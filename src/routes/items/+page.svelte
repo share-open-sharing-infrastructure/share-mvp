@@ -1,24 +1,28 @@
 <script>
 import Uploadimg from './Uploadimg.svelte'
-import Menu from '../Menu.svelte';
 
 let item_name = '';
 let item_description = '';
 let item_image = null;
 let items = [];
 
+let uploadImgComponent;
+
 
 function handleImageSelected(event) {
     item_image = event.detail.imageDataUrl;
   }
 
+
+
+
 function addItem() {
-    if (item_name && item_description, item_image) {
+    if (item_name && item_description && item_image) {
         items = [...items, { item_image, item_name, item_description,  }];
         item_name = '';
         item_description = '';
-        /* add clean disposal of item_image */
-        /* add error handling */
+        item_image = null;
+        uploadImgComponent.reset(); 
     }
 }
 
@@ -29,7 +33,7 @@ function addItem() {
 
 <h2> Neuen Gegenstand hinzuƒügen</h2>
 
-<Uploadimg on:imageSelected={handleImageSelected}  />
+<Uploadimg on:imageSelected={handleImageSelected}  bind:this={uploadImgComponent}/>
 
 <p><input type="text" bind:value={item_name} placeholder="Name des Gegenstands" />   </p>
 <p><input type="text" bind:value={item_description} placeholder="Beschreibung des Gegenstands" /> </p>
@@ -40,9 +44,9 @@ function addItem() {
 
 <h2> Liste </h2>
 
-{#each items as item}
+{#each items.reverse() as item}
     <div>
-        <p><img src={item_image}></p>
+        <p><img src={item.item_image} alt=""></p>
         <h3>{item.item_name}</h3>
         <p>{item.item_description}</p>
     </div>

@@ -25,11 +25,18 @@
         };
 
         reader.readAsDataURL(file);
-              
-              return;
+        return;
+
       } 
-          showImage = false; 
+      showImage = false; 
     }
+
+    export function reset() {
+      showImage = false;
+      if (input) input.value = '';
+    }
+
+
   </script>
   
   <input
