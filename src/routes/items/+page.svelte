@@ -24,8 +24,6 @@ function addItem() {
 
 </script>
 
-<Menu />
-
 <h1>Gegenstände</h1>
 
 

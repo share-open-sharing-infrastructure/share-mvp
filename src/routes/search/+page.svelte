@@ -1,7 +1,6 @@
 <script>
-    import Menu from '../Menu.svelte';
-    </script>
-    
-    <Menu />
+
+</script>
+
 
 <h1>Suche</h1>
