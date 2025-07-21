@@ -42,7 +42,7 @@ function addItem() {
 <p><button onclick={addItem}>Gegenstand hinzufügen</button></p>
 
 
-<h2> Liste </h2>
+<h2> Deine Gegenstände </h2>
 
 {#each items.reverse() as item}
     <div>
