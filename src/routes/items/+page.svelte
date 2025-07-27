@@ -1,39 +1,72 @@
 <script>
-import Uploadimg from './Uploadimg.svelte'
 
 let item_name = '';
 let item_description = '';
-let item_image = null;
+let item_image;
 let items = [];
 
-let uploadImgComponent;
+let input;
+let container;
+let placeholder;
+let showImage = false;
 
 
-function handleImageSelected(event) {
-    item_image = event.detail.imageDataUrl;
-  }
+  
+function onChange() {
+    const file = input.files[0];
+        
+    if (file) {
+            showImage = true;
 
+    const reader = new FileReader();
+    reader.addEventListener("load", function () {
+        item_image.setAttribute("src", reader.result);
+    });
 
+    reader.readAsDataURL(file);
+            return;
+    } 
+        showImage = false; 
+}
 
 
 function addItem() {
     if (item_name && item_description && item_image) {
-        items = [...items, { item_image, item_name, item_description,  }];
+        items = [...items, { item_name, item_description, item_image  }];
         item_name = '';
         item_description = '';
-        item_image = null;
-        uploadImgComponent.reset(); 
+        console.log(items);
     }
+    else(
+        console.log("error")
+    )
 }
 
+
 </script>
+
+
 
 <h1>Gegenstände</h1>
 
 
 <h2> Neuen Gegenstand hinzuƒügen</h2>
 
-<Uploadimg on:imageSelected={handleImageSelected}  bind:this={uploadImgComponent}/>
+  
+  <input
+      bind:this={input}
+      onchange={onChange}
+    type="file" 
+  />
+  
+  <div class="container" bind:this={container}>
+      {#if showImage}
+          <img bind:this={item_image} src="" alt="Preview" />
+      {:else}
+          <span bind:this={placeholder}>Bild Vorschau</span>
+      {/if}
+  </div>
+
 
 <p><input type="text" bind:value={item_name} placeholder="Name des Gegenstands" />   </p>
 <p><input type="text" bind:value={item_description} placeholder="Beschreibung des Gegenstands" /> </p>
@@ -42,15 +75,36 @@ function addItem() {
 <p><button onclick={addItem}>Gegenstand hinzufügen</button></p>
 
 
-<h2> Deine Gegenstände </h2>
+<h2> Liste </h2>
 
-{#each items.reverse() as item}
+{#each items as item}
     <div>
-        <p><img src={item.item_image} alt=""></p>
+
         <h3>{item.item_name}</h3>
+        <img class="preview-img" src={item.item_image.currentSrc} alt="" />
         <p>{item.item_description}</p>
+
     </div>
 {/each}
 
 
-
+  
+  <style>
+      .container {
+      width: 200px;
+      min-height: 100px;
+      border: 2px solid;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ccc;
+    }
+    img {
+      width: 100%;
+    }
+    .preview-img {
+        width: 150px;
+        min-height: 50px;
+    }
+  </style>
+  
