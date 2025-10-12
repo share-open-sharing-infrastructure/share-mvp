@@ -1,5 +1,10 @@
 ## MVP for Share
 
+
+
+### Setup local .env file
+In the root folder, create a `.env` file that stores the pocketbase URL e.g. `PB_URL=https://url`
+
 ### Install dependencies
 
 Once you've pulled the repository you can install dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
