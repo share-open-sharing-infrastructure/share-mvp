@@ -1,110 +1,39 @@
-<script>
-
-let item_name = '';
-let item_description = '';
-let item_image;
-let items = [];
-
-let input;
-let container;
-let placeholder;
-let showImage = false;
-
-
-  
-function onChange() {
-    const file = input.files[0];
-        
-    if (file) {
-            showImage = true;
-
-    const reader = new FileReader();
-    reader.addEventListener("load", function () {
-        item_image.setAttribute("src", reader.result);
-    });
-
-    reader.readAsDataURL(file);
-            return;
-    } 
-        showImage = false; 
-}
-
-
-function addItem() {
-    if (item_name && item_description && item_image) {
-        items = [...items, { item_name, item_description, item_image  }];
-        item_name = '';
-        item_description = '';
-        console.log(items);
-    }
-    else(
-        console.log("error")
-    )
-}
-
-
+<script lang="ts">
+	export let data;
+	const { items } = data;
+	import { Card, Img, Gallery } from 'flowbite-svelte';
+	import { Section } from 'flowbite-svelte-blocks';
 </script>
 
-
-
-<h1>Gegenstände</h1>
-
-
-<h2> Neuen Gegenstand hinzuƒügen</h2>
-
-  
-  <input
-      bind:this={input}
-      onchange={onChange}
-    type="file" 
-  />
-  
-  <div class="container" bind:this={container}>
-      {#if showImage}
-          <img bind:this={item_image} src="" alt="Preview" />
-      {:else}
-          <span bind:this={placeholder}>Bild Vorschau</span>
-      {/if}
-  </div>
-
-
-<p><input type="text" bind:value={item_name} placeholder="Name des Gegenstands" />   </p>
-<p><input type="text" bind:value={item_description} placeholder="Beschreibung des Gegenstands" /> </p>
-
-
-<p><button onclick={addItem}>Gegenstand hinzufügen</button></p>
-
-
-<h2> Liste </h2>
-
-{#each items as item}
-    <div>
-
-        <h3>{item.item_name}</h3>
-        <img class="preview-img" src={item.item_image.currentSrc} alt="" />
-        <p>{item.item_description}</p>
-
-    </div>
-{/each}
-
-
-  
-  <style>
-      .container {
-      width: 200px;
-      min-height: 100px;
-      border: 2px solid;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ccc;
-    }
-    img {
-      width: 100%;
-    }
-    .preview-img {
-        width: 150px;
-        min-height: 50px;
-    }
-  </style>
-  
+<Section>
+	<div class="flex items-center justify-center">
+		<a href="/" class="text-2xl font-semibold text-gray-900 dark:text-white"> Gegenstände </a>
+	</div>
+	<div class="mx-auto max-w-6xl space-y-4 overflow-x-auto p-6 sm:p-8 md:space-y-6">
+		<Gallery class="grid-cols-1 gap-4 md:grid-cols-4">
+			{#each items as item}
+				<Card>
+					<Img
+						src={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
+						alt="item image"
+						class="mx-auto h-48 w-full rounded-md object-cover p-5"
+					/>
+					<div class="m-6">
+						<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+							{item.name}
+						</h5>
+						<p class="mb-3 text-base leading-normal font-normal text-gray-700 dark:text-gray-400">
+							{item.description}
+						</p>
+						<p class="mb-3 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
+							Hinzugefügt am: {new Date(item.created).toLocaleDateString('de-DE', {day: '2-digit',month: '2-digit', year: '2-digit'})}
+						</p>
+						<p class="mb-3 text-xs font-thin text-gray-400 dark:text-gray-400">
+							Aktualisiert am: {new Date(item.updated).toLocaleDateString('de-DE', {day: '2-digit',month: '2-digit', year: '2-digit'})}
+						</p>
+					</div>
+				</Card>
+			{/each}
+		</Gallery>
+	</div>
+</Section>
