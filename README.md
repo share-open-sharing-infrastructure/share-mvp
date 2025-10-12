@@ -1,6 +1,6 @@
 ## MVP for Share
 
-## Install dependencies
+### Install dependencies
 
 Once you've pulled the repository you can install dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
@@ -11,7 +11,7 @@ npm run dev
 npm run dev -- --open
 ```
 
-## Building
+### Building
 
 To create a production version of your app:
 
