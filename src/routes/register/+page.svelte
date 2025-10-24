@@ -25,11 +25,11 @@
 				<h3 class="p-0 text-xl font-medium text-gray-900 dark:text-white">Wilkommen bei Share</h3>
 				<Label class="space-y-2">
 					<span>Deine E-Mail Adresse</span>
-					<Input type="email" name="email" placeholder="E-Mail Adresse" required />
+					<Input type="email" name="email" placeholder="E-Mail Adresse" class="focus:ring-gray-700 focus:border-gray-700" required />
 				</Label>
 				<Label class="space-y-2">
 					<span>Dein Passwort</span>
-					<Input type="password" name="password" placeholder="••••••••••" required />
+					<Input type="password" name="password" placeholder="••••••••••" class="focus:ring-gray-700 focus:border-gray-700" required />
 				</Label>
 				<Button
 					type="submit"
