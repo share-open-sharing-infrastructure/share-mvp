@@ -15,6 +15,7 @@
 		<NavLi href="/register">Registrieren</NavLi>
 		<NavLi href="/login">Login</NavLi>
 		<NavLi href="/items">Gegenstände</NavLi>
+		<NavLi href="/logout">Log out</NavLi>
 	</NavUl>
 </Navbar>
 
