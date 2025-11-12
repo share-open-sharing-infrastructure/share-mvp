@@ -1,1 +1,1 @@
-<marquee>You should never see me</marquee>
+<span>You should never see me.</span>
