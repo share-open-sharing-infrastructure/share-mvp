@@ -36,10 +36,12 @@ export const actions = {
         const description = data.get('description');
         const place = data.get('place');
         const image = data.get('image');
+        data.append('field', locals.pb.authStore.model.id);
 
 
 
-        if (!name || !description || !place || !image) {
+
+        if (!name || !description || !place || !image ) {
             return fail(400, { nameRequired: name === null, descriptionRequired: description === null, placeRequired: place === null });
         }
 
