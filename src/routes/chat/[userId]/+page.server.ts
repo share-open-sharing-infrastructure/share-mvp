@@ -1,13 +1,49 @@
-import { error } from "@sveltejs/kit";
+import { redirect } from "@sveltejs/kit";
 
-export function load({ params }) {
-	const chatTarget = params.userId;
+let currentUserId: string;
+let	currentChatPartnerId: string;
 
-	if (!chatTarget) {
-        error(404);
-    }
+
+export async function load({ locals, params, parent }) {
+	currentUserId = locals.pb.authStore.record.id;
+
+	const parentData = await parent();
+	const allMessages = parentData.allMessages;
+
+
+	// Get all messages for the currently selected target user
+    currentChatPartnerId = params.userId;
+    const currentMessages = allMessages.filter(msg => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId);
 
 	return {
-		chatTarget
+		currentMessages
 	};
 }
+
+export const actions = {
+    sendMessage: async ({ locals, request }) => {
+        
+		// get the message data from the form
+		const formData = await request.formData();
+		const messageContent = formData.get('messageContent');
+		const fromUserId = currentUserId;
+		const toUserId = currentChatPartnerId;
+
+		// try to send message to database
+		try {
+			const data = {
+				"messageContent": messageContent,
+				"from": fromUserId,
+				"to": toUserId
+			};
+			const record = await locals.pb.collection('messages').create(data);
+		} catch (error) {
+			console.error("Error sending message:", error);
+		}
+		// on success, return nothing to stay on the same page
+
+		// on failure, display error message
+        
+		// throw redirect(303, '/chat');
+    }
+};
