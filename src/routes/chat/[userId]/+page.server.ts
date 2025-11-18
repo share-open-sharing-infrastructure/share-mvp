@@ -3,15 +3,14 @@ import { redirect } from "@sveltejs/kit";
 let currentUserId: string;
 let	currentChatPartnerId: string;
 
-
 export async function load({ locals, params, parent }) {
 	currentUserId = locals.pb.authStore.record.id;
 
+	// Get chat message data from parent layout
 	const parentData = await parent();
 	const allMessages = parentData.allMessages;
 
-
-	// Get all messages for the currently selected target user
+	// Get all messages only for the currently selected target user
     currentChatPartnerId = params.userId;
     const currentMessages = allMessages.filter(msg => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId);
 
@@ -39,11 +38,6 @@ export const actions = {
 			const record = await locals.pb.collection('messages').create(data);
 		} catch (error) {
 			console.error("Error sending message:", error);
-		}
-		// on success, return nothing to stay on the same page
-
-		// on failure, display error message
-        
-		// throw redirect(303, '/chat');
+		}        
     }
 };

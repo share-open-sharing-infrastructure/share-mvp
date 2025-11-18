@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-    import { onMount } from 'svelte';
 
     let { data } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
     let lastMessageElement: HTMLDivElement;
@@ -16,7 +15,6 @@
         }
     });
 </script>
-
 
 <!-- Display all messages with selected other user -->
 <div class="overflow-auto mb-4 flex flex-col">
