@@ -3,6 +3,8 @@
 	import { enhance } from '$app/forms';
 	import { env } from '$env/dynamic/public';
 	import { tick } from 'svelte';
+    import { Button, Input, Label } from 'flowbite-svelte';
+	import { UserCircleSolid } from 'flowbite-svelte-icons';
 
     let pb: PocketBase;
     let { data } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
@@ -121,17 +123,24 @@
 </script>
 
 <!-- Display all messages with selected other user -->
-<span>Chat mit {data.currentChatPartner.username}</span>
+
+<div class="flex items-center gap-1 justify-center border-b border-t p-2 mb-4">
+    <div class="flex text-lg font-semibold text-gray-900 dark:text-white">
+        Unterhaltung mit {data.currentChatPartner.username}
+    </div>
+    <UserCircleSolid class="flex shrink-0 h-6 w-6"/>
+</div>
+
 <div class="overflow-auto mb-4 flex flex-col">
     {#each messages as message}
         <div class="
             {message.from === data.currentUserId ? 'self-end' : 'self-start'}
             border rounded 
-            p-1 mt-1
-            max-w-1/2 break-words
+            p-1 px-2 mt-1
+            max-w-2/3 break-words
             text-sm">
             {message.messageContent}
-            <div class="text-xs text-gray-500 mt-1 text-right">
+            <div class="text-xs text-gray-500 text-right">
                 {formatTimestamp(message.created)}
             </div>
         </div>
@@ -141,23 +150,24 @@
 
 <!-- Input field to type and send new messages -->
 <div id="message-input" class="mt-auto flex">
-<form class="mt-auto flex items-end gap-2 w-full" method="POST" action="?/sendMessage" 
-    use:enhance
-    >
-    <label class="w-full">
-        <input
-            name="messageContent"
-            type="text"
-            placeholder="Type your message..."
-            class="w-full border rounded-lg px-3 py-2 mt-4"
-            required
-            autocomplete="off"
-            autofocus
-            bind:value={messageText}
-            bind:this={messageInput}
-        />
-    </label>
-    <button type="submit" class="px-4 py-2 border rounded-lg">Senden</button>
-</form>
+    <form class="mt-auto flex items-end gap-2 w-full" method="POST" action="?/sendMessage" 
+        use:enhance
+        >
+        <Label class="w-full">
+            <Input
+                name="messageContent"
+                type="text"
+                placeholder="Type your message..."
+                class="w-full border rounded-lg px-3 py-2 mt-4"
+                required
+                autocomplete="off"
+                autofocus
+                bind:value={messageText}
+            />
+        </Label>
+        <Button type="submit">
+            Senden
+        </Button>
+    </form>
 </div>
 
