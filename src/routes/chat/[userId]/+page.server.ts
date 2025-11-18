@@ -8,6 +8,8 @@ export async function load({ locals, params, parent }) {
 
 	// Get all messages only for the currently selected target user
     let	currentChatPartnerId: string = params.userId;
+	const userRecord = await locals.pb.collection('users').getOne(currentChatPartnerId, { fields: 'id,username,email' });
+
 	let	currentMessages = [];
 	if (locals.pb.authStore.record.id !== currentChatPartnerId) {
 		currentMessages = allMessages.filter(msg => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId);
@@ -26,7 +28,7 @@ export async function load({ locals, params, parent }) {
 
 	return {
 		currentMessages,
-		currentChatPartnerId
+		currentChatPartner: userRecord
 	};
 }
 

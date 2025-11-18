@@ -15,7 +15,6 @@
                     <h3 class="font-semibold text-gray-900 dark:text-white">Chats</h3>
                 </div>
                 <div class="w-2/3 px-4 py-3">
-                    <h3 class="font-semibold text-gray-900 dark:text-white">Chat</h3>
                 </div>
             </div>
 

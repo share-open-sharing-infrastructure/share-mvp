@@ -74,6 +74,7 @@
 </script>
 
 <!-- Display all messages with selected other user -->
+<span>Chat mit {data.currentChatPartner.username}</span>
 <div class="overflow-auto mb-4 flex flex-col">
     {#each messages as message}
         <div class="
