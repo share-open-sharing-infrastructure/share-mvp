@@ -20,7 +20,8 @@ export const load = (async ({ locals }) => {
         items: structuredClone(items),
         PB_IMG_URL: PB_URL,
         uniqueNames: structuredClone(uniqueNames),
-        uniquePlaces: structuredClone(uniquePlaces)
+        uniquePlaces: structuredClone(uniquePlaces),
+        userId: locals.pb.authStore.record.id
     };
 
 }) satisfies PageServerLoad;

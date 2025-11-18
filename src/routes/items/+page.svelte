@@ -46,6 +46,10 @@
 				includesCaseInsensitive(items.name, searchTextState.value)
 			);
 		}
+
+		// Filter out own items
+		filteredResults = filteredResults.filter((item) => item.expand.field.id !== data.userId);
+
 		// console.log(filteredResults);
 		return filteredResults;
 	});
@@ -155,10 +159,14 @@
 						</div>
 						<div>
 							<!-- TODO: Once the database relation is renamed from field to "owner" or sth, rename -->
-							<a href="/chat/{item.expand.field.id}">
-								<p class="mb-3 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
-									von {item.expand.field.username}
-								</p>
+							<p class="mb-3 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
+								von {item.expand.field.username}
+								<a href="/chat/{item.expand.field.id}">
+									(kontaktieren)
+								</a>
+							</p>
+							
+								
 						</div>
 					</div>
 				</Card>
