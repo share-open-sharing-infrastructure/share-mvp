@@ -2,6 +2,7 @@
     import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
 	import { env } from '$env/dynamic/public';
+	import { tick } from 'svelte';
 
     let pb: PocketBase;
     let { data } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
@@ -71,6 +72,38 @@
         };
     });
 
+    // 👇 enhance handler: keep focus + clear input after submit
+    // This works like autofocus on the form element, but autofocus is deprecated because of accessibility issues
+    // Will have to decide how to handle accessibility properly
+    let messageInput: HTMLInputElement;
+    let messageText: string = $state('');
+
+    const keepFocusEnhance = () => {
+         return async ({ result, update }) => {
+            // let the action update data / invalidate
+            await update(result);
+
+            // wait for DOM + bindings to settle
+            await tick();
+
+            setTimeout(() => {
+                // clear via state
+                messageText = '';
+
+                if (messageInput) {
+                    messageInput.focus();
+
+                    // put caret at end (works even if value is empty)
+                    const len = messageInput.value.length;
+                    try {
+                        messageInput.setSelectionRange(len, len);
+                    } catch {
+                        // some browsers complain if element not "active", safe to ignore
+                    }
+                }
+            }, 0);
+        };
+    };
 
 </script>
 
@@ -92,7 +125,9 @@
 
 <!-- Input field to type and send new messages -->
 <div id="message-input" class="mt-auto flex">
-<form class="mt-auto flex items-end gap-2 w-full" method="POST" action="?/sendMessage" use:enhance>
+<form class="mt-auto flex items-end gap-2 w-full" method="POST" action="?/sendMessage" 
+    use:enhance
+    >
     <label class="w-full">
         <input
             name="messageContent"
@@ -101,6 +136,9 @@
             class="w-full border rounded-lg px-3 py-2 mt-4"
             required
             autocomplete="off"
+            autofocus
+            bind:value={messageText}
+            bind:this={messageInput}
         />
     </label>
     <button type="submit" class="px-4 py-2 border rounded-lg">Senden</button>
