@@ -28,7 +28,7 @@
     // This effect sets up and tears down PocketBase subscriptions for real-time updates when the chat partner changes.
     // I thought I could do this via onMount/onDestroy but those only run once per component lifetime, not per data change.
     $effect(() => {
-        const chatPartnerId = data.currentChatPartnerId;
+        const chatPartnerId = data.currentChatPartner.id;
 
         console.log('Setup for user', chatPartnerId);
 
@@ -65,7 +65,8 @@
             console.log('Cleanup for user', chatPartnerId);
             pb.collection('messages').unsubscribe('*'); // remove all '*' topic subscriptions
             
-            // destroy client when component is destroyed, unclear if this is a better way
+            // destroy client when component is destroyed
+            // unclear if this is a better way:
             // pb?.authStore?.clear()
         };
     });
