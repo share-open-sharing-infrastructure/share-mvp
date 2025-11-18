@@ -8,9 +8,11 @@ export const load = (async ({ locals }) => {
     }
 
     // Get list of all users that the current user has chatted with
+    // TODO: This feels inefficient, maybe there's a better way to directly pull chat partners without pulling all messages first, use expand?
     const currentUserId = locals.pb.authStore.record.id;
     const allMessages = await locals.pb.collection('messages').getFullList({
-         filter: `from = "${currentUserId}" || to = "${currentUserId}"`,
+        filter: `from = "${currentUserId}" || to = "${currentUserId}"`, // TODO: Check if this even needs the filter given PocketBase should only return records the user has access to based on API rules 
+        sort: '-created' // sort by newest first
     });
 
     const uniqueChatPartners = new Map<string, {id: string; username: string, email: string}>();

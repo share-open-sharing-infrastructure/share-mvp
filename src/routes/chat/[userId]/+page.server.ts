@@ -11,6 +11,8 @@ export async function load({ locals, params, parent }) {
 	let	currentMessages = [];
 	if (locals.pb.authStore.record.id !== currentChatPartnerId) {
 		currentMessages = allMessages.filter(msg => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId);
+		//sort messages oldest to newest to display newer messages at the bottom
+		currentMessages.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
 	} else {
 		// TODO: Find a more elegant way to do this maybe
 		// If the user is trying to chat with themselves, redirect to a safe default (first chat partner)
