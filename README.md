@@ -1,6 +1,6 @@
 ## MVP for Share
 
-
+share is a platform for sharing! The apps purpose is to allow users to find everything that friends, family and strangers offer for borrowing in the area. 
 
 ### Setup local .env file
 In the root folder, create a `.env` file that stores the pocketbase URL e.g. `PB_URL=https://url`
