@@ -1,4 +1,6 @@
-export async function load({ params, parent }) {
+import { redirect } from '@sveltejs/kit';
+
+export async function load({ locals, params, parent }) {
 
 	// Get chat message data from parent layout
 	const parentData = await parent();
@@ -6,7 +8,19 @@ export async function load({ params, parent }) {
 
 	// Get all messages only for the currently selected target user
     let	currentChatPartnerId: string = params.userId;
-    const currentMessages = allMessages.filter(msg => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId);
+	let	currentMessages = [];
+	if (locals.pb.authStore.record.id !== currentChatPartnerId) {
+		currentMessages = allMessages.filter(msg => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId);
+	} else {
+		// TODO: Find a more elegant way to do this maybe
+		// If the user is trying to chat with themselves, redirect to a safe default (first chat partner)
+		let firstChatPartnerId: string;
+		allMessages[0].from === locals.pb.authStore.record.id
+			? firstChatPartnerId = allMessages[0].to
+			: firstChatPartnerId = allMessages[0].from;
+
+		redirect(303, `/chat/${firstChatPartnerId}`);
+	}
 
 	return {
 		currentMessages,
