@@ -153,6 +153,13 @@
 								})}
 							</p>
 						</div>
+						<div>
+							<!-- TODO: Once the database relation is renamed from field to "owner" or sth, rename -->
+							<a href="/chat/{item.expand.field.id}">
+								<p class="mb-3 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
+									von {item.expand.field.username}
+								</p>
+						</div>
 					</div>
 				</Card>
 			{/each}

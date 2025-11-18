@@ -3,12 +3,10 @@ import type { PageServerLoad } from './$types';
 import type { Actions } from './$types';
 import { PB_URL } from '../../hooks.server';
 
-
-
-
 export const load = (async ({ locals }) => {
-    const items = await locals.pb.collection('items').getFullList();
-
+    const items = await locals.pb.collection('items').getFullList({
+        expand: 'field'
+    });
 
     const uniquePlaces = Array.from(new Set(items.map(item => item.place)));
     const uniqueNames = Array.from(new Set(items.map(item => item.name)));
@@ -17,16 +15,14 @@ export const load = (async ({ locals }) => {
         return redirect(303, '/login')
 
     }
+
     return {
         items: structuredClone(items),
         PB_IMG_URL: PB_URL,
         uniqueNames: structuredClone(uniqueNames),
         uniquePlaces: structuredClone(uniquePlaces)
-
-
-
-
     };
+
 }) satisfies PageServerLoad;
 
 export const actions = {
@@ -37,9 +33,6 @@ export const actions = {
         const place = data.get('place');
         const image = data.get('image');
         data.append('field', locals.pb.authStore.model.id);
-
-
-
 
         if (!name || !description || !place || !image ) {
             return fail(400, { nameRequired: name === null, descriptionRequired: description === null, placeRequired: place === null });

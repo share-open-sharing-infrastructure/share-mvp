@@ -20,7 +20,7 @@
             </div>
 
             <!-- Contains both the chat list and the messages window -->
-            <!-- TODO: Pull down into the per-user route -->
+            <!-- TODO: Pull down into the per-user route? -->
             <div id="chat-container" class="flex overflow-hidden" >
 
                 <!-- List of all users the present user chatted with -->
