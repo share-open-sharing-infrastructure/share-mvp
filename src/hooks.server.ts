@@ -22,9 +22,14 @@ export const authentication: Handle = async ({ event, resolve }) => {
 
     const response = await resolve(event);
 
-    response.headers.append('set-cookie', event.locals.pb.authStore.exportToCookie());
-    return response;
+    response.headers.append(
+        'set-cookie', 
+        event.locals.pb.authStore.exportToCookie({
+            httpOnly: false // required for SvelteKit to access the cookie on the client side
+        }
+    ));
 
+    return response;
 }
 
 
