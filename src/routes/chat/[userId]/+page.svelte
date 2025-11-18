@@ -31,8 +31,6 @@
     $effect(() => {
         const chatPartnerId = data.currentChatPartner.id;
 
-        console.log('Setup for user', chatPartnerId);
-
         // Example: set up PB subscription here
         pb = new PocketBase(env.PUBLIC_PB_URL);
         pb.authStore?.loadFromCookie(document.cookie || '')
@@ -55,15 +53,11 @@
                     // append new message
                     messages = [...messages, msg];
                 }
-
-                console.log(e.action);
-                console.log(e.record);
             }
         );
 
         // cleanup when:chatPartnerId changes OR component is destroyed
         return () => {
-            console.log('Cleanup for user', chatPartnerId);
             pb.collection('messages').unsubscribe('*'); // remove all '*' topic subscriptions
             
             // destroy client when component is destroyed
@@ -105,6 +99,25 @@
         };
     };
 
+    function formatTimestamp(ts: string) {
+        const d = new Date(ts);
+        const day = d.getDate();
+        const month = d.getMonth() + 1;  // months are 0-based
+        const hours = d.getHours();
+        const minutes = d.getMinutes();
+
+        // pad single digits (e.g. 3 → 03)
+        const pad = (n: number) => String(n).padStart(2, '0');
+
+        // if today, return only time
+        const today = new Date();
+        if (d.toDateString() === today.toDateString()) {
+            return `${pad(hours)}:${pad(minutes)}`;
+        }
+
+        return `${pad(day)}.${pad(month)}. ${pad(hours)}:${pad(minutes)}`;
+    }
+
 </script>
 
 <!-- Display all messages with selected other user -->
@@ -118,6 +131,9 @@
             max-w-1/2 break-words
             text-sm">
             {message.messageContent}
+            <div class="text-xs text-gray-500 mt-1 text-right">
+                {formatTimestamp(message.created)}
+            </div>
         </div>
     {/each}
     <div bind:this={lastMessageElement}></div>
