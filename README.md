@@ -1,9 +1,16 @@
-## MVP for Share
+# MVP for Share
 
+share is a platform for sharing! The apps purpose is to allow users to find everything that friends, family and strangers offer for borrowing in the area. The long-term goal is to integrate the platform with software like [leihbase](https://github.com/leihbase/leihbase), so that users can borrow both from private persons as well as from lending organisations like [Libraries of Things](https://en.wikipedia.org/wiki/Library_of_things) or for-profit lenders.
 
+## Setup
+
+share is based on Svelte and SvelteKit, and uses PocketBase (https://pocketbase.io/) for backend and storage. To setup your own instance, consider the steps below.
+
+### Copy repository
+Create a local copy of this repository. You will also need to set up your own PocketBase instance.
 
 ### Setup local .env file
-In the root folder, create a `.env` file that stores the pocketbase URL e.g. `PB_URL=https://url`
+In the root folder, create a `.env` file that stores the pocketbase URL e.g. `PB_URL=https://url...`
 
 ### Install dependencies
 

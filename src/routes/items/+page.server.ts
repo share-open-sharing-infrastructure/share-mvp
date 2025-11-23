@@ -8,7 +8,7 @@ export const load = (async ({ locals }) => {
         expand: 'field'
     });
 
-    const uniquePlaces = Array.from(new Set(items.map(item => item.place)));
+    const uniquePlaces = Array.from(new Set(items.map(item => item.place))); // deduplicates places by creating a Set
     const uniqueNames = Array.from(new Set(items.map(item => item.name)));
 
     if (!locals.pb.authStore.record) {
@@ -27,6 +27,7 @@ export const load = (async ({ locals }) => {
 }) satisfies PageServerLoad;
 
 export const actions = {
+
     create: async ({ locals, request }) => {
         const data = await request.formData();
         const name = data.get('name');

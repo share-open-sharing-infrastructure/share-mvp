@@ -17,8 +17,6 @@ export const actions = {
         const email = data.get('email');
         const password = data.get('password');
 
-
-
         if (!email || !password) {
             return fail(400, { emailRequired: email === null, passwordRequired: password === null });
         }
@@ -28,10 +26,10 @@ export const actions = {
             return fail(500, { fail: true, message: error });
         }
 
-        data.set('passwordConfirm', password?.toString())
+        data.set('passwordConfirm', password?.toString()) // TODO: Put into form eventually
         try {
             await locals.pb.collection('users').create(data);
-            await locals.pb.collection('users').authWithPassword(email, password.toString());
+            await locals.pb.collection('users').authWithPassword(email, password.toString()); // TODO: check why mail is not the right type
             await locals.pb.collection('users').requestVerification(email);
         } catch (error) {
             const errorObj = error as ClientResponseError;

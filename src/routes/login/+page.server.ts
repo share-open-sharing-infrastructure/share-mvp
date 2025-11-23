@@ -23,7 +23,7 @@ export const actions = {
         }
 
         try {
-            await locals.pb.collection('users').authWithPassword(email.toString(), password.toString());
+            await locals.pb.collection('users').authWithPassword(email.toString(), password.toString()); // TODO: Is this encrypted / does it need to be?
         } catch (error) {
             const errorObj = error as ClientResponseError;
             return fail(500, { fail: true, message: errorObj.data.message });

@@ -20,7 +20,7 @@
 	import { selectedNames, selectedPlaces, searchTextState } from '../state.svelte';
 
 	let formModal = $state(false);
-	let error = $state('');
+	let error = $state(''); // TODO: Check if this is even used
 
 	// helper for case insensitive search
 	const includesCaseInsensitive = (str, searchString) => new RegExp(searchString, 'i').test(str);
@@ -97,6 +97,7 @@
 					/>
 				</svg>
 				Filter<ChevronDownOutline />
+				<!-- TODO: How does this button open the dropdown? Is this just achieved by the Chevron? -->
 			</Button>
 
 			<Dropdown simple class="w-48 p-2 text-sm">
