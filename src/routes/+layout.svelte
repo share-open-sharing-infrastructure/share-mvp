@@ -12,12 +12,12 @@
 	</NavBrand>
 	<NavHamburger />
 	<NavUl>
-		<NavLi href="/register">Registrieren</NavLi>
 		<NavLi href="/login">Login</NavLi>
+		<NavLi href="/register">Registrieren</NavLi>
 		<NavLi href="/items">Gegenstände</NavLi>
 		<NavLi href="/chat">Chats</NavLi>
-		<NavLi href="/logout">Log out</NavLi>
 		<NavLi href="/profile">Profil</NavLi>
+		<NavLi href="/logout">Log out</NavLi>
 	</NavUl>
 </Navbar>
 
