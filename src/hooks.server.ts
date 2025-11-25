@@ -22,9 +22,16 @@ export const authentication: Handle = async ({ event, resolve }) => {
 
     const response = await resolve(event);
 
-    response.headers.append('set-cookie', event.locals.pb.authStore.exportToCookie());
+    response.headers.append(
+        'set-cookie', 
+        event.locals.pb.authStore.exportToCookie({
+            httpOnly: false // required for SvelteKit to access the cookie on the client side
+        }
+    ));
+
     return response;
-};
+}
+
 
 export const authorization: Handle = async ({ event, resolve }) => {
     if (!unprotectedPrefix.some((path) => event.url.pathname.startsWith(path)) && event.url.pathname !== '/') {

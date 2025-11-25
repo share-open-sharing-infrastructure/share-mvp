@@ -4,21 +4,26 @@ import type { Actions } from './$types';
 import { PB_URL } from '../../hooks.server';
 
 export const load = (async ({ locals }) => {
-    if (!locals.pb.authStore.record) {
-        return redirect(303, '/login')
-    }
-
-    const items = await locals.pb.collection('items').getFullList();
+    const items = await locals.pb.collection('items').getFullList({
+        expand: 'field'
+    });
 
     const uniquePlaces = Array.from(new Set(items.map(item => item.place))); // deduplicates places by creating a Set
     const uniqueNames = Array.from(new Set(items.map(item => item.name)));
+
+    if (!locals.pb.authStore.record) {
+        return redirect(303, '/login')
+
+    }
 
     return {
         items: structuredClone(items),
         PB_IMG_URL: PB_URL,
         uniqueNames: structuredClone(uniqueNames),
-        uniquePlaces: structuredClone(uniquePlaces)
+        uniquePlaces: structuredClone(uniquePlaces),
+        userId: locals.pb.authStore.record.id
     };
+
 }) satisfies PageServerLoad;
 
 export const actions = {
