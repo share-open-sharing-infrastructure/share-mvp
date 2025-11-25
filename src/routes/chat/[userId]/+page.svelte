@@ -2,7 +2,6 @@
     import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
 	import { env } from '$env/dynamic/public';
-	import { tick } from 'svelte';
     import { Button, Input, Label } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
 
@@ -33,7 +32,7 @@
     $effect(() => {
         const chatPartnerId = data.currentChatPartner.id;
 
-        // Example: set up PB subscription here
+        // set up PB subscription here
         pb = new PocketBase(env.PUBLIC_PB_URL);
         pb.authStore?.loadFromCookie(document.cookie || '')
 
@@ -43,8 +42,8 @@
             topic, 
             function (e) {
                 const msg = e.record;
-                // Only process messages relevant to this chat  
 
+                // Only process messages relevant to this chat
                 const isInThisChat =
                     (msg.from === data.currentUserId && msg.to === chatPartnerId) ||
                     (msg.to === data.currentUserId && msg.from === chatPartnerId);
@@ -68,10 +67,6 @@
         };
     });
 
-    // 👇 enhance handler: keep focus + clear input after submit
-    // This works like autofocus on the form element, but autofocus is deprecated because of accessibility issues
-    // Will have to decide how to handle accessibility properly
-    let messageInput: HTMLInputElement;
     let messageText: string = $state('');
 
     function formatTimestamp(ts: string) {
@@ -143,4 +138,3 @@
         </Button>
     </form>
 </div>
-
