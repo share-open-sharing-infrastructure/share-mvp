@@ -2,8 +2,10 @@
     import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
 	import { env } from '$env/dynamic/public';
-    import { Button, Input, Label } from 'flowbite-svelte';
+    import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
+	import type { ActionData } from './$types.js';
+    let form: ActionData;
 
     let pb: PocketBase;
     let { data } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
@@ -115,6 +117,14 @@
     {/each}
     <div bind:this={lastMessageElement}></div>
 </div>
+
+{#if form?.fail}
+<Toast>
+    <span class="font-medium">
+        {form.message}
+    </span>
+</Toast>
+{/if}
 
 <!-- Input field to type and send new messages -->
 <div id="message-input" class="mt-auto flex">

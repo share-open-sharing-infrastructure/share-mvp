@@ -1,4 +1,5 @@
-import { redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
+import type { ClientResponseError } from 'pocketbase';
 
 export async function load({ locals, params, parent }) {
 
@@ -8,7 +9,16 @@ export async function load({ locals, params, parent }) {
 
 	// Get all messages only for the currently selected target user
     let	currentChatPartnerId: string = params.userId;
-	const userRecord = await locals.pb.collection('users').getOne(currentChatPartnerId, { fields: 'id,username,email' });
+	let userRecord;
+
+	try {
+		userRecord = await locals.pb
+			.collection('users')
+			.getOne(currentChatPartnerId, { fields: 'id,username,email' });
+	} catch (eventError) {
+		const errorObj = eventError as ClientResponseError;
+		error(errorObj.status);
+	}
 
 	let	currentMessages = [];
 	if (locals.pb.authStore.record.id !== currentChatPartnerId) {
@@ -16,8 +26,8 @@ export async function load({ locals, params, parent }) {
 		//sort messages oldest to newest to display newer messages at the bottom
 		currentMessages.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
 	} else {
-		// TODO: Find a more elegant way to do this maybe
 		// If the user is trying to chat with themselves, redirect to a safe default (first chat partner)
+		// TODO: Find a more elegant way to do this maybe
 		let firstChatPartnerId: string;
 		allMessages[0].from === locals.pb.authStore.record.id
 			? firstChatPartnerId = allMessages[0].to
@@ -50,7 +60,7 @@ export const actions = {
 			};
 			const record = await locals.pb.collection('messages').create(data);
 		} catch (error) {
-			console.error("Error sending message:", error);
-		}        
+            return fail(500, { fail: true, message: error.data.message });
+		}
     }
 };
