@@ -1,8 +1,9 @@
 <script lang="ts">
+	import Flash from '$lib/Flash.svelte';
 	import '../app.css';
 	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
 
-	let { children } = $props();
+	let { children, data } = $props();
 </script>
 
 <Navbar>
@@ -20,5 +21,9 @@
 		<NavLi href="/logout">Log out</NavLi>
 	</NavUl>
 </Navbar>
+
+{#if data.flash}
+  <Flash flash={data.flash} />
+{/if}
 
 {@render children()}

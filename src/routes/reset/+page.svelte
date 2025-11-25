@@ -16,6 +16,7 @@
 			</Alert>
 		</div>
 	{/if}
+
 	<Register href="/" class="w-md">
 		{#snippet top()}
 			Passwort zurücksetzen

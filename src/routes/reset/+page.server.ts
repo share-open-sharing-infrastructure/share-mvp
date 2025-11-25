@@ -12,7 +12,7 @@ export const load = (async ({ locals }) => {
 }) satisfies PageServerLoad;
 
 export const actions = {
-    reset: async ({ locals, request }) => {
+    reset: async ({ locals, request, cookies }) => {
         const data = await request.formData();
         const email = data.get('email');
 
@@ -27,6 +27,18 @@ export const actions = {
             return fail(500, { fail: true, message: errorObj.data.message });
         }
 
+        // universal flash pattern:
+		cookies.set(
+			'flash',
+			JSON.stringify({
+				type: 'success',
+				message: 'If this email exists, a password reset email has been sent!'
+			}),
+			{
+				path: '/',
+				maxAge: 60 // seconds
+			}
+		);
         throw redirect(303, '/login');
     }
 }
