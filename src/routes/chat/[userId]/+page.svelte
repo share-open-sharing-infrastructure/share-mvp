@@ -74,33 +74,6 @@
     let messageInput: HTMLInputElement;
     let messageText: string = $state('');
 
-    const keepFocusEnhance = () => {
-         return async ({ result, update }) => {
-            // let the action update data / invalidate
-            await update(result);
-
-            // wait for DOM + bindings to settle
-            await tick();
-
-            setTimeout(() => {
-                // clear via state
-                messageText = '';
-
-                if (messageInput) {
-                    messageInput.focus();
-
-                    // put caret at end (works even if value is empty)
-                    const len = messageInput.value.length;
-                    try {
-                        messageInput.setSelectionRange(len, len);
-                    } catch {
-                        // some browsers complain if element not "active", safe to ignore
-                    }
-                }
-            }, 0);
-        };
-    };
-
     function formatTimestamp(ts: string) {
         const d = new Date(ts);
         const day = d.getDate();
