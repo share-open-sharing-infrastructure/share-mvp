@@ -1,15 +1,14 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
-import type { PageServerLoad } from './$types';
 
-export const load = (async ({ locals }) => {
+export async function load ({ locals }) {
     if (locals.pb.authStore.record) {
         return redirect(303, '/items')
     }
 
     return {
     };
-}) satisfies PageServerLoad;
+};
 
 export const actions = {
     reset: async ({ locals, request, cookies }) => {
