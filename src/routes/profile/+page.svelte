@@ -1,8 +1,8 @@
 <script>
-	import { Button, Img, Modal, Label, Input, Fileupload, Helper } from 'flowbite-svelte';
+	import { Button, Img, Modal, Label, Input, Fileupload, Helper, Alert } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 
-    let { data } = $props();
+    let { data, form } = $props();
 
 	let addModal = $state(false);
 
@@ -24,7 +24,15 @@
 		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Du verleihst...</span>
 	</div>
 	<div class="flex flex-col items-center mx-auto max-w-6xl space-y-2 p-4">
-
+		{#if form?.fail}
+			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
+				<Alert>
+					<span class="font-medium">
+						{form.message}
+					</span>
+				</Alert>
+			</div>
+		{/if}
 		{#each data.user.expand.items_via_field as item}
 		<!-- This should be extracted into a component -->
 			<div class="w-full max-w-2/4 border rounded-lg p-1">
@@ -114,7 +122,7 @@
 
 
 <!-- Edit Modal -->
-<Modal form bind:open={editModal} size="xs">
+<Modal bind:open={editModal} size="xs">
 	<form
 		class="flex flex-col space-y-6"
 		action="?/update"
@@ -147,7 +155,7 @@
 	</form>
 </Modal>
 
-<Modal form bind:open={addModal} size="xs">
+<Modal bind:open={addModal} size="xs">
 	<form
 		class="flex flex-col space-y-6"
 		action="?/create"
@@ -158,7 +166,7 @@
 
 		<Label class="space-y-2">
 			<span>Bild hochladen</span>
-			<Fileupload type="file" id="with_helper" name="image" class="mb-2" />
+			<Fileupload type="file" id="with_helper" name="image" class="mb-2" required />
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
 		<Label class="space-y-2">

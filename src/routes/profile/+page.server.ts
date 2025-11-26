@@ -22,8 +22,16 @@ export const actions = {
         const image = data.get('image');
         data.append('field', locals.pb.authStore.record.id);
 
-        if (!name || !description || !place || !image ) {
-            return fail(400, { nameRequired: name === null, descriptionRequired: description === null, placeRequired: place === null });
+        const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
+
+        if (!name || !description || !place || noImage ) {
+            return fail(400, {
+                fail: true,
+                nameRequired:name === null, 
+                descriptionRequired: description === null, 
+                placeRequired: place === null,
+                message: "Gegenstand konnte nicht hinzugefügt werden."
+            });
         }
 
         try {
@@ -31,7 +39,8 @@ export const actions = {
         } catch (error) {
             console.log(error?.message || error);
         }
-        throw redirect(303, '/profile');
+
+        redirect(303, '/profile');
     },
 
     update: async ({ locals, request }) => {
@@ -53,10 +62,10 @@ export const actions = {
                 place: place
             });
 
-        } catch (error) {
-            console.log(error?.message || error);
+        } catch (err) {
+            console.log(err?.message || err);
         }
-        throw redirect(303, '/profile');
+        redirect(303, '/profile');
     },
 
     delete: async ({ locals, request }) => {
@@ -69,6 +78,6 @@ export const actions = {
         } catch (error) {
             console.log(error?.message || error);
         }
-        throw redirect(303, '/profile');
+        redirect(303, '/profile');
     }
 }
