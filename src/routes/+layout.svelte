@@ -13,12 +13,20 @@
 	</NavBrand>
 	<NavHamburger />
 	<NavUl>
-		<NavLi href="/login">Login</NavLi>
-		<NavLi href="/register">Registrieren</NavLi>
+		{#if !data.currentUser}
+			<NavLi href="/login">Login</NavLi>
+			<NavLi href="/register">Registrieren</NavLi>
+		{/if}
 		<NavLi href="/items">Gegenstände</NavLi>
-		<NavLi href="/chat">Chats</NavLi>
-		<NavLi href="/profile">Profil</NavLi>
-		<NavLi href="/logout">Log out</NavLi>
+		{#if data.currentUser}
+			<NavLi href="/chat">Chats</NavLi>
+			<NavLi href="/profile">Profil</NavLi>
+			<NavLi>
+				<form method="POST" action="/logout">
+					<button type="submit" class="cursor-pointer w-full text-left">Logout</button>
+				</form>
+			</NavLi>
+		{/if}
 	</NavUl>
 </Navbar>
 

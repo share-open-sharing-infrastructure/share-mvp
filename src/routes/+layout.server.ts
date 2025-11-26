@@ -1,13 +1,18 @@
-export const load = ( event ) => {
+export const load = (event) => {
     const flashCookie = event.cookies.get('flash');
     let flash = null;
 
     if (flashCookie) {
         try {
-        flash = JSON.parse(flashCookie);
+            flash = JSON.parse(flashCookie);
         } catch {}
         event.cookies.delete('flash', { path: '/' });
     }
 
-    return { flash };
+    // PocketBase auth state: if logged in, authStore.record holds the user
+    const currentUser = event.locals.pb?.authStore?.isValid
+        ? event.locals.pb.authStore.record
+        : null;
+
+    return { flash, currentUser };
 };

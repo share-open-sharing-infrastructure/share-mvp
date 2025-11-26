@@ -1,8 +1,12 @@
 import { redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
-export function load ({ locals })  {
-    if (locals.pb.authStore.record) { // Check if the user is authenticated
-        locals.pb.authStore.clear(); // Clears the auth store, thereby effectively logs the user out
-        redirect(303, '/');
+export const actions: Actions = {
+    default: async ({ locals }) => {
+        // Clear PocketBase auth
+        locals.pb.authStore.clear();
+
+        // Redirect back to home
+        throw redirect(303, '/');
     }
 };
