@@ -35,6 +35,6 @@ export const actions = {
             return fail(500, { fail: true, message: errorObj.data.message });
         }
 
-        throw redirect(303, '/items');
+        redirect(303, '/items');
     }
 }

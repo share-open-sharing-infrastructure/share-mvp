@@ -38,6 +38,6 @@ export const actions = {
 				maxAge: 60 // seconds
 			}
 		);
-        throw redirect(303, '/login');
+        redirect(303, '/login');
     }
 }

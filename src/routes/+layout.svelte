@@ -22,6 +22,7 @@
 			<NavLi href="/chat">Chats</NavLi>
 			<NavLi href="/profile">Profil</NavLi>
 			<NavLi class="cursor-pointer">
+				<!-- This is a bit of an ugly solution, but I didn't find a better one yet -->
 				<form method="POST" action="/logout">
 					<button type="submit" class="cursor-pointer">
 						Logout
