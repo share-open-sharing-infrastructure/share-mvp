@@ -9,7 +9,9 @@
 	let editModal = $state(false);
 	let editingItemId = $state("");
 	let editingItem = $derived(
-		data.user.expand.items_via_field.find((item) => item.id === editingItemId)
+		data?.user?.expand?.items_via_field
+            ? data.user.expand.items_via_field.find((item) => item.id === editingItemId)
+            : undefined
 	);
 	
 </script>
@@ -33,69 +35,74 @@
 				</Alert>
 			</div>
 		{/if}
-		{#each data.user.expand.items_via_field as item}
-		<!-- This should be extracted into a component -->
-			<div class="w-full max-w-2/4 border rounded-lg p-1">
-				<!-- CONTENT -->
-				<div class="flex p-1">
-					<!-- IMAGE -->
-					<div class="p-1 flex-shrink-0">
-						<div class="h-24 w-24 overflow-hidden rounded-lg bg-gray-100">
-							<Img
-								src={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} alt={item.name} 
-								class="h-full w-full object-cover"
-								loading="lazy"
-							/>
+		{#if data?.user?.expand?.items_via_field?.length}
+			{#each data.user.expand.items_via_field as item}
+			<!-- This should be extracted into a component -->
+				<div class="w-full max-w-2/4 border rounded-lg p-1">
+					<!-- CONTENT -->
+					<div class="flex p-1">
+						<!-- IMAGE -->
+						<div class="p-1 flex-shrink-0">
+							<div class="h-24 w-24 overflow-hidden rounded-lg bg-gray-100">
+								<Img
+									src={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} alt={item.name} 
+									class="h-full w-full object-cover"
+									loading="lazy"
+								/>
+							</div>
+						</div>
+
+						<!-- DESCRIPTION -->
+						<div class="p-1 px-2 border-l mx-2">
+							<div class="text-lg font-bold p-1">
+								{item.name}
+							</div>
+							<div class="p-1 my-2">
+								{item.description}
+							</div>
+							<!-- <div class="p-1">
+								<span class="font-semibold">Status:</span>
+								<span class="border rounded-full bg-green-100 p-1 px-3 text-sm">Aktiv</span>
+							</div> -->
 						</div>
 					</div>
+					<!-- LENDING SCOPE -->
+					<!-- <div class="flex p-1 overflow-auto">
+						<span class="text-xs mr-2">Verleih an: </span>
 
-					<!-- DESCRIPTION -->
-					<div class="p-1 px-2 border-l mx-2">
-						<div class="text-lg font-bold p-1">
-							{item.name}
-						</div>
-						<div class="p-1 my-2">
-							{item.description}
-						</div>
-						<!-- <div class="p-1">
-							<span class="font-semibold">Status:</span>
-							<span class="border rounded-full bg-green-100 p-1 px-3 text-sm">Aktiv</span>
-						</div> -->
-					</div>
-
-				</div>
-				<!-- LENDING SCOPE -->
-				<!-- <div class="flex p-1 overflow-auto">
-					<span class="text-xs mr-2">Verleih an: </span>
-
-					{#snippet lendingTag(tagName)}
+						{#snippet lendingTag(tagName)}
+							
+							<div class="
+								border rounded-full 
+								p-1 px-2 mx-0.5 
+								bg-blue-100 
+								text-xs text-center">{tagName}</div>
+						{/snippet}
 						
-						<div class="
-							border rounded-full 
-							p-1 px-2 mx-0.5 
-							bg-blue-100 
-							text-xs text-center">{tagName}</div>
-					{/snippet}
+						{@render lendingTag('Freunde')}
+						{@render lendingTag('Freunde²')}
+						{@render lendingTag('Öffentlich')}
+						{@render lendingTag('Kegelverein')}
+					</div> -->
 					
-					{@render lendingTag('Freunde')}
-					{@render lendingTag('Freunde²')}
-					{@render lendingTag('Öffentlich')}
-					{@render lendingTag('Kegelverein')}
-				</div> -->
-				
-				<!-- BUTTONS -->
-				<div class="flex p-1">
-					<Button 
-						class="border p-1 w-full"
-						onclick={() => {
-							editingItemId = item.id;
-							editModal = true;
-						}}>
-						Bearbeiten
-					</Button>
+					<!-- BUTTONS -->
+					<div class="flex p-1">
+						<Button 
+							class="border p-1 w-full"
+							onclick={() => {
+								editingItemId = item.id;
+								editModal = true;
+							}}>
+							Bearbeiten
+						</Button>
+					</div>
 				</div>
+			{/each}
+		{:else}
+			<div class="text-center text-gray-500">
+				Bisher verleihst du noch keine Gegenstände.
 			</div>
-		{/each}
+		{/if}
 	</div>
 </Section>
 
