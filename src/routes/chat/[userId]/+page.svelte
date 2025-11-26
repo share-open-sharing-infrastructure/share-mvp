@@ -4,11 +4,9 @@
 	import { env } from '$env/dynamic/public';
     import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
-	import type { ActionData } from './$types.js';
-    let form: ActionData;
 
     let pb: PocketBase;
-    let { data } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
+    let { data, form } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
     let lastMessageElement: HTMLDivElement;
 
     let messages = $state([...data.currentMessages])
