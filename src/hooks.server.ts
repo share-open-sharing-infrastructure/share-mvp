@@ -44,3 +44,11 @@ export const authorization: Handle = async ({ event, resolve }) => {
 };
 
 export const handle = sequence(authentication, authorization)
+
+export function handleError({ error, event }) {
+    console.error('Error occurred during request processing:', {
+        error,
+        url: event.url.href,
+        method: event.request.method
+    });
+};
