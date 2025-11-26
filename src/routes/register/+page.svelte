@@ -2,7 +2,7 @@
 	import type { ActionData, PageData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Checkbox, Label, Input } from 'flowbite-svelte';
-	export let form: ActionData;
+	export let form: ActionData; // TODO: I (Matteo) think this is not standard SvelteKit practice, you should usually receive the form data from the $props. I don't even understand why it works here :D
 	import { Alert } from 'flowbite-svelte';
 </script>
 

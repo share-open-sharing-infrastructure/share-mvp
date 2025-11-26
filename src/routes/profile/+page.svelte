@@ -2,7 +2,6 @@
 	import { Button, Img, Modal, Label, Input, Fileupload, Helper } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 
-
     let { data } = $props();
 
 	let addModal = $state(false);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	const { data } = $props();
+	const { data, form } = $props();
 	const { items, uniqueNames, uniquePlaces } = data;
 	import { Section, TableHeader } from 'flowbite-svelte-blocks';
 	import {
@@ -14,7 +14,8 @@
 		Label,
 		Input,
 		Fileupload,
-		Helper
+		Helper,
+		Alert
 	} from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { selectedNames, selectedPlaces, searchTextState } from '../state.svelte';
@@ -55,13 +56,16 @@
 	});
 </script>
 
+
 <Section>
+	
 	<div class="flex items-center justify-center">
-		<a href="/" class="text-2xl font-semibold text-gray-900 dark:text-white"> Gegenstände </a>
+		<span class="text-2xl font-semibold text-gray-900 dark:text-white"> Gegenstände </span>
 	</div>
 	<div class="flex items-center justify-center">
 		<h5>{filterList.length} Gegenstände gefunden</h5>
 	</div>
+	
 	<Section
 		name="tableheader"
 		sectionClass="dark:bg-gray-900 flex pt-8 mx-auto max-w-6xl dark:hover:bg-gray-700"
@@ -130,6 +134,15 @@
 	</Section>
 
 	<div class="mx-auto max-w-6xl space-y-4 overflow-x-auto p-4 md:space-y-6">
+		{#if form?.fail}
+			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
+				<Alert>
+					<span class="font-medium">
+						{form.message}
+					</span>
+				</Alert>
+			</div>
+		{/if}
 		<Gallery class="grid-cols-1 gap-4 md:grid-cols-4">
 			{#each filterList as item}
 				<Card>
@@ -166,8 +179,6 @@
 									(kontaktieren)
 								</a>
 							</p>
-							
-								
 						</div>
 					</div>
 				</Card>
@@ -176,7 +187,7 @@
 	</div>
 </Section>
 
-<Modal form bind:open={formModal} size="xs">
+<Modal bind:open={formModal} size="xs">
 	<form
 		class="flex flex-col space-y-6"
 		action="?/create"
@@ -189,7 +200,7 @@
 		{/if}
 		<Label class="space-y-2">
 			<span>Bild hochladen</span>
-			<Fileupload type="file" id="with_helper" name="image" class="mb-2" />
+			<Fileupload type="file" id="with_helper" name="image" class="mb-2" required/>
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
 		<Label class="space-y-2">
