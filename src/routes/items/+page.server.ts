@@ -2,7 +2,6 @@ import { fail, redirect } from '@sveltejs/kit';
 import { PB_URL } from '../../hooks.server';
 
 export async function load ({ locals }) {
-    throw new Error('Test error handling');
 
     const items = await locals.pb.collection('items').getFullList({
         expand: 'field'
