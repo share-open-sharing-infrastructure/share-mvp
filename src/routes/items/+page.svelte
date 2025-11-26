@@ -49,7 +49,9 @@
 		}
 
 		// Filter out own items
-		filteredResults = filteredResults.filter((item) => item.expand.field.id !== data.userId);
+		if (data.userId) {
+			filteredResults = filteredResults.filter((item) => item.expand.field.id !== data.userId);
+		}
 
 		// console.log(filteredResults);
 		return filteredResults;

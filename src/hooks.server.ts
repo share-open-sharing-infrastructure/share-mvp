@@ -4,9 +4,8 @@ import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 
-
 export const PB_URL = env.PB_URL;
-const unprotectedPrefix = ['/login', '/register', '/reset']; // TODO: Check if this can be done by route grouping
+const unprotectedPrefix = ['/login', '/register', '/reset', '/items']; // TODO: Check if this can be done by route grouping
 
 export const authentication: Handle = async ({ event, resolve }) => {
 
@@ -37,7 +36,7 @@ export const authorization: Handle = async ({ event, resolve }) => {
     if (!unprotectedPrefix.some((path) => event.url.pathname.startsWith(path)) && event.url.pathname !== '/') {
         const loggedIn = await event.locals.pb.authStore.isValid;
         if (!loggedIn) {
-            throw redirect(303, '/login');
+            redirect(303, '/login');
         }
     }
     const result = await resolve(event);

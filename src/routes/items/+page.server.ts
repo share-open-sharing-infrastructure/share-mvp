@@ -2,10 +2,6 @@ import { fail, redirect } from '@sveltejs/kit';
 import { PB_URL } from '../../hooks.server';
 
 export async function load ({ locals }) {
-    if (!locals.pb.authStore.record) {
-        redirect(303, '/login')
-    }
-
     const items = await locals.pb.collection('items').getFullList({
         expand: 'field'
     });
@@ -18,9 +14,8 @@ export async function load ({ locals }) {
         PB_IMG_URL: PB_URL,
         uniqueNames: structuredClone(uniqueNames),
         uniquePlaces: structuredClone(uniquePlaces),
-        userId: locals.pb.authStore.record.id
+        userId: locals.pb.authStore.record ? locals.pb.authStore.record.id : null
     };
-
 };
 
 export const actions = {
