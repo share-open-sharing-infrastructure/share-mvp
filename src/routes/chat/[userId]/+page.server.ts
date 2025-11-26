@@ -15,9 +15,10 @@ export async function load({ locals, params, parent }) {
 		userRecord = await locals.pb
 			.collection('users')
 			.getOne(currentChatPartnerId, { fields: 'id,username,email' });
-	} catch (eventError) {
-		const errorObj = eventError as ClientResponseError;
-		error(errorObj.status);
+	} catch (err) {
+		const e = err as Partial<ClientResponseError>;
+		console.error('Failed to load chats', err);
+		error(e.status ?? 500, 'Unable to load chats.');
 	}
 
 	let	currentMessages = [];
@@ -59,8 +60,12 @@ export const actions = {
 				"to": toUserId
 			};
 			const record = await locals.pb.collection('messages').create(data);
-		} catch (error) {
-            return fail(500, { fail: true, message: error.data.message });
+		} catch (err) {
+            const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, {
+				fail: true,
+				message: e.data?.message ?? 'Failed to send message.'
+			});
 		}
     }
 };

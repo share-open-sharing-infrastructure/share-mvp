@@ -4,7 +4,7 @@ export const load = (async ({ locals }) => {
     
     // check if current user is authenticated, otherwise redirect to login
     if (!locals.pb.authStore.record) {
-        return redirect(303, '/login');
+        redirect(303, '/login');
     }
 
     // Get list of all users that the current user has chatted with
@@ -35,8 +35,9 @@ export const load = (async ({ locals }) => {
             allMessages,
             currentUserId
         };
-    } catch (errorObj) {
-        error(errorObj.status);
+    } catch (err) {
+        console.error('Failed to load chat layout', err);
+        error(500, 'Failed to load chats');
     }
 });
 
