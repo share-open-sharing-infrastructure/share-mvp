@@ -21,9 +21,11 @@
 		{#if data.currentUser}
 			<NavLi href="/chat">Chats</NavLi>
 			<NavLi href="/profile">Profil</NavLi>
-			<NavLi>
+			<NavLi class="cursor-pointer">
 				<form method="POST" action="/logout">
-					<button type="submit" class="cursor-pointer w-full text-left">Logout</button>
+					<button type="submit" class="cursor-pointer">
+						Logout
+					</button>
 				</form>
 			</NavLi>
 		{/if}

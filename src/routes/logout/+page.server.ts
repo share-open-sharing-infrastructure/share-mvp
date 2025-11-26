@@ -7,6 +7,6 @@ export const actions: Actions = {
         locals.pb.authStore.clear();
 
         // Redirect back to home
-        redirect(308, '/');
+        redirect(303, '/');
     }
 };
