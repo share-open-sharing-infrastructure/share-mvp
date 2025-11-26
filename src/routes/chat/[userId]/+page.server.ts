@@ -34,7 +34,7 @@ export async function load({ locals, params, parent }) {
 			? firstChatPartnerId = allMessages[0].to
 			: firstChatPartnerId = allMessages[0].from;
 
-		redirect(303, `/chat/${firstChatPartnerId}`);
+		redirect(308, `/chat/${firstChatPartnerId}`);
 	}
 
 	return {

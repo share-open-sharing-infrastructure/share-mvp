@@ -4,7 +4,7 @@ export const load = (async ({ locals }) => {
     
     // check if current user is authenticated, otherwise redirect to login
     if (!locals.pb.authStore.record) {
-        redirect(303, '/login');
+        redirect(308, '/login');
     }
 
     // Get list of all users that the current user has chatted with

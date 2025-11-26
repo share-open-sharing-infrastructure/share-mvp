@@ -36,7 +36,7 @@ export const authorization: Handle = async ({ event, resolve }) => {
     if (!unprotectedPrefix.some((path) => event.url.pathname.startsWith(path)) && event.url.pathname !== '/') {
         const loggedIn = await event.locals.pb.authStore.isValid;
         if (!loggedIn) {
-            redirect(303, '/login');
+            redirect(308, '/login');
         }
     }
     const result = await resolve(event);
