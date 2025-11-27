@@ -1,16 +1,17 @@
 <script>
-	import { Button, Img, Modal, Label, Input, Fileupload, Helper } from 'flowbite-svelte';
+	import { Button, Img, Modal, Label, Input, Fileupload, Helper, Alert } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 
-
-    let { data } = $props();
+    let { data, form } = $props();
 
 	let addModal = $state(false);
 
 	let editModal = $state(false);
 	let editingItemId = $state("");
 	let editingItem = $derived(
-		data.user.expand.items_via_field.find((item) => item.id === editingItemId)
+		data?.user?.expand?.items_via_field
+            ? data.user.expand.items_via_field.find((item) => item.id === editingItemId)
+            : undefined
 	);
 	
 </script>
@@ -25,70 +26,83 @@
 		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Du verleihst...</span>
 	</div>
 	<div class="flex flex-col items-center mx-auto max-w-6xl space-y-2 p-4">
-
-		{#each data.user.expand.items_via_field as item}
-		<!-- This should be extracted into a component -->
-			<div class="w-full max-w-2/4 border rounded-lg p-1">
-				<!-- CONTENT -->
-				<div class="flex p-1">
-					<!-- IMAGE -->
-					<div class="p-1 flex-shrink-0">
-						<div class="h-24 w-24 overflow-hidden rounded-lg bg-gray-100">
-							<Img
-								src={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} alt={item.name} 
-								class="h-full w-full object-cover"
-								loading="lazy"
-							/>
-						</div>
-					</div>
-
-					<!-- DESCRIPTION -->
-					<div class="p-1 px-2 border-l mx-2">
-						<div class="text-lg font-bold p-1">
-							{item.name}
-						</div>
-						<div class="p-1 my-2">
-							{item.description}
-						</div>
-						<!-- <div class="p-1">
-							<span class="font-semibold">Status:</span>
-							<span class="border rounded-full bg-green-100 p-1 px-3 text-sm">Aktiv</span>
-						</div> -->
-					</div>
-
-				</div>
-				<!-- LENDING SCOPE -->
-				<!-- <div class="flex p-1 overflow-auto">
-					<span class="text-xs mr-2">Verleih an: </span>
-
-					{#snippet lendingTag(tagName)}
-						
-						<div class="
-							border rounded-full 
-							p-1 px-2 mx-0.5 
-							bg-blue-100 
-							text-xs text-center">{tagName}</div>
-					{/snippet}
-					
-					{@render lendingTag('Freunde')}
-					{@render lendingTag('Freunde²')}
-					{@render lendingTag('Öffentlich')}
-					{@render lendingTag('Kegelverein')}
-				</div> -->
-				
-				<!-- BUTTONS -->
-				<div class="flex p-1">
-					<Button 
-						class="border p-1 w-full"
-						onclick={() => {
-							editingItemId = item.id;
-							editModal = true;
-						}}>
-						Bearbeiten
-					</Button>
-				</div>
+		{#if form?.fail}
+			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
+				<Alert>
+					<span class="font-medium">
+						{form.message}
+					</span>
+				</Alert>
 			</div>
-		{/each}
+		{/if}
+		{#if data?.user?.expand?.items_via_field?.length}
+			{#each data.user.expand.items_via_field as item}
+			<!-- This should be extracted into a component -->
+				<div class="w-full max-w-2/4 border rounded-lg p-1">
+					<!-- CONTENT -->
+					<div class="flex p-1">
+						<!-- IMAGE -->
+						<div class="p-1 flex-shrink-0">
+							<div class="h-24 w-24 overflow-hidden rounded-lg bg-gray-100">
+								<Img
+									src={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} alt={item.name} 
+									class="h-full w-full object-cover"
+									loading="lazy"
+								/>
+							</div>
+						</div>
+
+						<!-- DESCRIPTION -->
+						<div class="p-1 px-2 border-l mx-2">
+							<div class="text-lg font-bold p-1">
+								{item.name}
+							</div>
+							<div class="p-1 my-2">
+								{item.description}
+							</div>
+							<!-- <div class="p-1">
+								<span class="font-semibold">Status:</span>
+								<span class="border rounded-full bg-green-100 p-1 px-3 text-sm">Aktiv</span>
+							</div> -->
+						</div>
+					</div>
+					<!-- LENDING SCOPE -->
+					<!-- <div class="flex p-1 overflow-auto">
+						<span class="text-xs mr-2">Verleih an: </span>
+
+						{#snippet lendingTag(tagName)}
+							
+							<div class="
+								border rounded-full 
+								p-1 px-2 mx-0.5 
+								bg-blue-100 
+								text-xs text-center">{tagName}</div>
+						{/snippet}
+						
+						{@render lendingTag('Freunde')}
+						{@render lendingTag('Freunde²')}
+						{@render lendingTag('Öffentlich')}
+						{@render lendingTag('Kegelverein')}
+					</div> -->
+					
+					<!-- BUTTONS -->
+					<div class="flex p-1">
+						<Button 
+							class="border p-1 w-full"
+							onclick={() => {
+								editingItemId = item.id;
+								editModal = true;
+							}}>
+							Bearbeiten
+						</Button>
+					</div>
+				</div>
+			{/each}
+		{:else}
+			<div class="text-center text-gray-500">
+				Bisher verleihst du noch keine Gegenstände.
+			</div>
+		{/if}
 	</div>
 </Section>
 
@@ -115,7 +129,7 @@
 
 
 <!-- Edit Modal -->
-<Modal form bind:open={editModal} size="xs">
+<Modal bind:open={editModal} size="xs">
 	<form
 		class="flex flex-col space-y-6"
 		action="?/update"
@@ -148,7 +162,7 @@
 	</form>
 </Modal>
 
-<Modal form bind:open={addModal} size="xs">
+<Modal bind:open={addModal} size="xs">
 	<form
 		class="flex flex-col space-y-6"
 		action="?/create"
@@ -159,7 +173,7 @@
 
 		<Label class="space-y-2">
 			<span>Bild hochladen</span>
-			<Fileupload type="file" id="with_helper" name="image" class="mb-2" />
+			<Fileupload type="file" id="with_helper" name="image" class="mb-2" required />
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
 		<Label class="space-y-2">

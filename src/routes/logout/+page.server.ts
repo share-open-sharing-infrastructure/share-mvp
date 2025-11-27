@@ -1,12 +1,24 @@
-import { fail, redirect } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
 
-export const load = (async ({ locals }) => {
-    if (locals.pb.authStore.record) { // Check if the user is authenticated
-        locals.pb.authStore.clear(); // Clears the auth store, thereby effectively logs the user out
-        return redirect(303, '/');
+export const actions: Actions = {
+    default: async ({ locals, cookies }) => {
+        // Clear PocketBase auth
+        locals.pb.authStore.clear();
+
+        cookies.set(
+			'flash',
+			JSON.stringify({
+				type: 'success',
+				message: 'Logged out succesfully'
+			}),
+			{
+				path: '/',
+				maxAge: 60 // seconds
+			}
+		);
+
+        // Redirect back to home
+        redirect(303, '/');
     }
-
-    return {
-    };
-}) satisfies PageServerLoad;
+};

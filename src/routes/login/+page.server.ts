@@ -1,15 +1,14 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
-import type { PageServerLoad } from './$types';
 
-export const load = (async ({ locals }) => {
+export async function load ({ locals }) {
     if (locals.pb.authStore.record) {
-        return redirect(303, '/items')
+        redirect(303, '/items');
     }
 
     return {
     };
-}) satisfies PageServerLoad;
+};
 
 export const actions = {
 
@@ -19,16 +18,22 @@ export const actions = {
         const password = data.get('password');
 
         if (!email || !password) {
-            return fail(400, { emailRequired: email === null, passwordRequired: password === null });
+            return fail(400, { fail: true, emailRequired: email === null, passwordRequired: password === null });
         }
 
         try {
             await locals.pb.collection('users').authWithPassword(email.toString(), password.toString()); // TODO: Is this encrypted / does it need to be?
-        } catch (error) {
-            const errorObj = error as ClientResponseError;
-            return fail(500, { fail: true, message: errorObj.data.message });
-        }
+        } catch (err) {
+            // if error is "failed to authenticate", display error message
+            console.error('Failed to login', err);
+            const e = err as Partial<ClientResponseError>;
 
-        throw redirect(303, '/items');
+            if (e?.status == 400 ) {
+                return fail(400, {fail: true, message: "Login fehlgeschlagen."})
+            } else {
+                error(e.status ?? 500, 'Unable to login.');
+            }
+        }
+        redirect(303, '/items');
     },
 }

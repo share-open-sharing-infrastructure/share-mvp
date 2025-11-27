@@ -1,9 +1,8 @@
 <script lang="ts">
-	import type { ActionData, PageData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Checkbox, Label, Input } from 'flowbite-svelte';
-	export let form: ActionData;
+	import { Button, Label, Input } from 'flowbite-svelte';
 	import { Alert } from 'flowbite-svelte';
+	let { form } = $props();
 </script>
 
 <Section name="register">
