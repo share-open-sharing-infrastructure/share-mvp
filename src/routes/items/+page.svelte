@@ -3,8 +3,6 @@
 	const { items, uniqueNames, uniquePlaces } = data;
 	import { Section, TableHeader } from 'flowbite-svelte-blocks';
 	import {
-		Card,
-		Img,
 		Gallery,
 		Button,
 		Search,
@@ -147,7 +145,7 @@
 		{/if}
 		<Gallery class="grid-cols-1 gap-4 md:grid-cols-4">
 			{#each filterList as item}
-				<ItemCard 
+				<ItemCard
 					item={item}
 					imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
 				/>
