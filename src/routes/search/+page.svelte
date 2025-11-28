@@ -52,10 +52,10 @@
 <Section>
 	
 	<div class="flex items-center justify-center">
-		<span class="text-2xl font-semibold text-gray-900 dark:text-white"> Gegenstände </span>
+		<span class="text-2xl font-semibold text-gray-900 dark:text-white"> AllerLeih Dinge zum Teilen! </span>
 	</div>
 	<div class="flex items-center justify-center">
-		<h5>{filterList.length} Gegenstände gefunden</h5>
+		<h5>{filterList.length} Dinge gefunden</h5>
 	</div>
 	
 	<Section
@@ -68,7 +68,7 @@
 					size="md"
 					class="mr-4 flex flex-col"
 					classes={{ input: 'focus:ring-gray-700 focus:border-gray-700' }}
-					placeholder="Suche Gegenstände..."
+					placeholder="Suche Dinge..."
 					bind:value={searchTextState.value}
 				/>
 			{/snippet}
