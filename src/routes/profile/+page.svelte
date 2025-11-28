@@ -1,6 +1,7 @@
 <script>
-	import { Button, Img, Modal, Label, Input, Fileupload, Helper, Alert } from 'flowbite-svelte';
+	import { Button, Img, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
+	import UserItemCard from './UserItemCard.svelte';
 
     let { data, form } = $props();
 
@@ -25,7 +26,7 @@
 	<div class="flex flex-col items-center justify-center">
 		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Du verleihst...</span>
 	</div>
-	<div class="flex flex-col items-center mx-auto max-w-6xl space-y-2 p-4">
+	<Gallery class="max-w-3xl mx-auto grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-2">
 		{#if form?.fail}
 			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
 				<Alert>
@@ -37,58 +38,21 @@
 		{/if}
 		{#if data?.user?.expand?.items_via_field?.length}
 			{#each data.user.expand.items_via_field as item}
-			<!-- This should be extracted into a component -->
-				<div class="w-full max-w-2/4 border rounded-lg p-1">
-					<!-- CONTENT -->
-					<div class="flex p-1">
-						<!-- IMAGE -->
-						<div class="p-1 flex-shrink-0">
-							<div class="h-24 w-24 overflow-hidden rounded-lg bg-gray-100">
-								<Img
-									src={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} alt={item.name} 
-									class="h-full w-full object-cover"
-									loading="lazy"
-								/>
-							</div>
-						</div>
-
-						<!-- DESCRIPTION -->
-						<div class="p-1 px-2 border-l mx-2">
-							<div class="text-lg font-bold p-1">
-								{item.name}
-							</div>
-							<div class="p-1 my-2">
-								{item.description}
-							</div>
-							<!-- <div class="p-1">
-								<span class="font-semibold">Status:</span>
-								<span class="border rounded-full bg-green-100 p-1 px-3 text-sm">Aktiv</span>
-							</div> -->
-						</div>
-					</div>
-					<!-- LENDING SCOPE -->
-					<!-- <div class="flex p-1 overflow-auto">
-						<span class="text-xs mr-2">Verleih an: </span>
-
-						{#snippet lendingTag(tagName)}
-							
-							<div class="
-								border rounded-full 
-								p-1 px-2 mx-0.5 
-								bg-blue-100 
-								text-xs text-center">{tagName}</div>
-						{/snippet}
-						
-						{@render lendingTag('Freunde')}
-						{@render lendingTag('Freunde²')}
-						{@render lendingTag('Öffentlich')}
-						{@render lendingTag('Kegelverein')}
-					</div> -->
+				<Card class="border rounded-lg mb-4 max-w-full">
+					<UserItemCard
+						item={item}
+						imgUrl={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
+					/>
 					
 					<!-- BUTTONS -->
 					<div class="flex p-1">
-						<Button 
-							class="border p-1 w-full"
+						<Button
+							class="
+								border 
+								p-1 
+								w-full 
+								bg-gray-800 text-white 
+								hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 							onclick={() => {
 								editingItemId = item.id;
 								editModal = true;
@@ -96,32 +60,33 @@
 							Bearbeiten
 						</Button>
 					</div>
-				</div>
+				</Card>
 			{/each}
+			<Button
+				onclick={() => {addModal = true}}
+				class="
+					fixed               /* take it out of the normal flow */
+					bottom-10 right-10    /* position in the corner */
+					z-50                /* above other content */
+					rounded-full
+					shadow-lg
+					w-10
+					h-10
+					focus:ring-4 focus:ring-gray-300
+					text-lg
+				"
+				>
+			+
+			</Button>
 		{:else}
 			<div class="text-center text-gray-500">
 				Bisher verleihst du noch keine Gegenstände.
 			</div>
 		{/if}
-	</div>
+	</Gallery>
 </Section>
 
-<Button
-	onclick={() => {addModal = true}}
-	class="
-		fixed               /* take it out of the normal flow */
-		bottom-10 right-10    /* position in the corner */
-		z-50                /* above other content */
-		rounded-full
-		shadow-lg
-		w-10
-		h-10
-		focus:ring-4 focus:ring-gray-300
-		text-lg
-	"
-	>
-  +
-</Button>
+
 
 <!-- MODALS AND STUFF -->
 
@@ -131,7 +96,7 @@
 <!-- Edit Modal -->
 <Modal bind:open={editModal} size="xs">
 	<form
-		class="flex flex-col space-y-6"
+		class="flex flex-col space-y-6 items-right" 
 		action="?/update"
 		method="post"
 	>
@@ -153,10 +118,10 @@
 			type="submit">Speichern</Button
 		>
 	</form>
-	<form method="POST" action="?/delete">
+	<form method="POST" action="?/delete" class="w-full flex justify-end mt-4">
 		<Input type="text" name="itemId" value={editingItemId} hidden />
 		<Button
-			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+			class=""
 			type="submit">Löschen</Button
 		>
 	</form>
