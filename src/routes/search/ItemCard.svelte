@@ -35,11 +35,12 @@
         <div>
             <!-- TODO: Once the database relation is renamed from field to "owner" or sth, rename -->
             <p class="mb-3 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
-                von {item.expand?.field?.username}
-                <a href="/chat/{item.expand?.field?.id}">
-                    (kontaktieren)
-                </a>
-            </p>
+                von {item.expand?.field?.username ?? 'Unknown'}
+                {#if item.expand?.field?.id}
+                    <a href="/chat/{item.expand.field.id}">
+                        (kontaktieren)
+                    </a>
+                {/if}
         </div>
     </div>
 </Card>
