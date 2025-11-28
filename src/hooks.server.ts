@@ -11,12 +11,20 @@ export const authentication: Handle = async ({ event, resolve }) => {
 
     event.locals.pb = new PocketBase(env.PB_URL);
 
-    event.locals.pb.authStore.loadFromCookie(event.request.headers.get('cookie') || '');
+    event.locals.pb.authStore.loadFromCookie(
+        event.request.headers.get('cookie') || ''
+    );
 
     try {
-        event.locals.pb.authStore.isValid && await event.locals.pb.collection('users').authRefresh(); // Not entirely clear
+        if (event.locals.pb.authStore.isValid) {
+            await event.locals.pb.collection('users').authRefresh();
+            event.locals.user = event.locals.pb.authStore.record;
+        } else {
+            event.locals.user = null;
+        }
     } catch (_) {
         event.locals.pb.authStore.clear();
+        event.locals.user = null;
     }
 
     const response = await resolve(event);
@@ -24,7 +32,7 @@ export const authentication: Handle = async ({ event, resolve }) => {
     response.headers.append(
         'set-cookie', 
         event.locals.pb.authStore.exportToCookie({
-            httpOnly: false // required for SvelteKit to access the cookie on the client side
+            httpOnly: false // required for SvelteKit to access the cookie on the client side, necessary for /chat
         }
     ));
 

@@ -5,6 +5,7 @@ export const actions: Actions = {
     default: async ({ locals, cookies }) => {
         // Clear PocketBase auth
         locals.pb.authStore.clear();
+        locals.user = null;
 
         cookies.set(
 			'flash',
