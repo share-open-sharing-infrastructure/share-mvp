@@ -5,7 +5,8 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 
 export const PB_URL = env.PB_URL;
-const unprotectedPrefix = ['/login', '/register', '/reset', '/items']; // TODO: Check if this can be done by route grouping
+
+const unprotectedPrefix = ['/login', '/register', '/reset', '/items'];
 
 export const authentication: Handle = async ({ event, resolve }) => {
 

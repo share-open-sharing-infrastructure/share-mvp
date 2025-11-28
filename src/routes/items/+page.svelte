@@ -8,19 +8,11 @@
 		Search,
 		Dropdown,
 		Checkbox,
-		Modal,
-		Label,
-		Input,
-		Fileupload,
-		Helper,
 		Alert
 	} from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { selectedNames, selectedPlaces, searchTextState } from '../state.svelte';
 	import ItemCard from './ItemCard.svelte';
-
-	let formModal = $state(false);
-	let error = $state(''); // TODO: Check if this is even used
 
 	// helper for case insensitive search
 	const includesCaseInsensitive = (str, searchString) => new RegExp(searchString, 'i').test(str);
@@ -80,12 +72,7 @@
 					bind:value={searchTextState.value}
 				/>
 			{/snippet}
-			<Button
-				class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-				onclick={() => (formModal = true)}
-			>
-				Gegenstand hinzufügen
-			</Button>
+
 			<Button color="light">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +88,6 @@
 					/>
 				</svg>
 				Filter<ChevronDownOutline />
-				<!-- TODO: How does this button open the dropdown? Is this just achieved by the Chevron? -->
 			</Button>
 
 			<Dropdown simple class="w-48 p-2 text-sm">
@@ -153,38 +139,3 @@
 		</Gallery>
 	</div>
 </Section>
-
-<Modal bind:open={formModal} size="xs">
-	<form
-		class="flex flex-col space-y-6"
-		action="?/create"
-		method="post"
-		enctype="multipart/form-data"
-	>
-		<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Details</h3>
-		{#if error}
-			<Label color="red">{error}</Label>
-		{/if}
-		<Label class="space-y-2">
-			<span>Bild hochladen</span>
-			<Fileupload type="file" id="with_helper" name="image" class="mb-2" required/>
-			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
-		</Label>
-		<Label class="space-y-2">
-			<span>Name</span>
-			<Input type="text" name="name" placeholder="Name des Gegenstands" required />
-		</Label>
-		<Label class="space-y-2">
-			<span>Beschreibung</span>
-			<Input type="text" name="description" placeholder="Beschreibung des Gegenstands" required />
-		</Label>
-		<Label class="space-y-2">
-			<span>Ort</span>
-			<Input type="text" name="place" placeholder="Ort des Gegenstands" required />
-		</Label>
-		<Button
-			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-			type="submit">Gegenstand hinzufügen</Button
-		>
-	</form>
-</Modal>
