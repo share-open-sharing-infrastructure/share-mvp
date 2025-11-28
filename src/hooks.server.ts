@@ -6,7 +6,7 @@ import { redirect } from '@sveltejs/kit';
 
 export const PB_URL = env.PB_URL;
 
-const unprotectedPrefix = ['/login', '/register', '/reset', '/items'];
+const unprotectedPrefix = ['/login', '/register', '/reset', '/search'];
 
 export const authentication: Handle = async ({ event, resolve }) => {
 

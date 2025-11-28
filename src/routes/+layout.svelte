@@ -32,7 +32,7 @@
 			<NavLi href="/login">Login</NavLi>
 			<NavLi href="/register">Registrieren</NavLi>
 		{/if}
-		<NavLi href="/items">Gegenstände</NavLi>
+		<NavLi href="/search">Suche</NavLi>
 		{#if data.currentUser}
 			<NavLi href="/chat">Chats</NavLi>
 			<NavLi href="/profile">Profil</NavLi>

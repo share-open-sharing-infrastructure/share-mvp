@@ -46,6 +46,6 @@ export const actions = {
             console.error(error?.message || error);
         }
         
-        redirect(303, '/items');
+        redirect(303, '/');
     }
 };
