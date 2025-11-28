@@ -17,6 +17,8 @@
 	// helper for case insensitive search
 	const includesCaseInsensitive = (str, searchString) => new RegExp(searchString, 'i').test(str);
 
+	let isSearching: boolean = $derived(searchTextState.value.length > 0);
+
 	let filterList = $derived.by(() => {
 		let filteredResults = [];
 		filteredResults = items;
@@ -54,13 +56,11 @@
 	<div class="flex items-center justify-center">
 		<span class="text-2xl font-semibold text-gray-900 dark:text-white"> AllerLeih Dinge zum Teilen! </span>
 	</div>
-	<div class="flex items-center justify-center">
-		<h5>{filterList.length} Dinge gefunden</h5>
-	</div>
+
 	
 	<Section
 		name="tableheader"
-		sectionClass="dark:bg-gray-900 flex pt-8 mx-auto max-w-6xl dark:hover:bg-gray-700"
+		sectionClass="dark:bg-gray-900 flex pt-8 mx-auto max-w-5xl dark:hover:bg-gray-700"
 	>
 		<TableHeader headerType="search">
 			{#snippet search()}
@@ -129,13 +129,32 @@
 				</Alert>
 			</div>
 		{/if}
-		<Gallery class="grid-cols-1 gap-4 md:grid-cols-4">
-			{#each filterList as item}
-				<ItemCard
-					item={item}
-					imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
-				/>
-			{/each}
-		</Gallery>
+		{#if isSearching}
+			<div class="flex items-center justify-center">
+				<h5>{filterList.length} Dinge gefunden</h5>
+			</div>
+			<Gallery class="grid-cols-1 gap-4 md:grid-cols-4">
+				{#each filterList as item}
+					<ItemCard
+						item={item}
+						imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
+					/>
+				{/each}
+			</Gallery>
+		{:else}
+			<div class="
+				mt-10
+				flex flex-col items-center justify-center 
+				max-w-md mx-auto gap-4
+				text-center text-gray-600 dark:text-white text-lg
+				"
+			>
+				<p>Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung</p>
+				<p>zum leihen, teilen, mieten, ...</p>
+				<p>Nutze einfach die Suche oben oder</p>
+				<Button href="/profile">biete selbst etwas an!</Button>
+				<p>von und für Freunde, Familie und die lokale Gemeinschaft</p>
+			</div>
+		{/if}
 	</div>
 </Section>
