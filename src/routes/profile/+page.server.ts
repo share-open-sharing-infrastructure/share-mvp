@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { PB_URL } from '../../hooks.server';
 
 export async function load({ locals }) {
-    const user = await locals.pb.collection('users').getFirstListItem(`id="${locals.pb.authStore.record.id}"`, 
+    const user = await locals.pb.collection('users').getOne(locals.pb.authStore.record.id, 
         {expand: 'items_via_field',} // expands the user "backwards" from the items collection, i.e. pulls all items related to this user
     );
 
@@ -37,7 +37,7 @@ export const actions = {
         try {
             await locals.pb.collection('items').create(data)
         } catch (error) {
-            console.log(error?.message || error);
+            console.error(error?.message || error);
         }
 
         redirect(303, '/profile');
@@ -63,7 +63,7 @@ export const actions = {
             });
 
         } catch (err) {
-            console.log(err?.message || err);
+            console.error(err?.message || err);
         }
         redirect(303, '/profile');
     },
@@ -76,7 +76,7 @@ export const actions = {
             await locals.pb.collection('items').delete(id);
 
         } catch (error) {
-            console.log(error?.message || error);
+            console.error(error?.message || error);
         }
         redirect(303, '/profile');
     }

@@ -3,7 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 
 export async function load ({ locals }) {
     if (locals.pb.authStore.record) {
-        redirect(303, '/items')
+        redirect(303, '/')
     }
 
     return {
@@ -35,6 +35,6 @@ export const actions = {
             return fail(500, { fail: true, message: errorObj.data.message });
         }
 
-        redirect(303, '/items');
+        redirect(303, '/');
     }
 }
