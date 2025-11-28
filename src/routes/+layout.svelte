@@ -36,7 +36,7 @@
 		{#if data.currentUser}
 			<NavLi href="/chat">Chats</NavLi>
 			<NavLi href="/profile">Profil</NavLi>
-			<NavLi href="#" onclick={logout}>Logout</NavLi>
+			<NavLi href="/logout" onclick={logout}>Logout</NavLi>
 		{/if}
 	</NavUl>
 </Navbar>
