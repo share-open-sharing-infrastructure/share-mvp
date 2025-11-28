@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
 	import Flash from '$lib/Flash.svelte';
-	import { ChevronSortOutline } from 'flowbite-svelte-icons';
 	import '../app.css';
 	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
 

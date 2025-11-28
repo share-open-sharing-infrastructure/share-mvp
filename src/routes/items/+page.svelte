@@ -19,6 +19,7 @@
 	} from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { selectedNames, selectedPlaces, searchTextState } from '../state.svelte';
+	import ItemCard from './ItemCard.svelte';
 
 	let formModal = $state(false);
 	let error = $state(''); // TODO: Check if this is even used
@@ -146,43 +147,10 @@
 		{/if}
 		<Gallery class="grid-cols-1 gap-4 md:grid-cols-4">
 			{#each filterList as item}
-				<Card>
-					<div class="m-6">
-						<Img
-							src={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
-							alt="item image"
-							class="mx-auto h-48 w-full rounded-md object-cover p-5"
-						/>
-
-						<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-							{item.name}
-						</h5>
-						<p class="mt-2 mb-2 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
-							{item.place}
-						</p>
-						<p class="mb-3 text-base leading-normal font-normal text-gray-700 dark:text-gray-400">
-							{item.description}
-						</p>
-						<div class="flex space-x-10 sm:mt-0">
-							<p class="mb-3 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
-								Hinzugefügt am: {new Date(item.created).toLocaleDateString('de-DE', {
-									day: '2-digit',
-									month: '2-digit',
-									year: '2-digit'
-								})}
-							</p>
-						</div>
-						<div>
-							<!-- TODO: Once the database relation is renamed from field to "owner" or sth, rename -->
-							<p class="mb-3 text-xs leading-tight font-thin text-gray-400 dark:text-gray-400">
-								von {item.expand.field.username}
-								<a href="/chat/{item.expand.field.id}">
-									(kontaktieren)
-								</a>
-							</p>
-						</div>
-					</div>
-				</Card>
+				<ItemCard 
+					item={item}
+					imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
+				/>
 			{/each}
 		</Gallery>
 	</div>
