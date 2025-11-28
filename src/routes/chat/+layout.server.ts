@@ -1,12 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 
 export const load = (async ({ locals }) => {
-    
-    // check if current user is authenticated, otherwise redirect to login
-    if (!locals.pb.authStore.record) {
-        redirect(308, '/login');
-    }
-
     // Get list of all users that the current user has chatted with
     // TODO: This feels inefficient, maybe there's a better way to directly pull chat partners without pulling all messages first, use expand?
     const currentUserId = locals.user.id;

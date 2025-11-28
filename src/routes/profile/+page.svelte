@@ -26,7 +26,7 @@
 	<div class="flex flex-col items-center justify-center">
 		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Du verleihst...</span>
 	</div>
-	<Gallery class="max-w-3xl mx-auto grid-cols-1 sm:grid-cols-2 gap-4 md:grid-cols-2">
+	<Gallery class="flex flex-col max-w-3xl mx-auto items-center">
 		{#if form?.fail}
 			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
 				<Alert>
@@ -38,7 +38,7 @@
 		{/if}
 		{#if data?.user?.expand?.items_via_field?.length}
 			{#each data.user.expand.items_via_field as item}
-				<Card class="border rounded-lg mb-4 max-w-full">
+				<Card class="border rounded-lg mb-4 max-w-1/2">
 					<UserItemCard
 						item={item}
 						imgUrl={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
@@ -79,8 +79,22 @@
 			+
 			</Button>
 		{:else}
-			<div class="text-center text-gray-500">
-				Bisher verleihst du noch keine Gegenstände.
+			<div class="flex flex-col items-center text-center text-gray-500">
+				<p>Bisher verleihst du noch keine Gegenstände.</p>
+				<Button
+					onclick={() => {addModal = true}}
+					class="
+						z-50                /* above other content */
+						rounded-full
+						shadow-lg
+						w-10
+						h-10
+						focus:ring-4 focus:ring-gray-300
+						text-lg
+					"
+					>
+				+
+				</Button>
 			</div>
 		{/if}
 	</Gallery>

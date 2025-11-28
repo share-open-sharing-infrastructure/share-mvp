@@ -7,7 +7,7 @@
 </script>
 
 <!-- CONTENT -->
-<div class="flex p-1 h-36">
+<div class="flex p-1 max-h-36">
     <!-- IMAGE -->
     <div class="p-1 flex-shrink-0">
         <div class="h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
