@@ -1,5 +1,5 @@
 <script>
-	import { Button, Img, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery } from 'flowbite-svelte';
+	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
 
