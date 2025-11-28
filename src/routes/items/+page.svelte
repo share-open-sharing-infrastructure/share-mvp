@@ -53,7 +53,6 @@
 			filteredResults = filteredResults.filter((item) => item.expand.field.id !== data.userId);
 		}
 
-		// console.log(filteredResults);
 		return filteredResults;
 	});
 </script>
