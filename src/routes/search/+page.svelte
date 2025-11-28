@@ -73,6 +73,8 @@
 				/>
 			{/snippet}
 
+			{#if isSearching}
+
 			<Button color="light">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -116,6 +118,7 @@
 					</li>
 				{/each}
 			</Dropdown>
+			{/if}
 		</TableHeader>
 	</Section>
 
