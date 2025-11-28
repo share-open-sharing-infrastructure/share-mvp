@@ -1,9 +1,25 @@
 <script lang="ts">
+	import { goto, invalidateAll } from '$app/navigation';
 	import Flash from '$lib/Flash.svelte';
+	import { ChevronSortOutline } from 'flowbite-svelte-icons';
 	import '../app.css';
 	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger } from 'flowbite-svelte';
 
 	let { children, data } = $props();
+
+	async function logout() {
+        const res = await fetch('/logout', {
+            method: 'POST'
+        });
+
+        await invalidateAll();
+
+        if (res.redirected) {
+            goto(res.url);
+        } else {
+            goto('/');
+        }
+	}
 </script>
 
 <Navbar>
@@ -21,14 +37,7 @@
 		{#if data.currentUser}
 			<NavLi href="/chat">Chats</NavLi>
 			<NavLi href="/profile">Profil</NavLi>
-			<NavLi class="cursor-pointer">
-				<!-- This is a bit of an ugly solution, but I didn't find a better one yet -->
-				<form method="POST" action="/logout">
-					<button type="submit" class="cursor-pointer">
-						Logout
-					</button>
-				</form>
-			</NavLi>
+			<NavLi href="#" onclick={logout}>Logout</NavLi>
 		{/if}
 	</NavUl>
 </Navbar>
