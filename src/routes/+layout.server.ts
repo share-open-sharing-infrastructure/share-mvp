@@ -9,10 +9,8 @@ export const load = (event) => {
         event.cookies.delete('flash', { path: '/' });
     }
 
-    // PocketBase auth state: if logged in, authStore.record holds the user
-    const currentUser = event.locals.pb?.authStore?.isValid
-        ? event.locals.pb.authStore.record
-        : null;
-
-    return { flash, currentUser };
+    return {
+        flash,
+        currentUser: event.locals.user
+    };
 };

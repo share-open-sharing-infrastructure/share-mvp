@@ -43,9 +43,9 @@ export const actions = {
         try {
             await locals.pb.collection('items').create(data);
         } catch (error) {
-            console.log(error?.message || error);
+            console.error(error?.message || error);
         }
         
-        redirect(303, '/items');
+        redirect(303, '/');
     }
 };
