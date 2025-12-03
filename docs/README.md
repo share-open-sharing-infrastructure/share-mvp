@@ -1,5 +1,8 @@
-The docs folder contains multiple files for conceptual documentation. In general, we want the code to be the documentation. In this folder live domain and data models for guidance during coding and conceptual extensions when implementing new features.
+# Overview
+This is the work-in-progress home of documentation for the [share platform](https://github.com/share-open-sharing-infrastructure/share-mvp/tree/documentation). We are still in the process of setting everything up for contributors. If you wish to contribute, contact [Matteo via mail](mailto:matteo.ramin@outlook.com).
+
+For diagramming, we use [Mermaid.js](https://mermaid.js.org/). Everything else is held as plain and simple as possible:
 
 - [domain-model.md](domain-model.md) contains higher-level diagrams useful for conceptual understanding and work.
 - [data-model.md](data-model.md) contains the ER diagram that maps directly onto the database structure.
-- Actual TypeScript types live in [lib/types/models.ts](../lib/types/models.ts) (might eventually be broken up into separate files if useful).
+- Actual TypeScript types as used in the source code live in "src/lib/types/models.ts".

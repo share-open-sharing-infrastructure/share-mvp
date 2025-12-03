@@ -1,5 +1,3 @@
-// src/lib/types/models.ts
-
 // --- ID aliases (for clarity, still plain strings) ---
 
 export type UserId = string;

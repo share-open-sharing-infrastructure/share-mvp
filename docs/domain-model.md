@@ -1,5 +1,5 @@
-# Intro
-This file documents conceptual questions, diagrams are written in [Mermaid](https://mermaid.js.org/).
+# Overview
+This file documents conceptual questions.
 
 # Class diagrams
 ```mermaid
@@ -13,20 +13,15 @@ classDiagram
         +string username
         +String email
     }
-    User -- User : trusts
 
     class Item{
         +string name
         +Image image
         +string description
         +string place
+        +User field <!-- this is currently misnamed, have to adapt in DB and then in code -->
     }
-    User --> Item : owns/lends
-
-    Community --> User : has
-    class Community{
-        +string name
-    }
+    User <-- Item : owned by
 
     class message{
         +string messageContent
@@ -34,27 +29,5 @@ classDiagram
         +User to
         +date created
     }
-    message "1" -- "2" User
-```
-
-# Sequence diagrams
-These hold all sequenced logic
-## Borrowing request
-
-```mermaid
-sequenceDiagram
-Borrower->>Lender: Request item for time-frame X
-Lender->>Borrower: Accept
-Borrower->>Lender: Acknowledge
-
-```
-
-# Flow charts
-```mermaid
-flowchart LR
-    start{Start} --> request["Request Item (from, to)"]
-    request --> lendResponse{Lender Response}
-    lendResponse --> reject[Reject] --> stop{Stop}
-    lendResponse --> accept[Accept]
-    accept --> notify[Notify borrower]
+    message "n" --> "2" User
 ```
