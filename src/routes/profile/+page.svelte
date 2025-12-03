@@ -26,7 +26,7 @@
 	<div class="flex flex-col items-center justify-center">
 		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Du verleihst...</span>
 	</div>
-	<Gallery class="flex flex-col max-w-3xl mx-auto items-center">
+	<div class="max-w-6xl mx-auto items-center">
 		{#if form?.fail}
 			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
 				<Alert>
@@ -38,7 +38,9 @@
 		{/if}
 		{#if data?.user?.expand?.items_via_field?.length}
 			{#each data.user.expand.items_via_field as item}
-				<Card class="border rounded-lg mb-4 max-w-1/2">
+				<div class="border rounded-lg mb-4 
+					w-full md:w-2/3 lg:w-1/2 mx-auto
+					">
 					<UserItemCard
 						item={item}
 						imgUrl={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
@@ -48,11 +50,13 @@
 					<div class="flex p-1">
 						<Button
 							class="
-								border 
-								p-1 
+								border
+								p-1
 								w-full 
 								bg-gray-800 text-white 
-								hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+								hover:bg-gray-900
+								focus:ring-4 focus:ring-gray-300 focus:outline-none 
+								dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 							onclick={() => {
 								editingItemId = item.id;
 								editModal = true;
@@ -60,7 +64,7 @@
 							Bearbeiten
 						</Button>
 					</div>
-				</Card>
+				</div>
 			{/each}
 			<Button
 				onclick={() => {addModal = true}}
@@ -97,7 +101,7 @@
 				</Button>
 			</div>
 		{/if}
-	</Gallery>
+	</div>
 </Section>
 
 
