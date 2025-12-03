@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en-US" }}">
+  <head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>{{ page.title | default: site.title | default: site.github.repository_name }}</h1>
+          <h2>{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
+        </header>
+        
+        <section id="main_content">
+          {{ content }}
+        </section>
+
+      </div>
+    </div>
+
+    <script type="module">
+      Array.from(document.getElementsByClassName("language-mermaid")).forEach(element => {
+        element.classList.add("mermaid");
+      });
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ startOnLoad: true, theme: "dark" });
+    </script>
+
+  </body>
+</html>
