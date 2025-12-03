@@ -45,8 +45,8 @@
 
                 // Only process messages relevant to this chat
                 const isInThisChat =
-                    (msg.from === data.currentUserId && msg.to === chatPartnerId) ||
-                    (msg.to === data.currentUserId && msg.from === chatPartnerId);
+                    (msg.from === data.currentUser?.id && msg.to === chatPartnerId) ||
+                    (msg.to === data.currentUser?.id && msg.from === chatPartnerId);
 
                 if (!isInThisChat) return;
 
@@ -102,7 +102,7 @@
 <div class="overflow-auto mb-4 flex flex-col">
     {#each messages as message}
         <div class="
-            {message.from === data.currentUserId ? 'self-end' : 'self-start'}
+            {message.from === data.currentUser?.id ? 'self-end' : 'self-start'}
             border rounded 
             p-1 px-2 mt-1
             max-w-2/3 break-words
