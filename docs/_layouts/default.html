@@ -1,7 +1,18 @@
-<script type="module">
-    Array.from(document.getElementsByClassName("language-mermaid")).forEach(element => {
-    element.classList.add("mermaid");
-    });
-    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-    mermaid.initialize({ startOnLoad: true, theme: "dark" });
-</script>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{{ page.title }}</title>
+    {% include head-custom.html %}
+  </head>
+  <body>
+    <h1>{{ page.title }}</h1>
+    <section>
+      {{ content }}
+    </section>
+    <footer>
+
+    </footer>
+
+  </body>
+</html>
