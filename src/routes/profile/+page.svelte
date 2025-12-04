@@ -1,5 +1,5 @@
 <script>
-	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery } from 'flowbite-svelte';
+	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery, Img } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
 
@@ -140,6 +140,11 @@
 
 <!-- EDIT Modal -->
 <Modal bind:open={editModal} size="xs">
+	<Img 
+		src={`${data.PB_URL}api/files/${editingItem.collectionId}/${editingItem.id}/${editingItem.image}`}
+		class="mx-auto h-48 w-full rounded-md object-cover p-5"
+		>
+	</Img>
 	<form
 		class="flex flex-col space-y-6 items-right" 
 		action="?/update"
