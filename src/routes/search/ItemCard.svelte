@@ -41,6 +41,7 @@
                         (kontaktieren)
                     </a>
                 {/if}
+			</p>
         </div>
     </div>
 </Card>
