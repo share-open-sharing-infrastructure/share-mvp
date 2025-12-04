@@ -5,7 +5,7 @@ share is a platform for sharing! The apps purpose is to allow users to find ever
 Here, we develop a first minimum viable product.
 
 # Documentation
-The documentation for this project mainly lives in [docs](/docs/) and is statically rendered to our [GitHub Page](https://share-open-sharing-infrastructure.github.io/share-mvp/). Issues are managed in our [GitHub Project share-mvp](https://github.com/orgs/share-open-sharing-infrastructure/projects/2) (if this is still private: we're in the process of turning it public).
+The documentation for this project mainly lives in [docs](/docs/) and is statically rendered to our [GitHub Page](https://share-open-sharing-infrastructure.github.io/share-mvp/). Issues are managed in our [GitHub Project share-mvp](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
 
 # Setup
 
