@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 
 export async function load ({ locals }) {
-    if (locals.pb.authStore.record) {
+    if (locals.user) {
         return redirect(303, '/')
     }
 
