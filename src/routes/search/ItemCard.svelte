@@ -7,7 +7,7 @@
 </script>
 
 <div class="space-y-4">
-	<Card href="/" img={imgUrl} horizontal size="xl" class="bg-gray-50">
+	<Card href="/" img={imgUrl} horizontal size="xl" class="">
 		<div class="m-6">
 			<div class="flex space-x-10 sm:mt-0">
 				<p class="mb-3 text-xs leading-tight font-thin">

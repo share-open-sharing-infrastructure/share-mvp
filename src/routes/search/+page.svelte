@@ -133,10 +133,10 @@
 			</div>
 		{/if}
 		{#if isSearching}
-			<div class="flex items-center justify-center">
+			<div class="flex items-center pt-2 justify-center">
 				<h5>{filterList.length} Dinge gefunden</h5>
 			</div>
-			<Gallery class="grid-cols-1 gap-4 md:grid-cols-1 pt-8 mx-auto max-w-5xl">
+			<Gallery class="grid-cols-1 gap-4 md:grid-cols-1 pt-2 mx-auto max-w-5xl">
 				{#each filterList as item}
 					<ItemCard
 						item={item}
