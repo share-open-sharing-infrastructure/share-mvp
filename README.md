@@ -2,15 +2,22 @@
 
 share is a platform for sharing! The apps purpose is to allow users to find everything that friends, family and strangers offer for borrowing in the area. The long-term goal is to integrate the platform with software like [leihbase](https://github.com/leihbase/leihbase), so that users can borrow both from private persons as well as from lending organisations like [Libraries of Things](https://en.wikipedia.org/wiki/Library_of_things) or for-profit lenders.
 
-## Setup
+Here, we develop a first minimum viable product.
+
+# Documentation
+The documentation for this project mainly lives in [docs](/docs/) and is statically rendered to our [GitHub Page](https://share-open-sharing-infrastructure.github.io/share-mvp/). Issues are managed in our [GitHub Project share-mvp](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
+
+# Setup
 
 share is based on Svelte and SvelteKit, and uses PocketBase (https://pocketbase.io/) for backend and storage. To setup your own instance, consider the steps below.
 
 ### Copy repository
-Create a local copy of this repository. You will also need to set up your own PocketBase instance.
+Create a local copy of this repository.
 
-### Setup local .env file
-In the root folder, create a `.env` file that stores the pocketbase URL e.g. `PB_URL=https://url...`
+### Setup local .env file and databse
+In the root folder, create a `.env` file that stores your pocketbase URL e.g. `PB_URL=https://url...`. 
+
+You also need to have a PocketBase instance running somewhere with a database scheme as documented in our [docs/data-model.md](/docs/data-model.md).
 
 ### Install dependencies
 
