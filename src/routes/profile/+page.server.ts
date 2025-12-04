@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { PB_URL } from '../../hooks.server';
 
 export async function load({ locals }) {
-    const user = await locals.pb.collection('users').getOne(locals.pb.authStore.record.id, 
+    const user = await locals.pb.collection('users').getOne(locals.user.id, 
         {expand: 'items_via_field',} // expands the user "backwards" from the items collection, i.e. pulls all items related to this user
     );
 
@@ -20,7 +20,7 @@ export const actions = {
         const description = formData.get('description');
         const place = formData.get('place');
         const image = formData.get('image');
-        formData.append('field', locals.pb.authStore.record.id);
+        formData.append('field', locals.user.id);
 
         const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
 
