@@ -10,10 +10,6 @@
     let usernameToBeAdded: string = $state('');
     let showDropdown: boolean = $state(false);
 
-    localUsers.forEach(user => {
-        console.log(user.id + ": " + user.username);
-    });
-
     // Filter users based on input and exclude already added friends
     let filteredUsers = $derived(
         usernameToBeAdded.length > 1 // only start filtering after 2 characters typed
