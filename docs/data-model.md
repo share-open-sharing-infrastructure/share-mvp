@@ -16,7 +16,10 @@ erDiagram
         string email
         date created
         date updated
+        User[] trusts FK
     }
+    USER 1 to zero or more USER: "trusts"
+    "note that pocketbase auto-creates tables for n:m relationships as in user-trusts-user"
 
     ITEM{
         string id PK

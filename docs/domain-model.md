@@ -13,6 +13,7 @@ classDiagram
         +string username
         +String email
     }
+    User --> User : trusts
 
     class Item{
         +string name
@@ -31,3 +32,6 @@ classDiagram
     }
     message "n" --> "2" User
 ```
+
+## User entity
+- A user can "trust" 0 to n users. Building on this, they can select some of their items to only be visible to their "trustees". 
