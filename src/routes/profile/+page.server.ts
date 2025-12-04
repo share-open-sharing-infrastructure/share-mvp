@@ -15,12 +15,12 @@ export async function load({ locals }) {
 export const actions = {
 
     create: async ({ locals, request }) => {
-        const data = await request.formData();
-        const name = data.get('name');
-        const description = data.get('description');
-        const place = data.get('place');
-        const image = data.get('image');
-        data.append('field', locals.pb.authStore.record.id);
+        const formData = await request.formData();
+        const name = formData.get('name');
+        const description = formData.get('description');
+        const place = formData.get('place');
+        const image = formData.get('image');
+        formData.append('field', locals.pb.authStore.record.id);
 
         const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
 
@@ -35,7 +35,7 @@ export const actions = {
         }
 
         try {
-            await locals.pb.collection('items').create(data)
+            await locals.pb.collection('items').create(formData)
         } catch (error) {
             console.error(error?.message || error);
         }
@@ -50,18 +50,29 @@ export const actions = {
         const name = formData.get('itemName');
         const description = formData.get('itemDescription');
         const place = formData.get('itemPlace');
+        const image = formData.get('image');     
 
         if (!name || !description || !place ) {
-            return fail(400, { nameRequired: name === null, descriptionRequired: description === null, placeRequired: place === null });
+            return fail(400, { 
+                nameRequired: name === null, 
+                descriptionRequired: description === null, 
+                placeRequired: place === null 
+            });
         }
 
         try {
-            await locals.pb.collection('items').update(id, {
+            const updateData: Record<string, any> = {
                 name: name,
                 description: description,
                 place: place
-            });
+            };
 
+            // Check if a new image was uploaded
+            if (image && image instanceof File && image.size > 0) {
+                updateData.image = image;
+            }
+
+            await locals.pb.collection('items').update(id, updateData);
         } catch (err) {
             console.error(err?.message || err);
         }
