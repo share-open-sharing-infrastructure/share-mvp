@@ -59,7 +59,7 @@ export const actions = {
 				"from": fromUserId,
 				"to": toUserId
 			};
-			const record = await locals.pb.collection('messages').create(data);
+			await locals.pb.collection('messages').create(data);
 		} catch (err) {
             const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, {
