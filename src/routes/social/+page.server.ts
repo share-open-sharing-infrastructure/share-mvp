@@ -1,3 +1,5 @@
+import { redirect } from '@sveltejs/kit';
+
 export async function load({ locals }) {
 
     let friends;
@@ -19,16 +21,37 @@ export async function load({ locals }) {
             profilePic: `https://ui-avatars.com/api/?name=${friend.username}&background=random`
         })) ?? []
     };
-
 }
 
 export const actions = {
     addFriend: async ({ request, locals }) => {
-        // TODO: Implement adding a friend (not implemented yet)
-        console.log("addFriend action called");
+        const formData = await request.formData()
+        const friendId = formData.get('friendId');
+
+        const updateData = {
+            trusts: [...(locals.user.trusts || []), friendId]
+        };
+
+        try {
+            const record = await locals.pb
+                .collection('users')
+                .update(locals.user.id, updateData);
+        } catch (err) {
+            console.error(err?.message || err);
+        }
     },
     removeFriend: async ({ request, locals }) => {
+        const formData = await request.formData()
+        const friendId = formData.get('friendId');
 
+        try {
+            const updatedTrusts = (locals.user.trusts || []).filter(id => id !== friendId);
+            const record = await locals.pb
+                .collection('users')
+                .update(locals.user.id, { trusts: updatedTrusts });
+        } catch (err) {
+            console.error(err?.message || err);
+        }
     }
 };
 

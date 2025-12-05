@@ -1,11 +1,9 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { Button } from 'flowbite-svelte';
 
     const { data } = $props();
-    const { users, friends } = data;
-
-    let localUsers = $state([...users]);
-    let localFriends = $state([...friends]);
+    
 
     let usernameToBeAdded: string = $state('');
     let showDropdown: boolean = $state(false);
@@ -13,26 +11,12 @@
     // Filter users based on input and exclude already added friends
     let filteredUsers = $derived(
         usernameToBeAdded.length > 1 // only start filtering after 2 characters typed
-            ? localUsers.filter(user => 
+            ? data.users.filter(user => 
                 user.username.toLowerCase().includes(usernameToBeAdded.toLowerCase()) &&
-                !localFriends.some(friend => friend.id === user.id)
+                !data.friends.some(friend => friend.id === user.id)
             )
             : []
     );
-
-    function addFriend(friendName: string) {
-        localFriends.push({
-            id: localFriends.length + 1,
-            username: friendName,
-            profilePic: `https://ui-avatars.com/api/?name=${friendName}&background=random`
-        });
-        usernameToBeAdded = '';
-        showDropdown = false;
-    };
-
-    function removeFriend(friendId: number) {
-        localFriends = localFriends.filter(friend => friend.id !== friendId);
-    };
 
 </script>
 
@@ -60,15 +44,27 @@
 
         {#if showDropdown && filteredUsers.length > 0}
             <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                    {#each filteredUsers as user}
-                        <button
-                            type="button"
-                            class="flex items-center w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-left"
-                            onclick={() => addFriend(user.username)}
+                {#each filteredUsers as potentialFriend}
+                    <form
+                        method="POST"
+                        action="?/addFriend"
+                        use:enhance={() => {
+                            return async ({ update }) => {
+                                await update();
+                                usernameToBeAdded = '';
+                                showDropdown = false;
+                            };
+                        }}
                         >
-                            <span class="text-gray-900 dark:text-white">@{user.username}</span>
+                        <input type="hidden" name="friendId" value={potentialFriend.id} />
+                        <button
+                            class="flex items-center w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-left"
+                            type="submit"
+                        >
+                            <span class="text-gray-900 dark:text-white">@{potentialFriend.username}, {potentialFriend.id}</span>
                         </button>
-                    {/each}
+                    </form>
+                {/each}
             </div>
         {/if}
     </div>
@@ -76,10 +72,10 @@
 
 <!-- FRIEND LIST -->
 <div class="mx-auto max-w-2xl items-center">
-    {#if localFriends.length === 0}
+    {#if data.friends.length === 0}
         <p class="text-center text-gray-500 dark:text-gray-400">Du hast noch keine vertrauten Personen hinzugefügt. Na los ;)</p>
     {/if}
-    {#each localFriends as friend}
+    {#each data.friends as friend}
         <div class="flex items-center space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
             <img
                 src={friend.profilePic}
@@ -89,7 +85,13 @@
             <div class="text-left">
                 <p class="text-lg font-medium text-gray-900 dark:text-white">@{friend.username}</p>
             </div>
-            <Button class="ml-auto cursor-pointer" onclick={() => removeFriend(friend.id)}>X</Button>
+            <form class="ml-auto" 
+                method="POST" action="?/removeFriend"
+                use:enhance
+                >
+                <input type="hidden" name="friendId" value={friend.id} />
+                <Button class="ml-auto cursor-pointer" type="submit">X</Button>
+            </form>
         </div>
     {/each}
 </div>
