@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Item } from "$lib/types";
-	import { Img } from "flowbite-svelte";
+	import type { Item } from "$lib/types/models";
+	import { Badge, Img } from "flowbite-svelte";
 
     export let item: Item;
     export let imgUrl: string;
@@ -28,4 +28,9 @@
             {item.description}
         </div>
     </div>
+
 </div>
+
+{#if item.trusteesOnly}
+    <Badge color="green" class="m-2">Nur an Vertraute</Badge>
+{/if}

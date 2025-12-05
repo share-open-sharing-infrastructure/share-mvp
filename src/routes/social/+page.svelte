@@ -1,0 +1,97 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import { Button } from 'flowbite-svelte';
+
+    const { data } = $props();
+
+    let usernameToBeAdded: string = $state('');
+    let showDropdown: boolean = $state(false);
+
+    // Filter users based on input and exclude already added friends
+    let filteredUsers = $derived(
+        usernameToBeAdded.length > 1 // only start filtering after 2 characters typed
+            ? data.users.filter(user => 
+                user.username.toLowerCase().includes(usernameToBeAdded.toLowerCase()) && // Match names
+                !data.friends.some(friend => friend.id === user.id) && // Filter out existing friends
+                user.id !== data.currentUser.id // Exclude self
+            )
+            : []
+    );
+
+</script>
+
+<!-- HEADER -->
+<div class="flex flex-col items-center justify-center m-2 mb-6">
+    <div class="text-2xl font-semibold text-gray-900 dark:text-white"> Vertraute </div>
+    <div>Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust.</div>
+    <div>Du kannst dann <a href="/profile" class="text-blue-600 hover:underline">deine Dinge</a> nur für diese Menschen sichtbar machen.</div>
+</div>
+
+<!-- SEARCH BAR -->
+<div id="searchbar" class="flex items-center justify-center mb-4">
+    <div class="relative w-full max-w-md">
+        <div class="flex">
+            <input
+                type="text"
+                placeholder="Ich vertraue..."
+                class="flex-1 p-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                bind:value={usernameToBeAdded}
+                onfocus={() => showDropdown = true}
+                oninput={() => showDropdown = true}
+                onfocusoutcapture={() => setTimeout(() => showDropdown = false, 200)} 
+            />
+        </div>
+
+        {#if showDropdown && filteredUsers.length > 0}
+            <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                {#each filteredUsers as potentialFriend}
+                    <form
+                        method="POST"
+                        action="?/addFriend"
+                        use:enhance={() => {
+                            return async ({ update }) => {
+                                await update();
+                                usernameToBeAdded = '';
+                                showDropdown = false;
+                            };
+                        }}
+                        >
+                        <input type="hidden" name="friendId" value={potentialFriend.id} />
+                        <button
+                            class="flex items-center w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-left"
+                            type="submit"
+                        >
+                            <span class="text-gray-900 dark:text-white">@{potentialFriend.username}</span>
+                        </button>
+                    </form>
+                {/each}
+            </div>
+        {/if}
+    </div>
+</div>
+
+<!-- FRIEND LIST -->
+<div class="mx-auto max-w-2xl items-center">
+    {#if data.friends.length === 0}
+        <p class="text-center text-gray-500 dark:text-gray-400">Du hast noch keine vertrauten Personen hinzugefügt. Na los ;)</p>
+    {/if}
+    {#each data.friends as friend}
+        <div class="flex items-center space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
+            <img
+                src={friend.profilePic}
+                alt="Profile picture of {friend.username}"
+                class="h-12 w-12 rounded-full object-cover"
+            />
+            <div class="text-left">
+                <p class="text-lg font-medium text-gray-900 dark:text-white">@{friend.username}</p>
+            </div>
+            <form class="ml-auto" 
+                method="POST" action="?/removeFriend"
+                use:enhance
+                >
+                <input type="hidden" name="friendId" value={friend.id} />
+                <Button class="ml-auto cursor-pointer" type="submit">X</Button>
+            </form>
+        </div>
+    {/each}
+</div>
