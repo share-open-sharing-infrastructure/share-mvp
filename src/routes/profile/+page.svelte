@@ -22,9 +22,10 @@
 <!-- Friend list? -->
 
 <!-- User's items (although maybe that should be its own page) -->
-<Section>
-	<div class="flex flex-col items-center justify-center">
-		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Du verleihst...</span>
+<Section class="">
+	<div class="flex flex-col items-center justify-center mb-6">
+		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Hi {data.user.username}!</span>
+		<span>Du verleihst...</span>
 	</div>
 	<Gallery class="flex flex-col max-w-3xl mx-auto items-center">
 		{#if form?.fail}

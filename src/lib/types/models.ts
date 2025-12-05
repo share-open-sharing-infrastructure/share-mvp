@@ -15,6 +15,9 @@ export interface PocketBaseEntity {
 
   /** ISO datetime string, e.g. "2025-11-28 18:42:11.123Z" */
   updated: string;
+
+  /** Optional expanded relations from PocketBase */
+  expand?: Record<string, any>;
 }
 
 // --- USER ---
