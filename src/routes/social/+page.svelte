@@ -3,7 +3,6 @@
 	import { Button } from 'flowbite-svelte';
 
     const { data } = $props();
-    
 
     let usernameToBeAdded: string = $state('');
     let showDropdown: boolean = $state(false);
@@ -12,8 +11,9 @@
     let filteredUsers = $derived(
         usernameToBeAdded.length > 1 // only start filtering after 2 characters typed
             ? data.users.filter(user => 
-                user.username.toLowerCase().includes(usernameToBeAdded.toLowerCase()) &&
-                !data.friends.some(friend => friend.id === user.id)
+                user.username.toLowerCase().includes(usernameToBeAdded.toLowerCase()) && // Match names
+                !data.friends.some(friend => friend.id === user.id) && // Filter out existing friends
+                user.id !== data.currentUser.id // Exclude self
             )
             : []
     );
@@ -61,7 +61,7 @@
                             class="flex items-center w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-left"
                             type="submit"
                         >
-                            <span class="text-gray-900 dark:text-white">@{potentialFriend.username}, {potentialFriend.id}</span>
+                            <span class="text-gray-900 dark:text-white">@{potentialFriend.username}</span>
                         </button>
                     </form>
                 {/each}
