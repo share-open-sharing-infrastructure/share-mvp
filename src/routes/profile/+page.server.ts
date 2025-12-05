@@ -20,7 +20,7 @@ export const actions = {
         const description = data.get('description');
         const place = data.get('place');
         const image = data.get('image');
-        data.append('field', locals.pb.authStore.record.id);
+        const trusteesOnly = data.get('trusteesOnly') === 'on' ? true : false;
 
         const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
 
@@ -35,7 +35,14 @@ export const actions = {
         }
 
         try {
-            await locals.pb.collection('items').create(data)
+            await locals.pb.collection('items').create({
+                name: name,
+                description: description,
+                place: place,
+                image: image,
+                field: locals.user.id,
+                trusteesOnly: trusteesOnly
+            });
         } catch (error) {
             console.error(error?.message || error);
         }
@@ -59,7 +66,8 @@ export const actions = {
             await locals.pb.collection('items').update(id, {
                 name: name,
                 description: description,
-                place: place
+                place: place,
+                trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false
             });
 
         } catch (err) {

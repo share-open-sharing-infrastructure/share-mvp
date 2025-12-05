@@ -1,5 +1,5 @@
 <script>
-	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery } from 'flowbite-svelte';
+	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery, Toggle } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
 
@@ -127,6 +127,9 @@
 			<span>Ort:</span>
 			<Input type="text" name="itemPlace" placeholder="Ort des Gegenstands" value={editingItem.place} required  />
 		</Label>
+		<Label class="space-y-2">
+			<Toggle name="trusteesOnly" checked={editingItem.trusteesOnly}>Nur an Vertraute</Toggle>
+		</Label>
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 			type="submit">Speichern</Button
@@ -166,6 +169,9 @@
 		<Label class="space-y-2">
 			<span>Ort</span>
 			<Input type="text" name="place" placeholder="Ort des Gegenstands" required />
+		</Label>
+		<Label class="space-y-2">
+			<Toggle name="trusteesOnly">Nur an Vertraute verleihen</Toggle>
 		</Label>
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
