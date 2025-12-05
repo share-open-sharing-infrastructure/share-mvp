@@ -21,10 +21,10 @@
 </script>
 
 <!-- HEADER -->
-<div class="flex flex-col items-center justify-center m-2">
+<div class="flex flex-col items-center justify-center m-2 mb-6">
     <div class="text-2xl font-semibold text-gray-900 dark:text-white"> Vertraute </div>
     <div>Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust.</div>
-    <div>Du kannst dann bestimmte Dinge nur für  diese Menschen sichtbar machen.</div>
+    <div>Du kannst dann <a href="/profile" class="text-blue-600 hover:underline">deine Dinge</a> nur für diese Menschen sichtbar machen.</div>
 </div>
 
 <!-- SEARCH BAR -->
