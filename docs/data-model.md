@@ -30,6 +30,7 @@ erDiagram
         User field FK
         date created
         date updated
+        bool trusteesOnly
     }
 
     USER 1 to zero or more ITEM: owns

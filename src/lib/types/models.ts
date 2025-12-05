@@ -20,8 +20,20 @@ export interface PocketBaseEntity {
 // --- USER ---
 
 export interface User extends PocketBaseEntity {
+  /**
+   * Username 
+   */
   username: string;
+
+  /**
+   * Email address, should not be visible publicly
+   */
   email: string;
+
+  /**
+   * List of trusted user ids (friends) to whom the user is willing to lend certain items
+   */
+  trusts: UserId[];
 }
 
 // --- ITEM ---
@@ -44,6 +56,11 @@ export interface Item extends PocketBaseEntity {
 
   /** Foreign key: owner user id */
   field: UserId;
+
+  /**
+   * If true, only users in the owner's trusts list can borrow this item
+   */
+  trusteesOnly: boolean;
 }
 
 // --- MESSAGE ---
