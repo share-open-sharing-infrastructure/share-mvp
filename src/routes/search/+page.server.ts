@@ -16,7 +16,7 @@ export async function load ({ locals }) {
         PB_IMG_URL: PB_URL,
         uniqueNames: structuredClone(uniqueNames),
         uniquePlaces: structuredClone(uniquePlaces),
-        userId: locals.pb.authStore.record ? locals.pb.authStore.record.id : null
+        userId: locals.user ? locals.user.id : null
     };
 };
 
@@ -27,7 +27,7 @@ export const actions = {
         const description = data.get('description');
         const place = data.get('place');
         const image = data.get('image');
-        data.append('field', locals.pb.authStore.record.id);
+        data.append('field', locals.user.id);
 
         const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
 

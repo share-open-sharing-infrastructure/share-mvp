@@ -1,5 +1,5 @@
 <script>
-	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery } from 'flowbite-svelte';
+	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery, Img } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
 
@@ -108,43 +108,7 @@
 
 <!-- MODALS AND STUFF -->
 
-<!-- Add Modal -->
-
-
-<!-- Edit Modal -->
-<Modal bind:open={editModal} size="xs">
-	<form
-		class="flex flex-col space-y-6 items-right" 
-		action="?/update"
-		method="post"
-	>
-		<Input type="text" name="itemId" value={editingItemId} hidden />
-		<Label class="space-y-2">
-			<span>Name:</span>
-			<Input type="text" name="itemName" placeholder="Name des Gegenstands" value={editingItem.name} required />
-		</Label>
-		<Label class="space-y-2">
-			<span>Beschreibung:</span>
-			<Input type="text" name="itemDescription" placeholder="Beschreibung des Gegenstands" value={editingItem.description} required  />
-		</Label>
-		<Label class="space-y-2">
-			<span>Ort:</span>
-			<Input type="text" name="itemPlace" placeholder="Ort des Gegenstands" value={editingItem.place} required  />
-		</Label>
-		<Button
-			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-			type="submit">Speichern</Button
-		>
-	</form>
-	<form method="POST" action="?/delete" class="w-full flex justify-end mt-4">
-		<Input type="text" name="itemId" value={editingItemId} hidden />
-		<Button
-			class=""
-			type="submit">Löschen</Button
-		>
-	</form>
-</Modal>
-
+<!-- ADD Modal -->
 <Modal bind:open={addModal} size="xs">
 	<form
 		class="flex flex-col space-y-6"
@@ -174,6 +138,51 @@
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 			type="submit">Gegenstand hinzufügen</Button
+		>
+	</form>
+</Modal>
+
+<!-- EDIT Modal -->
+<Modal bind:open={editModal} size="xs">
+	<Img 
+		src={`${data.PB_URL}api/files/${editingItem.collectionId}/${editingItem.id}/${editingItem.image}`}
+		class="mx-auto h-48 w-full rounded-md object-cover p-5"
+		>
+	</Img>
+	<form
+		class="flex flex-col space-y-6 items-right" 
+		action="?/update"
+		method="post"
+		enctype="multipart/form-data"
+	>
+		<Label class="space-y-2">
+			<span>Bild ändern</span>
+			<Fileupload type="file" id="with_helper" name="image" class="mb-2" />
+			<Helper>SVG, PNG, JPG or GIF.</Helper>
+		</Label>
+		<Input type="text" name="itemId" value={editingItemId} hidden />
+		<Label class="space-y-2">
+			<span>Name:</span>
+			<Input type="text" name="itemName" placeholder="Name des Gegenstands" value={editingItem.name} required />
+		</Label>
+		<Label class="space-y-2">
+			<span>Beschreibung:</span>
+			<Input type="text" name="itemDescription" placeholder="Beschreibung des Gegenstands" value={editingItem.description} required  />
+		</Label>
+		<Label class="space-y-2">
+			<span>Ort:</span>
+			<Input type="text" name="itemPlace" placeholder="Ort des Gegenstands" value={editingItem.place} required  />
+		</Label>
+		<Button
+			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+			type="submit">Speichern</Button
+		>
+	</form>
+	<form method="POST" action="?/delete" class="w-full flex justify-end mt-4">
+		<Input type="text" name="itemId" value={editingItemId} hidden />
+		<Button
+			class=""
+			type="submit">Löschen</Button
 		>
 	</form>
 </Modal>
