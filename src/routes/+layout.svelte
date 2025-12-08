@@ -6,12 +6,14 @@
   import { Footer, FooterBrand, FooterLinkGroup, FooterLink } from "flowbite-svelte";
 	import share_logo from '$lib/images/share_logo.png';
 	import { APP_NAME } from '$lib/names';
+	import { searchTextState } from './state.svelte';
 
 	let { children, data } = $props();
 
 	let feedbackModalNotion = $state(false);
 
 	async function logout() {
+		searchTextState.value = '';
         const res = await fetch('/logout', {
             method: 'POST'
         });
