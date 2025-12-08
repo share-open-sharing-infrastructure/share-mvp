@@ -27,7 +27,7 @@
 		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Hi {data.user.username}!</span>
 		<span>Du verleihst...</span>
 	</div>
-	<Gallery class="flex flex-col max-w-3xl mx-auto items-center">
+	<div class="max-w-6xl mx-auto items-center">
 		{#if form?.fail}
 			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
 				<Alert>
@@ -39,7 +39,9 @@
 		{/if}
 		{#if data?.user?.expand?.items_via_field?.length}
 			{#each data.user.expand.items_via_field as item}
-				<Card class="border rounded-lg mb-4 max-w-1/2">
+				<div class="border rounded-lg mb-4 
+					w-full md:w-2/3 lg:w-1/2 mx-auto
+					">
 					<UserItemCard
 						item={item}
 						imgUrl={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
@@ -49,11 +51,13 @@
 					<div class="flex p-1">
 						<Button
 							class="
-								border 
-								p-1 
+								border
+								p-1
 								w-full 
 								bg-gray-800 text-white 
-								hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+								hover:bg-gray-900
+								focus:ring-4 focus:ring-gray-300 focus:outline-none 
+								dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 							onclick={() => {
 								editingItemId = item.id;
 								editModal = true;
@@ -61,7 +65,7 @@
 							Bearbeiten
 						</Button>
 					</div>
-				</Card>
+				</div>
 			{/each}
 			<Button
 				onclick={() => {addModal = true}}
@@ -98,7 +102,7 @@
 				</Button>
 			</div>
 		{/if}
-	</Gallery>
+	</div>
 </Section>
 
 
@@ -106,7 +110,41 @@
 <!-- MODALS AND STUFF -->
 
 <!-- Add Modal -->
+<Modal bind:open={addModal} size="xs">
+	<form
+		class="flex flex-col space-y-6"
+		action="?/create"
+		method="post"
+		enctype="multipart/form-data"
+	>
+		<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Details</h3>
 
+		<Label class="space-y-2">
+			<span>Bild hochladen</span>
+			<Fileupload type="file" id="with_helper" name="image" class="mb-2" required />
+			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
+		</Label>
+		<Label class="space-y-2">
+			<span>Name</span>
+			<Input type="text" name="name" placeholder="Name des Gegenstands" required />
+		</Label>
+		<Label class="space-y-2">
+			<span>Beschreibung</span>
+			<Input type="text" name="description" placeholder="Beschreibung des Gegenstands" required />
+		</Label>
+		<Label class="space-y-2">
+			<span>Ort</span>
+			<Input type="text" name="place" placeholder="Ort des Gegenstands" required />
+		</Label>
+		<Label class="space-y-2">
+			<Toggle name="trusteesOnly">Nur an Vertraute verleihen</Toggle>
+		</Label>
+		<Button
+			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+			type="submit">Gegenstand hinzufügen</Button
+		>
+	</form>
+</Modal>
 
 <!-- Edit Modal -->
 <Modal bind:open={editModal} size="xs">
@@ -141,42 +179,6 @@
 		<Button
 			class=""
 			type="submit">Löschen</Button
-		>
-	</form>
-</Modal>
-
-<Modal bind:open={addModal} size="xs">
-	<form
-		class="flex flex-col space-y-6"
-		action="?/create"
-		method="post"
-		enctype="multipart/form-data"
-	>
-		<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Details</h3>
-
-		<Label class="space-y-2">
-			<span>Bild hochladen</span>
-			<Fileupload type="file" id="with_helper" name="image" class="mb-2" required />
-			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
-		</Label>
-		<Label class="space-y-2">
-			<span>Name</span>
-			<Input type="text" name="name" placeholder="Name des Gegenstands" required />
-		</Label>
-		<Label class="space-y-2">
-			<span>Beschreibung</span>
-			<Input type="text" name="description" placeholder="Beschreibung des Gegenstands" required />
-		</Label>
-		<Label class="space-y-2">
-			<span>Ort</span>
-			<Input type="text" name="place" placeholder="Ort des Gegenstands" required />
-		</Label>
-		<Label class="space-y-2">
-			<Toggle name="trusteesOnly">Nur an Vertraute verleihen</Toggle>
-		</Label>
-		<Button
-			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-			type="submit">Gegenstand hinzufügen</Button
 		>
 	</form>
 </Modal>
