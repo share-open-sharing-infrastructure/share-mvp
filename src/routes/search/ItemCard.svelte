@@ -18,7 +18,7 @@
 					})}
 				</p>
 			</div>
-			<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+			<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white overflow-hidden text-ellipsis">
 				{item.name}
 			</h5>
 			<p class="mb-3 leading-tight font-normal text-gray-700">
