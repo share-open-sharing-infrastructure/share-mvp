@@ -76,7 +76,7 @@
 	</iframe>
 </Modal>
 
-<Footer footerType="socialmedia">
+<Footer footerType="socialmedia" class="bg-gray-100">
   <div class="mx-auto my-10 max-w-screen-xl text-center">
     <FooterBrand href="#" src={share_logo} alt="share Logo" name="" aClass="flex justify-center items-center text-2xl font-semibold text-gray-900 dark:text-white" />
     <p class="my-6 text-gray-500 dark:text-gray-400">Ein gemeinnütziger open-source Verleih-Marktplatz. Für alle.</p>
