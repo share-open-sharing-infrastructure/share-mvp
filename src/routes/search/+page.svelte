@@ -41,11 +41,6 @@
 			);
 		}
 
-		// Filter out own items
-		if (data.userId) {
-			filteredResults = filteredResults.filter((item) => item.expand.field.id !== data.userId);
-		}
-
 		return filteredResults;
 	});
 </script>

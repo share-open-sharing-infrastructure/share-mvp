@@ -29,7 +29,7 @@
                                     <div class="p-1">
                                         <UserCircleSolid class="shrink-0 h-6 w-6" />
                                     </div>
-                                    <div class="p-1">
+                                    <div class="p-1 overflow-hidden">
                                         {chatPartner.username}
                                     </div>     
                                 </a>

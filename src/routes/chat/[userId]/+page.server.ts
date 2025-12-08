@@ -22,7 +22,7 @@ export async function load({ locals, params, parent }) {
 	}
 
 	let	currentMessages = [];
-	if (locals.pb.authStore.record.id !== currentChatPartnerId) {
+	if (locals.user.id !== currentChatPartnerId) {
 		currentMessages = allMessages.filter(msg => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId);
 		//sort messages oldest to newest to display newer messages at the bottom
 		currentMessages.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
@@ -30,7 +30,7 @@ export async function load({ locals, params, parent }) {
 		// If the user is trying to chat with themselves, redirect to a safe default (first chat partner)
 		// TODO: Find a more elegant way to do this maybe
 		let firstChatPartnerId: string;
-		allMessages[0].from === locals.pb.authStore.record.id
+		allMessages[0].from === locals.user.id
 			? firstChatPartnerId = allMessages[0].to
 			: firstChatPartnerId = allMessages[0].from;
 
@@ -49,7 +49,7 @@ export const actions = {
 		// get the message data from the form
 		const formData = await request.formData();
 		const messageContent = formData.get('messageContent');
-		const fromUserId = locals.pb.authStore.record.id;
+		const fromUserId = locals.user.id;
 		const toUserId = params.userId;
 
 		// try to send message to database
