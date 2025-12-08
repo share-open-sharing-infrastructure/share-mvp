@@ -3,10 +3,13 @@ import { PB_URL } from '../../hooks.server';
 
 export async function load ({ locals }) {
 
-    const items = await locals.pb.collection('items').getFullList({
-        filter: `field != "${locals.user.id}"`, // do not load items of the current user
-        expand: 'field'
-    });
+
+    const pocketbaseQuery = {
+        expand: 'field',
+        filter: locals.user ? `field != "${locals.user.id}"` : undefined
+    };
+
+    const items = await locals.pb.collection('items').getFullList(pocketbaseQuery);
 
     // Filter items based on trusteesOnly
     const filteredItems = items.filter(item => {
