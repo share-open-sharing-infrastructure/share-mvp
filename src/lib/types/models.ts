@@ -15,13 +15,28 @@ export interface PocketBaseEntity {
 
   /** ISO datetime string, e.g. "2025-11-28 18:42:11.123Z" */
   updated: string;
+
+  /** Optional expanded relations from PocketBase */
+  expand?: Record<string, any>;
 }
 
 // --- USER ---
 
 export interface User extends PocketBaseEntity {
+  /**
+   * Username 
+   */
   username: string;
+
+  /**
+   * Email address, should not be visible publicly
+   */
   email: string;
+
+  /**
+   * List of trusted user ids (friends) to whom the user is willing to lend certain items
+   */
+  trusts: UserId[];
 }
 
 // --- ITEM ---
@@ -44,6 +59,11 @@ export interface Item extends PocketBaseEntity {
 
   /** Foreign key: owner user id */
   field: UserId;
+
+  /**
+   * If true, only users in the owner's trusts list can borrow this item
+   */
+  trusteesOnly: boolean;
 }
 
 // --- MESSAGE ---

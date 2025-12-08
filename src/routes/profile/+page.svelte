@@ -1,5 +1,5 @@
 <script>
-	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery, Img } from 'flowbite-svelte';
+	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery, Toggle } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
 
@@ -22,9 +22,10 @@
 <!-- Friend list? -->
 
 <!-- User's items (although maybe that should be its own page) -->
-<Section>
-	<div class="flex flex-col items-center justify-center">
-		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Du verleihst...</span>
+<Section class="">
+	<div class="flex flex-col items-center justify-center mb-6">
+		<span class="text-2xl m-2 font-semibold text-gray-900 dark:text-white">Hi {data.user.username}!</span>
+		<span>Du verleihst...</span>
 	</div>
 	<div class="max-w-6xl mx-auto items-center">
 		{#if form?.fail}
@@ -108,7 +109,7 @@
 
 <!-- MODALS AND STUFF -->
 
-<!-- ADD Modal -->
+<!-- Add Modal -->
 <Modal bind:open={addModal} size="xs">
 	<form
 		class="flex flex-col space-y-6"
@@ -135,6 +136,9 @@
 			<span>Ort</span>
 			<Input type="text" name="place" placeholder="Ort des Gegenstands" required />
 		</Label>
+		<Label class="space-y-2">
+			<Toggle name="trusteesOnly">Nur an Vertraute verleihen</Toggle>
+		</Label>
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 			type="submit">Gegenstand hinzufügen</Button
@@ -142,24 +146,13 @@
 	</form>
 </Modal>
 
-<!-- EDIT Modal -->
+<!-- Edit Modal -->
 <Modal bind:open={editModal} size="xs">
-	<Img 
-		src={`${data.PB_URL}api/files/${editingItem.collectionId}/${editingItem.id}/${editingItem.image}`}
-		class="mx-auto h-48 w-full rounded-md object-cover p-5"
-		>
-	</Img>
 	<form
 		class="flex flex-col space-y-6 items-right" 
 		action="?/update"
 		method="post"
-		enctype="multipart/form-data"
 	>
-		<Label class="space-y-2">
-			<span>Bild ändern</span>
-			<Fileupload type="file" id="with_helper" name="image" class="mb-2" />
-			<Helper>SVG, PNG, JPG or GIF.</Helper>
-		</Label>
 		<Input type="text" name="itemId" value={editingItemId} hidden />
 		<Label class="space-y-2">
 			<span>Name:</span>
@@ -172,6 +165,9 @@
 		<Label class="space-y-2">
 			<span>Ort:</span>
 			<Input type="text" name="itemPlace" placeholder="Ort des Gegenstands" value={editingItem.place} required  />
+		</Label>
+		<Label class="space-y-2">
+			<Toggle name="trusteesOnly" checked={editingItem.trusteesOnly}>Nur an Vertraute</Toggle>
 		</Label>
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"

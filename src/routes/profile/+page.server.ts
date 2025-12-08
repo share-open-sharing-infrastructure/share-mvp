@@ -15,12 +15,12 @@ export async function load({ locals }) {
 export const actions = {
 
     create: async ({ locals, request }) => {
-        const formData = await request.formData();
-        const name = formData.get('name');
-        const description = formData.get('description');
-        const place = formData.get('place');
-        const image = formData.get('image');
-        formData.append('field', locals.user.id);
+        const data = await request.formData();
+        const name = data.get('name');
+        const description = data.get('description');
+        const place = data.get('place');
+        const image = data.get('image');
+        const trusteesOnly = data.get('trusteesOnly') === 'on' ? true : false;
 
         const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
 
@@ -35,7 +35,14 @@ export const actions = {
         }
 
         try {
-            await locals.pb.collection('items').create(formData)
+            await locals.pb.collection('items').create({
+                name: name,
+                description: description,
+                place: place,
+                image: image,
+                field: locals.user.id,
+                trusteesOnly: trusteesOnly
+            });
         } catch (error) {
             console.error(error?.message || error);
         }
@@ -64,7 +71,8 @@ export const actions = {
             const updateData: Record<string, any> = {
                 name: name,
                 description: description,
-                place: place
+                place: place,
+                trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false
             };
 
             // Check if a new image was uploaded

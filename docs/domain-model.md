@@ -13,6 +13,7 @@ classDiagram
         +string username
         +String email
     }
+    User --> User : trusts
 
     class Item{
         +string name
@@ -20,6 +21,7 @@ classDiagram
         +string description
         +string place
         +User field <!-- this is currently misnamed, have to adapt in DB and then in code -->
+        +bool trusteesOnly
     }
     User <-- Item : owned by
 
@@ -31,3 +33,9 @@ classDiagram
     }
     message "n" --> "2" User
 ```
+
+## User entity
+- A user can "trust" 0 to n users. Building on this, they can select some of their items to only be visible to their "trustees". 
+
+## Item
+- "trusteesOnly" is true when the item owner wants to lend this item only to persons they declared as trusted, and otherwise false.
