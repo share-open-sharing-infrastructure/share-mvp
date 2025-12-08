@@ -136,7 +136,7 @@
 			<div class="flex items-center pt-2 justify-center">
 				<h5>{filterList.length} Dinge gefunden</h5>
 			</div>
-			<Gallery class="grid-cols-1 gap-4 md:grid-cols-1 pt-2 mx-auto max-w-5xl">
+			<Gallery class="grid-cols-1 gap-4 md:grid-cols-1 max-md:grid-cols-2 max-sm:grid-cols-3 pt-2 mx-auto max-w-5xl">
 				{#each filterList as item}
 					<ItemCard
 						item={item}
