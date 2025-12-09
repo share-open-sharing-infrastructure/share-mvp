@@ -6,7 +6,7 @@
 <ul class="list-inside space-y-2 max-w-md mx-auto">
     <li>Matteo Ramin</li>
     <li>Untere Augartenstraße 37/22</li>
-    <li>1020 Wien, Österreich.</li>
+    <li>1020 Wien, Österreich</li>
     <li>{MAIN_CONTACT_MAIL}</li>
     <!-- Weitere Informationen unten nur falls zutreffend in Zukunft:  https://www.anwalt.de/rechtstipps/impressumspflicht-in-deutschland-was-muss-ins-impressum-und-welche-konsequenzen-drohen-241288.html -->
     <li hidden>Zuständige Aufsichtsbehörde: Falls der Betreiber einer behördlichen Aufsicht unterliegt (z. B. Finanzdienstleister, Versicherungsvermittler).</li>
