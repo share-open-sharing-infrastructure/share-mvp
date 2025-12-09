@@ -3,16 +3,39 @@ import { PB_URL } from '../../hooks.server';
 
 export async function load ({ locals }) {
 
-    const items = await locals.pb.collection('items').getFullList({
-        filter: `field != "${locals.user.id}"`, // do not load items of the current user
-        expand: 'field'
+
+    const pocketbaseQuery = {
+        expand: 'field',
+        filter: locals.user ? `field != "${locals.user.id}"` : undefined
+    };
+
+    const items = await locals.pb.collection('items').getFullList(pocketbaseQuery);
+
+    // Filter items based on trusteesOnly
+    const filteredItems = items.filter(item => {
+        // If item is not marked trusteesOnly, always show it
+        if (!item.trusteesOnly) {
+            return true;
+        }
+
+        // Not logged in - can't see trustees-only items
+        if (!locals.pb.authStore.isValid) {
+            return false;
+        }
+
+        // Check if current user is a trustee of the item's owner
+        const itemOwnerTrustees = item.expand?.field?.trusts || [];
+        const isTrustee = itemOwnerTrustees.includes(locals.user?.id);
+
+        return isTrustee;
     });
+
 
     const uniquePlaces = Array.from(new Set(items.map(item => item.place))); // deduplicates places by creating a Set
     const uniqueNames = Array.from(new Set(items.map(item => item.name)));
 
     return {
-        items: structuredClone(items),
+        items: filteredItems,
         PB_IMG_URL: PB_URL,
         uniqueNames: structuredClone(uniqueNames),
         uniquePlaces: structuredClone(uniquePlaces),
