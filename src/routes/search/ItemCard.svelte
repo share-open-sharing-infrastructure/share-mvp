@@ -39,9 +39,11 @@
 						</a>
 					
 					{/if}
+				</p>
         </div>
         {#if item.trusteesOnly}
             <Badge color="green" class="m-2">Nutzer vertraut dir</Badge>
         {/if}
     </div>
-</Card>
+	</Card>
+</div>
