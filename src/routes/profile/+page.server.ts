@@ -46,8 +46,6 @@ export const actions = {
         } catch (error) {
             console.error(error?.message || error);
         }
-
-        redirect(303, '/profile');
     },
 
     update: async ({ locals, request }) => {

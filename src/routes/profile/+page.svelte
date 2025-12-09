@@ -2,6 +2,7 @@
 	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery, Toggle } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
+	import { enhance } from '$app/forms';
 
     let { data, form } = $props();
 
@@ -16,10 +17,6 @@
 	);
 	
 </script>
-
-<!-- User meta data -->
-
-<!-- Friend list? -->
 
 <!-- User's items (although maybe that should be its own page) -->
 <Section class="">
@@ -116,6 +113,7 @@
 		action="?/create"
 		method="post"
 		enctype="multipart/form-data"
+		use:enhance
 	>
 		<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Details</h3>
 
@@ -141,7 +139,9 @@
 		</Label>
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-			type="submit">Gegenstand hinzufügen</Button
+			type="submit"
+			onclick={() => {addModal = false}}
+			>Gegenstand hinzufügen</Button
 		>
 	</form>
 </Modal>
