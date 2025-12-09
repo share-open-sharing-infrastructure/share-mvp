@@ -2,6 +2,7 @@ import { PB_URL } from '../../hooks.server';
 
 export async function load ({ locals }) {
 
+    // Prepare PocketBase query parameters. If user is logged in, filter out their own items.
     const pocketbaseQuery = {
         expand: 'field',
         filter: locals.user ? `field != "${locals.user.id}"` : undefined
