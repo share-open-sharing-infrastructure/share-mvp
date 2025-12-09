@@ -82,7 +82,6 @@ export const actions = {
         } catch (err) {
             console.error(err?.message || err);
         }
-        redirect(303, '/profile');
     },
 
     delete: async ({ locals, request }) => {
@@ -95,6 +94,5 @@ export const actions = {
         } catch (error) {
             console.error(error?.message || error);
         }
-        redirect(303, '/profile');
     }
 }
