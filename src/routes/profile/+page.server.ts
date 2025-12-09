@@ -3,7 +3,7 @@ import { PB_URL } from '../../hooks.server';
 
 export async function load({ locals }) {
     const user = await locals.pb.collection('users').getOne(locals.user.id, 
-        {expand: 'items_via_field',} // expands the user "backwards" from the items collection, i.e. pulls all items related to this user
+        {expand: 'items_via_owner',} // expands the user "backwards" from the items collection, i.e. pulls all items related to this user
     );
 
     return {
@@ -40,7 +40,7 @@ export const actions = {
                 description: description,
                 place: place,
                 image: image,
-                field: locals.user.id,
+                owner: locals.user.id,
                 trusteesOnly: trusteesOnly
             });
         } catch (error) {

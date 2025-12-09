@@ -5,8 +5,8 @@ export async function load ({ locals }) {
 
 
     const pocketbaseQuery = {
-        expand: 'field',
-        filter: locals.user ? `field != "${locals.user.id}"` : undefined
+        expand: 'owner',
+        filter: locals.user ? `owner != "${locals.user.id}"` : undefined
     };
 
     const items = await locals.pb.collection('items').getFullList(pocketbaseQuery);
@@ -24,7 +24,7 @@ export async function load ({ locals }) {
         }
 
         // Check if current user is a trustee of the item's owner
-        const itemOwnerTrustees = item.expand?.field?.trusts || [];
+        const itemOwnerTrustees = item.expand?.owner?.trusts || [];
         const isTrustee = itemOwnerTrustees.includes(locals.user?.id);
 
         return isTrustee;
@@ -50,7 +50,7 @@ export const actions = {
         const description = data.get('description');
         const place = data.get('place');
         const image = data.get('image');
-        data.append('field', locals.user.id);
+        data.append('owner', locals.user.id);
 
         const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
 
