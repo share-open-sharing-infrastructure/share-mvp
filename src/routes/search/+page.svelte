@@ -117,7 +117,7 @@
 		</TableHeader>
 	</Section>
 
-	<div class="mx-auto max-w-6xl space-y-4 overflow-x-auto p-4 md:space-y-6">
+	<div class="mx-auto max-w-5xl space-y-4 overflow-x-auto p-4 md:space-y-6">
 		{#if form?.fail}
 			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
 				<Alert>
@@ -128,10 +128,10 @@
 			</div>
 		{/if}
 		{#if isSearching}
-			<div class="flex items-center justify-center">
+			<div class="flex items-center pt-2 justify-center">
 				<h5>{filterList.length} Dinge gefunden</h5>
 			</div>
-			<Gallery class="grid-cols-1 gap-4 md:grid-cols-4">
+			<Gallery class="grid-cols-1 gap-4 md:grid-cols-1 max-md:grid-cols-2 max-sm:grid-cols-3 pt-2 mx-auto max-w-5xl">
 				{#each filterList as item}
 					<ItemCard
 						item={item}
@@ -150,7 +150,8 @@
 				<p>Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung</p>
 				<p>zum leihen, teilen, mieten, ...</p>
 				<p>Nutze einfach die Suche oben oder</p>
-				<Button href="/profile">biete selbst etwas an!</Button>
+				<Button class="me-2 mb-2 w-full rounded-lg bg-gray-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+href="/profile">biete selbst etwas an!</Button>
 				<p>von und für Freunde, Familie und die lokale Gemeinschaft</p>
 			</div>
 		{/if}
