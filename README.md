@@ -2,7 +2,14 @@
 
 share is a platform for sharing! The apps purpose is to allow users to find everything that friends, family and strangers offer for borrowing in the area. The long-term goal is to integrate the platform with software like [leihbase](https://github.com/leihbase/leihbase), so that users can borrow both from private persons as well as from lending organisations like [Libraries of Things](https://en.wikipedia.org/wiki/Library_of_things) or for-profit lenders.
 
-Here, we develop a first minimum viable product.
+Here, we develop a first minimum viable product. Next milestones are roughly:
+
+- 01/2026: Ready for user testing
+- 03/2026: Most important feedback incorporated, remaining issues documented and planned for 
+- 06/2026: Ready for integration with lending organisations
+- 12/2026: Integration with lending organisations possible and demonstrated
+
+For a more fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
 
 # Documentation
 The documentation for this project mainly lives in [docs](/docs/) and is statically rendered to our [GitHub Page](https://share-open-sharing-infrastructure.github.io/share-mvp/). Issues are managed in our [GitHub Project share-mvp](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
