@@ -55,7 +55,7 @@ export const actions = {
         const name = formData.get('itemName');
         const description = formData.get('itemDescription');
         const place = formData.get('itemPlace');
-        const image = formData.get('image');     
+        const image = formData.get('image');
 
         if (!name || !description || !place ) {
             return fail(400, { 
