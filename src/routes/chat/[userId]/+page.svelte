@@ -8,6 +8,7 @@
 	let pb: PocketBase;
 	let { data, form } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
 	let lastMessageElement: HTMLDivElement;
+	let chatWindow: HTMLDivElement
 
 	let messages = $state([...data.currentMessages]);
 
@@ -17,7 +18,10 @@
 		if (messages && lastMessageElement) {
 			// Use setTimeout to ensure DOM has rendered
 			setTimeout(() => {
-				lastMessageElement?.scrollIntoView({ behavior: 'smooth' }); // TODO: consider if behavior should be something else but 'smooth'
+				chatWindow.scrollTo({
+					top: chatWindow.scrollHeight,
+					behavior: 'smooth'
+				});
 			}, 0);
 		}
 	});
@@ -95,7 +99,10 @@
 	<UserCircleSolid class="flex h-6 w-6 shrink-0" />
 </div>
 
-<div class="mb-4 flex flex-col overflow-auto">
+<div 
+	bind:this={chatWindow}
+	class="mb-4 flex flex-col overflow-auto" 
+	>
 	{#each messages as message}
 		<div
 			class="
