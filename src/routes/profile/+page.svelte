@@ -2,6 +2,7 @@
 	import { Button, Modal, Label, Input, Fileupload, Helper, Alert, Card, Gallery, Toggle } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
+	import { enhance } from '$app/forms';
 
     let { data, form } = $props();
 
@@ -10,16 +11,12 @@
 	let editModal = $state(false);
 	let editingItemId = $state("");
 	let editingItem = $derived(
-		data?.user?.expand?.items_via_field
-            ? data.user.expand.items_via_field.find((item) => item.id === editingItemId)
+		data?.user?.expand?.items_via_owner
+            ? data.user.expand.items_via_owner.find((item) => item.id === editingItemId)
             : undefined
 	);
 	
 </script>
-
-<!-- User meta data -->
-
-<!-- Friend list? -->
 
 <!-- User's items (although maybe that should be its own page) -->
 <Section class="">
@@ -37,8 +34,8 @@
 				</Alert>
 			</div>
 		{/if}
-		{#if data?.user?.expand?.items_via_field?.length}
-			{#each data.user.expand.items_via_field as item}
+		{#if data?.user?.expand?.items_via_owner?.length}
+			{#each data.user.expand.items_via_owner as item}
 				<div class="border rounded-lg mb-4 
 					w-full md:w-2/3 lg:w-1/2 mx-auto
 					">
@@ -116,6 +113,7 @@
 		action="?/create"
 		method="post"
 		enctype="multipart/form-data"
+		use:enhance
 	>
 		<h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">Details</h3>
 
@@ -141,7 +139,9 @@
 		</Label>
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-			type="submit">Gegenstand hinzufügen</Button
+			type="submit"
+			onclick={() => {addModal = false}}
+			>Gegenstand hinzufügen</Button
 		>
 	</form>
 </Modal>
@@ -151,8 +151,15 @@
 	<form
 		class="flex flex-col space-y-6 items-right" 
 		action="?/update"
-		method="post"
+		method="POST"
+		enctype="multipart/form-data"
+		use:enhance
 	>
+		<Label class="space-y-2">
+			<span>Bild ändern</span>
+			<Fileupload type="file" id="with_helper" name="image" class="mb-2" />
+			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
+		</Label>
 		<Input type="text" name="itemId" value={editingItemId} hidden />
 		<Label class="space-y-2">
 			<span>Name:</span>
@@ -171,14 +178,23 @@
 		</Label>
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-			type="submit">Speichern</Button
+			type="submit"
+			onclick={() => {editModal = false}}
+			>Speichern</Button
 		>
 	</form>
-	<form method="POST" action="?/delete" class="w-full flex justify-end mt-4">
+	<form 
+		method="POST" 
+		action="?/delete" 
+		use:enhance
+		class="w-full flex justify-end mt-4"
+		>
 		<Input type="text" name="itemId" value={editingItemId} hidden />
 		<Button
 			class=""
-			type="submit">Löschen</Button
+			type="submit"
+			onclick={() => {editModal = false}}
+			>Löschen</Button
 		>
 	</form>
 </Modal>

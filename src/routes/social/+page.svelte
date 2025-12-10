@@ -7,12 +7,12 @@
     let usernameToBeAdded: string = $state('');
     let showDropdown: boolean = $state(false);
 
-    // Filter users based on input and exclude already added friends
+    // Filter users based on input and exclude already added trustees
     let filteredUsers = $derived(
         usernameToBeAdded.length > 1 // only start filtering after 2 characters typed
             ? data.users.filter(user => 
                 user.username.toLowerCase().includes(usernameToBeAdded.toLowerCase()) && // Match names
-                !data.friends.some(friend => friend.id === user.id) && // Filter out existing friends
+                !data.trustees.some(trustee => trustee.id === user.id) && // Filter out existing trustees
                 user.id !== data.currentUser.id // Exclude self
             )
             : []
@@ -47,7 +47,7 @@
                 {#each filteredUsers as potentialFriend}
                     <form
                         method="POST"
-                        action="?/addFriend"
+                        action="?/addTrustee"
                         use:enhance={() => {
                             return async ({ update }) => {
                                 await update();
@@ -56,7 +56,7 @@
                             };
                         }}
                         >
-                        <input type="hidden" name="friendId" value={potentialFriend.id} />
+                        <input type="hidden" name="trusteeId" value={potentialFriend.id} />
                         <button
                             class="flex items-center w-full p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-left"
                             type="submit"
@@ -72,24 +72,24 @@
 
 <!-- FRIEND LIST -->
 <div class="mx-auto max-w-2xl items-center">
-    {#if data.friends.length === 0}
+    {#if data.trustees.length === 0}
         <p class="text-center text-gray-500 dark:text-gray-400">Du hast noch keine vertrauten Personen hinzugefügt. Na los ;)</p>
     {/if}
-    {#each data.friends as friend}
+    {#each data.trustees as trustee}
         <div class="flex items-center space-x-4 p-4 border-b border-gray-200 dark:border-gray-700">
             <img
-                src={friend.profilePic}
-                alt="Profile picture of {friend.username}"
+                src={trustee.profilePic}
+                alt="Profile picture of {trustee.username}"
                 class="h-12 w-12 rounded-full object-cover"
             />
             <div class="text-left">
-                <p class="text-lg font-medium text-gray-900 dark:text-white">@{friend.username}</p>
+                <p class="text-lg font-medium text-gray-900 dark:text-white">@{trustee.username}</p>
             </div>
             <form class="ml-auto" 
-                method="POST" action="?/removeFriend"
+                method="POST" action="?/removeTrustee"
                 use:enhance
                 >
-                <input type="hidden" name="friendId" value={friend.id} />
+                <input type="hidden" name="trusteeId" value={trustee.id} />
                 <Button class="ml-auto cursor-pointer" type="submit">X</Button>
             </form>
         </div>

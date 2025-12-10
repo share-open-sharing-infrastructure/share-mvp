@@ -34,7 +34,7 @@ export interface User extends PocketBaseEntity {
   email: string;
 
   /**
-   * List of trusted user ids (friends) to whom the user is willing to lend certain items
+   * List of trusted user ids (friends, family, ...) to whom the user is willing to lend certain items
    */
   trusts: UserId[];
 }

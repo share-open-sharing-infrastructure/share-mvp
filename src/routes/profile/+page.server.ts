@@ -46,8 +46,6 @@ export const actions = {
         } catch (error) {
             console.error(error?.message || error);
         }
-
-        redirect(303, '/profile');
     },
 
     update: async ({ locals, request }) => {
@@ -57,7 +55,7 @@ export const actions = {
         const name = formData.get('itemName');
         const description = formData.get('itemDescription');
         const place = formData.get('itemPlace');
-        const image = formData.get('image');     
+        const image = formData.get('image');
 
         if (!name || !description || !place ) {
             return fail(400, { 
@@ -84,7 +82,6 @@ export const actions = {
         } catch (err) {
             console.error(err?.message || err);
         }
-        redirect(303, '/profile');
     },
 
     delete: async ({ locals, request }) => {
@@ -97,6 +94,5 @@ export const actions = {
         } catch (error) {
             console.error(error?.message || error);
         }
-        redirect(303, '/profile');
     }
 }
