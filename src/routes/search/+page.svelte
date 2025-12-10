@@ -5,7 +5,7 @@
 	import type { Item } from '$lib/types/models';
 	import SearchBar from './SearchBar.svelte';
 	import Welcome from './Welcome.svelte';
-	import Results from './Results.svelte';
+	import ResultsList from './ResultsList.svelte';
 
 	let selectedPlaces: string[] = $state([]);
 	let searchText = $state({value: ''});
@@ -51,7 +51,7 @@
 
 	<div class="mx-auto max-w-5xl space-y-4 overflow-x-auto p-4 md:space-y-6">
 		{#if isSearching}
-			<Results 
+			<ResultsList 
 				filteredItemList={filteredItemList} 
 				PB_IMG_URL={data.PB_IMG_URL}
 			/>
