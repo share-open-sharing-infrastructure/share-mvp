@@ -1,41 +1,43 @@
 <script lang="ts">
-	const { data, form } = $props();
+	const { data } = $props();
 	const { items, uniqueNames, uniquePlaces } = data;
 	import { Section, TableHeader } from 'flowbite-svelte-blocks';
-	import { Gallery, Button, Search, Dropdown, Checkbox, Alert } from 'flowbite-svelte';
+	import { Gallery, Button, Search, Dropdown, Checkbox } from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
-	import { selectedNames, selectedPlaces, searchTextState } from '../state.svelte';
 	import ItemCard from './ItemCard.svelte';
+	import type { Item } from '$lib/types/models';
 
-	// helper for case insensitive search
-	const includesCaseInsensitive = (str, searchString) => new RegExp(searchString, 'i').test(str);
+	let selectedNames: string[] = $state([]);
+    let selectedPlaces: string[] = $state([]);
+    let searchText = $state('');
 
-	let isSearching: boolean = $derived(searchTextState.value.length > 0);
+    // Helper for case insensitive search
+    const includesCaseInsensitive = (str: string, searchString: string) => 
+        str.toLowerCase().includes(searchString.toLowerCase());
 
-	const filterFunction = () => {
-		let filteredResults = items;
-		/* TODO this currently only filters by one category, needs to be extended to multiple categories */
-		if (selectedNames.selectedValues.length > 0) {
-			filteredResults = filteredResults.filter((items) =>
-				selectedNames.selectedValues.every((name) => items.name.includes(name))
-			);
-		}
+    let isSearching: boolean = $derived(searchText.length > 0);
 
-		if (selectedPlaces.selectedValues.length > 0) {
-			filteredResults = filteredResults.filter((items) =>
-				selectedPlaces.selectedValues.every((place) => items.place.includes(place))
-			);
-		}
+    // Filters result set item list based on selected filters and search text
+    let filteredItemList: Item[] = $derived(
+        items.filter((item: Item) => {
+            // Filter by selected names
+            if (selectedNames.length > 0 && !selectedNames.includes(item.name)) {
+                return false;
+            }
 
-		if (searchTextState.value !== '') {
-			filteredResults = filteredResults.filter((items) =>
-				includesCaseInsensitive(items.name, searchTextState.value)
-			);
-		}
+            // Filter by selected places
+            if (selectedPlaces.length > 0 && !selectedPlaces.includes(item.place)) {
+                return false;
+            }
 
-		return filteredResults;
-	};
-	let filterList = $derived.by(filterFunction);
+            // Filter by search text
+            if (searchText.length && !includesCaseInsensitive(item.name, searchText)) {
+                return false;
+            }
+
+            return true;
+        })
+    );
 </script>
 
 <Section>
@@ -56,7 +58,7 @@
 					class="mr-4 flex flex-col"
 					classes={{ input: 'focus:ring-gray-700 focus:border-gray-700' }}
 					placeholder="Suche Dinge..."
-					bind:value={searchTextState.value}
+					bind:value={searchText}
 				/>
 			{/snippet}
 
@@ -86,7 +88,7 @@
 								checked
 								inline
 								class="text-gray-900 focus:ring-gray-700"
-								bind:group={selectedPlaces.selectedValues}
+								bind:group={selectedPlaces}
 								value={place}>{place}</Checkbox
 							>
 						</li>
@@ -98,7 +100,7 @@
 								checked
 								inline
 								class="text-gray-900 focus:ring-gray-700"
-								bind:group={selectedNames.selectedValues}
+								bind:group={selectedNames}
 								value={name}>{name}</Checkbox
 							>
 						</li>
@@ -109,23 +111,14 @@
 	</Section>
 
 	<div class="mx-auto max-w-5xl space-y-4 overflow-x-auto p-4 md:space-y-6">
-		{#if form?.fail}
-			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-				<Alert>
-					<span class="font-medium">
-						{form.message}
-					</span>
-				</Alert>
-			</div>
-		{/if}
 		{#if isSearching}
 			<div class="flex items-center justify-center pt-2">
-				<h5>{filterList.length} Dinge gefunden</h5>
+				<h5>{filteredItemList.length} Dinge gefunden</h5>
 			</div>
 			<Gallery
 				class="mx-auto max-w-5xl grid-cols-1 gap-4 pt-2 max-md:grid-cols-2 max-sm:grid-cols-3 md:grid-cols-1"
 			>
-				{#each filterList as item}
+				{#each filteredItemList as item}
 					<ItemCard
 						{item}
 						imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}

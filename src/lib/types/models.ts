@@ -60,10 +60,11 @@ export interface Item extends PocketBaseEntity {
 	/** Foreign key: owner user id */
 	owner: UserId;
 
-	/**
-	 * If true, only users in the owner's trusts list can borrow this item
-	 */
+	/** If true, only users in the owner's trusts list can borrow this item */
 	trusteesOnly: boolean;
+	
+	/** PocketBase collection id to which the item belongs */
+	collectionId: string;
 }
 
 // --- MESSAGE ---
