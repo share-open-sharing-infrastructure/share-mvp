@@ -4,8 +4,8 @@ export async function load ({ locals }) {
 
     // Prepare PocketBase query parameters. If user is logged in, filter out their own items.
     const pocketbaseQuery = {
-        expand: 'field',
-        filter: locals.user ? `field != "${locals.user.id}"` : undefined
+        expand: 'owner',
+        filter: locals.user ? `owner != "${locals.user.id}"` : undefined
     };
 
     const items = await locals.pb.collection('items').getFullList(pocketbaseQuery);
@@ -23,7 +23,7 @@ export async function load ({ locals }) {
         }
 
         // Check if current user is a trustee of the item's owner
-        const itemOwnerTrustees = item.expand?.field?.trusts || [];
+        const itemOwnerTrustees = item.expand?.owner?.trusts || [];
         const isTrustee = itemOwnerTrustees.includes(locals.user?.id);
 
         return isTrustee;

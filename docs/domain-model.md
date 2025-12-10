@@ -20,7 +20,7 @@ classDiagram
         +Image image
         +string description
         +string place
-        +User field <!-- this is currently misnamed, have to adapt in DB and then in code -->
+        +User owner <!-- this is currently misnamed, have to adapt in DB and then in code -->
         +bool trusteesOnly
     }
     User <-- Item : owned by

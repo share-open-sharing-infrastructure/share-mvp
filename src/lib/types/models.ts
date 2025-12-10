@@ -58,7 +58,7 @@ export interface Item extends PocketBaseEntity {
   place: string;
 
   /** Foreign key: owner user id */
-  field: UserId;
+  owner: UserId;
 
   /**
    * If true, only users in the owner's trusts list can borrow this item
