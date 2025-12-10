@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Item } from "$lib/types/models"
-	import { Badge, Card } from "flowbite-svelte";
+	import type { Item } from '$lib/types/models';
+	import { Badge, Card } from 'flowbite-svelte';
 	import { PenNibSolid } from 'flowbite-svelte-icons';
 	export let item: Item;
 	export let imgUrl: string;
@@ -18,7 +18,9 @@
 					})}
 				</p>
 			</div>
-			<h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white overflow-hidden text-ellipsis">
+			<h5
+				class="mb-2 overflow-hidden text-2xl font-bold tracking-tight text-ellipsis text-gray-900 dark:text-white"
+			>
 				{item.name}
 			</h5>
 			<p class="mb-3 leading-tight font-normal text-gray-700">
@@ -30,18 +32,21 @@
 			<div>
 				<p class="mb-3 text-xs leading-tight font-thin">
 					von {item.expand?.owner?.username ?? 'Unknown'}
-                    
+
 					{#if item.expand?.owner?.id}
-						<a href="/chat/{item.expand.owner.id}" class="inline-flex items-center text-primary-600 hover:underline">
+						<a
+							href="/chat/{item.expand.owner.id}"
+							class="inline-flex items-center text-primary-600 hover:underline"
+						>
 							Anschreiben
 							<PenNibSolid class="ms-0.5 h-4 w-4" />
 						</a>
 					{/if}
 				</p>
-        	</div>
+			</div>
 			{#if item.trusteesOnly}
 				<Badge color="green" class="m-2">Nutzer vertraut dir</Badge>
 			{/if}
-    	</div>
+		</div>
 	</Card>
 </div>

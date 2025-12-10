@@ -16,18 +16,30 @@
 				{#if form?.fail}
 					<Alert>
 						<span class="font-medium">
-							{form.message} 
+							{form.message}
 							Sind Nutzername & Passwort korrekt?
 						</span>
 					</Alert>
 				{/if}
 				<Label class="space-y-2">
 					<span>Deine E-Mail Adresse</span>
-					<Input type="email" name="email" placeholder="E-Mail Adresse" class="focus:ring-gray-700 focus:border-gray-700" required />
+					<Input
+						type="email"
+						name="email"
+						placeholder="E-Mail Adresse"
+						class="focus:border-gray-700 focus:ring-gray-700"
+						required
+					/>
 				</Label>
 				<Label class="space-y-2">
 					<span>Dein Passwort</span>
-					<Input type="password" name="password" placeholder="••••••••••" class="focus:ring-gray-700 focus:border-gray-700" required />
+					<Input
+						type="password"
+						name="password"
+						placeholder="••••••••••"
+						class="focus:border-gray-700 focus:ring-gray-700"
+						required
+					/>
 				</Label>
 
 				<p class="mt-2 text-sm font-light text-gray-500 dark:text-gray-400">

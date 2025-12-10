@@ -1,7 +1,7 @@
 <script lang="ts">
-    let { children } = $props();
+	let { children } = $props();
 </script>
 
-<div class="mx-auto max-w-3xl text-center min-h-[50vh] px-20">
-    {@render children()}
+<div class="mx-auto min-h-[50vh] max-w-3xl px-20 text-center">
+	{@render children()}
 </div>

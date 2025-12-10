@@ -4,7 +4,6 @@ about: A template for all issues that are not bugs or features
 title: ''
 labels: ''
 assignees: ''
-
 ---
 
 **Description**

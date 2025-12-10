@@ -1,5 +1,5 @@
-import { redirect } from "@sveltejs/kit";
+import { redirect } from '@sveltejs/kit';
 
-export async function load () {
-    redirect(303, '/search');
-};
+export async function load() {
+	redirect(303, '/search');
+}
