@@ -21,6 +21,7 @@ export async function load ({ locals }) {
         locals.pb.authStore.isValid // I am not entirely sure if it is necessary to pass this (because a null userId should be sufficient), but added just to be clean
     );
     console.log("Filtered: " + filteredItems);
+    
     // Extract unique places and names for filtering options
     const uniquePlaces = Array.from(new Set(filteredItems.map(item => item.place))); // deduplicates places by creating a Set
     const uniqueNames = Array.from(new Set(filteredItems.map(item => item.name)));
@@ -42,7 +43,7 @@ export const actions = {
         const description = data.get('description');
         const place = data.get('place');
         const image = data.get('image');
-        data.append('field', locals.user.id);
+        data.append('owner', locals.user.id);
 
         const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
 

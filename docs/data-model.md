@@ -27,7 +27,7 @@ erDiagram
         Image image
         string description
         string place
-        User field FK
+        User owner FK
         date created
         date updated
         bool trusteesOnly

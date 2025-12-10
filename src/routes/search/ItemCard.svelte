@@ -28,12 +28,11 @@
 				{item.place}
 			</p>
 			<div>
-				<!-- TODO: Once the database relation is renamed from field to "owner" or sth, rename -->
 				<p class="mb-3 text-xs leading-tight font-thin">
-					von {item.expand?.field?.username ?? 'Unknown'}
+					von {item.expand?.owner?.username ?? 'Unknown'}
                     
-					{#if item.expand?.field?.id}
-						<a href="/chat/{item.expand.field.id}" class="inline-flex items-center text-primary-600 hover:underline">
+					{#if item.expand?.owner?.id}
+						<a href="/chat/{item.expand.owner.id}" class="inline-flex items-center text-primary-600 hover:underline">
 							Anschreiben
 							<PenNibSolid class="ms-0.5 h-4 w-4" />
 						</a>
