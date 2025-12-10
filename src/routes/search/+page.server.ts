@@ -8,20 +8,18 @@ export async function load ({ locals }) {
     const items: Item[] = await locals.pb
         .collection('items')
         .getFullList({
-                expand: 'field', // expand the relation to the 'field' (user) collection
+                expand: 'owner', // expand the relation to the 'owner' (user) collection
                 sort: '-updated', // sort by update date descending
-                filter: locals.user ? `field != "${locals.user.id}"` : undefined // exclude user's own items from search results (if logged in)
+                filter: locals.user ? `owner != "${locals.user.id}"` : undefined // exclude user's own items from search results (if logged in)
             });
     
-    console.log("Plain: " + items);
     // Filter out items which the current user is not trusted with
     const filteredItems = filterTrustedItems(
         items, 
         locals.user ? locals.user.id : null,
         locals.pb.authStore.isValid // I am not entirely sure if it is necessary to pass this (because a null userId should be sufficient), but added just to be clean
     );
-    console.log("Filtered: " + filteredItems);
-    
+
     // Extract unique places and names for filtering options
     const uniquePlaces = Array.from(new Set(filteredItems.map(item => item.place))); // deduplicates places by creating a Set
     const uniqueNames = Array.from(new Set(filteredItems.map(item => item.name)));
@@ -90,7 +88,7 @@ function filterTrustedItems(items: Item[], userId: UserId, loggedIn: boolean): I
         }
 
         // Check if current user is a trustee of the item's owner
-        const itemOwnerTrustees = item.expand?.field?.trusts || [];
+        const itemOwnerTrustees = item.expand?.owner?.trusts || [];
         const isTrustee = userId ? itemOwnerTrustees.includes(userId) : false;
 
         return isTrustee;
