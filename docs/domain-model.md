@@ -25,7 +25,7 @@ classDiagram
         +User owner <!-- this is currently misnamed, have to adapt in DB and then in code -->
         +bool trusteesOnly
     }
-    User <-- Item : owned by
+    User "1" <-- "n" Item : owned by
 
     class message{
         +string messageContent

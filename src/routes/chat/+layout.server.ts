@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 
 export const load = async ({ locals }) => {
 	// Get list of all users that the current user has chatted with
