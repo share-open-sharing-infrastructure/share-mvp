@@ -62,7 +62,7 @@ export interface Item extends PocketBaseEntity {
 
 	/** If true, only users in the owner's trusts list can borrow this item */
 	trusteesOnly: boolean;
-	
+
 	/** PocketBase collection id to which the item belongs */
 	collectionId: string;
 }

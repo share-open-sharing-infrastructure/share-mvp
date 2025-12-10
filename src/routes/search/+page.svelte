@@ -8,36 +8,36 @@
 	import type { Item } from '$lib/types/models';
 
 	let selectedNames: string[] = $state([]);
-    let selectedPlaces: string[] = $state([]);
-    let searchText = $state('');
+	let selectedPlaces: string[] = $state([]);
+	let searchText = $state('');
 
-    // Helper for case insensitive search
-    const includesCaseInsensitive = (str: string, searchString: string) => 
-        str.toLowerCase().includes(searchString.toLowerCase());
+	// Helper for case insensitive search
+	const includesCaseInsensitive = (str: string, searchString: string) =>
+		str.toLowerCase().includes(searchString.toLowerCase());
 
-    let isSearching: boolean = $derived(searchText.length > 0);
+	let isSearching: boolean = $derived(searchText.length > 0);
 
-    // Filters result set item list based on selected filters and search text
-    let filteredItemList: Item[] = $derived(
-        items.filter((item: Item) => {
-            // Filter by selected names
-            if (selectedNames.length > 0 && !selectedNames.includes(item.name)) {
-                return false;
-            }
+	// Filters result set item list based on selected filters and search text
+	let filteredItemList: Item[] = $derived(
+		items.filter((item: Item) => {
+			// Filter by selected names
+			if (selectedNames.length > 0 && !selectedNames.includes(item.name)) {
+				return false;
+			}
 
-            // Filter by selected places
-            if (selectedPlaces.length > 0 && !selectedPlaces.includes(item.place)) {
-                return false;
-            }
+			// Filter by selected places
+			if (selectedPlaces.length > 0 && !selectedPlaces.includes(item.place)) {
+				return false;
+			}
 
-            // Filter by search text
-            if (searchText.length && !includesCaseInsensitive(item.name, searchText)) {
-                return false;
-            }
+			// Filter by search text
+			if (searchText.length && !includesCaseInsensitive(item.name, searchText)) {
+				return false;
+			}
 
-            return true;
-        })
-    );
+			return true;
+		})
+	);
 </script>
 
 <Section>
