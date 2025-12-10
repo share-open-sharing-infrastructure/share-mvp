@@ -11,8 +11,8 @@
 	let editModal = $state(false);
 	let editingItemId = $state("");
 	let editingItem = $derived(
-		data?.user?.expand?.items_via_field
-            ? data.user.expand.items_via_field.find((item) => item.id === editingItemId)
+		data?.user?.expand?.items_via_owner
+            ? data.user.expand.items_via_owner.find((item) => item.id === editingItemId)
             : undefined
 	);
 	
@@ -34,8 +34,8 @@
 				</Alert>
 			</div>
 		{/if}
-		{#if data?.user?.expand?.items_via_field?.length}
-			{#each data.user.expand.items_via_field as item}
+		{#if data?.user?.expand?.items_via_owner?.length}
+			{#each data.user.expand.items_via_owner as item}
 				<div class="border rounded-lg mb-4 
 					w-full md:w-2/3 lg:w-1/2 mx-auto
 					">
