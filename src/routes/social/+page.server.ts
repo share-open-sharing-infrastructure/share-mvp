@@ -1,13 +1,11 @@
-import { redirect } from '@sveltejs/kit';
-
 export async function load({ locals }) {
 
-    let friends;
+    let trustees;
     let users;
 
     try {
         users = await locals.pb.collection('users').getFullList()
-        friends = users.filter(
+        trustees = users.filter(
             user => locals.user.trusts && locals.user.trusts.includes(user.id)
         );
     } catch (error) {
@@ -16,20 +14,20 @@ export async function load({ locals }) {
 
     return {
         users: users,
-        friends: friends.map(friend => ({
-            ...friend,
-            profilePic: `https://ui-avatars.com/api/?name=${friend.username}&background=random`
+        trustees: trustees.map(trustee => ({
+            ...trustee,
+            profilePic: `https://ui-avatars.com/api/?name=${trustee.username}&background=random`
         })) ?? []
     };
 }
 
 export const actions = {
-    addFriend: async ({ request, locals }) => {
+    addTrustee: async ({ request, locals }) => {
         const formData = await request.formData()
-        const friendId = formData.get('friendId');
+        const newTrusteeId = formData.get('trusteeId');
 
         const updateData = {
-            trusts: [...(locals.user.trusts || []), friendId]
+            trusts: [...(locals.user.trusts || []), newTrusteeId]
         };
 
         try {
@@ -40,12 +38,12 @@ export const actions = {
             console.error(err?.message || err);
         }
     },
-    removeFriend: async ({ request, locals }) => {
+    removeTrustee: async ({ request, locals }) => {
         const formData = await request.formData()
-        const friendId = formData.get('friendId');
+        const toRemoveTrusteeId = formData.get('trusteeId');
 
         try {
-            const updatedTrusts = (locals.user.trusts || []).filter(id => id !== friendId);
+            const updatedTrusts = (locals.user.trusts || []).filter(id => id !== toRemoveTrusteeId);
             const record = await locals.pb
                 .collection('users')
                 .update(locals.user.id, { trusts: updatedTrusts });

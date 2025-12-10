@@ -1,4 +1,3 @@
-import { fail, redirect } from '@sveltejs/kit';
 import { PB_URL } from '../../hooks.server';
 import type { Item, UserId } from '$lib/types/models';
 
