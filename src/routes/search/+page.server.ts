@@ -1,5 +1,6 @@
 import { PB_URL } from '../../hooks.server';
-import type { Item, UserId } from '$lib/types/models';
+import type { Item } from '$lib/types/models';
+import { filterTrustedItems } from '$lib/server/itemFilters';
 
 export async function load({ locals }) {
 	// Fetch all items from PocketBase
@@ -13,11 +14,11 @@ export async function load({ locals }) {
 	const filteredItems = filterTrustedItems(
 		items,
 		locals.user ? locals.user.id : null,
-		locals.pb.authStore.isValid // I am not entirely sure if it is necessary to pass this (because a null userId should be sufficient), but added just to be clean
+		locals.pb.authStore.isValid 
 	);
 
 	// Extract unique places and names for filtering options
-	const uniquePlaces = Array.from(new Set(filteredItems.map((item) => item.place))); // deduplicates places by creating a Se
+	const uniquePlaces = Array.from(new Set(filteredItems.map((item) => item.place))); // deduplicates places by creating a Set
 
 	// Return data to the page
 	return {
@@ -35,6 +36,7 @@ export async function load({ locals }) {
  * @param loggedIn whether a user is currently logged in
  * @returns an array of Item objects that the user is allowed to see based on trusteesOnly settings
  */
+/*
 function filterTrustedItems(items: Item[], userId: UserId, loggedIn: boolean): Item[] {
 	let trustedItems = items;
 
@@ -57,4 +59,5 @@ function filterTrustedItems(items: Item[], userId: UserId, loggedIn: boolean): I
 	});
 
 	return trustedItems;
-}
+} 
+*/
