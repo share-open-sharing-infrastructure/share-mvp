@@ -19,30 +19,24 @@
 
 	let isSearching: boolean = $derived(searchTextState.value.length > 0);
 
-	let filterList = $derived.by(() => {
-		let filteredResults = [];
-		filteredResults = items;
+	const filterFunction = () => {
+		let filteredResults=items;
 		/* TODO this currently only filters by one category, needs to be extended to multiple categories */
-		if (selectedNames.selectedValues.length > 0) {
-			filteredResults = filteredResults.filter((items) =>
-				selectedNames.selectedValues.every((tag) => items.name.includes(tag))
-			);
+		if(selectedNames.selectedValues.length>0) {
+			filteredResults=filteredResults.filter((items) => selectedNames.selectedValues.every((name) => items.name.includes(name)));
 		}
 
-		if (selectedPlaces.selectedValues.length > 0) {
-			filteredResults = filteredResults.filter((items) =>
-				selectedPlaces.selectedValues.every((tag) => items.place.includes(tag))
-			);
+		if(selectedPlaces.selectedValues.length>0) {
+			filteredResults=filteredResults.filter((items) => selectedPlaces.selectedValues.every((place) => items.place.includes(place)));
 		}
 
-		if (searchTextState.value !== '') {
-			filteredResults = filteredResults.filter((items) =>
-				includesCaseInsensitive(items.name, searchTextState.value)
-			);
+		if(searchTextState.value!=='') {
+			filteredResults=filteredResults.filter((items) => includesCaseInsensitive(items.name,searchTextState.value));
 		}
 
 		return filteredResults;
-	});
+	};
+	let filterList = $derived.by(filterFunction);
 </script>
 
 
