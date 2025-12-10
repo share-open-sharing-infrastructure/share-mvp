@@ -17,14 +17,12 @@ export async function load({ locals }) {
 	);
 
 	// Extract unique places and names for filtering options
-	const uniquePlaces = Array.from(new Set(filteredItems.map((item) => item.place))); // deduplicates places by creating a Set
-	const uniqueNames = Array.from(new Set(filteredItems.map((item) => item.name)));
+	const uniquePlaces = Array.from(new Set(filteredItems.map((item) => item.place))); // deduplicates places by creating a Se
 
 	// Return data to the page
 	return {
 		items: filteredItems,
 		PB_IMG_URL: PB_URL,
-		uniqueNames: uniqueNames,
 		uniquePlaces: uniquePlaces,
 		userId: locals.user ? locals.user.id : null
 	};

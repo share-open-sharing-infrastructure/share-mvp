@@ -1,13 +1,12 @@
 <script lang="ts">
 	const { data } = $props();
-	const { items, uniqueNames, uniquePlaces } = data;
+	const { items, uniquePlaces } = data;
 	import { Section, TableHeader } from 'flowbite-svelte-blocks';
 	import { Gallery, Button, Search, Dropdown, Checkbox } from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import ItemCard from './ItemCard.svelte';
 	import type { Item } from '$lib/types/models';
 
-	let selectedNames: string[] = $state([]);
 	let selectedPlaces: string[] = $state([]);
 	let searchText = $state('');
 
@@ -20,10 +19,6 @@
 	// Filters result set item list based on selected filters and search text
 	let filteredItemList: Item[] = $derived(
 		items.filter((item: Item) => {
-			// Filter by selected names
-			if (selectedNames.length > 0 && !selectedNames.includes(item.name)) {
-				return false;
-			}
 
 			// Filter by selected places
 			if (selectedPlaces.length > 0 && !selectedPlaces.includes(item.place)) {
@@ -90,18 +85,6 @@
 								class="text-gray-900 focus:ring-gray-700"
 								bind:group={selectedPlaces}
 								value={place}>{place}</Checkbox
-							>
-						</li>
-					{/each}
-					<h6 class="mt-5 mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">Name</h6>
-					{#each uniqueNames as name}
-						<li class="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-600">
-							<Checkbox
-								checked
-								inline
-								class="text-gray-900 focus:ring-gray-700"
-								bind:group={selectedNames}
-								value={name}>{name}</Checkbox
 							>
 						</li>
 					{/each}
