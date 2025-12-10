@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Item } from "$lib/types/models"
-  import { Badge, Card } from "flowbite-svelte";
+	import { Badge, Card } from "flowbite-svelte";
 	import { PenNibSolid } from 'flowbite-svelte-icons';
 	export let item: Item;
 	export let imgUrl: string;
@@ -36,13 +36,12 @@
 							Anschreiben
 							<PenNibSolid class="ms-0.5 h-4 w-4" />
 						</a>
-					
 					{/if}
 				</p>
-        </div>
-        {#if item.trusteesOnly}
-            <Badge color="green" class="m-2">Nutzer vertraut dir</Badge>
-        {/if}
-    </div>
+        	</div>
+			{#if item.trusteesOnly}
+				<Badge color="green" class="m-2">Nutzer vertraut dir</Badge>
+			{/if}
+    	</div>
 	</Card>
 </div>

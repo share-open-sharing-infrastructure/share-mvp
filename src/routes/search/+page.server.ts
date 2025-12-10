@@ -34,37 +34,6 @@ export async function load ({ locals }) {
     };
 };
 
-export const actions = {
-    create: async ({ locals, request }) => {
-        const data = await request.formData();
-        const name = data.get('name');
-        const description = data.get('description');
-        const place = data.get('place');
-        const image = data.get('image');
-        data.append('owner', locals.user.id);
-
-        const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
-
-        if (!name || !description || !place || noImage ) {
-            return fail(400, {
-                fail: true,
-                nameRequired:name === null, 
-                descriptionRequired: description === null, 
-                placeRequired: place === null,
-                message: "Gegenstand konnte nicht hinzugefügt werden."
-            });
-        }
-
-        try {
-            await locals.pb.collection('items').create(data);
-        } catch (error) {
-            console.error(error?.message || error);
-        }
-        
-        redirect(303, '/');
-    }
-};
-
 /**
  * Filters out items that the present user is not trusted with
  * @param items an unfiltered list of items to be filtered
