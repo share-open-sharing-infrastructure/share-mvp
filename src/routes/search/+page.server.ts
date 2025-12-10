@@ -28,36 +28,3 @@ export async function load({ locals }) {
 		userId: locals.user ? locals.user.id : null
 	};
 }
-
-/**
- * Filters out items that the present user is not trusted with
- * @param items an unfiltered list of items to be filtered
- * @param userId the id of the logged in user (if logged in), null otherwise
- * @param loggedIn whether a user is currently logged in
- * @returns an array of Item objects that the user is allowed to see based on trusteesOnly settings
- */
-/*
-function filterTrustedItems(items: Item[], userId: UserId, loggedIn: boolean): Item[] {
-	let trustedItems = items;
-
-	trustedItems = items.filter((item) => {
-		// If item is not marked trusteesOnly, always show it
-		if (!item.trusteesOnly) {
-			return true;
-		}
-
-		// If no user is logged in, do not show any trusteesOnly items
-		if (!loggedIn) {
-			return false;
-		}
-
-		// Check if current user is a trustee of the item's owner
-		const itemOwnerTrustees = item.expand?.owner?.trusts || [];
-		const isTrustee = userId ? itemOwnerTrustees.includes(userId) : false;
-
-		return isTrustee;
-	});
-
-	return trustedItems;
-} 
-*/
