@@ -1,32 +1,31 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 
-export async function load ({ locals }) {
-    if (locals.user) {
-        return redirect(303, '/')
-    }
+export async function load({ locals }) {
+	if (locals.user) {
+		return redirect(303, '/');
+	}
 
-    return {
-    };
-};
+	return {};
+}
 
 export const actions = {
-    reset: async ({ locals, request, cookies }) => {
-        const data = await request.formData();
-        const email = data.get('email');
+	reset: async ({ locals, request, cookies }) => {
+		const data = await request.formData();
+		const email = data.get('email');
 
-        if (!email) {
-            return fail(400, { emailRequired: email === null });
-        }
+		if (!email) {
+			return fail(400, { emailRequired: email === null });
+		}
 
-        try {
-            await locals.pb.collection('users').requestPasswordReset(email.toString());
-        } catch (error) {
-            const errorObj = error as ClientResponseError;
-            return fail(500, { fail: true, message: errorObj.data.message });
-        }
+		try {
+			await locals.pb.collection('users').requestPasswordReset(email.toString());
+		} catch (error) {
+			const errorObj = error as ClientResponseError;
+			return fail(500, { fail: true, message: errorObj.data.message });
+		}
 
-        // universal flash pattern:
+		// universal flash pattern:
 		cookies.set(
 			'flash',
 			JSON.stringify({
@@ -38,6 +37,6 @@ export const actions = {
 				maxAge: 60 // seconds
 			}
 		);
-        redirect(303, '/login');
-    }
-}
+		redirect(303, '/login');
+	}
+};
