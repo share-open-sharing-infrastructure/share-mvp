@@ -33,7 +33,6 @@
 	});
 
 	// This effect sets up and tears down PocketBase subscriptions for real-time updates when the chat partner changes.
-	// I thought I could do this via onMount/onDestroy but those only run once per component lifetime, not per data change.
 	$effect(() => {
 		const chatPartnerId = data.currentChatPartner.id;
 
@@ -41,21 +40,23 @@
 		pb = new PocketBase(env.PUBLIC_PB_URL);
 		pb.authStore?.loadFromCookie(document.cookie || '');
 
-		const topic = '*';
+		// This will eventually cause performance problems because the subscription runs on all messages independent of who they are to/from. 
+		// A better solution would be to have per-user channels/conversations or similar server-side filtering. But this would need to be implemented in PocketBase itself.
+		const topic = '*'; 
 
 		pb.collection('messages').subscribe(topic, function (e) {
-			const msg = e.record;
+			const message = e.record;
 
 			// Only process messages relevant to this chat
 			const isInThisChat =
-				(msg.from === data.currentUser?.id && msg.to === chatPartnerId) ||
-				(msg.to === data.currentUser?.id && msg.from === chatPartnerId);
+				(message.from === data.currentUser?.id && message.to === chatPartnerId) ||
+				(message.to === data.currentUser?.id && message.from === chatPartnerId);
 
 			if (!isInThisChat) return;
 
 			if (e.action === 'create') {
 				// append new message
-				messages = [...messages, msg];
+				messages = [...messages, message];
 			}
 		});
 
@@ -85,7 +86,7 @@
 	{#each messages as message}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
-	<div bind:this={lastMessageElement}></div>
+	<div bind:this={lastMessageElement}></div> <!-- dummy element to auto-scroll down to -->
 </div>
 
 {#if form?.fail}
