@@ -1,148 +1,146 @@
 <script lang="ts">
-    import PocketBase from 'pocketbase';
+	import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
 	import { env } from '$env/dynamic/public';
-    import { Button, Input, Label, Toast } from 'flowbite-svelte';
+	import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
+	import Message from './Message.svelte';
+	import { onMount } from 'svelte';
+	import type { RecordSubscription } from 'pocketbase';
 
-    let pb: PocketBase;
-    let { data, form } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
-    let lastMessageElement: HTMLDivElement;
+	let { data, form } = $props();
+	let messages = $state([...data.currentMessages]);
+	let messageText: string = $state('');
+	let lastMessageElement: HTMLDivElement;
+	let chatWindow: HTMLDivElement;
 
-    let messages = $state([...data.currentMessages])
-    
-    // This automatic effect keeps the chat window scrolled down to the last message on new messages
-    $effect(() => {
-        // Track changes to currentMessages specifically
-        if (messages && lastMessageElement) {
-            // Use setTimeout to ensure DOM has rendered
-            setTimeout(() => {
-                lastMessageElement?.scrollIntoView({ behavior: 'smooth' }); // TODO: consider if behavior should be something else but 'smooth'
-            }, 0);
-        }
-    });
+	// Initialize PocketBase client once on component mount
+	let pb: PocketBase;
+	onMount(() => {
+		pb = new PocketBase(env.PUBLIC_PB_URL);
+		pb.authStore.loadFromCookie(document.cookie || '');
+	});
 
-    // whenever the server data changes (e.g. switching user), reset local messages to the new server-side messages
-    $effect(() => {
-        messages = [...data.currentMessages];
-    });
+	// Handle incoming real-time message events
+	function handleMessageEvent(event: RecordSubscription<any>) {
+		const message = event.record;
+		const currentUserId = data.currentUser?.id;
+		const chatPartnerId = data.currentChatPartner.id;
 
-    // This effect sets up and tears down PocketBase subscriptions for real-time updates when the chat partner changes.
-    // I thought I could do this via onMount/onDestroy but those only run once per component lifetime, not per data change.
-    $effect(() => {
-        const chatPartnerId = data.currentChatPartner.id;
+		// Only process messages in this conversation
+		const isRelevantMessage =
+			(message.from === currentUserId && message.to === chatPartnerId) ||
+			(message.from === chatPartnerId && message.to === currentUserId);
 
-        // set up PB subscription here
-        pb = new PocketBase(env.PUBLIC_PB_URL);
-        pb.authStore?.loadFromCookie(document.cookie || '')
+		if (!isRelevantMessage) return;
 
-        const topic = '*';
+		// Only handle new messages (ignore updates/deletes)
+		if (event.action === 'create') {
+			messages = [...messages, message];
+		}
+	}
 
-        pb.collection('messages').subscribe(
-            topic, 
-            function (e) {
-                const msg = e.record;
+	/**
+	 * Sets up a PocketBase real-time subscription for the respective collection and record, and unsubscribes on cleanup.
+	 * @param pocketBaseInstance A PocketBase instance to subscribe to
+	 * @param collectionName The collection name to subscribe to
+	 * @param recordId The record ID to subscribe to, defaults to '*' (all records in the collection)
+	 * @param eventHandler A callback function to handle incoming subscription events
+	 * TODO: Check if this needs to be done client-side, maybe it's better to do server-side? Would that work?
+	 */
+	function setupPocketBaseSubscription(
+		pocketBaseInstance: PocketBase,
+		collectionName: string,
+		recordId: string = '*',
+		eventHandler: (event: RecordSubscription<any>) => void
+	) {
+		// Subscribe to all message events
+		// Note: PocketBase doesn't support filtering subscriptions by query,
+		// so we must subscribe to all messages and filter client-side
+		pocketBaseInstance
+			?.collection(collectionName)
+			.subscribe(recordId, eventHandler)
+			.catch((error) => {
+				console.error(`Failed to subscribe to ${collectionName}:`, error);
+			});
 
-                // Only process messages relevant to this chat
-                const isInThisChat =
-                    (msg.from === data.currentUser?.id && msg.to === chatPartnerId) ||
-                    (msg.to === data.currentUser?.id && msg.from === chatPartnerId);
+		// Cleanup: unsubscribe when chat partner changes or component unmounts
+		return () => {
+			pocketBaseInstance
+				?.collection(collectionName)
+				.unsubscribe(recordId)
+				.catch((error) => {
+					console.error(`Failed to unsubscribe from ${collectionName}:`, error);
+				});
+		};
+	}
 
-                if (!isInThisChat) return;
+	// Set up real-time subscription
+	$effect(() => setupPocketBaseSubscription(pb, 'messages', '*', handleMessageEvent));
 
-                if (e.action === 'create') {
-                    // append new message
-                    messages = [...messages, msg];
-                }
-            }
-        );
+	// Scroll chat window to bottom when messages change
+	$effect(() => {
+		if (messages.length > 0 && chatWindow) {
+			setTimeout(() => {
+				chatWindow.scrollTo({
+					top: chatWindow.scrollHeight,
+					behavior: 'smooth'
+				});
+			}, 0);
+		}
+	});
 
-        // cleanup when:chatPartnerId changes OR component is destroyed
-        return () => {
-            pb.collection('messages').unsubscribe('*'); // remove all '*' topic subscriptions
-            
-            // destroy client when component is destroyed
-            // unclear if this is a better way:
-            // pb?.authStore?.clear()
-        };
-    });
-
-    let messageText: string = $state('');
-
-    function formatTimestamp(ts: string) {
-        const d = new Date(ts);
-        const day = d.getDate();
-        const month = d.getMonth() + 1;  // months are 0-based
-        const hours = d.getHours();
-        const minutes = d.getMinutes();
-
-        // pad single digits (e.g. 3 → 03)
-        const pad = (n: number) => String(n).padStart(2, '0');
-
-        // if today, return only time
-        const today = new Date();
-        if (d.toDateString() === today.toDateString()) {
-            return `${pad(hours)}:${pad(minutes)}`;
-        }
-
-        return `${pad(day)}.${pad(month)}. ${pad(hours)}:${pad(minutes)}`;
-    }
-
+	// Sync local messages with server data when messages prop changes
+	$effect(() => {
+		messages = [...data.currentMessages];
+	});
 </script>
 
 <!-- Display all messages with selected other user -->
 
-<div class="flex items-center gap-1 justify-center border-b border-t p-2 mb-4">
-    <div class="flex text-lg font-semibold text-gray-900 dark:text-white">
-        Unterhaltung mit {data.currentChatPartner.username}
-    </div>
-    <UserCircleSolid class="flex shrink-0 h-6 w-6"/>
+<div class="mb-4 flex items-center justify-center gap-1 border-t border-b p-2">
+	<div class="text-lg font-semibold text-gray-900">
+		Unterhaltung mit {data.currentChatPartner.username}
+	</div>
+	<UserCircleSolid class="flex h-6 w-6 shrink-0" />
 </div>
 
-<div class="overflow-auto mb-4 flex flex-col">
-    {#each messages as message}
-        <div class="
-            {message.from === data.currentUser?.id ? 'self-end' : 'self-start'}
-            border rounded 
-            p-1 px-2 mt-1
-            max-w-2/3 break-words
-            text-sm">
-            {message.messageContent}
-            <div class="text-xs text-gray-500 text-right">
-                {formatTimestamp(message.created)}
-            </div>
-        </div>
-    {/each}
-    <div bind:this={lastMessageElement}></div>
+<div bind:this={chatWindow} class="mb-4 flex flex-col overflow-auto">
+	{#each messages as message}
+		<Message {message} isFromCurrentUser={data.currentUser?.id} />
+	{/each}
+	<!-- dummy element to auto-scroll down to -->
+	<div bind:this={lastMessageElement}></div>
 </div>
 
 {#if form?.fail}
-<Toast>
-    <span class="font-medium">
-        {form.message}
-    </span>
-</Toast>
+	<Toast>
+		<span class="font-medium">
+			{form.message}
+		</span>
+	</Toast>
 {/if}
 
 <!-- Input field to type and send new messages -->
 <div id="message-input" class="mt-auto flex">
-    <form class="mt-auto flex items-end gap-2 w-full" method="POST" action="?/sendMessage" 
-        use:enhance
-        >
-        <Label class="w-full">
-            <Input
-                name="messageContent"
-                type="text"
-                placeholder="Type your message..."
-                class="w-full border rounded-lg px-3 py-2 mt-4"
-                required
-                autocomplete="off"
-                autofocus
-                bind:value={messageText}
-            />
-        </Label>
-        <Button type="submit">
-            Senden
-        </Button>
-    </form>
+	<form
+		class="mt-auto flex w-full items-end gap-2"
+		method="POST"
+		action="?/sendMessage"
+		use:enhance
+	>
+		<Label class="w-full">
+			<Input
+				name="messageContent"
+				type="text"
+				placeholder="Type your message..."
+				class="mt-4 w-full rounded-lg border px-3 py-2"
+				required
+				autocomplete="off"
+				autofocus
+				bind:value={messageText}
+			/>
+		</Label>
+		<Button type="submit">Senden</Button>
+	</form>
 </div>

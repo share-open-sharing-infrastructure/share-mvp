@@ -25,7 +25,13 @@
 			<form class="flex flex-col space-y-5" action="?/login" method="post">
 				<Label class="space-y-2">
 					<span>Deine E-Mail Adresse</span>
-					<Input type="email" name="email" placeholder="E-Mail Adresse" class="focus:ring-gray-700 focus:border-gray-700" required />
+					<Input
+						type="email"
+						name="email"
+						placeholder="E-Mail Adresse"
+						class="focus:border-gray-700 focus:ring-gray-700"
+						required
+					/>
 				</Label>
 				<Button
 					type="submit"

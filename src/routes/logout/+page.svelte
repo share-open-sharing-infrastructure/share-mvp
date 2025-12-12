@@ -1,4 +1,4 @@
-<div class="flex flex-col items-center justify-center min-h-screen">
+<div class="flex min-h-screen flex-col items-center justify-center">
 	<div class="spinner"></div>
 	<h1 class="mt-4 text-xl">Logging you out...</h1>
 </div>
