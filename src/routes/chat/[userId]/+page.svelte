@@ -75,9 +75,8 @@
 		};
 	}
 
-	// Set up real-time subscription when chat partner changes
+	// Set up real-time subscription
 	$effect(() => setupPocketBaseSubscription(pb, 'messages', '*', handleMessageEvent));
-	
 
 	// Scroll chat window to bottom when messages change
 	$effect(() => {
