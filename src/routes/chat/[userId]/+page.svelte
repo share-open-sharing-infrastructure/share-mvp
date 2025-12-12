@@ -5,19 +5,83 @@
 	import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
 	import Message from './Message.svelte';
+	import { onMount } from 'svelte';
+	import type { RecordSubscription } from 'pocketbase';
 
-	let pb: PocketBase;
-	let { data, form } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
+	let { data, form } = $props();
+	let messages = $state([...data.currentMessages]);
+	let messageText: string = $state('');
 	let lastMessageElement: HTMLDivElement;
 	let chatWindow: HTMLDivElement;
 
-	let messages = $state([...data.currentMessages]);
+	// Initialize PocketBase client once on component mount
+	let pb: PocketBase;
+	onMount(() => {
+		pb = new PocketBase(env.PUBLIC_PB_URL);
+		pb.authStore.loadFromCookie(document.cookie || '');
+	});
 
-	// This automatic effect keeps the chat window scrolled down to the last message on new messages
+	// Handle incoming real-time message events
+	function handleMessageEvent(event: RecordSubscription<any>) {
+		const message = event.record;
+		const currentUserId = data.currentUser?.id;
+		const chatPartnerId = data.currentChatPartner.id;
+
+		// Only process messages in this conversation
+		const isRelevantMessage =
+			(message.from === currentUserId && message.to === chatPartnerId) ||
+			(message.from === chatPartnerId && message.to === currentUserId);
+
+		if (!isRelevantMessage) return;
+
+		// Only handle new messages (ignore updates/deletes)
+		if (event.action === 'create') {
+			messages = [...messages, message];
+		}
+	}
+
+	/**
+	 * Sets up a PocketBase real-time subscription for the respective collection and record, and unsubscribes on cleanup.
+	 * @param pocketBaseInstance A PocketBase instance to subscribe to
+	 * @param collectionName The collection name to subscribe to
+	 * @param recordId The record ID to subscribe to, defaults to '*' (all records in the collection)
+	 * @param eventHandler A callback function to handle incoming subscription events
+	 * TODO: Check if this needs to be done client-side, maybe it's better to do server-side? Would that work?
+	 */
+	function setupPocketBaseSubscription(
+		pocketBaseInstance: PocketBase,
+		collectionName: string,
+		recordId: string = '*',
+		eventHandler: (event: RecordSubscription<any>) => void
+	) {
+		// Subscribe to all message events
+		// Note: PocketBase doesn't support filtering subscriptions by query,
+		// so we must subscribe to all messages and filter client-side
+		pocketBaseInstance
+			?.collection(collectionName)
+			.subscribe(recordId, eventHandler)
+			.catch((error) => {
+				console.error(`Failed to subscribe to ${collectionName}:`, error);
+			});
+
+		// Cleanup: unsubscribe when chat partner changes or component unmounts
+		return () => {
+			pocketBaseInstance
+				?.collection(collectionName)
+				.unsubscribe(recordId)
+				.catch((error) => {
+					console.error(`Failed to unsubscribe from ${collectionName}:`, error);
+				});
+		};
+	}
+
+	// Set up real-time subscription when chat partner changes
+	$effect(() => setupPocketBaseSubscription(pb, 'messages', '*', handleMessageEvent));
+	
+
+	// Scroll chat window to bottom when messages change
 	$effect(() => {
-		// Track changes to currentMessages specifically
-		if (messages && lastMessageElement) {
-			// Use setTimeout to ensure DOM has rendered
+		if (messages.length > 0 && chatWindow) {
 			setTimeout(() => {
 				chatWindow.scrollTo({
 					top: chatWindow.scrollHeight,
@@ -27,50 +91,10 @@
 		}
 	});
 
-	// whenever the server data changes (e.g. switching user), reset local messages to the new server-side messages
+	// Sync local messages with server data when messages prop changes
 	$effect(() => {
 		messages = [...data.currentMessages];
 	});
-
-	// This effect sets up and tears down PocketBase subscriptions for real-time updates when the chat partner changes.
-	$effect(() => {
-		const chatPartnerId = data.currentChatPartner.id;
-
-		// set up PB subscription here
-		pb = new PocketBase(env.PUBLIC_PB_URL);
-		pb.authStore?.loadFromCookie(document.cookie || '');
-
-		// This will eventually cause performance problems because the subscription runs on all messages independent of who they are to/from. 
-		// A better solution would be to have per-user channels/conversations or similar server-side filtering. But this would need to be implemented in PocketBase itself.
-		const topic = '*'; 
-
-		pb.collection('messages').subscribe(topic, function (e) {
-			const message = e.record;
-
-			// Only process messages relevant to this chat
-			const isInThisChat =
-				(message.from === data.currentUser?.id && message.to === chatPartnerId) ||
-				(message.to === data.currentUser?.id && message.from === chatPartnerId);
-
-			if (!isInThisChat) return;
-
-			if (e.action === 'create') {
-				// append new message
-				messages = [...messages, message];
-			}
-		});
-
-		// cleanup when:chatPartnerId changes OR component is destroyed
-		return () => {
-			pb.collection('messages').unsubscribe('*'); // remove all '*' topic subscriptions
-
-			// destroy client when component is destroyed
-			// unclear if this is a better way:
-			// pb?.authStore?.clear()
-		};
-	});
-
-	let messageText: string = $state('');
 </script>
 
 <!-- Display all messages with selected other user -->
@@ -86,7 +110,8 @@
 	{#each messages as message}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
-	<div bind:this={lastMessageElement}></div> <!-- dummy element to auto-scroll down to -->
+	<!-- dummy element to auto-scroll down to -->
+	<div bind:this={lastMessageElement}></div>
 </div>
 
 {#if form?.fail}
