@@ -8,7 +8,7 @@
 	let pb: PocketBase;
 	let { data, form } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
 	let lastMessageElement: HTMLDivElement;
-	let chatWindow: HTMLDivElement
+	let chatWindow: HTMLDivElement;
 
 	let messages = $state([...data.currentMessages]);
 
@@ -99,15 +99,12 @@
 	<UserCircleSolid class="flex h-6 w-6 shrink-0" />
 </div>
 
-<div 
-	bind:this={chatWindow}
-	class="mb-4 flex flex-col overflow-auto" 
-	>
+<div bind:this={chatWindow} class="mb-4 flex flex-col overflow-auto">
 	{#each messages as message}
 		<div
 			class="
             {message.from === data.currentUser?.id ? 'self-end' : 'self-start'}
-            mt-1 max-w-2/3
+            mt-1 max-w-5/6
             rounded border p-1
             px-2 text-sm
             break-words"
