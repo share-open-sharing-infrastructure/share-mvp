@@ -4,6 +4,7 @@
 	import { env } from '$env/dynamic/public';
 	import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
+	import Message from './Message.svelte';
 
 	let pb: PocketBase;
 	let { data, form } = $props(); // Note: remember to never destructure the data object unless you want to loose reactivity
@@ -69,31 +70,12 @@
 	});
 
 	let messageText: string = $state('');
-
-	function formatTimestamp(ts: string) {
-		const d = new Date(ts);
-		const day = d.getDate();
-		const month = d.getMonth() + 1; // months are 0-based
-		const hours = d.getHours();
-		const minutes = d.getMinutes();
-
-		// pad single digits (e.g. 3 → 03)
-		const pad = (n: number) => String(n).padStart(2, '0');
-
-		// if today, return only time
-		const today = new Date();
-		if (d.toDateString() === today.toDateString()) {
-			return `${pad(hours)}:${pad(minutes)}`;
-		}
-
-		return `${pad(day)}.${pad(month)}. ${pad(hours)}:${pad(minutes)}`;
-	}
 </script>
 
 <!-- Display all messages with selected other user -->
 
 <div class="mb-4 flex items-center justify-center gap-1 border-t border-b p-2">
-	<div class="flex text-lg font-semibold text-gray-900 dark:text-white">
+	<div class="text-lg font-semibold text-gray-900">
 		Unterhaltung mit {data.currentChatPartner.username}
 	</div>
 	<UserCircleSolid class="flex h-6 w-6 shrink-0" />
@@ -101,19 +83,7 @@
 
 <div bind:this={chatWindow} class="mb-4 flex flex-col overflow-auto">
 	{#each messages as message}
-		<div
-			class="
-            {message.from === data.currentUser?.id ? 'self-end' : 'self-start'}
-            mt-1 max-w-5/6
-            rounded border p-1
-            px-2 text-sm
-            break-words"
-		>
-			{message.messageContent}
-			<div class="text-right text-xs text-gray-500">
-				{formatTimestamp(message.created)}
-			</div>
-		</div>
+		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 	<div bind:this={lastMessageElement}></div>
 </div>
