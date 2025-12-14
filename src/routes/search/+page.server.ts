@@ -1,43 +1,30 @@
 import { PB_URL } from '../../hooks.server';
+import type { Item } from '$lib/types/models';
+import { filterTrustedItems } from '$lib/server/itemFilters';
 
-export async function load ({ locals }) {
+export async function load({ locals }) {
+	// Fetch all items from PocketBase
+	const items: Item[] = await locals.pb.collection('items').getFullList({
+		expand: 'owner', // expand the relation to the 'owner' (user) collection
+		sort: '-updated', // sort by update date descending
+		filter: locals.user ? `owner != "${locals.user.id}"` : undefined // exclude user's own items from search results (if logged in)
+	});
 
-    // Prepare PocketBase query parameters. If user is logged in, filter out their own items.
-    const pocketbaseQuery = {
-        expand: 'owner',
-        filter: locals.user ? `owner != "${locals.user.id}"` : undefined
-    };
+	// Filter out items which the current user is not trusted with
+	const filteredItems = filterTrustedItems(
+		items,
+		locals.user ? locals.user.id : null,
+		locals.pb.authStore.isValid 
+	);
 
-    const items = await locals.pb.collection('items').getFullList(pocketbaseQuery);
+	// Extract unique places and names for filtering options
+	const uniquePlaces = Array.from(new Set(filteredItems.map((item) => item.place))); // deduplicates places by creating a Set
 
-    // Filter items based on trusteesOnly
-    const filteredItems = items.filter(item => {
-        // If item is not marked trusteesOnly, always show it
-        if (!item.trusteesOnly) {
-            return true;
-        }
-
-        // Not logged in - can't see trustees-only items
-        if (!locals.pb.authStore.isValid) {
-            return false;
-        }
-
-        // Check if current user is a trustee of the item's owner
-        const itemOwnerTrustees = item.expand?.owner?.trusts || [];
-        const isTrustee = itemOwnerTrustees.includes(locals.user?.id);
-
-        return isTrustee;
-    });
-
-
-    const uniquePlaces = Array.from(new Set(items.map(item => item.place))); // deduplicates places by creating a Set
-    const uniqueNames = Array.from(new Set(items.map(item => item.name)));
-
-    return {
-        items: filteredItems,
-        PB_IMG_URL: PB_URL,
-        uniqueNames: structuredClone(uniqueNames),
-        uniquePlaces: structuredClone(uniquePlaces),
-        userId: locals.user ? locals.user.id : null
-    };
-};
+	// Return data to the page
+	return {
+		items: filteredItems,
+		PB_IMG_URL: PB_URL,
+		uniquePlaces: uniquePlaces,
+		userId: locals.user ? locals.user.id : null
+	};
+}
