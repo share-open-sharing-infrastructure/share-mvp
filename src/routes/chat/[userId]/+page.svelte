@@ -1,7 +1,7 @@
 <script lang="ts">
     import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
-	import { env } from '$env/dynamic/public';
+	import { PUBLIC_PB_URL } from '$env/static/public';
     import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
 
@@ -33,7 +33,7 @@
         const chatPartnerId = data.currentChatPartner.id;
 
         // set up PB subscription here
-        pb = new PocketBase(env.PUBLIC_PB_URL);
+        pb = new PocketBase(PUBLIC_PB_URL);
         pb.authStore?.loadFromCookie(document.cookie || '')
 
         const topic = '*';

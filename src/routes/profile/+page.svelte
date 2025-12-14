@@ -44,7 +44,7 @@
 					">
 					<UserItemCard
 						item={item}
-						imgUrl={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
+						imgUrl={`${data.PUBLIC_PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`} 
 					/>
 					
 					<!-- BUTTONS -->

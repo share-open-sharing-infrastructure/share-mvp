@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { PB_URL } from '../../hooks.server';
+import { PUBLIC_PB_URL } from '$env/static/public';
 
 export async function load ({ locals }) {
 
@@ -36,7 +36,7 @@ export async function load ({ locals }) {
 
     return {
         items: filteredItems,
-        PB_IMG_URL: PB_URL,
+        PB_IMG_URL: PUBLIC_PB_URL,
         uniqueNames: structuredClone(uniqueNames),
         uniquePlaces: structuredClone(uniquePlaces),
         userId: locals.user ? locals.user.id : null
