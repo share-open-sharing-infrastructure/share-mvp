@@ -1,15 +1,15 @@
 import PocketBase from 'pocketbase';
-import { env } from '$env/dynamic/private';
+import { PUBLIC_PB_URL } from '$env/static/public'
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 
-export const PB_URL = env.PB_URL;
+export { PUBLIC_PB_URL };
 
 const unprotectedPrefix = ['/login', '/register', '/reset', '/search'];
 
 export const authentication: Handle = async ({ event, resolve }) => {
-	event.locals.pb = new PocketBase(env.PB_URL);
+	event.locals.pb = new PocketBase(PUBLIC_PB_URL);
 
 	event.locals.pb.authStore.loadFromCookie(event.request.headers.get('cookie') || '');
 
