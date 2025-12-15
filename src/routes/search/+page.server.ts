@@ -1,4 +1,4 @@
-import { PB_URL } from '../../hooks.server';
+import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { Item } from '$lib/types/models';
 import { filterTrustedItems } from '$lib/server/itemFilters';
 
@@ -23,7 +23,7 @@ export async function load({ locals }) {
 	// Return data to the page
 	return {
 		items: filteredItems,
-		PB_IMG_URL: PB_URL,
+		PB_IMG_URL: PUBLIC_PB_URL,
 		uniquePlaces: uniquePlaces,
 		userId: locals.user ? locals.user.id : null
 	};

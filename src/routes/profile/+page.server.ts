@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { PB_URL } from '../../hooks.server';
+import { PUBLIC_PB_URL } from '../../hooks.server';
 
 export async function load({ locals }) {
 	const user = await locals.pb.collection('users').getOne(
@@ -9,7 +9,7 @@ export async function load({ locals }) {
 
 	return {
 		user: user,
-		PB_URL: PB_URL
+		PB_URL: PUBLIC_PB_URL
 	};
 }
 
