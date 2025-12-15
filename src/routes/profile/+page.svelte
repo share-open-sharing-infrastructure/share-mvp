@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Alert } from 'flowbite-svelte';
+	import { Alert } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
 	import ItemModal from './ItemModal.svelte';
