@@ -1,4 +1,4 @@
-# Introduction
+# Best Practices
 
 This document aims to - well - document certain best practices for implementing recurring patterns in our code base. This is, of course, more of a guideline than a hard rule, but should help contributors understand how and why certain things are done the way they are.
 

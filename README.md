@@ -9,7 +9,9 @@ Here, we develop a first minimum viable product. Next milestones are roughly:
 - 06/2026: Ready for integration with lending organisations
 - 12/2026: Integration with lending organisations possible and demonstrated
 
-For a more fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
+For a more fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2). 
+
+If you wish to contribute or are otherwise interested in the project, please don't hesitate to get in touch via matteo.ramin@outlook.com.
 
 # Documentation
 
@@ -27,7 +29,7 @@ Create a local copy of this repository.
 
 In the root folder, create a `.env` file that stores your pocketbase URL e.g. `PB_URL=https://url...`.
 
-You also need to have a PocketBase instance running somewhere with a database scheme as documented in our [docs/data-model.md](/docs/data-model.md).
+You also need to have a PocketBase instance running somewhere with a database scheme as documented in our [docs/data-model.md](/docs/data-model.md) ([GitHub Page](https://share-open-sharing-infrastructure.github.io/share-mvp/data-model.html)).
 
 ### Install dependencies
 
@@ -49,3 +51,18 @@ npm run build
 ```
 
 You can preview the production build with `npm run preview`.
+
+# Testing
+We use [vitest](https://vitest.dev/guide/) for testing. To install vitest, run
+
+```bash
+npm install -D vitest
+```
+
+For running tests then, run
+
+```bash
+npm run test
+```
+
+For a basic introduction, check the tutorial on the vitest page: [Writing Tests in vitest](https://vitest.dev/guide/#writing-tests). For more extensive information, have a look at our work-in-progress testing documentation [/docs/testing-strategy.md](/docs/testing-strategy.md) ([GitHub Page](https://share-open-sharing-infrastructure.github.io/share-mvp/testing-strategy.html))
