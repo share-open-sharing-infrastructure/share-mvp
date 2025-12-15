@@ -10,17 +10,19 @@ describe('Chat page', () => {
         // Reset mocks before each test
         vi.clearAllMocks();
 
+        const currentUserId = 'user123';
         // Mock the PocketBase client
         mockLocals = {
             pb: {
                 authStore: {
-                    record: { id: 'user123' }
+                    record: { id: currentUserId }
                 },
                 collection: vi.fn((collectionName) => ({
                     create: vi.fn(),
                     getOne: vi.fn()
                 }))
-            }
+            },
+            user: { id: currentUserId }
         };
 
         mockParams = {
