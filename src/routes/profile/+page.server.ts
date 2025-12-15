@@ -24,15 +24,7 @@ export const actions = {
 
 		const imageIsMissing = !image || !(image instanceof File) || image.size === 0 || !image.name;
 
-		console.log('Creating item with data:', data);
-		console.log('Image info:', imageIsMissing, image);
-
 		if (!name || !description || !place || imageIsMissing) {
-			console.log('Name:', name);
-			console.log('Description:', description);
-			console.log('Place:', place);
-			console.log('Image is missing:', imageIsMissing);
-			console.log('Item creation failed due to missing fields.');
 			return fail(400, {
 				fail: true,
 				nameRequired: name === null,

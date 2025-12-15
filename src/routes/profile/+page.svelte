@@ -74,9 +74,7 @@
 					showAddModal = true;
 				}}
 				class="
-					/*               take it out of the normal flow */ /*
-					position in    the corner */ /* above other
-					content                */ fixed right-10 bottom-10 z-50
+					fixed right-10 bottom-10 z-50
 					h-10
 					w-10
 					rounded-full
@@ -95,7 +93,7 @@
 						showAddModal = true;
 					}}
 					class="
-						/*                above other content */ z-50
+						z-50
 						h-10
 						w-10
 						rounded-full
@@ -111,19 +109,8 @@
 	</div>
 </Section>
 
-<!-- MODALS AND STUFF -->
-
-
 <!-- Add Modal -->
-<ItemModal
-	bind:isVisible={showAddModal} 
-	type="add"  
-	{editingItem}
-	/>
+<ItemModal bind:isVisible={showAddModal} type="add" {editingItem} />
 
 <!-- Edit Modal -->
-<ItemModal
-	bind:isVisible={showEditModal} 
-	type="edit"
-	{editingItem} 
-	/>
+<ItemModal bind:isVisible={showEditModal} type="edit" {editingItem} />
