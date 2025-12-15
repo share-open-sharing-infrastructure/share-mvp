@@ -22,10 +22,10 @@
 
 <!-- HEADER -->
 <div class="m-2 mb-6 flex flex-col items-center justify-center">
-	<div class="text-2xl font-semibold text-gray-900 dark:text-white">Vertraute</div>
+	<div class="text-2xl font-semibold text-primary-900 dark:text-white">Vertraute</div>
 	<div>Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust.</div>
 	<div>
-		Du kannst dann <a href="/profile" class="text-secondary-600 hover:underline">deine Dinge</a> nur für diese
+		Du kannst dann <a href="/profile" class="text-primary-600 hover:underline">deine Dinge</a> nur für diese
 		Menschen sichtbar machen.
 	</div>
 </div>
@@ -37,7 +37,7 @@
 			<input
 				type="text"
 				placeholder="Ich vertraue..."
-				class="flex-1 rounded-l-md border border-gray-300 p-2 focus:ring-2 focus:ring-secondary-500 focus:outline-none"
+				class="flex-1 rounded-l-md border border-primary-300 p-2 focus:ring-2 focus:ring-primary-500 focus:outline-none"
 				bind:value={usernameToBeAdded}
 				onfocus={() => (showDropdown = true)}
 				oninput={() => (showDropdown = true)}
@@ -94,7 +94,7 @@
 			</div>
 			<form class="ml-auto" method="POST" action="?/removeTrustee" use:enhance>
 				<input type="hidden" name="trusteeId" value={trustee.id} />
-				<Button class="ml-auto cursor-pointer" type="submit">X</Button>
+				<Button class="ml-auto cursor-pointer bg-secondary-500 hover:bg-secondary-600" type="submit">X</Button>
 			</form>
 		</div>
 	{/each}

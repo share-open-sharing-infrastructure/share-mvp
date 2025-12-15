@@ -6,13 +6,13 @@
 </script>
 
 <Section name="login">
-	<Register href="/" class="w-md">
+	<Register class="w-md">
 		{#snippet top()}
 			Einloggen
 		{/snippet}
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			<form class="flex flex-col space-y-5" action="?/login" method="post">
-				<h3 class="p-0 text-xl font-medium text-gray-900 dark:text-white">Wilkommen zurück!</h3>
+				<h3 class="p-0 text-xl font-medium text-accent-900 dark:text-white">Wilkommen zurück!</h3>
 				{#if form?.fail}
 					<Alert>
 						<span class="font-medium">
@@ -50,7 +50,14 @@
 
 				<Button
 					type="submit"
-					class="me-2 mb-2 w-full rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
+					class="
+						me-2 mb-2 w-full rounded-lg 
+						bg-primary-400 px-5 py-2.5 text-sm font-medium text-white 
+						hover:bg-primary-500 focus:ring-4 focus:ring-primary-300 focus:outline-none 
+						dark:border-primary-700 dark:bg-primary-700 
+						dark:hover:bg-primary-800 dark:focus:ring-primary-700
+						cursor-pointer
+						"
 					>Anmelden</Button
 				>
 				<p class="mt-4 text-sm font-light text-gray-500 dark:text-gray-400">
