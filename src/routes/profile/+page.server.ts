@@ -81,21 +81,22 @@ export const actions = {
 			updateData.image = image;
 		}
 
+		const itemId = formData.get('itemId').toString();
 		try {
-			await locals.pb.collection('items').update(formData.get('itemId').toString(), updateData);
+			await locals.pb
+				.collection('items')
+				.update(itemId, updateData);
 		} catch (err) {
 			console.error(err?.message || err);
 		}
 	},
 
 	delete: async ({ locals, request }) => {
+		const itemId = (await request.formData()).get('itemId').toString();
 		try {
 			await locals.pb
 				.collection('items')
-				.delete(
-					(await request.formData())
-						.get('itemId')
-						.toString());
+				.delete(itemId);
 		} catch (error) {
 			console.error(error?.message || error);
 		}

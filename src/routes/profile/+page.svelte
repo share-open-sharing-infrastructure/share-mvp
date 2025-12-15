@@ -4,6 +4,8 @@
 	import UserItemCard from './UserItemCard.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import type { Item } from '$lib/types/models';
+	import AddButton from './AddButton.svelte';
+	import EditButton from './EditButton.svelte';
 
 	let { data, form } = $props();
 
@@ -43,68 +45,22 @@
 		{#if data?.user?.expand?.items_via_owner?.length}
 			{#each data.user.expand.items_via_owner as item}
 				<div
-					class="mx-auto mb-4 w-full
+					class="mx-auto mb-4 w-full p-1
 					rounded-lg border md:w-2/3 lg:w-1/2
 					"
 				>
 					<UserItemCard {item} imgUrl={getItemImageUrl(item, data.PB_URL)} />
-
-					<!-- BUTTONS -->
-					<div class="flex p-1">
-						<Button
-							class="
-								w-full
-								border
-								bg-gray-800 
-								p-1 text-white 
-								hover:bg-gray-900
-								focus:ring-4 focus:ring-gray-300 focus:outline-none 
-								dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-							onclick={() => {
-								editingItemId = item.id;
-								showEditModal = true;
-							}}
-						>
-							Bearbeiten
-						</Button>
-					</div>
+					<EditButton onclick={() => {
+							editingItemId = item.id;
+							showEditModal = true;
+						}}/>
 				</div>
 			{/each}
-			<Button
-				onclick={() => {
-					showAddModal = true;
-				}}
-				class="
-					fixed right-10 bottom-10 z-50
-					h-10
-					w-10
-					rounded-full
-					text-lg
-					shadow-lg focus:ring-4
-					focus:ring-gray-300
-				"
-			>
-				+
-			</Button>
+			<AddButton onclick={() => { showAddModal = true;}} floating={true} />
 		{:else}
 			<div class="flex flex-col items-center text-center text-gray-500">
 				<p>Bisher verleihst du noch keine Gegenstände.</p>
-				<Button
-					onclick={() => {
-						showAddModal = true;
-					}}
-					class="
-						z-50
-						h-10
-						w-10
-						rounded-full
-						text-lg
-						shadow-lg focus:ring-4
-						focus:ring-gray-300
-					"
-				>
-					+
-				</Button>
+				<AddButton onclick={() => { showAddModal = true; }} floating={false} />
 			</div>
 		{/if}
 	</div>
