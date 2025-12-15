@@ -21,19 +21,20 @@
 		enctype="multipart/form-data"
 		use:enhance
 	>
-		<Img 
-			src={imgUrl ? imgUrl : '/placeholder-image.png'}
-			class="mx-auto h-48 w-full rounded-md object-cover p-5"
-			>
-		</Img>
+		{#if type === 'edit'}
+			<Input type="text" name="itemId" value={editingItem?.id} hidden />
+			<Img 
+				src={imgUrl ? imgUrl : '/placeholder-image.png'}
+				class="mx-auto h-48 w-full rounded-md object-cover p-5"
+				>
+			</Img>
+		{/if}
 		<Label class="space-y-2">
 			<span>{type === 'edit' ? 'Bild ändern' : 'Bild hinzufügen'}</span>
 			<Fileupload type="file" id="with_helper" name="itemImage" class="mb-2" />
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
-		{#if type === 'edit'}
-			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-		{/if}
+		
 		<Label class="space-y-2">
 			<span>Name:</span>
 			<Input
