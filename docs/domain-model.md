@@ -1,4 +1,4 @@
-# Overview
+# Domain Model
 
 This file documents conceptual questions.
 

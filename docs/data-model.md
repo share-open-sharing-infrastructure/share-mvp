@@ -1,4 +1,4 @@
-# Overview
+# Data Model
 
 Here live the ER schemas as (should be) implemented in the database version of the current branch.
 

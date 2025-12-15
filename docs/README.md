@@ -6,4 +6,6 @@ For diagramming, we use [Mermaid.js](https://mermaid.js.org/). Everything else i
 
 - [domain-model.md](domain-model.md) contains higher-level diagrams useful for conceptual understanding and work.
 - [data-model.md](data-model.md) contains the ER diagram that maps directly onto the database structure.
+- [best-practices.md](best-practices.md) documents architecture or code patterns we rely on and would ask contributors to consider when implementing.
+- [testing-strategy.md](testing-strategy.md) contains the current status of and explanations for testing.  
 - Actual TypeScript types as used in the source code live in "src/lib/types/models.ts".
