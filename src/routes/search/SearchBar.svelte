@@ -15,7 +15,7 @@
             <Search
                 size="md"
                 class="mr-4 flex flex-col"
-                classes={{ input: 'focus:ring-gray-700 focus:border-gray-700' }}
+                classes={{ input: 'focus:ring-primary-700 focus:border-primary-700' }}
                 placeholder="Suche Dinge..."
                 bind:value={searchText.value}
             />
@@ -42,11 +42,11 @@
             <Dropdown simple class="w-48 p-2 text-sm">
                 <h6 class="mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">Ort</h6>
                 {#each uniquePlaces as place}
-                    <li class="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-600">
+                    <li class="rounded p-1 hover:bg-primary-50 dark:hover:bg-primary-900">
                         <Checkbox
                             checked
                             inline
-                            class="text-gray-900 focus:ring-gray-700"
+                            class="text-gray-900 focus:ring-primary-700"
                             bind:group={selectedPlaces}
                             value={place}>{place}</Checkbox
                         >

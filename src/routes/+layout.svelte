@@ -89,7 +89,7 @@
 	</iframe>
 </Modal>
 
-<Footer footerType="socialmedia" class="bg-gray-100">
+<Footer footerType="socialmedia" class="bg-primary-50">
 	<div class="mx-auto my-10 max-w-screen-xl text-center">
 		<FooterBrand
 			href="#"

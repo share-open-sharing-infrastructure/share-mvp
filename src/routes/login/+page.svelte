@@ -27,7 +27,7 @@
 						type="email"
 						name="email"
 						placeholder="E-Mail Adresse"
-						class="focus:border-gray-700 focus:ring-gray-700"
+						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>
 				</Label>
@@ -37,25 +37,25 @@
 						type="password"
 						name="password"
 						placeholder="••••••••••"
-						class="focus:border-gray-700 focus:ring-gray-700"
+						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>
 				</Label>
 
 				<p class="mt-2 text-sm font-light text-gray-500 dark:text-gray-400">
-					<a href="/reset" class="font-medium text-gray-800 hover:underline dark:text-gray-300"
+					<a href="/reset" class="font-medium text-primary-800 hover:underline dark:text-primary-300"
 						>Passwort vergessen?</a
 					>
 				</p>
 
 				<Button
 					type="submit"
-					class="me-2 mb-2 w-full rounded-lg bg-gray-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+					class="me-2 mb-2 w-full rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
 					>Anmelden</Button
 				>
 				<p class="mt-4 text-sm font-light text-gray-500 dark:text-gray-400">
 					Noch keinen Account?
-					<a href="/register" class="font-medium text-gray-800 hover:underline dark:text-gray-300"
+					<a href="/register" class="font-medium text-primary-800 hover:underline dark:text-primary-300"
 						>Registrieren</a
 					>
 				</p>

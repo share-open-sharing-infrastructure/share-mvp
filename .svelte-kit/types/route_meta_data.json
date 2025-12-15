@@ -1,0 +1,58 @@
+{
+	"/": [
+		"src/routes/+page.server.ts",
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/chat": [
+		"src/routes/chat/+layout.server.ts",
+		"src/routes/+layout.server.ts",
+		"src/routes/chat/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/chat/[userId]": [
+		"src/routes/chat/[userId]/+page.server.ts",
+		"src/routes/chat/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/login": [
+		"src/routes/login/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/logout": [
+		"src/routes/+layout.server.ts",
+		"src/routes/logout/+server.ts"
+	],
+	"/org": [
+		"src/routes/+layout.server.ts"
+	],
+	"/org/about": [
+		"src/routes/+layout.server.ts"
+	],
+	"/org/contact": [
+		"src/routes/+layout.server.ts"
+	],
+	"/org/imprint": [
+		"src/routes/+layout.server.ts"
+	],
+	"/profile": [
+		"src/routes/profile/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/register": [
+		"src/routes/register/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/reset": [
+		"src/routes/reset/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/search": [
+		"src/routes/search/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/social": [
+		"src/routes/social/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	]
+}

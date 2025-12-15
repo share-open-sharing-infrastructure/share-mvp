@@ -53,11 +53,11 @@
 							class="
 								w-full
 								border
-								bg-gray-800 
+								bg-primary-700 
 								p-1 text-white 
-								hover:bg-gray-900
-								focus:ring-4 focus:ring-gray-300 focus:outline-none 
-								dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+								hover:bg-primary-800
+								focus:ring-4 focus:ring-primary-300 focus:outline-none 
+								dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
 							onclick={() => {
 								editingItemId = item.id;
 								editModal = true;
@@ -81,7 +81,7 @@
 					rounded-full
 					text-lg
 					shadow-lg focus:ring-4
-					focus:ring-gray-300
+					focus:ring-primary-300
 				"
 			>
 				+
@@ -100,7 +100,7 @@
 						rounded-full
 						text-lg
 						shadow-lg focus:ring-4
-						focus:ring-gray-300
+						focus:ring-primary-300
 					"
 				>
 					+
@@ -144,7 +144,7 @@
 			<Toggle name="trusteesOnly">Nur an Vertraute verleihen</Toggle>
 		</Label>
 		<Button
-			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+			class="bg-primary-700 text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
 			type="submit"
 			onclick={() => {
 				addModal = false;
@@ -202,7 +202,7 @@
 			<Toggle name="trusteesOnly" checked={editingItem.trusteesOnly}>Nur an Vertraute</Toggle>
 		</Label>
 		<Button
-			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+			class="bg-primary-700 text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
 			type="submit"
 			onclick={() => {
 				editModal = false;

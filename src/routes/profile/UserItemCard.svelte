@@ -10,7 +10,7 @@
 <div class="flex max-h-36 p-1">
 	<!-- IMAGE -->
 	<div class="flex-shrink-0 p-1">
-		<div class="h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
+		<div class="h-16 w-16 overflow-hidden rounded-lg bg-primary-100">
 			<Img src={imgUrl} alt={item.name} class="h-full w-full object-cover" loading="lazy" />
 		</div>
 	</div>

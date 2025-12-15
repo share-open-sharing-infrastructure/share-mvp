@@ -25,7 +25,7 @@
 	<div class="text-2xl font-semibold text-gray-900 dark:text-white">Vertraute</div>
 	<div>Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust.</div>
 	<div>
-		Du kannst dann <a href="/profile" class="text-blue-600 hover:underline">deine Dinge</a> nur für diese
+		Du kannst dann <a href="/profile" class="text-secondary-600 hover:underline">deine Dinge</a> nur für diese
 		Menschen sichtbar machen.
 	</div>
 </div>
@@ -37,7 +37,7 @@
 			<input
 				type="text"
 				placeholder="Ich vertraue..."
-				class="flex-1 rounded-l-md border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+				class="flex-1 rounded-l-md border border-gray-300 p-2 focus:ring-2 focus:ring-secondary-500 focus:outline-none"
 				bind:value={usernameToBeAdded}
 				onfocus={() => (showDropdown = true)}
 				oninput={() => (showDropdown = true)}
@@ -63,7 +63,7 @@
 					>
 						<input type="hidden" name="trusteeId" value={potentialFriend.id} />
 						<button
-							class="flex w-full cursor-pointer items-center p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+							class="flex w-full cursor-pointer items-center p-3 text-left hover:bg-primary-50 dark:hover:bg-primary-900"
 							type="submit"
 						>
 							<span class="text-gray-900 dark:text-white">@{potentialFriend.username}</span>
