@@ -1,31 +1,31 @@
 <script lang="ts">
-	import type { Item } from "$lib/types";
-	import { Img } from "flowbite-svelte";
+	import type { Item } from '$lib/types/models';
+	import { Badge, Img } from 'flowbite-svelte';
 
-    export let item: Item;
-    export let imgUrl: string;
+	export let item: Item;
+	export let imgUrl: string;
 </script>
 
 <!-- CONTENT -->
-<div class="flex p-1 max-h-36">
-    <!-- IMAGE -->
-    <div class="p-1 flex-shrink-0">
-        <div class="h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
-            <Img
-                src={imgUrl} alt={item.name}
-                class="h-full w-full object-cover"
-                loading="lazy"
-            />
-        </div>
-    </div>
+<div class="flex max-h-36 p-1">
+	<!-- IMAGE -->
+	<div class="flex-shrink-0 p-1">
+		<div class="h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
+			<Img src={imgUrl} alt={item.name} class="h-full w-full object-cover" loading="lazy" />
+		</div>
+	</div>
 
-    <!-- TEXT -->
-    <div class="p-1 px-2 border-l mx-2 overflow-hidden">
-        <div class="text-lg font-bold p-1">
-            {item.name}
-        </div>
-        <div class="p-1 my-2">
-            {item.description}
-        </div>
-    </div>
+	<!-- TEXT -->
+	<div class="mx-2 overflow-hidden border-l p-1 px-2">
+		<div class="p-1 text-lg font-bold">
+			{item.name}
+		</div>
+		<div class="my-2 p-1">
+			{item.description}
+		</div>
+	</div>
 </div>
+
+{#if item.trusteesOnly}
+	<Badge color="green" class="m-2">Nur an Vertraute</Badge>
+{/if}
