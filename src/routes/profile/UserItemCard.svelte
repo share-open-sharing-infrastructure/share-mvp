@@ -2,8 +2,12 @@
 	import type { Item } from '$lib/types/models';
 	import { Badge, Img } from 'flowbite-svelte';
 
-	export let item: Item;
-	export let imgUrl: string;
+	interface Props {
+		item: Item;
+		imgUrl: string;
+	}
+
+	let { item, imgUrl }: Props = $props();
 </script>
 
 <!-- CONTENT -->

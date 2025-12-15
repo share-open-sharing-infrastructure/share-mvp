@@ -16,6 +16,10 @@
 			? data.user.expand.items_via_owner.find((item: Item) => item.id === editingItemId)
 			: null
 	);
+
+	function getItemImageUrl(item: Item, baseUrl: string): string {
+		return `${baseUrl}api/files/${item?.collectionId}/${item?.id}/${item?.image}`;
+	}
 </script>
 
 <!-- User's items (although maybe that should be its own page) -->
@@ -43,10 +47,7 @@
 					rounded-lg border md:w-2/3 lg:w-1/2
 					"
 				>
-					<UserItemCard
-						{item}
-						imgUrl={`${data.PB_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
-					/>
+					<UserItemCard {item} imgUrl={getItemImageUrl(item, data.PB_URL)} />
 
 					<!-- BUTTONS -->
 					<div class="flex p-1">
@@ -117,5 +118,5 @@
 	bind:isVisible={showEditModal}
 	type="edit"
 	{editingItem}
-	imgUrl={`${data.PB_URL}api/files/${editingItem?.collectionId}/${editingItem?.id}/${editingItem?.image}`}
+	imgUrl={getItemImageUrl(editingItem, data.PB_URL)}
 />

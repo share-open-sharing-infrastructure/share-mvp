@@ -1,5 +1,14 @@
 <script lang="ts">
-	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle, Img, img } from 'flowbite-svelte';
+	import {
+		Modal,
+		Button,
+		Input,
+		Label,
+		Fileupload,
+		Helper,
+		Toggle,
+		Img
+	} from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import type { Item } from '$lib/types/models';
 
@@ -9,7 +18,7 @@
 		editingItem?: Item | null;
 		imgUrl?: string;
 	}
-	
+
 	let { isVisible = $bindable(), type, editingItem, imgUrl }: Props = $props();
 </script>
 
@@ -19,22 +28,28 @@
 		action="?/{type === 'edit' ? 'update' : 'create'}"
 		method="POST"
 		enctype="multipart/form-data"
-		use:enhance
+		use:enhance={() => {
+			return async ({ result, update }) => {
+				if (result.type === 'success') {
+					isVisible = false;
+				}
+				await update();
+			};
+		}}
 	>
 		{#if type === 'edit'}
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Img 
+			<Img
 				src={imgUrl ? imgUrl : '/placeholder-image.png'}
 				class="mx-auto h-48 w-full rounded-md object-cover p-5"
-				>
-			</Img>
+			></Img>
 		{/if}
 		<Label class="space-y-2">
 			<span>{type === 'edit' ? 'Bild ändern' : 'Bild hinzufügen'}</span>
 			<Fileupload type="file" id="with_helper" name="itemImage" class="mb-2" />
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
-		
+
 		<Label class="space-y-2">
 			<span>Name:</span>
 			<Input
@@ -75,22 +90,26 @@
 		<Button
 			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 			type="submit"
-			onclick={() => {
-				isVisible = false;
-			}}
 		>
 			{type === 'edit' ? 'Speichern' : 'Hinzufügen'}
 		</Button>
 	</form>
 	{#if type === 'edit'}
-		<form method="POST" action="?/delete" use:enhance class="mt-4 flex w-full justify-end">
+		<form
+			method="POST"
+			action="?/delete"
+			use:enhance={() => {
+				return async ({ result, update }) => {
+					if (result.type === 'success') {
+						isVisible = false;
+					}
+					await update();
+				};
+			}}
+			class="mt-4 flex w-full justify-end"
+		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button
-				type="submit"
-				onclick={() => {
-					isVisible = false;
-				}}>Löschen</Button
-			>
+			<Button type="submit">Löschen</Button>
 		</form>
 	{/if}
 </Modal>
