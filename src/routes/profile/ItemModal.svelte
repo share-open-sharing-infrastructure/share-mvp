@@ -1,16 +1,16 @@
 <script lang="ts">
-	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle } from 'flowbite-svelte';
+	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle, Img, img } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import type { Item } from '$lib/types/models';
 
 	interface Props {
 		isVisible: boolean;
 		type: 'add' | 'edit';
-		editingItem: Item | null;
+		editingItem?: Item | null;
+		imgUrl?: string;
 	}
 	
-	// This is still a bit suboptimal because we have to pass both editingItemId and editingItem from the parent even if we want to add a new item.
-	let { isVisible = $bindable(), type, editingItem }: Props = $props();
+	let { isVisible = $bindable(), type, editingItem, imgUrl }: Props = $props();
 </script>
 
 <Modal bind:open={isVisible} size="xs">
@@ -21,6 +21,11 @@
 		enctype="multipart/form-data"
 		use:enhance
 	>
+		<Img 
+			src={imgUrl ? imgUrl : '/placeholder-image.png'}
+			class="mx-auto h-48 w-full rounded-md object-cover p-5"
+			>
+		</Img>
 		<Label class="space-y-2">
 			<span>{type === 'edit' ? 'Bild ändern' : 'Bild hinzufügen'}</span>
 			<Fileupload type="file" id="with_helper" name="itemImage" class="mb-2" />
