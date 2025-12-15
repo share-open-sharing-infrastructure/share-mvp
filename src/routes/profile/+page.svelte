@@ -113,4 +113,9 @@
 <ItemModal bind:isVisible={showAddModal} type="add" />
 
 <!-- Edit Modal -->
-<ItemModal bind:isVisible={showEditModal} type="edit" {editingItem} imgUrl={`${data.PB_URL}api/files/${editingItem.collectionId}/${editingItem.id}/${editingItem.image}`} />
+<ItemModal
+	bind:isVisible={showEditModal}
+	type="edit"
+	{editingItem}
+	imgUrl={`${data.PB_URL}api/files/${editingItem?.collectionId}/${editingItem?.id}/${editingItem?.image}`}
+/>
