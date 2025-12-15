@@ -8,7 +8,7 @@
 </script>
 <Section
     name="tableheader"
-    sectionClass="dark:bg-gray-900 flex pt-8 mx-auto max-w-5xl dark:hover:bg-gray-700"
+    sectionClass="dark:bg-primary-900 flex pt-8 mx-auto max-w-5xl dark:hover:bg-primary-800"
 >
     <TableHeader headerType="search">
         {#snippet search()}

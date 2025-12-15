@@ -47,7 +47,7 @@
 
 		{#if showDropdown && filteredUsers.length > 0}
 			<div
-				class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+				class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-primary-700 dark:bg-primary-900"
 			>
 				{#each filteredUsers as potentialFriend}
 					<form
@@ -83,7 +83,7 @@
 		</p>
 	{/if}
 	{#each data.trustees as trustee}
-		<div class="flex items-center space-x-4 border-b border-gray-200 p-4 dark:border-gray-700">
+		<div class="flex items-center space-x-4 border-b border-gray-200 p-4 dark:border-primary-700">
 			<img
 				src={trustee.profilePic}
 				alt="Profile picture of {trustee.username}"

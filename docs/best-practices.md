@@ -8,6 +8,7 @@ We have found that creating well-running forms can give you some headache, but h
 For the official SvelteKit tutorial, see: https://svelte.dev/tutorial/kit/the-form-element and the subsequent tutorial elements.
 
 In this app, forms are basically connected to three separate components:
+
 1. The HTML form itself (in the +page.svelte component).
 2. The action that is triggered by the form submission (in the +page.server.ts actions object).
 3. The data (re-)loading that happens as an effect of the form updated database state (in the +page.server.ts load function).
