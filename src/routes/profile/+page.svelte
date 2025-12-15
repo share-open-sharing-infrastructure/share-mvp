@@ -1,21 +1,20 @@
-<script>
+<script lang="ts">
 	import { Button, Alert } from 'flowbite-svelte';
 	import { Section } from 'flowbite-svelte-blocks';
 	import UserItemCard from './UserItemCard.svelte';
-	import AddModal from './AddModal.svelte';
-	import EditModal from './EditModal.svelte';
 	import ItemModal from './ItemModal.svelte';
+	import type { Item } from '$lib/types/models';
 
 	let { data, form } = $props();
 
-	let addModal = $state(false);
+	let showAddModal = $state(false);
 
-	let editModal = $state(false);
+	let showEditModal = $state(false);
 	let editingItemId = $state('');
 	let editingItem = $derived(
 		data?.user?.expand?.items_via_owner
-			? data.user.expand.items_via_owner.find((item) => item.id === editingItemId)
-			: undefined
+			? data.user.expand.items_via_owner.find((item: Item) => item.id === editingItemId)
+			: null
 	);
 </script>
 
@@ -62,7 +61,7 @@
 								dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 							onclick={() => {
 								editingItemId = item.id;
-								editModal = true;
+								showEditModal = true;
 							}}
 						>
 							Bearbeiten
@@ -72,7 +71,7 @@
 			{/each}
 			<Button
 				onclick={() => {
-					addModal = true;
+					showAddModal = true;
 				}}
 				class="
 					/*               take it out of the normal flow */ /*
@@ -93,7 +92,7 @@
 				<p>Bisher verleihst du noch keine Gegenstände.</p>
 				<Button
 					onclick={() => {
-						addModal = true;
+						showAddModal = true;
 					}}
 					class="
 						/*                above other content */ z-50
@@ -116,7 +115,15 @@
 
 
 <!-- Add Modal -->
-<AddModal bind:addModal={addModal} />
+<ItemModal
+	bind:isVisible={showAddModal} 
+	type="add"  
+	{editingItem}
+	/>
 
 <!-- Edit Modal -->
-<EditModal bind:editModal={editModal} {editingItemId} {editingItem} />
+<ItemModal
+	bind:isVisible={showEditModal} 
+	type="edit"
+	{editingItem} 
+	/>

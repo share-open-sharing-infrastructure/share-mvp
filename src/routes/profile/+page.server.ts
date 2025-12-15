@@ -1,4 +1,4 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { PB_URL } from '../../hooks.server';
 
 export async function load({ locals }) {
@@ -16,15 +16,23 @@ export async function load({ locals }) {
 export const actions = {
 	create: async ({ locals, request }) => {
 		const data = await request.formData();
-		const name = data.get('name');
-		const description = data.get('description');
-		const place = data.get('place');
-		const image = data.get('image');
+		const name = data.get('itemName');
+		const description = data.get('itemDescription');
+		const place = data.get('itemPlace');
+		const image = data.get('itemImage');
 		const trusteesOnly = data.get('trusteesOnly') === 'on' ? true : false;
 
-		const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
+		const imageIsMissing = !image || !(image instanceof File) || image.size === 0 || !image.name;
 
-		if (!name || !description || !place || noImage) {
+		console.log('Creating item with data:', data);
+		console.log('Image info:', imageIsMissing, image);
+
+		if (!name || !description || !place || imageIsMissing) {
+			console.log('Name:', name);
+			console.log('Description:', description);
+			console.log('Place:', place);
+			console.log('Image is missing:', imageIsMissing);
+			console.log('Item creation failed due to missing fields.');
 			return fail(400, {
 				fail: true,
 				nameRequired: name === null,
@@ -55,7 +63,7 @@ export const actions = {
 		const name = formData.get('itemName');
 		const description = formData.get('itemDescription');
 		const place = formData.get('itemPlace');
-		const image = formData.get('image');
+		const image = formData.get('itemImage');
 
 		if (!name || !description || !place) {
 			return fail(400, {

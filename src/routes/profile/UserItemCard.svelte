@@ -23,6 +23,9 @@
 		<div class="my-2 p-1">
 			{item.description}
 		</div>
+		<div class="my-2 p-1">
+			{item.place}
+		</div>
 	</div>
 </div>
 
