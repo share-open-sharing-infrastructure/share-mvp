@@ -19,11 +19,16 @@ function validateItemData(data: FormData, isImageRequired: boolean = true) {
 	const place = data.get('itemPlace');
 	const image = data.get('itemImage');
 
+	// Check if image is a valid image file
+	const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+	const isValidImage = image instanceof File && image.size > 0 && validImageTypes.includes(image.type);
+
 	const errors = {
 		nameIsMissing: !name,
 		descriptionIsMissing: !description,
 		placeIsMissing: !place,
-		imageIsMissing: isImageRequired ? (!image || !(image instanceof File) || image.size === 0) : false
+		imageIsMissing: isImageRequired ? (!image || !(image instanceof File) || image.size === 0) : false,
+		imageInvalidType: image instanceof File && image.size > 0 ? !isValidImage : false
 	};
 
 	return { isValid: Object.values(errors).every(e => !e), errors };
@@ -38,7 +43,7 @@ export const actions = {
 			return fail(400, {
 				fail: true,
 				missingFields: validationResult.errors,
-				message: 'Es fehlen erforderliche Felder.'
+				message: 'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.'
 			});
 		}
 
@@ -64,7 +69,7 @@ export const actions = {
 			return fail(400, {
 				fail: true,
 				missingFields: validationResult.errors,
-				message: 'Es fehlen erforderliche Felder.'
+				message: 'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.'
 			});
 		}
 

@@ -46,7 +46,8 @@
 		{/if}
 		<Label class="space-y-2">
 			<span>{type === 'edit' ? 'Bild ändern' : 'Bild hinzufügen'}</span>
-			<Fileupload type="file" id="with_helper" name="itemImage" class="mb-2" />
+			<Fileupload type="file" id="with_helper" name="itemImage" class="mb-2" accept="image/*"
+			/>
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
 
