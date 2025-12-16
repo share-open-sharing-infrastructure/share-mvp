@@ -2,14 +2,18 @@
 	import type { Item } from '$lib/types/models';
 	import { Badge, Img } from 'flowbite-svelte';
 
-	export let item: Item;
-	export let imgUrl: string;
+	interface Props {
+		item: Item;
+		imgUrl: string;
+	}
+
+	let { item, imgUrl }: Props = $props();
 </script>
 
 <!-- CONTENT -->
 <div class="flex max-h-36 p-1">
 	<!-- IMAGE -->
-	<div class="flex-shrink-0 p-1">
+	<div class="shrink-0 p-1">
 		<div class="h-16 w-16 overflow-hidden rounded-lg bg-gray-100">
 			<Img src={imgUrl} alt={item.name} class="h-full w-full object-cover" loading="lazy" />
 		</div>
@@ -22,6 +26,9 @@
 		</div>
 		<div class="my-2 p-1">
 			{item.description}
+		</div>
+		<div class="my-2 p-1">
+			{item.place}
 		</div>
 	</div>
 </div>
