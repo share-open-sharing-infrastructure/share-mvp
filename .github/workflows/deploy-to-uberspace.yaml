@@ -25,6 +25,8 @@ jobs:
 
       - name: Build Svelte app
         run: npm run build
+        env:
+          PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
 
       - name: Deploy using Rsync
         uses: burnett01/rsync-deployments@8.0.2
