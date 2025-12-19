@@ -46,3 +46,4 @@ jobs:
           script: |
             cd share-mvp
             npm ci
+            supervisorctl restart svelte
