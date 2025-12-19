@@ -36,9 +36,17 @@ jobs:
         with:
           switches: -avrh --delete --exclude="node_modules"
           path: /
-          rsh: npm ci
           remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
           remote_key_pass: ${{ secrets.SSH_PRIVATE_KEY_PASS }}
+      - name: Install node modules
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd share-mvp
+            npm ci
