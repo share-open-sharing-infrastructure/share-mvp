@@ -36,6 +36,7 @@ jobs:
         with:
           switches: -avrh --delete --exclude="node_modules"
           path: /
+          rsh: npm ci
           remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
