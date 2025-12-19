@@ -27,10 +27,6 @@ jobs:
         run: npm run build
         env:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
-      - name: list
-        run: |
-          ls -la build
-          ls
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:
@@ -49,4 +45,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd share-mvp
+            npm ci dotenv
             npm ci
