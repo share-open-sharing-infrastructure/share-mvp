@@ -34,21 +34,8 @@ jobs:
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:
-          switches: -avrh --delete
-          path: build/
-          remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/build
-          remote_host: ${{ vars.SSH_HOST }}
-          remote_user: ${{ vars.SSH_USERNAME }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          remote_key_pass: ${{ secrets.SSH_PRIVATE_KEY_PASS }}
-
-      - name: Deploy package.json files
-        uses: burnett01/rsync-deployments@8.0.2
-        with:
-          switches: -avrh
-          path: |
-            package.json
-            package-lock.json
+          switches: -avrh --delete --include="/build" --include="package.json" --include="package.lock.json"
+          path: /
           remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
