@@ -23,6 +23,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Set up SSH known_hosts to remove host from stdout
+      - name: Setup SSH known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ vars.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
       - name: Build Svelte app
         run: npm run build
         env:
@@ -38,3 +44,5 @@ jobs:
           remote_user: ${{ vars.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
           remote_key_pass: ${{ secrets.SSH_PRIVATE_KEY_PASS }}
+          # to disable ssh output
+          ssh_opts: -q
