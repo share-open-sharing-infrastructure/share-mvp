@@ -45,5 +45,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd share-mvp
-            npm ci dotenv
             npm ci
