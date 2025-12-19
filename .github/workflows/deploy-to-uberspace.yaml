@@ -33,7 +33,7 @@ jobs:
         with:
           switches: -avrh --delete
           path: build/
-          remote_path: /share-mvp/
+          remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
