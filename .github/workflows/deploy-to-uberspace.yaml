@@ -31,34 +31,14 @@ jobs:
         run: |
           ls -la build
           ls
-
-      - name: Copy package.json and package-lock.json
-        uses: burnett01/rsync-deployments@8.0.2
-        with:
-          switches: -avrh
-          path: |
-            package.json
-            package-lock.json
-          remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
-          remote_host: ${{ vars.SSH_HOST }}
-          remote_user: ${{ vars.SSH_USERNAME }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          remote_key_pass: ${{ secrets.SSH_PRIVATE_KEY_PASS }}
-
-      - name: Install dependencies on server
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.SSH_PRIVATE_KEY }} ${{ vars.SSH_USERNAME }}@${{ vars.SSH_HOST }} "
-            cd /home/${{ vars.SSH_USERNAME }}/share-mvp/build &&
-            npm ci --omit=dev
-          "
-
       - name: Deploy using Rsync
         uses: burnett01/rsync-deployments@8.0.2
         with:
           switches: -avrh --delete
           path: |
             build/
-          remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/build
+            package.json
+          remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
