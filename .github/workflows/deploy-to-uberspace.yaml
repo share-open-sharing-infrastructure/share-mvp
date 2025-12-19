@@ -35,9 +35,7 @@ jobs:
         uses: burnett01/rsync-deployments@8.0.2
         with:
           switches: -avrh --delete
-          path: |
-            build/
-            package.json
+          path: build/
           remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
