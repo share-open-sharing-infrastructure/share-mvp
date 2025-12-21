@@ -1,0 +1,42 @@
+name: Build and Deploy to Uberspace
+on:
+  push:
+    branches: [main]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v6.1.0
+        with:
+          node-version: 25.2.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Svelte app
+        run: npm run build
+        env:
+          PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
+      - name: Deploy build folder
+        uses: burnett01/rsync-deployments@8.0.2
+        with:
+          switches: -avrh --delete --exclude="node_modules" --exclude="src" --exclude="docs"
+          path: /
+          remote_path: /home/${{ vars.SSH_USERNAME }}/share-mvp/
+          remote_host: ${{ vars.SSH_HOST }}
+          remote_user: ${{ vars.SSH_USERNAME }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          remote_key_pass: ${{ secrets.SSH_PRIVATE_KEY_PASS }}
+      - name: Install node modules on server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd share-mvp
+            npm ci
+            supervisorctl restart svelte

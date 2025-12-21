@@ -1,4 +1,4 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 
 export async function load({ locals }) {
@@ -13,35 +13,48 @@ export async function load({ locals }) {
 	};
 }
 
+function validateItemData(data: FormData, isImageRequired: boolean = true) {
+	const name = data.get('itemName');
+	const description = data.get('itemDescription');
+	const place = data.get('itemPlace');
+	const image = data.get('itemImage');
+
+	// Check if image is a valid image file
+	const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+	const isValidImage = image instanceof File && image.size > 0 && validImageTypes.includes(image.type);
+
+	const errors = {
+		nameIsMissing: !name,
+		descriptionIsMissing: !description,
+		placeIsMissing: !place,
+		imageIsMissing: isImageRequired ? (!image || !(image instanceof File) || image.size === 0) : false,
+		imageInvalidType: image instanceof File && image.size > 0 ? !isValidImage : false
+	};
+
+	return { isValid: Object.values(errors).every(e => !e), errors };
+}
+
 export const actions = {
 	create: async ({ locals, request }) => {
-		const data = await request.formData();
-		const name = data.get('name');
-		const description = data.get('description');
-		const place = data.get('place');
-		const image = data.get('image');
-		const trusteesOnly = data.get('trusteesOnly') === 'on' ? true : false;
+		const formData = await request.formData();
+		const validationResult = validateItemData(formData, true);
 
-		const noImage = !image || !(image instanceof File) || image.size === 0 || !image.name;
-
-		if (!name || !description || !place || noImage) {
+		if (!validationResult.isValid) {
 			return fail(400, {
 				fail: true,
-				nameRequired: name === null,
-				descriptionRequired: description === null,
-				placeRequired: place === null,
-				message: 'Gegenstand konnte nicht hinzugefügt werden.'
+				missingFields: validationResult.errors,
+				message: 'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.'
 			});
 		}
 
 		try {
 			await locals.pb.collection('items').create({
-				name: name,
-				description: description,
-				place: place,
-				image: image,
+				name: formData.get('itemName'),
+				description: formData.get('itemDescription'),
+				place: formData.get('itemPlace'),
+				image: formData.get('itemImage'),
 				owner: locals.user.id,
-				trusteesOnly: trusteesOnly
+				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false
 			});
 		} catch (error) {
 			console.error(error?.message || error);
@@ -50,46 +63,45 @@ export const actions = {
 
 	update: async ({ locals, request }) => {
 		const formData = await request.formData();
+		const validationResult = validateItemData(formData, false);
 
-		const id = formData.get('itemId').toString();
-		const name = formData.get('itemName');
-		const description = formData.get('itemDescription');
-		const place = formData.get('itemPlace');
-		const image = formData.get('image');
-
-		if (!name || !description || !place) {
+		if (!validationResult.isValid) {
 			return fail(400, {
-				nameRequired: name === null,
-				descriptionRequired: description === null,
-				placeRequired: place === null
+				fail: true,
+				missingFields: validationResult.errors,
+				message: 'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.'
 			});
 		}
 
+		const updateData: Record<string, any> = {
+			name: formData.get('itemName'),
+			description: formData.get('itemDescription'),
+			place: formData.get('itemPlace'),
+			trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false
+		};
+
+		// Check if a new image was uploaded
+		const image = formData.get('itemImage');
+		if (image && image instanceof File && image.size > 0) {
+			updateData.image = image;
+		}
+
+		const itemId = formData.get('itemId').toString();
 		try {
-			const updateData: Record<string, any> = {
-				name: name,
-				description: description,
-				place: place,
-				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false
-			};
-
-			// Check if a new image was uploaded
-			if (image && image instanceof File && image.size > 0) {
-				updateData.image = image;
-			}
-
-			await locals.pb.collection('items').update(id, updateData);
+			await locals.pb
+				.collection('items')
+				.update(itemId, updateData);
 		} catch (err) {
 			console.error(err?.message || err);
 		}
 	},
 
 	delete: async ({ locals, request }) => {
-		const formData = await request.formData();
-
-		const id = formData.get('itemId').toString();
+		const itemId = (await request.formData()).get('itemId').toString();
 		try {
-			await locals.pb.collection('items').delete(id);
+			await locals.pb
+				.collection('items')
+				.delete(itemId);
 		} catch (error) {
 			console.error(error?.message || error);
 		}
