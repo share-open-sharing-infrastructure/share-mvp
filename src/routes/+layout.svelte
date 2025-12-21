@@ -64,9 +64,8 @@
 		feedbackModalNotion = true;
 	}}
 	class="
-		/*               take it out of the normal flow */ /*
-		position in    the corner */ /* above other
-		content                */ fixed bottom-10 left-10 z-50
+		fixed bottom-10 left-10 z-50
+		cursor-pointer
 	"
 >
 	Feedback geben
