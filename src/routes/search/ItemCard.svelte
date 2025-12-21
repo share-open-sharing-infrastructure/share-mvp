@@ -36,7 +36,7 @@
 					{#if item.expand?.owner?.id}
 						<a
 							href="/chat/{item.expand.owner.id}"
-							class="inline-flex items-center text-primary-600 hover:underline"
+							class="inline-flex items-center text-primary-500 hover:underline"
 						>
 							Anschreiben
 							<PenNibSolid class="ms-0.5 h-4 w-4" />

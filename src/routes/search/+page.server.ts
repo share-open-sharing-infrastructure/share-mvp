@@ -14,7 +14,7 @@ export async function load({ locals }) {
 	const filteredItems = filterTrustedItems(
 		items,
 		locals.user ? locals.user.id : null,
-		locals.pb.authStore.isValid 
+		locals.pb.authStore.isValid
 	);
 
 	// Extract unique places and names for filtering options

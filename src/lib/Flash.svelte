@@ -17,7 +17,7 @@
 	<div
 		class="fixed bottom-4 left-1/2 -translate-x-1/2
     rounded-lg px-4 py-3 text-sm text-white
-    shadow-lg {flash.type === 'error' ? 'bg-red-600' : 'bg-green-600'}"
+    shadow-lg {flash.type === 'error' ? 'bg-primary-600' : 'bg-secondary-600'}"
 	>
 		{flash.message}
 		<button class="ml-3 underline" onclick={close}>Close</button>

@@ -64,9 +64,8 @@
 		feedbackModalNotion = true;
 	}}
 	class="
-		/*               take it out of the normal flow */ /*
-		position in    the corner */ /* above other
-		content                */ fixed bottom-10 left-10 z-50
+		fixed bottom-10 left-10 z-50
+		cursor-pointer
 	"
 >
 	Feedback geben
@@ -89,7 +88,7 @@
 	</iframe>
 </Modal>
 
-<Footer footerType="socialmedia" class="bg-gray-100">
+<Footer footerType="socialmedia" class="bg-primary-50">
 	<div class="mx-auto my-10 max-w-screen-xl text-center">
 		<FooterBrand
 			href="#"

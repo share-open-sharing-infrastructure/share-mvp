@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase';
-import { PUBLIC_PB_URL } from '$env/static/public'
+import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';

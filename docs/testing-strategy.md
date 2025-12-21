@@ -1,17 +1,20 @@
 # Testing
+
 We are still in the process of developing a useful testing strategy. The below captures the current status.
 
 ## Framework
-For running tests, we rely on [vitest](https://vitest.dev/) because it is integrated with our build tool [vite](https://vite.dev/). 
+
+For running tests, we rely on [vitest](https://vitest.dev/) because it is integrated with our build tool [vite](https://vite.dev/).
 
 ## Strategy
-For now, we aim to build test coverage up as we go to achieve a reasonable balance of flexibility and robustness that provides enough security to prevent bigger problems whilst still allowing us to implement improvements to our code at pace. 
+
+For now, we aim to build test coverage up as we go to achieve a reasonable balance of flexibility and robustness that provides enough security to prevent bigger problems whilst still allowing us to implement improvements to our code at pace.
 
 Currently, this means that we gradually implement unit tests for server-side functions. Integration and UI tests will follow as soon as reasonable.
 
 ## Practice
 
-Test files currently live next to their target. For example, for testing chat functionality, the test file [/src/routes/chat/[userId]/page.server.test.js](/src/routes/chat/[userId]/page.server.test.js) lives directly next to [/src/routes/chat/[userId]/+page.server.ts](/src/routes/chat/[userId]/+page.server.ts). 
+Test files currently live next to their target. For example, for testing chat functionality, the test file [/src/routes/chat/[userId]/page.server.test.js](/src/routes/chat/[userId]/page.server.test.js) lives directly next to [/src/routes/chat/[userId]/+page.server.ts](/src/routes/chat/[userId]/+page.server.ts).
 
 To test a page and its functions, use Vitest like so:
 
@@ -71,9 +74,9 @@ describe('page name, e.g. Chat Page', () => {
 
             // Call the action
             await actions.sendMessage({
-                locals: mockLocals, 
-                request: mockRequest, 
-                params: mockParams 
+                locals: mockLocals,
+                request: mockRequest,
+                params: mockParams
             });
 
             // Verify the collection was called with correct name
