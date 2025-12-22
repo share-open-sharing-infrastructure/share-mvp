@@ -44,7 +44,8 @@ export const authorization: Handle = async ({ event, resolve }) => {
 	) {
 		const loggedIn = await event.locals.pb.authStore.isValid;
 		if (!loggedIn) {
-			redirect(308, '/login');
+			const redirectTo = event.url.pathname + event.url.search;
+			redirect(308, `/login?redirectTo=${encodeURIComponent(redirectTo)}`); // TODO: Maybe status 307 or 303 would be better?
 		}
 	}
 	const result = await resolve(event);
