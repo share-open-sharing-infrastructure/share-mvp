@@ -90,6 +90,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           json-summary-path: pr-coverage/coverage-summary.json
-          json-summary-compare-path: main-coverage/coverage-summary.json
+        #  json-summary-compare-path: main-coverage/coverage-summary.json
           json-final-path: pr-coverage/coverage-final.json
           comment-on: pr
