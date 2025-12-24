@@ -34,8 +34,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - branch: main
-            artifact: main
+#          - branch: main
+ #           artifact: main
           - branch: ${{ github.head_ref }}
             artifact: pull-request
     steps:
