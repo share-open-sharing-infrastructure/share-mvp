@@ -7,7 +7,7 @@
 </script>
 
 <div class="space-y-4">
-	<Card img={imgUrl} horizontal size="xl" class="">
+	<Card img={imgUrl} horizontal size="xl" class="max-md:h-150">
 		<div class="m-6">
 			<div class="flex space-x-10 sm:mt-0">
 				<p class="mb-3 text-xs leading-tight font-thin">
@@ -32,7 +32,8 @@
 			<div>
 				<p class="mb-3 text-xs leading-tight font-thin">
 					von {item.expand?.owner?.username ?? 'Unknown'}
-
+				</p>
+				<p class="mb-3 text-xs leading-tight font-thin">
 					{#if item.expand?.owner?.id}
 						<a
 							href="/chat/{item.expand.owner.id}"

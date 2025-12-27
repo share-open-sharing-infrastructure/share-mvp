@@ -11,7 +11,7 @@
 </div>
 
 <Gallery
-    class="mx-auto max-w-5xl grid-cols-1 gap-4 pt-2 max-md:grid-cols-2 max-sm:grid-cols-3 md:grid-cols-1"
+    class="grid-cols-1 gap-4 pt-2 max-md:grid-cols-2 max-sm:grid-cols-1"
 >
     {#each filteredItemList as item}
         <ItemCard
