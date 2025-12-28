@@ -4,10 +4,9 @@ This file documents conceptual questions.
 
 # Class diagrams
 
+## Base data model
 ```mermaid
----
-title: Base data structure
----
+
 classDiagram
     direction LR
 
@@ -27,13 +26,23 @@ classDiagram
     }
     User "1" <-- "n" Item : owned by
 
-    class message{
+    class Message{
         +string messageContent
         +User from
         +User to
-        +date created
     }
-    message "n" --> "2" User
+
+    class Conversation{
+        +User requester
+        +User itemOwner
+        +Message[] messages
+        +Date lastMessageDate
+        +boolean readByRequester
+        +boolean readByOwner
+    }
+    Conversation "1" --> "n" Message
+    Conversation "0...*" --> "2" User
+    Conversation "1" --> "1" Item
 ```
 
 ## User entity
@@ -43,3 +52,8 @@ classDiagram
 ## Item
 
 - "trusteesOnly" is true when the item owner wants to lend this item only to persons they declared as trusted, and otherwise false.
+
+## Conversation
+
+- A conversation brings together  an item for which a request has been made, two users (the requester and the owner of the requested item), and a set of messages that were exchanged between the two users regarding that request. 
+- The conversation stores if it has been read by either party to enable notifications and an "unread" inbox.

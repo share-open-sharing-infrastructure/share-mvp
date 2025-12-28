@@ -79,3 +79,10 @@ export interface Message extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
 	toUserId: UserId;
 }
+
+export interface Conversation extends PocketBaseEntity {
+	requester: UserId;
+	itemOwner: UserId;
+	requestedItem: ItemId;
+	messages: Message[];
+}
