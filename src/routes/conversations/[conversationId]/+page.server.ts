@@ -1,0 +1,75 @@
+import { error, fail } from "@sveltejs/kit";
+import type { ClientResponseError } from "pocketbase";
+import { PB_URL } from "$env/static/private";
+
+export async function load({ params, locals }) {
+    const conversationId: string = params.conversationId;
+    let conversationRecord;
+    try {
+        conversationRecord = await locals.pb
+            .collection('conversations')
+            .getOne(conversationId, { expand: 'requester, itemOwner, requestedItem, messages' });
+    } catch (err) {
+        console.error('Failed to load conversation', err);
+        error(500, 'Unable to load conversation.');
+    }
+
+    return {
+        conversation: {
+            id: conversationRecord.id,
+            requester: conversationRecord.expand.requester,
+            itemOwner: conversationRecord.expand.itemOwner,
+            requestedItem: conversationRecord.expand.requestedItem,
+            messages: conversationRecord.expand.messages
+        },
+        PB_URL: PB_URL
+    };
+}
+
+export const actions = {
+    sendMessage: async ({ locals, request, params }) => {
+		// get the message data from the form
+		const formData = await request.formData();
+		const messageContent = formData.get('messageContent');
+		const fromUserId = locals.user.id;
+		const toUserId = formData.get('chatPartnerId') as string;
+
+        const messageData = {
+            messageContent: messageContent,
+            from: fromUserId,
+            to: toUserId
+        };
+
+        let createdMessage;
+		// try to send message to database
+		try {
+			createdMessage = await locals.pb.collection('messages').create(messageData);
+            // append message to conversation's messages relation
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, {
+				fail: true,
+				message: e.data?.message ?? 'Failed to send message.'
+			});
+		}
+
+        // Append created
+        if (createdMessage){
+            const conversationId: string = params.conversationId;
+            const conversationRecord = await locals.pb.collection('conversations').getOne(conversationId);
+            const updatedMessages = conversationRecord.messages ? [...conversationRecord.messages, createdMessage.id] : [createdMessage.id];
+            
+            try {
+                await locals.pb.collection('conversations').update(conversationId, { messages: updatedMessages });
+            } catch (err) {
+                const e = err as Partial<ClientResponseError>;
+                return fail(e.status ?? 500, {
+                    fail: true,
+                    message: e.data?.message ?? 'Failed to send message.'
+                });
+            }
+        }
+
+	}
+    
+};
