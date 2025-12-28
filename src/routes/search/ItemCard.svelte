@@ -1,9 +1,10 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
-	import { Badge, Card } from 'flowbite-svelte';
+	import { Badge, Button, Card, Input } from 'flowbite-svelte';
 	import { PenNibSolid } from 'flowbite-svelte-icons';
 	export let item: Item;
 	export let imgUrl: string;
+	export let requesterId: string;
 </script>
 
 <div class="space-y-4">
@@ -29,20 +30,20 @@
 			<p class="mt-2 mb-2 text-xs leading-tight font-thin">
 				{item.place}
 			</p>
-			<div>
-				<p class="mb-3 text-xs leading-tight font-thin">
-					von {item.expand?.owner?.username ?? 'Unknown'}
-
-					{#if item.expand?.owner?.id}
-						<a
-							href="/chat/{item.expand.owner.id}"
-							class="inline-flex items-center text-primary-600 hover:underline"
-						>
-							Anschreiben
-							<PenNibSolid class="ms-0.5 h-4 w-4" />
-						</a>
-					{/if}
-				</p>
+			<div class="mb-3 text-xs leading-tight font-thin">
+				von {item.expand?.owner?.username ?? 'Unknown'}
+				<form
+					class="inline-flex"
+					method="POST"
+					action="?/startConversation"
+				>
+					<Input name="itemId" value={item.id} hidden/>
+					<Input name="requesterId" value={item.expand?.requester?.id} hidden/>
+					<Input name="ownerId" value={item.expand?.owner?.id} hidden/>
+					<button class="cursor-pointer text-primary-800" type="submit">
+						(kontaktieren)
+					</button>
+				</form>
 			</div>
 			{#if item.trusteesOnly}
 				<Badge color="green" class="m-2">Nutzer vertraut dir</Badge>

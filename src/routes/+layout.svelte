@@ -49,7 +49,7 @@
 		{/if}
 		<NavLi href="/search">Suche</NavLi>
 		{#if data.currentUser}
-			<NavLi href="/chat">Chats</NavLi>
+			<!-- <NavLi href="/chat">Chats</NavLi> -->
 			<NavLi href="/conversations">Unterhaltungen</NavLi>
 			<NavLi href="/profile">Profil</NavLi>
 			<NavLi href="/social">Soziales</NavLi>

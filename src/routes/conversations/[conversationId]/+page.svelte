@@ -6,7 +6,8 @@
 
     let { data } = $props();
    
-    let chatPartner = $derived(data.conversation.requester === data.currentUser.id ? data.conversation.itemOwner : data.conversation.requester);
+	let loggedInUserIsItemOwner = $derived(data.currentUser.id === data.conversation.itemOwner.id);
+    let chatPartner = $derived(loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner);
     let messageText: string = $state('');
 
 </script>
@@ -20,7 +21,11 @@
 			/>
 	</div>
 	<div class="text-lg font-semibold text-gray-900">
-		{data.conversation.requestedItem.name} von {chatPartner.username}
+		{#if loggedInUserIsItemOwner}
+			Anfrage für {data.conversation.requestedItem.name} von {chatPartner.username}
+		{:else}
+			Anfrage für {data.conversation.requestedItem.name} an {chatPartner.username}
+		{/if}
 	</div>
 	<UserCircleSolid class="flex h-6 w-6 shrink-0" />
 	

@@ -23,9 +23,9 @@
 		<div id="username" class="overflow-hidden p-1 text-ellipsis text-sm">
             {conversation.expand.requestedItem.name}
             ({#if conversation.requester === currentUser.id}
-                {conversation.expand.itemOwner.username}
+                an {conversation.expand.itemOwner.username}
             {:else} 
-                {conversation.expand.requester.username}
+                von {conversation.expand.requester.username}
             {/if})
 		</div>
 	</a>

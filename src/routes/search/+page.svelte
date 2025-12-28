@@ -54,6 +54,7 @@
 			<ResultsList 
 				filteredItemList={filteredItemList} 
 				PB_IMG_URL={data.PB_IMG_URL}
+				requesterId={data.userId}
 			/>
 		{:else}
 			<Welcome />
