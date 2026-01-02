@@ -1,16 +1,34 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 
-export async function load({ locals }) {
+function getSafeRedirectTo(url: URL) {
+	const raw = url.searchParams.get('redirectTo');
+	if (!raw) {
+		return '/';
+	}
+
+	// Prevent open redirects: allow only site-relative paths
+	if (raw.startsWith('/') && !raw.startsWith('//')) {
+		return raw;
+	}
+
+	return '/';
+}
+
+export async function load({ locals, url }) {
+	const redirectTo = getSafeRedirectTo(url);
+
 	if (locals.user) {
-		redirect(303, '/');
+		redirect(303, redirectTo);
 	}
 
 	return {};
 }
 
 export const actions = {
-	login: async ({ locals, request }) => {
+	login: async ({ locals, request, url }) => {
+		const redirectTo = getSafeRedirectTo(url);
+
 		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
@@ -36,6 +54,6 @@ export const actions = {
 				error(e.status ?? 500, 'Unable to login.');
 			}
 		}
-		redirect(303, '/');
+		redirect(303, redirectTo);
 	}
 };
