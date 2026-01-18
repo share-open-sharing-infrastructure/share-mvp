@@ -1,5 +1,7 @@
 <script>
 	import { Button } from "flowbite-svelte";
+    import { ArrowUpOutline } from "flowbite-svelte-icons";
+
 
 </script>
 <div
@@ -13,9 +15,10 @@
     <p>Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung</p>
     <p>zum leihen, teilen, mieten, ...</p>
     <p>Nutze einfach die Suche oben oder</p>
-    <Button
-        class="me-2 mb-2 w-full rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-600 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
-        href="/profile">biete selbst etwas an!</Button
-    >
+    <!-- to set bg color assign class="bg-primary-500"-->
+
+    <Button class="me-2 mb-2 w-full min-button rounded-lg px-5 py-2.5 text-sm font-medium" href="/profile">Biete selbst etwas an!
+        <ArrowUpOutline class="me-2 h-6 w-6" />
+        </Button>
     <p>von und für Freunde, Familie und die lokale Gemeinschaft</p>
 </div>

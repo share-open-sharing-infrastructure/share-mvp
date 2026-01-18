@@ -38,7 +38,7 @@
 <Section>
 	<div class="flex items-center justify-center">
 		<span class="text-2xl font-semibold text-gray-900 dark:text-white">
-			AllerLeih Dinge zum Teilen!
+			<span class="logo">AllerLeih</span> Dinge zum Teilen!
 		</span>
 	</div>
 

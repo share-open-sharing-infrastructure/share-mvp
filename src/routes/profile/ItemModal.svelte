@@ -38,7 +38,9 @@
 
 	$effect(() => {
 		if(isVisible) {
-			previewUrl = placeholderimg;
+			if (!previewUrl && !imgUrl) {
+				previewUrl = placeholderimg;
+			}
 		}
 	});
 

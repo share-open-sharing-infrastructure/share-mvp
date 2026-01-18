@@ -8,14 +8,14 @@
 </script>
 <Section
     name="tableheader"
-    sectionClass="dark:bg-primary-900 flex pt-8 mx-auto max-w-5xl dark:hover:bg-primary-800"
+    sectionClass="flex pt-8 mx-auto max-w-5xl"
 >
     <TableHeader headerType="search">
         {#snippet search()}
             <Search
                 size="md"
                 class="mr-4 flex flex-col"
-                classes={{ input: 'focus:ring-primary-700 focus:border-primary-700' }}
+                classes={{ input: 'focus:ring-primary-700 focus:border-primary-700 search-bar' }}
                 placeholder="Suche Dinge..."
                 bind:value={searchText.value}
             />
