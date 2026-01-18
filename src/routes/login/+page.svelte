@@ -52,11 +52,12 @@
 					type="submit"
 					class="
 						me-2 mb-2 w-full rounded-lg 
-						bg-primary-400 px-5 py-2.5 text-sm font-medium text-white 
+						min-button px-5 py-2.5 text-sm font-medium text-white 
 						hover:bg-primary-500 focus:ring-4 focus:ring-primary-300 focus:outline-none 
 						dark:border-primary-700 dark:bg-primary-700 
 						dark:hover:bg-primary-800 dark:focus:ring-primary-700
 						cursor-pointer
+
 						"
 					>Anmelden</Button
 				>

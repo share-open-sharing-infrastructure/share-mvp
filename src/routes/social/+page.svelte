@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { Button } from 'flowbite-svelte';
+	import { UserRemoveOutline } from 'flowbite-svelte-icons';
 
 	const { data } = $props();
 
@@ -21,15 +22,17 @@
 </script>
 
 <!-- HEADER -->
-<div class="m-2 mb-6 flex flex-col items-center justify-center">
-	<div class="text-2xl font-semibold text-primary-900 dark:text-white">Vertraute</div>
-	<div>Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust.</div>
-	<div>
-		Du kannst dann <a href="/profile" class="text-primary-600 hover:underline">deine Dinge</a> nur für diese
+	<div class="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6">
+		<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">
+			<h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+				Vertraute Personen
+			</h2>
+			<p class="font-light text-gray-500 lg:mb-16 sm:text-xl dark:text-gray-400">
+					Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust. Du kannst dann <a href="/profile" class="primary-text hover:underline">deine Dinge</a> nur für diese
 		Menschen sichtbar machen.
+			</p>
+		</div>
 	</div>
-</div>
-
 <!-- SEARCH BAR -->
 <div id="searchbar" class="mb-4 flex items-center justify-center">
 	<div class="relative w-full max-w-md">
@@ -87,14 +90,16 @@
 			<img
 				src={trustee.profilePic}
 				alt="Profile picture of {trustee.username}"
-				class="h-12 w-12 rounded-full object-cover"
+				class="primary-bg h-10 w-10 rounded-full object-cover"
 			/>
 			<div class="text-left">
 				<p class="text-lg font-medium text-gray-900 dark:text-white">@{trustee.username}</p>
 			</div>
 			<form class="ml-auto" method="POST" action="?/removeTrustee" use:enhance>
-				<input type="hidden" name="trusteeId" value={trustee.id} />
-				<Button class="ml-auto cursor-pointer bg-secondary-500 hover:bg-secondary-600" type="submit">X</Button>
+				<input type="hidden" name="trusteeId" value={trustee.id}>
+				<Button class="min-button ml-auto cursor-pointer bg-secondary-500 hover:bg-secondary-600" type="submit">
+					<UserRemoveOutline class="shrink-0 h-5 w-5" />
+				</Button>
 			</form>
 		</div>
 	{/each}
