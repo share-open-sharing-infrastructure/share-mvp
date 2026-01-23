@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button } from 'flowbite-svelte';
+	import { Button, Tooltip } from 'flowbite-svelte';
 	import { UserRemoveOutline } from 'flowbite-svelte-icons';
 
 	const { data } = $props();
@@ -22,25 +22,26 @@
 </script>
 
 <!-- HEADER -->
-	<div class="py-8 px-4 mx-auto max-w-screen-xl lg:py-16 lg:px-6">
+	<div class="py-4 px-4 mx-auto max-w-screen-xl">
 		<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">
 			<h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
 				Vertraute Personen
 			</h2>
-			<p class="font-light text-gray-500 lg:mb-16 sm:text-xl dark:text-gray-400">
-					Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust. Du kannst dann <a href="/profile" class="primary-text hover:underline">deine Dinge</a> nur für diese
-		Menschen sichtbar machen.
+			<p class="font-light text-gray-500 sm:text-xl dark:text-gray-400">
+					Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust. 
+					Du kannst dann <a href="/profile" class="primary-text hover:underline">deine Dinge</a> 
+					nur für diese Menschen sichtbar machen.
 			</p>
 		</div>
 	</div>
 <!-- SEARCH BAR -->
-<div id="searchbar" class="mb-4 flex items-center justify-center">
+<div id="searchbar" class="mb-4 p-2 flex items-center justify-center">
 	<div class="relative w-full max-w-md">
 		<div class="flex">
 			<input
 				type="text"
 				placeholder="Ich vertraue..."
-				class="flex-1 rounded-l-md border border-primary-300 p-2 focus:ring-2 focus:ring-primary-500 focus:outline-none"
+				class="search-bar flex-1"
 				bind:value={usernameToBeAdded}
 				onfocus={() => (showDropdown = true)}
 				oninput={() => (showDropdown = true)}
@@ -79,7 +80,7 @@
 </div>
 
 <!-- FRIEND LIST -->
-<div class="mx-auto max-w-2xl items-center">
+<div class="mx-auto max-w-sm items-center">
 	{#if data.trustees.length === 0}
 		<p class="text-center text-gray-500 dark:text-gray-400">
 			Du hast noch keine vertrauten Personen hinzugefügt. Na los ;)
@@ -100,6 +101,7 @@
 				<Button class="min-button ml-auto cursor-pointer bg-secondary-500 hover:bg-secondary-600" type="submit">
 					<UserRemoveOutline class="shrink-0 h-5 w-5" />
 				</Button>
+				<Tooltip type="light" placement="top">{trustee.username} das Vertrauen entziehen</Tooltip>
 			</form>
 		</div>
 	{/each}

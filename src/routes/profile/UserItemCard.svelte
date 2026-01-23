@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
+	import { MapPinOutline } from 'flowbite-svelte-icons';
 	import EditButton from './EditButton.svelte';
 	import ItemModal from './ItemModal.svelte';
 
@@ -24,13 +25,16 @@
 <div
 	class="items-center bg-gray-50 rounded-lg shadow sm:flex dark:bg-gray-800 dark:border-gray-700"
 >
-	<img class="lg:w-40 h-40 rounded-lg" src={imgUrl} alt={item.name} />
+	<img class="m-5 w-40 h-40 rounded-lg" src={imgUrl} alt={item.name} />
 
 	<div class="p-5">
 		<h3 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
 			{item.name}
 		</h3>
-		<span class="text-gray-500 dark:text-gray-400">{item.place}</span>
+		<span class="flex items-center gap-1 text-sm">
+					<MapPinOutline class="h-4 w-4" />
+					{item.place}
+				</span>
 		<p class="mt-3 mb-4 font-light text-gray-500 dark:text-gray-400">{item.description}</p>
 		<EditButton
 			onclick={() => {

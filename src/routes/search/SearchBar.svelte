@@ -14,7 +14,7 @@
         {#snippet search()}
             <Search
                 size="md"
-                class="mr-4 flex flex-col"
+                class="m-2 flex flex-col"
                 classes={{ input: 'focus:ring-primary-700 focus:border-primary-700 search-bar' }}
                 placeholder="Suche Dinge..."
                 bind:value={searchText.value}
@@ -22,7 +22,7 @@
         {/snippet}
 
         {#if isSearching}
-            <Button color="light">
+            <Button color="light" style="border-radius:20px; cursor:pointer;">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     aria-hidden="true"

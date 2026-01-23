@@ -7,6 +7,7 @@
 	class="
 	border-t
 	p-2
+	mb-2
 	min-button"
 >
 	<a href="/chat/{chatPartner.id}" class="flex">

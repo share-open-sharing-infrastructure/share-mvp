@@ -17,8 +17,8 @@
     <p>Nutze einfach die Suche oben oder</p>
     <!-- to set bg color assign class="bg-primary-500"-->
 
-    <Button class="me-2 mb-2 w-full min-button rounded-lg px-5 py-2.5 text-sm font-medium" href="/profile">Biete selbst etwas an!
+    <Button class="me-2 mb-2 w-full min-button" href="/profile">Biete selbst etwas an!
         <ArrowUpOutline class="me-2 h-6 w-6" />
-        </Button>
+    </Button>
     <p>von und für Freunde, Familie und die lokale Gemeinschaft</p>
 </div>

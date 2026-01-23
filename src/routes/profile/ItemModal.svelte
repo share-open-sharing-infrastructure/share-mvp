@@ -72,8 +72,8 @@
 				class="mx-auto h-50 w-50 rounded-md object-cover p-5"
 			/>
 		<Label class="space-y-2">
-			<span>{type === 'edit' ? 'Anderes Bild hochladen:' : 'Bild hinzufügen:'}</span>
-			<input type="file" id="with_helper" name="itemImage" class="mb-2" accept="image/*" onchange={handleFileChange}
+			<span>{type === 'edit' ? 'Bild ändern:' : 'Bild hinzufügen:'}</span>
+			<input type="file" id="with_helper" name="itemImage" class="mb-2 min-button" accept="image/*" onchange={handleFileChange}
 			/>
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
@@ -116,7 +116,7 @@
 			>
 		</Label>
 		<Button
-			class="bg-gray-800 text-white hover:bg-gray-900 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
+			class="min-button"
 			type="submit"
 		>
 			{type === 'edit' ? 'Speichern' : 'Hinzufügen'}
@@ -137,7 +137,7 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button type="submit">Löschen</Button>
+			<Button class="min-button" type="submit">Löschen</Button>
 		</form>
 	{/if}
 </Modal>

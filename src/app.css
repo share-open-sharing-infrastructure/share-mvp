@@ -77,11 +77,11 @@ Blue: #4da2ff
 	color: black;
 	border-color: black;
 	border: 1px solid;
-	border-radius: 20px; 
+	border-radius: 20px;
 }
 .min-button:hover {
 	box-shadow: 0 0 11px rgba(33,33,33,.2); 
-
+	cursor:pointer;
 }
 
 .search-bar {
