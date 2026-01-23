@@ -1,6 +1,6 @@
 # Overview
 
-This is the work-in-progress home of documentation for the [share platform](https://github.com/share-open-sharing-infrastructure/share-mvp/tree/documentation). We are still in the process of setting everything up for contributors. If you wish to contribute, contact [Matteo via mail](mailto:matteo.ramin@outlook.com).
+This is the work-in-progress home of documentation for the [share platform](https://github.com/share-open-sharing-infrastructure/share-mvp/tree/documentation). We are still in the process of setting everything up for contributors. If you wish to contribute, [contact us via mail](mailto:allerleih@posteo.org).
 
 For diagramming, we use [Mermaid.js](https://mermaid.js.org/). Everything else is held as plain and simple as possible:
 

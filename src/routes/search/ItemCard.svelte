@@ -9,15 +9,6 @@
 <div class="space-y-4">
 	<Card img={imgUrl} horizontal size="xl" class="max-md:h-150">
 		<div class="m-6">
-			<div class="flex space-x-10 sm:mt-0">
-				<p class="mb-3 text-xs leading-tight font-thin">
-					Hinzugefügt am: {new Date(item.created).toLocaleDateString('de-DE', {
-						day: '2-digit',
-						month: '2-digit',
-						year: '2-digit'
-					})}
-				</p>
-			</div>
 			<h5
 				class="mb-2 overflow-hidden text-2xl font-bold tracking-tight text-ellipsis text-gray-900 dark:text-white"
 			>

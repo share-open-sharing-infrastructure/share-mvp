@@ -50,7 +50,7 @@
 		<NavLi href="/search">Suche</NavLi>
 		{#if data.currentUser}
 			<NavLi href="/chat">Chats</NavLi>
-			<NavLi href="/profile">Profil</NavLi>
+			<NavLi href="/profile">Meine Dinge</NavLi>
 			<NavLi href="/social">Soziales</NavLi>
 			<NavLi href="/logout" onclick={logout}>Logout</NavLi>
 		{/if}
