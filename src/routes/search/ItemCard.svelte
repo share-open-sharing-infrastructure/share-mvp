@@ -9,14 +9,12 @@
 <div class="space-y-4">
 	<Card img={imgUrl} horizontal size="xl">
 		<div class="m-6 grow">
-			<div class="flex justify-between items-center text-xs font-thin mb-3">
+			<div class="flex justify-between items-center text-s font-thin mb-3">
 				<p>
-					von {item.expand?.owner?.username ?? 'Unknown'} hinzugefügt am:{' '}
-					{new Date(item.created).toLocaleDateString('de-DE', {
-						day: '2-digit',
-						month: '2-digit',
-						year: '2-digit'
-					})}
+					von {item.expand?.owner?.username ?? 'Unknown'} 
+					{#if item.trusteesOnly}
+							<span class="text-green-900 bg-green-100">(vertraut dir)</span>
+					{/if}
 				</p>
 
 				<span class="flex items-center gap-1">
@@ -43,11 +41,7 @@
 					{/if}
 				</p>
 
-				{#if item.trusteesOnly}
-					<span class="flex items-center gap-1">
-						<Badge color="green" class="m-2">Nutzer*in vertraut dir</Badge>
-					</span>
-				{/if}
+				
 			</div>
 			<div></div>
 		</div>
