@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
+	import { Badge } from 'flowbite-svelte';
 	import { MapPinOutline } from 'flowbite-svelte-icons';
 	import EditButton from './EditButton.svelte';
 	import ItemModal from './ItemModal.svelte';
@@ -31,11 +32,15 @@
 		<h3 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
 			{item.name}
 		</h3>
+		{#if item.trusteesOnly}
+			<Badge color="green" class="m-2">Nur an Vertraute</Badge>
+		{/if}
 		<span class="flex items-center gap-1 text-sm">
-					<MapPinOutline class="h-4 w-4" />
-					{item.place}
-				</span>
+			<MapPinOutline class="h-4 w-4" />
+			{item.place}
+		</span>
 		<p class="mt-3 mb-4 font-light text-gray-500 dark:text-gray-400">{item.description}</p>
+
 		<EditButton
 			onclick={() => {
 				editingItemId = item.id;
