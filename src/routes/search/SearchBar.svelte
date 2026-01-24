@@ -6,9 +6,20 @@
     let { searchText, isSearching, selectedPlaces, uniquePlaces } = $props();
 
 </script>
+
+		<div class="mx-auto max-w-screen-sm text-center">
+			<h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+				Wilkommen.
+			</h2>
+			<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
+                    Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung
+    zum leihen, teilen, mieten, ...
+            </p>
+		</div>
+
 <Section
     name="tableheader"
-    sectionClass="flex pt-8 mx-auto max-w-5xl"
+    sectionClass="flex p-4 mx-auto max-w-5xl"
 >
     <TableHeader headerType="search">
         {#snippet search()}

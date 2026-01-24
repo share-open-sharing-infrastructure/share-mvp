@@ -7,13 +7,12 @@
 <div
     class="
     mx-auto
-    mt-10 flex max-w-md flex-col
+    mt-2 flex max-w-md flex-col
     items-center justify-center gap-4
     text-center text-lg text-gray-600 dark:text-white
     "
 >
-    <p>Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung</p>
-    <p>zum leihen, teilen, mieten, ...</p>
+
     <p>Nutze einfach die Suche oben oder</p>
     <!-- to set bg color assign class="bg-primary-500"-->
 
