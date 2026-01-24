@@ -28,18 +28,24 @@
 >
 	<img class="m-5 w-40 h-40 rounded-lg" src={imgUrl} alt={item.name} />
 
-	<div class="p-5">
+	<div class="p-2">
 		<h3 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
 			{item.name}
 		</h3>
-		{#if item.trusteesOnly}
-			<Badge color="green" class="m-2">Nur an Vertraute</Badge>
-		{/if}
-		<span class="flex items-center gap-1 text-sm">
+		<span class="flex items-center text-sm">
 			<MapPinOutline class="h-4 w-4" />
 			{item.place}
 		</span>
-		<p class="mt-3 mb-4 font-light text-gray-500 dark:text-gray-400">{item.description}</p>
+		<p class="my-2 font-light text-gray-500 dark:text-gray-400">
+			{item.description}
+		</p>
+		{#if item.trusteesOnly}
+			<div>
+				<Badge rounded border color="green" class="my-2">
+					<span class="text-green-900 bg-green-100">Nur an Vertraute</span>
+				</Badge>
+			</div>
+		{/if}
 
 		<EditButton
 			onclick={() => {
@@ -47,7 +53,7 @@
 				showEditModal = true;
 			}}
 		/>
-		<ul class="flex space-x-4 sm:mt-0"></ul>
+		<ul class="flex space-x-4 sm:mt-0"></ul> <!-- what's this?-->
 	</div>
 </div>
 
