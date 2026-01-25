@@ -117,7 +117,7 @@
 					</form>
 					{#if form?.success}
 						<SuccessAlert />
-					{:else if form?.fail}
+					{:else if form?.error}
 						<ErrorAlert />
 					{/if}
 				</div>
