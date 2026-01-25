@@ -1,7 +1,7 @@
 {
 	"name": "mvp-svelte",
 	"private": true,
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -48,8 +48,10 @@
 		]
 	},
 	"dependencies": {
+		"debounce": "^3.0.0",
 		"dotenv": "^17.2.3",
 		"flowbite-svelte-blocks": "^2.1.0",
+		"leaflet": "^1.9.4",
 		"pocketbase": "^0.26.2"
 	}
 }

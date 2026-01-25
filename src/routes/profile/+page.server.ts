@@ -2,14 +2,15 @@ import { error, fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import { form } from '$app/server';
 
-export async function load({ locals }) {
+
+export async function load({ locals, url, fetch }) {
 	const user = await locals.pb.collection('users').getOne(
 		locals.user.id,
-		{ expand: 'items_via_owner' } // expands the user "backwards" from the items collection, i.e. pulls all items related to this user
+		{ expand: 'items_via_owner' }
 	);
 
 	return {
-		user: user,
+		user,
 		PB_URL: PUBLIC_PB_URL
 	};
 }
@@ -119,9 +120,9 @@ export const actions = {
 				}
 			}
 		} catch (err) {
-				return {
-					error: true
-				}
+			return {
+				error: true
+			}
 		}
 	},
 	delete: async ({ locals, request }) => {

@@ -1,13 +1,18 @@
 <script lang="ts">
-	import { Alert, Button } from 'flowbite-svelte';
+	import { Alert, Button, Listgroup } from 'flowbite-svelte';
 	import UserItemCard from './UserItemCard.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import type { Item } from '$lib/types/models';
 	import AddButton from './AddButton.svelte';
 	import SuccessAlert from './SuccessAlert.svelte';
 	import ErrorAlert from './ErrorAlert.svelte';
+	import debounce from 'debounce';
+	import { onDestroy } from 'svelte';
 
 	let { data, form } = $props();
+
+	let search = '';
+	let results = $state<any[]>([]);
 
 	let showAddModal = $state(false);
 
@@ -23,6 +28,26 @@
 			year: 'numeric'
 		});
 	}
+
+	// Function to search Nominatim
+	const searchLocations = debounce(async () => {
+		if (!search) {
+			results = [];
+			return;
+		}
+		const res = await fetch(`/api/nominatim?q=${encodeURIComponent(search)}`);
+		results = await res.json();
+		console.log(results);
+	}, 300);
+
+	$effect(() => {
+		searchLocations();
+	});
+
+	onDestroy(() => {
+		searchLocations.flush?.();
+		(searchLocations as any).cancel?.();
+	});
 </script>
 
 <section class="bg-white dark:bg-gray-900">
@@ -31,7 +56,6 @@
 			<div class="mb-4 col-span-full xl:mb-2">
 				<h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">Dein Profil</h1>
 			</div>
-			<!-- Right Content -->
 			<div class="col-span-full">
 				<div
 					class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800"
@@ -39,9 +63,7 @@
 					<form method="POST" action="?/saveProfile">
 						<div class="grid grid-cols-6 gap-6">
 							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="mail"
-									class="block mb-2 text-sm font-medium text-gray-900"
+								<label for="mail" class="block mb-2 text-sm font-medium text-gray-900"
 									>Mailadresse:</label
 								>
 								<input
@@ -53,9 +75,7 @@
 								/>
 							</div>
 							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="username"
-									class="block mb-2 text-sm font-medium text-gray-900"
+								<label for="username" class="block mb-2 text-sm font-medium text-gray-900"
 									>Nutzername:</label
 								>
 								<input
@@ -67,9 +87,7 @@
 								/>
 							</div>
 							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="location"
-									class="block mb-2 text-sm font-medium text-gray-900"
+								<label for="location" class="block mb-2 text-sm font-medium text-gray-900"
 									>Standort:</label
 								>
 								<input
@@ -78,12 +96,16 @@
 									id="city"
 									class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
 									placeholder={data.user.city}
+									bind:value={search}
+									oninput={searchLocations}
 								/>
+
+								{#if results.length > 0}
+									<Listgroup border active items={results} class="w-50 absolute hover:bg-gray-100" />
+								{/if}
 							</div>
 							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="country"
-									class="block mb-2 text-sm font-medium text-gray-900"
+								<label for="country" class="block mb-2 text-sm font-medium text-gray-900"
 									>Registriert seit:</label
 								>
 								<div class="mt-4"><span class="italic text-lg">{formattedDate()}</span></div>
