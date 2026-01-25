@@ -14,7 +14,8 @@
         rounded-full
         text-lg
         shadow-lg focus:ring-4
-        focus:ring-gray-300					
+        focus:ring-gray-300		
+        min-button			
     ">
     +
 </Button>

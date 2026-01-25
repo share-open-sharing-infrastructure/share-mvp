@@ -142,7 +142,7 @@
 			/>
 		</Label>
 		<Button 
-			class="bg-primary-400 hover:bg-primary-500 cursor-pointer" 
+			class="min-button bg-primary-400 hover:bg-primary-500 cursor-pointer" 
 			type="submit">Senden</Button>
 	</form>
 </div>

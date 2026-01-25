@@ -36,7 +36,6 @@
 </script>
 
 <Section>
-
 	<SearchBar
 		searchText={searchText}
 		isSearching={isSearching}

@@ -1,38 +1,66 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
-	import { Badge, Img } from 'flowbite-svelte';
+	import { Badge } from 'flowbite-svelte';
+	import { MapPinOutline } from 'flowbite-svelte-icons';
+	import EditButton from './EditButton.svelte';
+	import ItemModal from './ItemModal.svelte';
 
 	interface Props {
 		item: Item;
 		imgUrl: string;
+		data: any;
 	}
-
-	let { item, imgUrl }: Props = $props();
+	let { item, imgUrl, data }: Props = $props();
+	let showEditModal = $state(false);
+	let editingItemId = $state('');
+	let editingItem = $derived(
+		data?.user?.expand?.items_via_owner
+			? data.user.expand.items_via_owner.find((item: Item) => item.id === editingItemId)
+			: null
+	);
+	function getItemImageUrl(item: Item, baseUrl: string): string {
+		return `${baseUrl}api/files/${item?.collectionId}/${item?.id}/${item?.image}`;
+	}
 </script>
 
-<!-- CONTENT -->
-<div class="flex max-h-36 p-1">
-	<!-- IMAGE -->
-	<div class="shrink-0 p-1">
-		<div class="h-16 w-16 overflow-hidden rounded-lg bg-primary-100">
-			<Img src={imgUrl} alt={item.name} class="h-full w-full object-cover" loading="lazy" />
-		</div>
-	</div>
+<div
+	class="items-center bg-gray-50 rounded-lg shadow sm:flex dark:bg-gray-800 dark:border-gray-700"
+>
+	<img class="m-5 w-40 h-40 rounded-lg" src={imgUrl} alt={item.name} />
 
-	<!-- TEXT -->
-	<div class="mx-2 overflow-hidden border-l p-1 px-2">
-		<div class="p-1 text-lg font-bold">
+	<div class="p-2">
+		<h3 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
 			{item.name}
-		</div>
-		<div class="my-2 p-1">
-			{item.description}
-		</div>
-		<div class="my-2 p-1">
+		</h3>
+		<span class="flex items-center text-sm">
+			<MapPinOutline class="h-4 w-4" />
 			{item.place}
-		</div>
+		</span>
+		<p class="my-2 font-light text-gray-500 dark:text-gray-400">
+			{item.description}
+		</p>
+		{#if item.trusteesOnly}
+			<div>
+				<Badge rounded border color="green" class="my-2">
+					<span class="text-green-900 bg-green-100">Nur an Vertraute</span>
+				</Badge>
+			</div>
+		{/if}
+
+		<EditButton
+			onclick={() => {
+				editingItemId = item.id;
+				showEditModal = true;
+			}}
+		/>
+		<ul class="flex space-x-4 sm:mt-0"></ul> <!-- what's this?-->
 	</div>
 </div>
 
-{#if item.trusteesOnly}
-	<Badge color="green" class="m-2">Nur an Vertraute</Badge>
-{/if}
+<!-- Edit Modal -->
+<ItemModal
+	bind:isVisible={showEditModal}
+	type="edit"
+	{editingItem}
+	imgUrl={getItemImageUrl(editingItem, data.PB_URL)}
+/>

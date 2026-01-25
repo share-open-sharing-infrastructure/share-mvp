@@ -83,6 +83,7 @@ export const actions = {
 		// Check if a new image was uploaded
 		const image = formData.get('itemImage');
 		if (image && image instanceof File && image.size > 0) {
+
 			updateData.image = image;
 		}
 
