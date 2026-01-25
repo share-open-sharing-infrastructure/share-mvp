@@ -1,5 +1,6 @@
-import { fail } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
+import { form } from '$app/server';
 
 export async function load({ locals }) {
 	const user = await locals.pb.collection('users').getOne(
@@ -97,14 +98,40 @@ export const actions = {
 		}
 	},
 
+	saveProfile: async ({ locals, request }) => {
+		const formData = await request.formData();
+
+		const updateData = {};
+		const fields = ['email', 'username', 'city'];
+
+		fields.forEach(field => {
+			const value = formData.get(field);
+			if (value && value.trim() !== '') {
+				updateData[field] = value.trim();
+			}
+		});
+
+		try {
+			if (Object.keys(updateData).length > 0) {
+				await locals.pb.collection('users').update(locals.user.id, updateData);
+				return {
+					success: true
+				}
+			}
+		} catch (err) {
+				return {
+					error: true
+				}
+		}
+	},
 	delete: async ({ locals, request }) => {
 		const itemId = (await request.formData()).get('itemId').toString();
 		try {
 			await locals.pb
 				.collection('items')
 				.delete(itemId);
-		} catch (error) {
-			console.error(error?.message || error);
+		} catch (err) {
+			console.error(err?.message || err);
 		}
 	}
 };
