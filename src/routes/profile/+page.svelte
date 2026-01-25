@@ -37,7 +37,6 @@
 		}
 		const res = await fetch(`/api/nominatim?q=${encodeURIComponent(search)}`);
 		results = await res.json();
-		console.log(results);
 	}, 300);
 
 	$effect(() => {
