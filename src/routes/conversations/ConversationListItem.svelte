@@ -2,7 +2,6 @@
 	import { Img } from "flowbite-svelte";
 
     let { conversation, currentUser, PB_IMG_URL } = $props();
-    let requestedItem = conversation.expand.requestedItem;
 
 </script>
 
@@ -17,7 +16,7 @@
             <Img 
                 alt="Requested Item Image"
                 class="h-10 w-10 rounded-full object-cover"
-                src={`${PB_IMG_URL}api/files/${requestedItem.collectionId}/${requestedItem.id}/${requestedItem.image}`}
+                src={`${PB_IMG_URL}api/files/${conversation.expand.requestedItem.collectionId}/${conversation.expand.requestedItem.id}/${conversation.expand.requestedItem.image}`}
                 />
 		</div>
 		<div id="username" class="overflow-hidden p-1 text-ellipsis text-sm">
