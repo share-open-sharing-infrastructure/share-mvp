@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
-	import { Badge, Button, Card } from 'flowbite-svelte';
+	import { Badge, Button, Card, Input } from 'flowbite-svelte';
 	import { MapPinOutline, MessagesOutline } from 'flowbite-svelte-icons';
 	export let item: Item;
 	export let imgUrl: string;
@@ -37,19 +37,23 @@
 			<div class="flex justify-between items-center text-xs font-thin mb-3">
 				{#if item.expand?.owner?.id}
 					<span class="ml-auto">
-						<a href="/chat/{item.expand.owner.id}" class="flex items-center gap-2">
-							<Button
-								pill
-								onclick={() => {}}
-								class="
+						<form
+								class="inline-flex"
+								method="POST"
+								action="?/startConversation"
+							>
+								<Input name="itemId" value={item.id} hidden/>
+								<Input name="requesterId" value={item.expand?.requester?.id} hidden/>
+								<Input name="ownerId" value={item.expand?.owner?.id} hidden/>
+								<Button pill class="
+									cursor-pointer 
 									min-button
 									left-10 z-50
-									cursor-pointer
-								"
-							>
-								<MessagesOutline class="h-4 w-4 mr-2" /> Kontaktieren
-							</Button>
-						</a>
+									" 
+									type="submit">
+									<MessagesOutline class="h-4 w-4 mr-2" /> Kontaktieren
+								</Button>
+							</form>
 					</span>
 				{/if}
 			</div>
