@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button } from 'flowbite-svelte';
+	import { Button, Tooltip } from 'flowbite-svelte';
+	import { UserRemoveOutline } from 'flowbite-svelte-icons';
 
 	const { data } = $props();
 
@@ -21,23 +22,26 @@
 </script>
 
 <!-- HEADER -->
-<div class="m-2 mb-6 flex flex-col items-center justify-center">
-	<div class="text-2xl font-semibold text-gray-900 dark:text-white">Vertraute</div>
-	<div>Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust.</div>
-	<div>
-		Du kannst dann <a href="/profile" class="text-blue-600 hover:underline">deine Dinge</a> nur für diese
-		Menschen sichtbar machen.
+	<div class="py-4 px-4 mx-auto max-w-screen-xl">
+		<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">
+			<h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+				Vertraute Personen
+			</h2>
+			<p class="font-light text-gray-500 sm:text-xl dark:text-gray-400">
+					Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen zutraust. 
+					Du kannst dann <a href="/profile" class="primary-text hover:underline">deine Dinge</a> 
+					nur für diese Menschen sichtbar machen.
+			</p>
+		</div>
 	</div>
-</div>
-
 <!-- SEARCH BAR -->
-<div id="searchbar" class="mb-4 flex items-center justify-center">
+<div id="searchbar" class="mb-4 p-2 flex items-center justify-center">
 	<div class="relative w-full max-w-md">
 		<div class="flex">
 			<input
 				type="text"
 				placeholder="Ich vertraue..."
-				class="flex-1 rounded-l-md border border-gray-300 p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+				class="search-bar flex-1"
 				bind:value={usernameToBeAdded}
 				onfocus={() => (showDropdown = true)}
 				oninput={() => (showDropdown = true)}
@@ -47,7 +51,7 @@
 
 		{#if showDropdown && filteredUsers.length > 0}
 			<div
-				class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+				class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-primary-700 dark:bg-primary-900"
 			>
 				{#each filteredUsers as potentialFriend}
 					<form
@@ -63,7 +67,7 @@
 					>
 						<input type="hidden" name="trusteeId" value={potentialFriend.id} />
 						<button
-							class="flex w-full cursor-pointer items-center p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+							class="flex w-full cursor-pointer items-center p-3 text-left hover:bg-primary-50 dark:hover:bg-primary-900"
 							type="submit"
 						>
 							<span class="text-gray-900 dark:text-white">@{potentialFriend.username}</span>
@@ -76,25 +80,28 @@
 </div>
 
 <!-- FRIEND LIST -->
-<div class="mx-auto max-w-2xl items-center">
+<div class="mx-auto max-w-sm items-center">
 	{#if data.trustees.length === 0}
 		<p class="text-center text-gray-500 dark:text-gray-400">
 			Du hast noch keine vertrauten Personen hinzugefügt. Na los ;)
 		</p>
 	{/if}
 	{#each data.trustees as trustee}
-		<div class="flex items-center space-x-4 border-b border-gray-200 p-4 dark:border-gray-700">
+		<div class="flex items-center space-x-4 border-b border-gray-200 p-4 dark:border-primary-700">
 			<img
 				src={trustee.profilePic}
 				alt="Profile picture of {trustee.username}"
-				class="h-12 w-12 rounded-full object-cover"
+				class="primary-bg h-10 w-10 rounded-full object-cover"
 			/>
 			<div class="text-left">
 				<p class="text-lg font-medium text-gray-900 dark:text-white">@{trustee.username}</p>
 			</div>
 			<form class="ml-auto" method="POST" action="?/removeTrustee" use:enhance>
-				<input type="hidden" name="trusteeId" value={trustee.id} />
-				<Button class="ml-auto cursor-pointer" type="submit">X</Button>
+				<input type="hidden" name="trusteeId" value={trustee.id}>
+				<Button class="min-button ml-auto cursor-pointer bg-secondary-500 hover:bg-secondary-600" type="submit">
+					<UserRemoveOutline class="shrink-0 h-5 w-5" />
+				</Button>
+				<Tooltip type="light" placement="top">{trustee.username} das Vertrauen entziehen</Tooltip>
 			</form>
 		</div>
 	{/each}

@@ -7,7 +7,7 @@
 		<span class="text-gray-500">Du hast noch keine Chats.</span>
 		<span class="text-gray-500">Starte ein Gespräch, indem du jemanden anschreibst!</span>
 		<span class="text-gray-500"
-			>Gehe dazu auf die <a href="/search" class="text-blue-500 underline">Suche</a> und finde einen
+			>Gehe dazu auf die <a href="/search" class="text-secondary-600 underline">Suche</a> und finde einen
 			Gegenstand.</span
 		>
 	</div>

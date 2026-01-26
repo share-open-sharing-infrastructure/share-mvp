@@ -141,6 +141,8 @@
 				bind:value={messageText}
 			/>
 		</Label>
-		<Button type="submit">Senden</Button>
+		<Button 
+			class="min-button bg-primary-400 hover:bg-primary-500 cursor-pointer" 
+			type="submit">Senden</Button>
 	</form>
 </div>

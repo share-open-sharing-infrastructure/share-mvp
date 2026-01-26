@@ -15,9 +15,9 @@
 	</p>
 	<br />
 	<p>
-		{APP_NAME} ist quelloffen und lebt von der Gemeinschaft. Den Code findest du auf
+		{APP_NAME} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode findest du auf
 		<a href="https://github.com/share-open-sharing-infrastructure/share-mvp" class="underline"
 			>GitHub</a
-		>.
+		>. Wir freuen uns über Beiträge, Feedback und Unterstützung!
 	</p>
 </div>

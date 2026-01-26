@@ -7,7 +7,8 @@
 	class="
 	border-t
 	p-2
-	hover:bg-orange-50"
+	mb-2
+	min-button"
 >
 	<a href="/chat/{chatPartner.id}" class="flex">
 		<div id="icon" class="p-1">

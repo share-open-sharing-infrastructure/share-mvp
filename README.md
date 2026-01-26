@@ -9,9 +9,9 @@ Here, we develop a first minimum viable product. Next milestones are roughly:
 - 06/2026: Ready for integration with lending organisations
 - 12/2026: Integration with lending organisations possible and demonstrated
 
-For a more fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2). 
+For a more fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
 
-If you wish to contribute or are otherwise interested in the project, please don't hesitate to get in touch via matteo.ramin@outlook.com.
+If you wish to contribute or are otherwise interested in the project, please don't hesitate to get in touch via allerleih@posteo.de.
 
 # Documentation
 
@@ -53,6 +53,7 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 # Testing
+
 We use [vitest](https://vitest.dev/guide/) for testing. To install vitest, run
 
 ```bash
