@@ -16,7 +16,7 @@
 	let chatWindow: HTMLDivElement;
 
 	let { data } = $props();
-	let messages = $state(data.conversation.messages);
+	let messages = $state(data.conversation.messages ? [...data.conversation.messages] : []);
 
 	let loggedInUserIsItemOwner = $derived(data.currentUser.id === data.conversation.itemOwner.id);
 	let chatPartner = $derived(loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner);
@@ -44,7 +44,7 @@
 
 	// Scroll chat window to bottom when messages change
 	$effect(() => {
-		if (messages.length > 0 && chatWindow) {
+		if (messages && messages.length > 0 && chatWindow) {
 			setTimeout(() => {
 				chatWindow.scrollTo({
 					top: chatWindow.scrollHeight,
@@ -116,11 +116,15 @@
 
 	// Sync local messages with server data when messages prop changes
 	$effect(() => {
-		messages = [...data.conversation.messages];
+		messages = data.conversation.messages ? [...data.conversation.messages] : [];
 	});
 
 	// Set up real-time subscription
-	$effect(() => setupPocketBaseSubscription(pb, 'conversations', data.conversation.id, handleConversationEvent));
+	$effect(() => {
+		if (!pb) return; // Wait for pb to be initialized
+        const cleanup = setupPocketBaseSubscription(pb, 'conversations', data.conversation.id, handleConversationEvent);
+        return cleanup;
+	});
 </script>
 
 <!-- Conversation Header -->
