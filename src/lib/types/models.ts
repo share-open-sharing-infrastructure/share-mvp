@@ -64,6 +64,7 @@ export interface Item extends PocketBaseEntity {
 	trusteesOnly: boolean;
 
 	/** PocketBase collection id to which the item belongs */
+	/** TODO: I don't know why we save this? This should always be the "items" collection, right? */
 	collectionId: string;
 }
 
@@ -85,4 +86,6 @@ export interface Conversation extends PocketBaseEntity {
 	itemOwner: UserId;
 	requestedItem: ItemId;
 	messages: Message[];
+	readByRequester: boolean;
+	readByOwner: boolean;
 }

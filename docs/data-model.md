@@ -10,6 +10,7 @@ title: PocketBase Schema
 ---
 erDiagram
     direction LR
+
     USER{
         string id PK
         string username
@@ -18,6 +19,7 @@ erDiagram
         date updated
         User[] trusts FK
     }
+    
     USER 1 to zero or more USER: "trusts"
 
     ITEM{
@@ -51,7 +53,6 @@ erDiagram
 
     MESSAGE{
         string id PK
-        id conversation FK
         string messageContent
         id from FK
         id to FK

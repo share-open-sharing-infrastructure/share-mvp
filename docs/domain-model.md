@@ -12,7 +12,8 @@ classDiagram
 
     class User{
         +string username
-        +String email
+        +string email
+        +trusts UserId[]
     }
     User --> User : trusts
 
@@ -35,8 +36,8 @@ classDiagram
     class Conversation{
         +User requester
         +User itemOwner
+        +Item requestedItem
         +Message[] messages
-        +Date lastMessageDate
         +boolean readByRequester
         +boolean readByOwner
     }
