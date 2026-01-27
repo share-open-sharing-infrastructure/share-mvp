@@ -14,11 +14,11 @@
 	<!-- Main chat window container including chat list and messages -->
 	<div id="chat-container" class="flex h-150 w-full max-w-3xl justify-center gap-2">
 		<!-- List of all users the present user chatted with -->
-		<div class="w-1/3 border rounded-[20px]">
+		<div class="w-1/3 border rounded-[20px] overflow-hidden">
 			<div class="flex justify-center font-bold text-lg items-center h-15 truncate border-b">
 				Unterhaltungen
 			</div>
-			<ul id="chat-list" class="w-full p-2">
+			<ul id="chat-list" class="w-full p-2 overflow-auto h-full">
 				{#each data.conversations as conversation}
 					<ConversationListItem 
 						conversation={conversation} 

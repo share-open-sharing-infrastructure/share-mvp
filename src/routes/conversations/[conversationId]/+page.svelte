@@ -51,22 +51,6 @@
 		</div>
 	</div>
 	
-	<!-- <div id="icon" class="p-1">
-		<Img
-			alt="Requested Item Image"
-			class="h-10 w-10 rounded-full object-cover"
-			src={`${data.PB_URL}api/files/${data.conversation.requestedItem.collectionId}/${data.conversation.requestedItem.id}/${data.conversation.requestedItem.image}`}
-			/>
-	</div>
-	<div class="text-lg font-semibold text-gray-900">
-		{#if loggedInUserIsItemOwner}
-			Anfrage für {data.conversation.requestedItem.name} von {chatPartner.username}
-		{:else}
-			Anfrage für {data.conversation.requestedItem.name} an {chatPartner.username}
-		{/if}
-	</div>
-	<UserCircleSolid class="flex h-6 w-6 shrink-0" /> -->
-	
 </div>
 
 <!-- Messages list -->

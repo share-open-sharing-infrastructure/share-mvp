@@ -10,7 +10,7 @@
                 {conversation.expand.requestedItem.name}
             </div>
             <div class="flex w-full">
-                <div class="p-1 max-w-1/2 flex items-center justify-center">
+                <div class="p-1 min-w-1/2 max-w-1/2 flex items-center justify-center">
                     <div class="flex items-center justify-center w-full">
                         {#if conversation.requester === currentUser.id} <!-- User requests from another -->
                             <img 
@@ -27,7 +27,7 @@
                         {/if}
                     </div>
                 </div>
-                <div class="p-1 max-w-1/2 flex items-center justify-center">
+                <div class="p-1 min-w-1/2  max-w-1/2 flex items-center justify-center">
                     <div class="flex items-center justify-center w-full">
                         <img 
                             class="w-full rounded-[20px] aspect-square object-cover" 
