@@ -1,4 +1,4 @@
-import { error, fail } from "@sveltejs/kit";
+import { error, fail, redirect } from "@sveltejs/kit";
 import type { ClientResponseError } from "pocketbase";
 import { PB_URL } from "$env/static/private";
 
@@ -70,6 +70,21 @@ export const actions = {
             }
         }
 
-	}
+	},
+    deleteConversation: async ({ locals, request }) => {
+        const formData = await request.formData();
+        const conversationId = formData.get('conversationId') as string;
+
+        try {
+            await locals.pb.collection('conversations').delete(conversationId);
+        } catch (err) {
+            const e = err as Partial<ClientResponseError>;
+            return fail(e.status ?? 500, {
+                fail: true,
+                message: e.data?.message ?? 'Failed to delete conversation.'
+            });
+        }
+        redirect(303, '/conversations');
+    }
     
 };

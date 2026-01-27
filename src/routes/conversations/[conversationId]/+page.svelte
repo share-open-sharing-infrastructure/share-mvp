@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { MapPinOutline, UserCircleSolid } from 'flowbite-svelte-icons';
+	import { MapPinOutline, PaperPlaneSolid, TrashBinSolid } from 'flowbite-svelte-icons';
 	import Message from './Message.svelte';
 	import { enhance } from '$app/forms';
-	import { Button, Img, Input, Label } from 'flowbite-svelte';
-	import placeholderimg from '$lib/images/placeholder_img.png';
+	import { Button, Modal, Input, Label } from 'flowbite-svelte';
+
+	let defaultModal = $state(false);
+    let isSubmitting: boolean = $state(false);
 
     let { data } = $props();
    
@@ -66,8 +68,16 @@
 		class="flex w-full items-end gap-2"
 		method="POST"
 		action="?/sendMessage"
-		use:enhance
+		use:enhance={() => {
+            isSubmitting = true;
+            return async ({ update }) => {
+                await update();
+                isSubmitting = false;
+                messageText = '';
+            };
+        }}
 	>
+		<Button class="bg-red-700 border rounded-[20px]" onclick={() => (defaultModal = true)}><TrashBinSolid class="shrink-0 h-full" /></Button>
         <Input name="chatPartnerId" value={chatPartner.id} hidden></Input>
 		<Label class="w-full ">
 			<Input
@@ -81,6 +91,21 @@
 				bind:value={messageText}
 			/>
 		</Label>
-		<Button class="min-button" type="submit">Senden</Button>
+		<Button class="min-button" type="submit" disabled={isSubmitting}><PaperPlaneSolid class="shrink-0 h-full" /></Button>
+		
 	</form>
 </div>
+
+
+<Modal title="Anfrage löschen" form bind:open={defaultModal}>
+	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung gehen dabei verloren.
+
+	<form
+		class="flex justify-end ml-2"
+		method="POST"
+		action="?/deleteConversation"
+		>
+			<Input name="conversationId" value={data.conversation.id} hidden></Input>
+			<Button class="bg-red-700 rounded-[20px]" type="submit">Anfrage löschen</Button>
+	</form>
+</Modal>
