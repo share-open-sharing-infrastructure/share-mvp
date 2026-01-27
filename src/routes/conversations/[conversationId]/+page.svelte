@@ -5,14 +5,16 @@
 	import { Button, Modal, Input, Label } from 'flowbite-svelte';
 
 	let defaultModal = $state(false);
-    let isSubmitting: boolean = $state(false);
+	let isSubmitting: boolean = $state(false);
 	let chatWindow: HTMLDivElement;
 
-    let { data } = $props();
-   
+	let { data } = $props();
+
 	let loggedInUserIsItemOwner = $derived(data.currentUser.id === data.conversation.itemOwner.id);
-    let chatPartner = $derived(loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner);
-    let messageText: string = $state('');
+	let chatPartner = $derived(
+		loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner
+	);
+	let messageText: string = $state('');
 
 	function formatTimestamp(timestamp: string) {
 		const d = new Date(timestamp);
@@ -45,7 +47,6 @@
 			}, 0);
 		}
 	});
-
 </script>
 
 <!-- Conversation Header -->
@@ -55,19 +56,26 @@
 			<span class="text-m">{chatPartner.username}</span>
 			<span class="text-xs">aktiv seit {formatTimestamp(chatPartner.created)}</span>
 		</div>
-		<img src={`https://ui-avatars.com/api/?name=${chatPartner.username}&background=random`} class="rounded-[20px] aspect-square object-cover"/>
+		<img
+			src={`https://ui-avatars.com/api/?name=${chatPartner.username}&background=random`}
+			class="rounded-[20px] aspect-square object-cover"
+			alt="User Avatar"
+		/>
 	</div>
-	<div class="flex justify-start h-full min-w-1/2 gap-1 pl-1 truncate ">
-		<img src={`${data.PB_URL}api/files/${data.conversation.requestedItem.collectionId}/${data.conversation.requestedItem.id}/${data.conversation.requestedItem.image}`} class="rounded-[20px] aspect-square object-cover"/>
+	<div class="flex justify-start h-full min-w-1/2 gap-1 pl-1 truncate">
+		<img
+			src={`${data.PB_URL}api/files/${data.conversation.requestedItem.collectionId}/${data.conversation.requestedItem.id}/${data.conversation.requestedItem.image}`}
+			class="rounded-[20px] aspect-square object-cover"
+			alt="User Avatar"
+		/>
 		<div class="flex flex-col items-start">
 			<span class="text-m">{data.conversation.requestedItem.name}</span>
 			<span class="flex text-xs">
-					<MapPinOutline class="h-3 w-3" />{data.conversation.requestedItem.place}</span>
+				<MapPinOutline class="h-3 w-3" />{data.conversation.requestedItem.place}</span
+			>
 		</div>
 	</div>
-	
 </div>
-
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
 	{#each data.conversation.messages as message}
@@ -82,16 +90,18 @@
 		method="POST"
 		action="?/sendMessage"
 		use:enhance={() => {
-            isSubmitting = true;
-            return async ({ update }) => {
-                await update();
-                isSubmitting = false;
-                messageText = '';
-            };
-        }}
+			isSubmitting = true;
+			return async ({ update }) => {
+				await update();
+				isSubmitting = false;
+				messageText = '';
+			};
+		}}
 	>
-		<Button class="bg-red-700 border rounded-[20px]" onclick={() => (defaultModal = true)}><TrashBinSolid class="shrink-0 h-full" /></Button>
-        <Input name="chatPartnerId" value={chatPartner.id} hidden></Input>
+		<Button class="bg-red-700 border rounded-[20px]" onclick={() => (defaultModal = true)}
+			><TrashBinSolid class="shrink-0 h-full" /></Button
+		>
+		<Input name="chatPartnerId" value={chatPartner.id} hidden></Input>
 		<Label class="w-full ">
 			<Input
 				name="messageContent"
@@ -104,21 +114,18 @@
 				bind:value={messageText}
 			/>
 		</Label>
-		<Button class="min-button" type="submit" disabled={isSubmitting}><PaperPlaneSolid class="shrink-0 h-full" /></Button>
-		
+		<Button class="min-button" type="submit" disabled={isSubmitting}
+			><PaperPlaneSolid class="shrink-0 h-full" /></Button
+		>
 	</form>
 </div>
 
-
 <Modal title="Anfrage löschen" form bind:open={defaultModal}>
-	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung gehen dabei verloren.
+	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung gehen dabei
+	verloren.
 
-	<form
-		class="flex justify-end ml-2"
-		method="POST"
-		action="?/deleteConversation"
-		>
-			<Input name="conversationId" value={data.conversation.id} hidden></Input>
-			<Button class="bg-red-700 rounded-[20px]" type="submit">Anfrage löschen</Button>
+	<form class="flex justify-end ml-2" method="POST" action="?/deleteConversation">
+		<Input name="conversationId" value={data.conversation.id} hidden></Input>
+		<Button class="bg-red-700 rounded-[20px]" type="submit">Anfrage löschen</Button>
 	</form>
 </Modal>
