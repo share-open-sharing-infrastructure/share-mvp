@@ -11,7 +11,6 @@
 	let { data, form } = $props();
 	let messages = $state([...data.currentMessages]);
 	let messageText: string = $state('');
-	let lastMessageElement: HTMLDivElement;
 	let chatWindow: HTMLDivElement;
 
 	// Initialize PocketBase client once on component mount
@@ -109,8 +108,6 @@
 	{#each messages as message}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
-	<!-- dummy element to auto-scroll down to -->
-	<div bind:this={lastMessageElement}></div>
 </div>
 
 {#if form?.fail}
