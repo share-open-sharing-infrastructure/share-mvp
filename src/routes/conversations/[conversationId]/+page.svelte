@@ -1,19 +1,24 @@
 <script lang="ts">
+	// Imports for pocketbase real-time subcription
+	import PocketBase from 'pocketbase';
+	import type { RecordSubscription } from 'pocketbase';
+	import { onMount } from 'svelte';
+	import { PUBLIC_PB_URL } from '$env/static/public';
+	
 	import { MapPinOutline, PaperPlaneSolid, TrashBinSolid } from 'flowbite-svelte-icons';
-	import Message from './Message.svelte';
-	import { enhance } from '$app/forms';
 	import { Button, Modal, Input, Label } from 'flowbite-svelte';
+	import { enhance } from '$app/forms';
+	import Message from './Message.svelte';
 
 	let defaultModal = $state(false);
 	let isSubmitting: boolean = $state(false);
 	let chatWindow: HTMLDivElement;
 
 	let { data } = $props();
+	let messages = $state([...data.conversation.messages]);
 
 	let loggedInUserIsItemOwner = $derived(data.currentUser.id === data.conversation.itemOwner.id);
-	let chatPartner = $derived(
-		loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner
-	);
+	let chatPartner = $derived(loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner);
 	let messageText: string = $state('');
 
 	function formatTimestamp(timestamp: string) {
@@ -38,7 +43,7 @@
 
 	// Scroll chat window to bottom when messages change
 	$effect(() => {
-		if (data.conversation.messages.length > 0 && chatWindow) {
+		if (messages.length > 0 && chatWindow) {
 			setTimeout(() => {
 				chatWindow.scrollTo({
 					top: chatWindow.scrollHeight,
@@ -47,6 +52,73 @@
 			}, 0);
 		}
 	});
+
+	// Initialize PocketBase client once on component mount
+	let pb: PocketBase;
+	onMount(() => {
+		pb = new PocketBase(PUBLIC_PB_URL);
+		pb.authStore.loadFromCookie(document.cookie || '');
+	});
+
+	// Handle incoming real-time message events
+	async function handleConversationEvent(event: RecordSubscription<any>) {
+		console.log('Received conversation event:', event);
+		if (event.action === 'update') {
+			// Extract the last message id from the updated conversation record
+			const lastMessageId = event.record.messages?.[event.record.messages.length - 1];
+
+			// get last messages contents from pocketbase
+			let latestMessage;
+			if (lastMessageId) {
+				try {
+					latestMessage = await pb.collection('messages').getOne(lastMessageId)
+				} catch (error) {
+					console.error('Failed to fetch last message record:', error);
+				}
+			}
+			console.log('Latest message fetched:', latestMessage);
+
+			messages = [...messages, latestMessage];
+		}
+	}
+
+	/**
+	 * Sets up a PocketBase real-time subscription for the respective collection and record, and unsubscribes on cleanup.
+	 * @param pocketBaseInstance A PocketBase instance to subscribe to
+	 * @param collectionName The collection name to subscribe to
+	 * @param recordId The record ID to subscribe to, defaults to '*' (all records in the collection)
+	 * @param eventHandler A callback function to handle incoming subscription events
+	 * TODO: Check if this needs to be done client-side, maybe it's better to do server-side? Would that work?
+	 */
+	function setupPocketBaseSubscription(
+		pocketBaseInstance: PocketBase,
+		collectionName: string,
+		recordId: string = '*',
+		eventHandler: (event: RecordSubscription<any>) => void
+	) {
+		// Subscribe to all message events
+		// Note: PocketBase doesn't support filtering subscriptions by query,
+		// so we must subscribe to all messages and filter client-side
+		pocketBaseInstance
+			?.collection(collectionName)
+			.subscribe(recordId, eventHandler)
+			.catch((error) => {
+				console.error(`Failed to subscribe to ${collectionName}:`, error);
+			});
+
+		// Cleanup: unsubscribe when chat partner changes or component unmounts
+		return () => {
+			pocketBaseInstance
+				?.collection(collectionName)
+				.unsubscribe(recordId)
+				.catch((error) => {
+					console.error(`Failed to unsubscribe from ${collectionName}:`, error);
+				});
+		};
+	}
+
+	// Set up real-time subscription
+	$effect(() => setupPocketBaseSubscription(pb, 'conversations', data.conversation.id, handleConversationEvent));
 </script>
 
 <!-- Conversation Header -->
@@ -76,9 +148,10 @@
 		</div>
 	</div>
 </div>
+
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
-	{#each data.conversation.messages as message}
+	{#each messages as message}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>
