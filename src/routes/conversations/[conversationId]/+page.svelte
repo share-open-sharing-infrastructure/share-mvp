@@ -8,14 +8,15 @@
 	import { MapPinOutline, PaperPlaneSolid, TrashBinSolid } from 'flowbite-svelte-icons';
 	import { Button, Modal, Input, Label } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
-	import Message from './Message.svelte';
+	import MessageElement from './MessageElement.svelte';
+	import type { Message } from '$lib/types/models';
 
 	let defaultModal = $state(false);
 	let isSubmitting: boolean = $state(false);
 	let chatWindow: HTMLDivElement;
 
 	let { data } = $props();
-	let messages = $state([...data.conversation.messages]);
+	let messages = $state(data.conversation.messages);
 
 	let loggedInUserIsItemOwner = $derived(data.currentUser.id === data.conversation.itemOwner.id);
 	let chatPartner = $derived(loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner);
@@ -62,13 +63,12 @@
 
 	// Handle incoming real-time message events
 	async function handleConversationEvent(event: RecordSubscription<any>) {
-		console.log('Received conversation event:', event);
 		if (event.action === 'update') {
 			// Extract the last message id from the updated conversation record
 			const lastMessageId = event.record.messages?.[event.record.messages.length - 1];
 
 			// get last messages contents from pocketbase
-			let latestMessage;
+			let latestMessage: Message | null = null;
 			if (lastMessageId) {
 				try {
 					latestMessage = await pb.collection('messages').getOne(lastMessageId)
@@ -76,7 +76,6 @@
 					console.error('Failed to fetch last message record:', error);
 				}
 			}
-			console.log('Latest message fetched:', latestMessage);
 
 			messages = [...messages, latestMessage];
 		}
@@ -96,9 +95,7 @@
 		recordId: string = '*',
 		eventHandler: (event: RecordSubscription<any>) => void
 	) {
-		// Subscribe to all message events
-		// Note: PocketBase doesn't support filtering subscriptions by query,
-		// so we must subscribe to all messages and filter client-side
+		// Subscribe to some collection's and record's events
 		pocketBaseInstance
 			?.collection(collectionName)
 			.subscribe(recordId, eventHandler)
@@ -116,6 +113,11 @@
 				});
 		};
 	}
+
+	// Sync local messages with server data when messages prop changes
+	$effect(() => {
+		messages = [...data.conversation.messages];
+	});
 
 	// Set up real-time subscription
 	$effect(() => setupPocketBaseSubscription(pb, 'conversations', data.conversation.id, handleConversationEvent));
@@ -152,7 +154,7 @@
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
 	{#each messages as message}
-		<Message {message} isFromCurrentUser={data.currentUser?.id} />
+		<MessageElement {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>
 
