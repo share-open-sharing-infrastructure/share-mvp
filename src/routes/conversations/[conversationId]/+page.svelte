@@ -6,6 +6,7 @@
 
 	let defaultModal = $state(false);
     let isSubmitting: boolean = $state(false);
+	let chatWindow: HTMLDivElement;
 
     let { data } = $props();
    
@@ -33,6 +34,18 @@
 		return `${pad(day)}.${pad(month)}.${pad(year)}`;
 	}
 
+	// Scroll chat window to bottom when messages change
+	$effect(() => {
+		if (data.conversation.messages.length > 0 && chatWindow) {
+			setTimeout(() => {
+				chatWindow.scrollTo({
+					top: chatWindow.scrollHeight,
+					behavior: 'smooth'
+				});
+			}, 0);
+		}
+	});
+
 </script>
 
 <!-- Conversation Header -->
@@ -56,7 +69,7 @@
 </div>
 
 <!-- Messages list -->
-<div class="flex flex-col overflow-auto p-2">
+<div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
 	{#each data.conversation.messages as message}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
