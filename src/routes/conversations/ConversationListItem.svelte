@@ -1,5 +1,4 @@
 <script lang="ts">
-    import placeholderimg from '$lib/images/placeholder_img.png';
     let { conversation, currentUser, PB_IMG_URL } = $props();
 </script>
 

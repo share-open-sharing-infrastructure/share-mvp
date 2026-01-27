@@ -1,24 +1,6 @@
 <script lang="ts">
+	import { formatTimestamp } from '$lib/utils/utils';
 	let { message, isFromCurrentUser } = $props();
-
-	function formatTimestamp(timestamp: string) {
-		const d = new Date(timestamp);
-		const day = d.getDate();
-		const month = d.getMonth() + 1; // months are 0-based
-		const hours = d.getHours();
-		const minutes = d.getMinutes();
-
-		// pad single digits (e.g. 3 → 03)
-		const pad = (n: number) => String(n).padStart(2, '0');
-
-		// if today, return only time
-		const today = new Date();
-		if (d.toDateString() === today.toDateString()) {
-			return `${pad(hours)}:${pad(minutes)}`;
-		}
-
-		return `${pad(day)}.${pad(month)}. ${pad(hours)}:${pad(minutes)}`;
-	}
 </script>
 
 <div
@@ -31,6 +13,6 @@
 >
 	{message.messageContent}
 	<div class="text-right text-xs text-gray-500">
-		{formatTimestamp(message.created)}
+		{formatTimestamp(message.created, false)}
 	</div>
 </div>

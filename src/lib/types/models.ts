@@ -82,9 +82,9 @@ export interface Message extends PocketBaseEntity {
 }
 
 export interface Conversation extends PocketBaseEntity {
-	requester: UserId;
-	itemOwner: UserId;
-	requestedItem: ItemId;
+	requester: User;
+	itemOwner: User;
+	requestedItem: Item;
 	messages: Message[];
 	readByRequester: boolean;
 	readByOwner: boolean;
