@@ -1,6 +1,6 @@
 import { error, fail, redirect } from "@sveltejs/kit";
 import type { ClientResponseError } from "pocketbase";
-import { PB_URL } from "$env/static/private";
+import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Conversation, Message } from "$lib/types/models.js";
 
 export async function load({ params, locals }) {
@@ -29,7 +29,7 @@ export async function load({ params, locals }) {
 
     return {
         conversation,
-        PB_URL: PB_URL
+        PB_URL: PUBLIC_PB_URL
     };
 }
 

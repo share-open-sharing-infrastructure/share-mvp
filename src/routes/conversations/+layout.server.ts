@@ -1,6 +1,6 @@
 import type { Conversation } from "$lib/types/models.js";
 import { error } from "@sveltejs/kit";
-import { PB_URL } from "$env/static/private";
+import { PUBLIC_PB_URL } from "$env/static/public";
 
 export async function load( { locals } ) {
 
@@ -21,6 +21,6 @@ export async function load( { locals } ) {
     // return data to the page
     return {
         conversations: allConversations,
-        PB_IMG_URL: PB_URL,
+        PB_IMG_URL: PUBLIC_PB_URL,
     };
 }
