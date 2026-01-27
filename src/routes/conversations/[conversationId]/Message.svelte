@@ -25,7 +25,7 @@
 	class="
     {message.from === isFromCurrentUser ? 'self-end' : 'self-start'}
     mt-1 max-w-5/6
-    rounded border p-1
+    rounded-[15px] border p-1
     px-2 text-sm
     wrap-break-word"
 >
