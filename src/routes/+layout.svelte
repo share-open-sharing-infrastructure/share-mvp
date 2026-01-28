@@ -110,6 +110,9 @@
 			<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/contact"
 				>Kontakt</FooterLink
 			>
+			<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/newsletter"
+				>Newsletter</FooterLink
+			>
 		</FooterLinkGroup>
 		<span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">
 			© 2026 <a href="/" class="hover:underline">{APP_NAME}</a>
