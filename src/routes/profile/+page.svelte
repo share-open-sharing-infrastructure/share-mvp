@@ -30,6 +30,15 @@
 				Hi {data.user.username}!
 			</h2>
 			<p class="font-light text-gray-500 lg:mb-16 sm:text-xl dark:text-gray-400">Du verleihst...</p>
+			{#if !data?.user?.expand?.items_via_owner?.length}
+				<p class="text-sm my-2">Noch garnichts! Füge etwas hinzu :)</p>
+				<AddButton
+					onclick={() => {
+						showAddModal = true;
+					}}
+					floating={false}
+				/>
+			{/if}
 		</div>
 		<div class="grid gap-8 mb-6 lg:mb-16 md:grid-cols-2">
 			{#if data?.user?.expand?.items_via_owner?.length}
@@ -44,6 +53,10 @@
 				/>
 			{/if}
 		</div>
+	</div>
+	<div class="mx-auto">
+		
+		
 	</div>
 </section>
 
