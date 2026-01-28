@@ -85,6 +85,7 @@
 				name="itemName"
 				placeholder="Name des Gegenstands"
 				value={editingItem?.name ? editingItem.name : ''}
+				autocomplete="off"
 				required
 			/>
 		</Label>
@@ -95,6 +96,7 @@
 				name="itemDescription"
 				placeholder="Beschreibung des Gegenstands"
 				value={editingItem?.description ? editingItem.description : ''}
+				autocomplete="off"
 				required
 			/>
 		</Label>
