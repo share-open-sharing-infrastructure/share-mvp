@@ -8,10 +8,10 @@
         z-50
         h-10
         rounded-full
-        text-lg
+        text-sm
         shadow-lg focus:ring-4
         focus:ring-gray-300		
         min-button			
     ">
-    <a href="/howto">Wie funktioniert's?</a>
+    <a href="/howto">?</a>
 </Button>
