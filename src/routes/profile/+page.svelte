@@ -41,7 +41,7 @@
 
 	function selectLocation(name) {
 		search = name;
-		results = []; 
+		results = [];
 	}
 
 	onDestroy(() => {
@@ -95,12 +95,13 @@
 								>
 									{#if results.length > 0}
 										{#each results as result}
-											<li
+											<button
+												type="button"
 												onclick={() => selectLocation(result.name)}
-												class="w-60 bg-white px-4 py-2 rounded-base hover:bg-gray-100 cursor"
+												class="w-60 bg-white text-left px-4 py-2 rounded-base hover:bg-gray-100 cursor-pointer"
 											>
-												{result.name}
-											</li>
+												{result.display_name}
+											</button>
 										{/each}
 									{/if}
 								</ul>

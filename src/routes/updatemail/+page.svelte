@@ -24,7 +24,7 @@
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			<form class="flex flex-col space-y-5" action="?/updatemail" method="post">
 				<Label class="space-y-2">
-					<span>Deine neue E-Mail Adresse</span>
+					<span>Deine neue E-Mail Adresse:</span>
 					<Input
 						type="email"
 						name="newEmail"
