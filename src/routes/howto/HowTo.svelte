@@ -2,6 +2,7 @@
 	import screenshot_search from '$lib/images/screenshot_search.png';
 	import screenshot_upload from '$lib/images/screenshot_upload.png';
 	import screenshot_trust from '$lib/images/screenshot_trust.png';
+	import screenshot_request from '$lib/images/screenshot_request.png';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import HowToElement from './HowToElement.svelte';
 </script>
@@ -32,10 +33,11 @@
 		/>
 
 		<HowToElement
-			img={screenshot_upload}
+			img={screenshot_request}
 			number={2}
 			headline="Kontakt aufnehmen"
-			text="Du kannst direkt über die Plattform Kontakt zu den Verleiher:innen aufnehmen. Falls die Person andere Kontaktdaten wie z.B. von Signal hinterlegt hat, kannst du sie auch drüber kontaktieren."
+			text="Du kannst direkt über die Plattform Kontakt zu den Verleiher:innen aufnehmen.
+			Falls die Person andere Kontaktdaten wie z.B. von Signal hinterlegt hat, kannst du sie auch darüber kontaktieren."
 		/>
 
 		<HowToElement

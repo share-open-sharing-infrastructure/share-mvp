@@ -4,12 +4,8 @@
 
 <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
     <div class="grid gap-0 md:grid-cols-5">
-        <!-- Image placeholder -->
-        <div class="md:col-span-2">
-            <div class="flex h-44 w-full items-center justify-center bg-gray-100 md:h-full">
-                <img src={img} alt="{headline}" class="h-full" />
-            </div>
-        </div>
+        <!-- Image -->
+        <img src={img} alt="{headline}" class="object-cover h-full md:col-span-2 items-center justify-center" />
 
         <!-- Content -->
         <div class="p-6 md:col-span-3">
