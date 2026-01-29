@@ -125,6 +125,7 @@ export const actions = {
 			}
 		}
 	},
+
 	delete: async ({ locals, request }) => {
 		const itemId = (await request.formData()).get('itemId').toString();
 		try {
