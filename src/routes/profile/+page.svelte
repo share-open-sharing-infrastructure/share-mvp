@@ -8,11 +8,10 @@
 	import ErrorAlert from './ErrorAlert.svelte';
 	import debounce from 'debounce';
 	import { onDestroy } from 'svelte';
-	
 
 	let { data, form } = $props();
 
-	let search = '';
+	let search = $state('');
 	let results = $state<any[]>([]);
 
 	let showAddModal = $state(false);
@@ -40,9 +39,10 @@
 		results = await res.json();
 	}, 300);
 
-	$effect(() => {
-		searchLocations();
-	});
+	function selectLocation(name) {
+		search = name;
+		results = []; 
+	}
 
 	onDestroy(() => {
 		searchLocations.flush?.();
@@ -62,7 +62,6 @@
 				>
 					<form method="POST" action="?/saveProfile">
 						<div class="grid grid-cols-6 gap-6">
-		
 							<div class="col-span-6 sm:col-span-3">
 								<label for="username" class="block mb-2 text-sm font-medium text-gray-900"
 									>Nutzername:</label
@@ -88,20 +87,23 @@
 									bind:value={search}
 									autocomplete="off"
 									oninput={searchLocations}
+									onblur={() => setTimeout(() => (results = []), 100)}
 								/>
 
-								{#if results.length > 0}
-									<Listgroup
-										border
-										active
-										items={results}
-										onsubmit={(e) => {
-											console.log(e);
-											const selected = e;
-										}}
-										class="w-60 absolute hover:bg-gray-100"
-									/>
-								{/if}
+								<ul
+									class="w-48 text-sm absolute font-medium text-heading bg-neutral-primary-soft border-none active rounded-base"
+								>
+									{#if results.length > 0}
+										{#each results as result}
+											<li
+												onclick={() => selectLocation(result.name)}
+												class="w-60 bg-white px-4 py-2 rounded-base hover:bg-gray-100 cursor"
+											>
+												{result.name}
+											</li>
+										{/each}
+									{/if}
+								</ul>
 							</div>
 							<div class="col-span-6 sm:col-span-3">
 								<label for="country" class="block mb-2 text-sm font-medium text-gray-900"
@@ -109,15 +111,18 @@
 								>
 								<div class="mt-2"><span class="italic text-lg">{formattedDate()}</span></div>
 							</div>
-												<div class="col-span-6 sm:col-span-3">
+							<div class="col-span-6 sm:col-span-3">
 								<label for="mail" class="block mb-2 text-sm font-medium text-gray-900"
 									>Mailadresse:</label
 								>
-							<div class="mt-2"><span class="italic text-lg">{data.user.email}</span></div>
-								  <p id="helper-text-explanation" class="mt-2.5 text-sm text-body">Deine Mailadresse kannst du <a href="/updatemail" class="font-medium primary-text hover:underline">hier</a> ändern.</p>
-
+								<div class="mt-2"><span class="italic text-lg">{data.user.email}</span></div>
+								<p id="helper-text-explanation" class="mt-2.5 text-sm text-body">
+									Deine Mailadresse kannst du <a
+										href="/updatemail"
+										class="font-medium primary-text hover:underline">hier</a
+									> ändern.
+								</p>
 							</div>
-							
 
 							<div class="col-span-6 sm:col-full">
 								<Button class="min-button" type="submit">Speichern</Button>
