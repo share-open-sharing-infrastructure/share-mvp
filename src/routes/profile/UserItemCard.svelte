@@ -23,9 +23,7 @@
 	}
 </script>
 
-<div
-	class="items-center border border-gray-200 rounded-lg shadow sm:flex"
->
+<div class="items-center border border-gray-200 rounded-lg shadow sm:flex">
 	<img class="m-5 w-40 h-40 rounded-lg" src={imgUrl} alt={item.name} />
 
 	<div class="p-5">
