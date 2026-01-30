@@ -26,6 +26,7 @@ jobs:
         run: npm run build
         env:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
+          LOGIN_SECRET: ${{ secrets.LOGIN_SECRET }}
   test:
     # This matrix tests both the main and pull request branches
     name: Test ${{ matrix.artifact }}
