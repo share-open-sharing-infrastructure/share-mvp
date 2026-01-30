@@ -13,7 +13,7 @@
 	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
 		Bei <span
 			class="self-center text-xl text-black font-semibold whitespace-nowrap dark:text-white logo"
-			>Allerleih</span
+			>AllerLeih</span
 		> findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...
 	</p>
 </div>

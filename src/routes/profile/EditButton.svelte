@@ -17,5 +17,5 @@
         dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 	{onclick}
 >
-	Bearbeiten  <EditOutline class="me-2 h-4 w-4 ml-1" />
+        Bearbeiten <EditOutline class="me-2 h-4 w-4 ml-1" />
 </Button>

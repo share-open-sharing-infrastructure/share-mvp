@@ -1,14 +1,15 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 
-export async function load({ locals }) {
+
+export async function load({ locals, url, fetch }) {
 	const user = await locals.pb.collection('users').getOne(
 		locals.user.id,
-		{ expand: 'items_via_owner' } // expands the user "backwards" from the items collection, i.e. pulls all items related to this user
+		{ expand: 'items_via_owner' }
 	);
 
 	return {
-		user: user,
+		user,
 		PB_URL: PUBLIC_PB_URL
 	};
 }
@@ -97,14 +98,42 @@ export const actions = {
 		}
 	},
 
+	saveProfile: async ({ locals, request }) => {
+		const formData = await request.formData();
+
+		const updateData = {};
+		const fields = ['email', 'username', 'city'];
+
+		fields.forEach(field => {
+			const value = formData.get(field);
+			if (value && value.toString().trim() !== '') {
+				updateData[field] = value.toString().trim();
+			}
+		});
+		console.log(updateData);
+
+		try {
+			if (Object.keys(updateData).length > 0) {
+				await locals.pb.collection('users').update(locals.user.id, updateData);
+				return {
+					success: true
+				}
+			}
+		} catch (err) {
+			return {
+				error: true
+			}
+		}
+	},
+
 	delete: async ({ locals, request }) => {
 		const itemId = (await request.formData()).get('itemId').toString();
 		try {
 			await locals.pb
 				.collection('items')
 				.delete(itemId);
-		} catch (error) {
-			console.error(error?.message || error);
+		} catch (err) {
+			console.error(err?.message || err);
 		}
 	}
 };

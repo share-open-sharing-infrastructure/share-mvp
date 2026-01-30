@@ -6,7 +6,7 @@ import { redirect } from '@sveltejs/kit';
 
 export { PUBLIC_PB_URL };
 
-const unprotectedPrefix = ['/login', '/register', '/reset', '/search'];
+const unprotectedPrefix = ['/login', '/register', '/reset', '/search', '/updatemail'];
 
 export const authentication: Handle = async ({ event, resolve }) => {
 	event.locals.pb = new PocketBase(PUBLIC_PB_URL);
