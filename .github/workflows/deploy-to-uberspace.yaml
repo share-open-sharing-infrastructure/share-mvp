@@ -20,6 +20,7 @@ jobs:
         run: npm run build
         env:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
+          LOGIN_SECRET: ${{ secrets.LOGIN_SECRET }}
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:
