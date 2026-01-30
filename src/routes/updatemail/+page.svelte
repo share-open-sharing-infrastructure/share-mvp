@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ActionData, PageData } from './$types';
+	import type { ActionData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
 	export let form: ActionData;
@@ -7,6 +7,7 @@
 </script>
 
 <Section name="reset">
+
 	{#if form?.fail}
 		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
 			<Alert>
@@ -36,7 +37,7 @@
 				<Button
 					type="submit"
 					formaction="?/updatemail"
-					class="me-2 mb-2 w-full rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
+					class="min-button w-full"
 					>Ändere meine Mailadresse.</Button
 				>
 			</form>

@@ -15,7 +15,7 @@ export const actions = {
 		}
 
 		try {
-			await locals.pb.collection('users').requestEmailChange(email);
+			await locals.pb.collection('users').requestEmailChange(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
 			return fail(500, { fail: true, message: errorObj.data.message });
@@ -23,7 +23,6 @@ export const actions = {
 
 		
 		return {
-		
 			success: true
 		};
 	}

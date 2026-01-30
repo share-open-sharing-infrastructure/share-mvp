@@ -1,6 +1,5 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
-import { form } from '$app/server';
 
 
 export async function load({ locals, url, fetch }) {
@@ -107,10 +106,11 @@ export const actions = {
 
 		fields.forEach(field => {
 			const value = formData.get(field);
-			if (value && value.trim() !== '') {
-				updateData[field] = value.trim();
+			if (value && value.toString().trim() !== '') {
+				updateData[field] = value.toString().trim();
 			}
 		});
+		console.log(updateData);
 
 		try {
 			if (Object.keys(updateData).length > 0) {
