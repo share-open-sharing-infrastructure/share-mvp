@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { Button } from 'flowbite-svelte';
+	import { Button } from 'flowbite-svelte';
 
-    let { onclick, floating } = $props();
+	let { onclick, floating } = $props();
 </script>
 
-<Button 
-    {onclick}
-    class="
+<Button
+	{onclick}
+	class="
         {floating ? 'fixed right-10 bottom-10' : ''}
         z-50
         h-10
@@ -16,6 +16,7 @@
         shadow-lg focus:ring-4
         focus:ring-gray-300		
         min-button			
-    ">
-    +
+    "
+>
+	+
 </Button>
