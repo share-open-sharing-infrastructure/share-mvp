@@ -2,7 +2,7 @@
 	import { Gallery } from "flowbite-svelte";
 	import ItemCard from "./ItemCard.svelte";
 
-    let { filteredItemList, PB_IMG_URL } = $props();
+    let { filteredItemList, PB_IMG_URL, requesterId } = $props();
 
 </script>
 
@@ -17,6 +17,7 @@
         <ItemCard
             {item}
             imgUrl={`${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
+            {requesterId}
         />
     {/each}
 </Gallery>
