@@ -3,21 +3,13 @@
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
 	export let form: ActionData;
-	import { Alert } from 'flowbite-svelte';
+	import SuccessAlert from '$lib/SuccessAlert.svelte';
+	import ErrorAlert from '$lib/ErrorAlert.svelte';
+
+	let newEmail = '';
 </script>
 
 <Section name="reset">
-
-	{#if form?.fail}
-		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-			<Alert>
-				<span class="font-medium">
-					{form.message}
-				</span>
-			</Alert>
-		</div>
-	{/if}
-
 	<Register href="/" class="w-md">
 		{#snippet top()}
 			Mailadresse ändern
@@ -29,6 +21,7 @@
 					<Input
 						type="email"
 						name="newEmail"
+						bind:value={newEmail}
 						placeholder="E-Mail Adresse"
 						class="focus:border-primary-700 focus:ring-primary-700"
 						required
@@ -37,10 +30,15 @@
 				<Button
 					type="submit"
 					formaction="?/updatemail"
-					class="min-button w-full"
-					>Ändere meine Mailadresse.</Button
+					class="me-2 mb-2 w-full rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
+					>Ändere meine Mailadresse</Button
 				>
 			</form>
+			{#if form?.success}
+				<SuccessAlert successMessage={form?.message} />
+			{:else if form?.error}
+				<ErrorAlert errorMessage={form?.message} />
+			{/if}
 		</div>
 	</Register>
 </Section>

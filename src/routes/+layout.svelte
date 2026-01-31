@@ -67,7 +67,7 @@
 		cursor-pointer
 	"
 >
-	Feedback geben
+	Feedback
 </Button>
 
 {#if data.flash}
@@ -75,7 +75,7 @@
 {/if}
 
 {@render children()}
-<Modal bind:open={feedbackModalNotion} size="lg" title="Feedback geben">
+<Modal bind:open={feedbackModalNotion} size="lg" title="Feedback">
 	<iframe
 		title="Feedback Form"
 		src="https://dismantle-capitalism.notion.site/ebd/2bc20d17d64980d798b8f4d1105c8bc0"
