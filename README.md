@@ -11,7 +11,7 @@ Here, we develop a first minimum viable product. Next milestones are roughly:
 
 For a more fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
 
-If you wish to contribute or are otherwise interested in the project, please don't hesitate to get in touch via matteo.ramin@outlook.com.
+If you wish to contribute or are otherwise interested in the project, please don't hesitate to get in touch via allerleih@posteo.de.
 
 # Documentation
 
