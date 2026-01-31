@@ -1,3 +1,5 @@
+import { form } from '$app/server';
+
 export const load = (event) => {
 	const flashCookie = event.cookies.get('flash');
 	let flash = null;
@@ -14,3 +16,4 @@ export const load = (event) => {
 		currentUser: event.locals.user
 	};
 };
+
