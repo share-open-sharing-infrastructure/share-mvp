@@ -44,6 +44,16 @@
 						required
 					/>
 				</Label>
+				<Label class="space-y-2">
+					<span>Geheimnis</span>
+					<Input
+						type="text"
+						name="secret"
+						placeholder="Geheimes Codewort für den Test-Zugang"
+						class="focus:border-primary-700 focus:ring-primary-700"
+						required
+					/>
+				</Label>
 				<Button
 					type="submit"
 					formaction="?/register"

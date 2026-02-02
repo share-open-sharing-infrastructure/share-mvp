@@ -2,6 +2,7 @@
 	let { flash, duration = 3000 } = $props();
 	let open = $state(true);
 
+	// svelte-ignore state_referenced_locally
 	const timer = setTimeout(() => {
 		open = false;
 	}, duration);

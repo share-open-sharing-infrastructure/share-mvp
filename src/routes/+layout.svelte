@@ -5,10 +5,11 @@
 	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Button, Modal } from 'flowbite-svelte';
 	import { Footer, FooterBrand, FooterLinkGroup, FooterLink } from 'flowbite-svelte';
 	import { APP_NAME } from '$lib/names';
+	import FeedbackForm from '$lib/FeedbackForm.svelte';
 
 	let { children, data } = $props();
 
-	let feedbackModalNotion = $state(false);
+	let isFeedbackModalOpen = $state(false);
 
 	async function logout() {
 		const res = await fetch('/logout', {
@@ -59,29 +60,23 @@
 
 	<Button
 		pill
-		onclick={() => {
-			feedbackModalNotion = true;
-		}}
-		class="
-		min-button
-		fixed bottom-10 left-10 z-50
-		cursor-pointer
-	"
-	>
+			onclick={() => {
+				isFeedbackModalOpen = true;
+			}}
+			class="
+				min-button
+				fixed bottom-10 left-10 z-50
+				cursor-pointer
+			"
+		>
 		Feedback geben
 	</Button>
 
-	<Modal bind:open={feedbackModalNotion} size="lg" title="Feedback geben">
-		<iframe
-			title="Feedback Form"
-			src="https://dismantle-capitalism.notion.site/ebd/2bc20d17d64980d798b8f4d1105c8bc0"
-			width="100%"
-			height="800"
-			frameborder="0"
-			allowfullscreen
-		>
-		</iframe>
+
+	<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
+		<FeedbackForm />
 	</Modal>
+
 
 	<!-- to set bg color assign class="bg-primary-50"-->
 	<Footer footerType="socialmedia" class="">
@@ -108,6 +103,9 @@
 				>
 				<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/contact"
 					>Kontakt</FooterLink
+				>
+				<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/newsletter"
+					>Newsletter</FooterLink
 				>
 			</FooterLinkGroup>
 			<span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">

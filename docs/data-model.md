@@ -10,6 +10,7 @@ title: PocketBase Schema
 ---
 erDiagram
     direction LR
+
     USER{
         string id PK
         string username
@@ -18,8 +19,8 @@ erDiagram
         date updated
         User[] trusts FK
     }
+    
     USER 1 to zero or more USER: "trusts"
-    "note that pocketbase auto-creates tables for n:m relationships as in user-trusts-user"
 
     ITEM{
         string id PK
@@ -35,6 +36,21 @@ erDiagram
 
     USER 1 to zero or more ITEM: owns
 
+    CONVERSATION{
+        string id PK
+        id requester FK
+        id itemOwner FK
+        id requestedItem FK
+        Message[] messages
+        bool readByRequester
+        bool readByOwner
+        date created
+        date updated
+    }
+
+    USER 1 to zero or more CONVERSATION: has
+    CONVERSATION zero or more to 1 ITEM: concerns
+
     MESSAGE{
         string id PK
         string messageContent
@@ -43,8 +59,7 @@ erDiagram
         date created
         date updated
     }
-
-    USER 1 to 1 MESSAGE: "from"
-    USER 1 to 1 MESSAGE: "to"
+    
+    CONVERSATION 1 to zero or more MESSAGE: contains
 
 ```
