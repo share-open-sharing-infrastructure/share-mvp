@@ -12,7 +12,7 @@
 		<h2 class="text-2xl font-semibold tracking-tight">So funktioniert AllerLeih</h2>
 		<p class="mt-2 text-base leading-relaxed text-gray-600">
 			Allerleih ist eine offene Plattform, auf der du Dinge aus- und verleihen kannst. Im Gegensatz
-			zu anderen Plattformen steht bei uns allerdings die Gemeinnützigkeit im Sinne der sozialen und
+			zu anderen Plattformen steht bei uns die Gemeinnützigkeit im Sinne der sozialen und
 			ökologischen Wirkung im Vordergrund.
 		</p>
 		<p class="mt-2 text-base leading-relaxed">
@@ -58,19 +58,6 @@
 			Personen verleihen willst.
 			Das kannst du für jeden deiner Gegenstände beim Hochladen oder im Nachhinein
 			festlegen."
-		/>
-
-		<HowToElement
-			img={placeholderimg}
-			number={5}
-			headline="Datenschutz"
-			text="Du gibst Preis, so viel du magst. Wir sorgen dafür, dass deine Daten sicher und
-									vertraulich sind.
-									Auf deinem Profil kannst du selber entscheiden, ob du nur deine Stadt, oder direkt
-									deine Adresse und Kontaktdaten hinterlegen willst.
-									Wir zeigen deine Adresse nie öffentlich – sie wird nur genutzt, um die grobe
-									Distanz zu berechnen. Und du kannst jedes Mal entscheiden, ob du sie mit einer
-									Anfrage teilen willst."
 		/>
 
 	</div>
