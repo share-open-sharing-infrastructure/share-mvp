@@ -1,14 +1,16 @@
 <script lang="ts">
-	const { data } = $props();
-	const { items, uniquePlaces } = data;
 	import { Section } from 'flowbite-svelte-blocks';
 	import type { Item } from '$lib/types/models';
 	import SearchBar from './SearchBar.svelte';
 	import Welcome from './Welcome.svelte';
 	import ResultsList from './ResultsList.svelte';
 
+	const { data } = $props();
+	// svelte-ignore state_referenced_locally
+	const { items, uniquePlaces } = data;
+
 	let selectedPlaces: string[] = $state([]);
-	let searchText = $state({value: ''});
+	let searchText = $state({ value: '' });
 
 	// Helper for case insensitive search
 	const includesCaseInsensitive = (str: string, searchString: string) =>
@@ -19,7 +21,6 @@
 	// Filters result set item list based on selected filters and search text
 	let filteredItemList: Item[] = $derived(
 		items.filter((item: Item) => {
-
 			// Filter by selected places
 			if (selectedPlaces.length > 0 && !selectedPlaces.includes(item.place)) {
 				return false;
@@ -36,12 +37,7 @@
 </script>
 
 <Section>
-	<SearchBar
-		searchText={searchText}
-		isSearching={isSearching}
-		selectedPlaces={selectedPlaces}
-		uniquePlaces={uniquePlaces}
-	/>
+	<SearchBar {searchText} {isSearching} {selectedPlaces} {uniquePlaces} />
 
 	<div class="mx-auto max-w-5xl space-y-4 overflow-x-auto p-4 md:space-y-6">
 		{#if isSearching}
