@@ -1,9 +1,16 @@
 <script lang="ts">
-	import { Modal, Button, Input, Label, Helper, Toggle, Img, Popover } from 'flowbite-svelte';
+	import {
+		Modal,
+		Button,
+		Input,
+		Label,
+		Helper,
+		Toggle,
+		Img
+	} from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
-	import { onDestroy } from 'svelte';
 	import { ChevronRightOutline, QuestionCircleSolid } from 'flowbite-svelte-icons';
 
 	interface Props {
@@ -36,8 +43,14 @@
 		}
 	});
 
-	onDestroy(() => {
-		if (lastUrl) URL.revokeObjectURL(lastUrl);
+	$effect(() => {
+		if (!isVisible) {
+			previewUrl = undefined;
+			if (lastUrl) {
+				URL.revokeObjectURL(lastUrl);
+				lastUrl = undefined;
+			}
+		}
 	});
 </script>
 
@@ -57,6 +70,8 @@
 		}}
 	>
 		<Input type="text" name="itemId" value={editingItem?.id} hidden />
+
+		<!-- IMAGE PREVIEW -->
 		<Img
 			src={previewUrl ?? imgUrl ?? placeholderimg}
 			class="mx-auto h-50 w-50 rounded-md object-cover p-5"
@@ -74,6 +89,7 @@
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
 
+		<!-- ITEM DETAILS -->
 		<Label class="space-y-2">
 			<span>Name:</span>
 			<Input
@@ -85,6 +101,7 @@
 				required
 			/>
 		</Label>
+
 		<Label class="space-y-2">
 			<span>Beschreibung:</span>
 			<Input
@@ -96,6 +113,7 @@
 				required
 			/>
 		</Label>
+
 		<Label class="space-y-2">
 			<span>Ort:</span>
 			<Input
@@ -119,10 +137,17 @@
 				</button>
 			</div>
 		</Label>
-		<Button class="min-button" type="submit">
+
+		<!-- SUBMIT BUTTON -->
+		<Button
+			class="min-button"
+			type="submit"
+		>
 			{type === 'edit' ? 'Speichern' : 'Hinzufügen'}
 		</Button>
 	</form>
+
+	<!-- DELETE BUTTON -->
 	{#if type === 'edit'}
 		<form
 			method="POST"
