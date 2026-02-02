@@ -13,10 +13,11 @@
 	} from 'flowbite-svelte';
 	import { Footer, FooterBrand, FooterLinkGroup, FooterLink } from 'flowbite-svelte';
 	import { APP_NAME } from '$lib/names';
+	import FeedbackForm from '$lib/FeedbackForm.svelte';
 
 	let { children, data } = $props();
 
-	let feedbackModalNotion = $state(false);
+	let isFeedbackModalOpen = $state(false);
 
 	async function logout() {
 		const res = await fetch('/logout', {
@@ -48,8 +49,9 @@
 		{/if}
 		<NavLi href="/search">Suche</NavLi>
 		{#if data.currentUser}
-			<NavLi href="/chat">Chats</NavLi>
-			<NavLi href="/profile">Meine Dinge</NavLi>
+			<!-- <NavLi href="/chat">Chats</NavLi> -->
+			<NavLi href="/conversations">Anfragen</NavLi>
+			<NavLi href="/profile">Profil</NavLi>
 			<NavLi href="/social">Soziales</NavLi>
 			<NavLi href="/logout" onclick={logout}>Logout</NavLi>
 		{/if}
@@ -59,7 +61,7 @@
 <Button
 	pill
 	onclick={() => {
-		feedbackModalNotion = true;
+		isFeedbackModalOpen = true;
 	}}
 	class="
 		min-button
@@ -75,18 +77,12 @@
 {/if}
 
 {@render children()}
-<Modal bind:open={feedbackModalNotion} size="lg" title="Feedback geben">
-	<iframe
-		title="Feedback Form"
-		src="https://dismantle-capitalism.notion.site/ebd/2bc20d17d64980d798b8f4d1105c8bc0"
-		width="100%"
-		height="800"
-		frameborder="0"
-		allowfullscreen
-	>
-	</iframe>
+
+<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
+	<FeedbackForm />
 </Modal>
-<!-- to set bg color assign class="bg-primary-50"-->
+
+
 <Footer footerType="socialmedia" class="">
 	<div class="mx-auto my-10 max-w-screen-xl text-center">
 		<FooterBrand

@@ -1,4 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { LOGIN_SECRET } from '$env/static/private';
 import type { ClientResponseError } from 'pocketbase';
 
 export async function load({ locals }) {
@@ -14,6 +15,12 @@ export const actions = {
 		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
+		const secret = data.get('secret');
+
+		if (secret.toString() !== LOGIN_SECRET) {
+			const error = 'Das eingegebene Geheimnis ist ungültig.';
+			return fail(500, { fail: true, message: error });
+		}
 
 		if (!email || !password) {
 			return fail(400, { emailRequired: email === null, passwordRequired: password === null });
