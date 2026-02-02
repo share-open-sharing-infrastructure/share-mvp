@@ -4,6 +4,9 @@
 	import SearchBar from './SearchBar.svelte';
 	import Welcome from './Welcome.svelte';
 	import ResultsList from './ResultsList.svelte';
+	import HowToButton from './HowToButton.svelte';
+	import { Modal } from 'flowbite-svelte';
+	import HowTo from '../howto/HowTo.svelte';
 
 	const { data } = $props();
 	// svelte-ignore state_referenced_locally
@@ -11,6 +14,8 @@
 
 	let selectedPlaces: string[] = $state([]);
 	let searchText = $state({ value: '' });
+
+	let showHowTo = $state(false);
 
 	// Helper for case insensitive search
 	const includesCaseInsensitive = (str: string, searchString: string) =>
@@ -51,3 +56,5 @@
 		{/if}
 	</div>
 </Section>
+
+<HowToButton />
