@@ -6,7 +6,6 @@
 	import { QuestionCircleSolid, ChevronRightOutline } from "flowbite-svelte-icons";
 	export let item: Item;
 	export let imgUrl: string;
-	export let requesterId: string;
 </script>
 
 

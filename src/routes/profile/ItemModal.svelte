@@ -6,7 +6,10 @@
 		Label,
 		Helper,
 		Toggle,
-		Img
+		Img,
+
+		Popover
+
 	} from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
