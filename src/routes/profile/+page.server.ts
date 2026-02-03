@@ -1,14 +1,15 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 
-export async function load({ locals }) {
+
+export async function load({ locals, url, fetch }) {
 	const user = await locals.pb.collection('users').getOne(
 		locals.user.id,
-		{ expand: 'items_via_owner' } // expands the user "backwards" from the items collection, i.e. pulls all items related to this user
+		{ expand: 'items_via_owner' }
 	);
 
 	return {
-		user: user,
+		user,
 		PB_URL: PUBLIC_PB_URL
 	};
 }
@@ -97,14 +98,61 @@ export const actions = {
 		}
 	},
 
+	saveProfile: async ({ locals, request }) => {
+		const formData = await request.formData();
+
+		const updateData = {};
+
+		// Get username separately to check for spaces
+		const username = formData.get('username').toString();
+		if (username) {
+			const trimmedUsername = username.trim();
+			if (trimmedUsername.includes(' ')) {
+				return {
+					error: true,
+					message: 'Nutzername darf keine Leerzeichen enthalten.'
+				};
+			} else if (trimmedUsername !== '') {
+				updateData['username'] = trimmedUsername;
+			}
+		}
+
+		// Handle other fields
+		const city = formData.get('city').toString();
+		if (city && city.trim() !== '') {
+			updateData['city'] = city.trim();
+		}
+
+		try {
+			if (Object.keys(updateData).length > 0) {
+				await locals.pb.collection('users').update(locals.user.id, updateData);
+				return {
+					success: true,
+					message: 'Daten wurden erfolgreich aktualisiert.'
+				};
+			} else {
+				return {
+					error: true,
+					message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+				};
+			}
+		} catch (err) {
+			return {
+				error: true,
+				message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+			};
+		}
+	},
+
+
 	delete: async ({ locals, request }) => {
 		const itemId = (await request.formData()).get('itemId').toString();
 		try {
 			await locals.pb
 				.collection('items')
 				.delete(itemId);
-		} catch (error) {
-			console.error(error?.message || error);
+		} catch (err) {
+			console.error(err?.message || err);
 		}
 	}
 };

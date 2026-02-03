@@ -1,13 +1,5 @@
 <script lang="ts">
-	import {
-		Modal,
-		Button,
-		Input,
-		Label,
-		Helper,
-		Toggle,
-		Img
-	} from 'flowbite-svelte';
+	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle, Img } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
@@ -36,13 +28,17 @@
 	}
 
 	$effect(() => {
-		if(isVisible) {
+		if (isVisible) {
 			if (!previewUrl && !imgUrl) {
 				previewUrl = placeholderimg;
 			}
 		}
 	});
 
+	onDestroy(() => {
+		if (lastUrl) URL.revokeObjectURL(lastUrl);
+	});
+	
 	$effect(() => {
 		if (!isVisible) {
 			previewUrl = undefined;
@@ -52,8 +48,8 @@
 			}
 		}
 	});
+	
 </script>
-
 
 <Modal bind:open={isVisible} size="xs">
 	<form
@@ -79,7 +75,13 @@
 		/>
 		<Label class="space-y-2">
 			<span>{type === 'edit' ? 'Bild ändern:' : 'Bild hinzufügen:'}</span>
-			<input type="file" id="with_helper" name="itemImage" class="mb-2 min-button" accept="image/*" onchange={handleFileChange}
+			<input
+				type="file"
+				id="with_helper"
+				name="itemImage"
+				class="mb-2 min-button"
+				accept="image/*"
+				onchange={handleFileChange}
 			/>
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
@@ -87,7 +89,7 @@
 		<!-- ITEM DETAILS -->
 		<Label class="space-y-2">
 			<span>Name:</span>
-			<Input	
+			<Input
 				type="text"
 				name="itemName"
 				placeholder="Name des Gegenstands"
