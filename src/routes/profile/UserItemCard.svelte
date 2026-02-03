@@ -63,7 +63,6 @@
 				showEditModal = true;
 			}}
 		/>
-		<ul class="flex space-x-4 sm:mt-0"></ul>
 	</div>
 </div>
 

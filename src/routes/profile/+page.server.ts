@@ -102,29 +102,48 @@ export const actions = {
 		const formData = await request.formData();
 
 		const updateData = {};
-		const fields = ['email', 'username', 'city'];
 
-		fields.forEach(field => {
-			const value = formData.get(field);
-			if (value && value.toString().trim() !== '') {
-				updateData[field] = value.toString().trim();
+		// Get username separately to check for spaces
+		const username = formData.get('username').toString();
+		if (username) {
+			const trimmedUsername = username.trim();
+			if (trimmedUsername.includes(' ')) {
+				return {
+					error: true,
+					message: 'Nutzername darf keine Leerzeichen enthalten.'
+				};
+			} else if (trimmedUsername !== '') {
+				updateData['username'] = trimmedUsername;
 			}
-		});
-		console.log(updateData);
+		}
+
+		// Handle other fields
+		const city = formData.get('city').toString();
+		if (city && city.trim() !== '') {
+			updateData['city'] = city.trim();
+		}
 
 		try {
 			if (Object.keys(updateData).length > 0) {
 				await locals.pb.collection('users').update(locals.user.id, updateData);
 				return {
-					success: true
-				}
+					success: true,
+					message: 'Daten wurden erfolgreich aktualisiert.'
+				};
+			} else {
+				return {
+					error: true,
+					message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+				};
 			}
 		} catch (err) {
 			return {
-				error: true
-			}
+				error: true,
+				message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+			};
 		}
 	},
+
 
 	delete: async ({ locals, request }) => {
 		const itemId = (await request.formData()).get('itemId').toString();

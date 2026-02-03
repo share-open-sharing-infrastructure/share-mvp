@@ -1,20 +1,10 @@
 <script lang="ts">
-	import {
-		Modal,
-		Button,
-		Input,
-		Label,
-		Helper,
-		Toggle,
-		Img,
-
-		Popover
-
-	} from 'flowbite-svelte';
+	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle, Img, Popover } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
 	import { ChevronRightOutline, QuestionCircleSolid } from 'flowbite-svelte-icons';
+	import { onDestroy } from 'svelte';
 
 	interface Props {
 		isVisible: boolean;
@@ -46,6 +36,10 @@
 		}
 	});
 
+	onDestroy(() => {
+		if (lastUrl) URL.revokeObjectURL(lastUrl);
+	});
+	
 	$effect(() => {
 		if (!isVisible) {
 			previewUrl = undefined;
@@ -55,6 +49,7 @@
 			}
 		}
 	});
+	
 </script>
 
 <Modal bind:open={isVisible} size="xs">

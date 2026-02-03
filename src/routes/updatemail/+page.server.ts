@@ -17,13 +17,16 @@ export const actions = {
 		try {
 			await locals.pb.collection('users').requestEmailChange(email.toString());
 		} catch (error) {
-			const errorObj = error as ClientResponseError;
-			return fail(500, { fail: true, message: errorObj.data.message });
+			return {
+				error: true,
+				message: (error as ClientResponseError).message || 'Ein unbekannter Fehler ist aufgetreten.'
+			};
 		}
 
-		
+
 		return {
-			success: true
+			success: true,
+			message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${email} gesendet. Bitte überprüfe deinen Posteingang.`
 		};
 	}
 };
