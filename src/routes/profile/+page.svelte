@@ -87,7 +87,7 @@
 						</div>
 					</form>
 					{#if form?.success}
-						<SuccessAlert/>
+						<SuccessAlert successMessage={form?.message} />
 					{:else if form?.error}
 						<ErrorAlert errorMessage={form?.message} />
 					{/if}

@@ -51,7 +51,8 @@
 				showEditModal = true;
 			}}
 		/>
-		<ul class="flex space-x-4 sm:mt-0"></ul> <!-- what's this?-->
+		<ul class="flex space-x-4 sm:mt-0"></ul>
+		<!-- what's this?-->
 	</div>
 </div>
 

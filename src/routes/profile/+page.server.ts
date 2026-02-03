@@ -98,51 +98,51 @@ export const actions = {
 		}
 	},
 
-saveProfile: async ({ locals, request }) => {
-    const formData = await request.formData();
+	saveProfile: async ({ locals, request }) => {
+		const formData = await request.formData();
 
-    const updateData = {};
-    const fields = ['username', 'city'];
+		const updateData = {};
 
-    // Get username separately to check for spaces
-    const username = formData.get('username');
-    if (username) {
-        const trimmedUsername = username.trim();
-        if (trimmedUsername.includes(' ')) {
-            return {
-                error: true,
-                message: 'Nutzername darf keine Leerzeichen enthalten.'
-            };
-        } else if (trimmedUsername !== '') {
-            updateData['username'] = trimmedUsername;
-        }
-    }
+		// Get username separately to check for spaces
+		const username = formData.get('username').toString();
+		if (username) {
+			const trimmedUsername = username.trim();
+			if (trimmedUsername.includes(' ')) {
+				return {
+					error: true,
+					message: 'Nutzername darf keine Leerzeichen enthalten.'
+				};
+			} else if (trimmedUsername !== '') {
+				updateData['username'] = trimmedUsername;
+			}
+		}
 
-    // Handle other fields
-    const city = formData.get('city');
-    if (city && city.trim() !== '') {
-        updateData['city'] = city.trim();
-    }
+		// Handle other fields
+		const city = formData.get('city').toString();
+		if (city && city.trim() !== '') {
+			updateData['city'] = city.trim();
+		}
 
-    try {
-        if (Object.keys(updateData).length > 0) {
-            await locals.pb.collection('users').update(locals.user.id, updateData);
-            return {
-                success: true
-            };
-        } else {
-            return {
-                error: true,
-                message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
-            };
-        }
-    } catch (err) {
-        return {
-            error: true,
-            message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
-        };
-    }
-},
+		try {
+			if (Object.keys(updateData).length > 0) {
+				await locals.pb.collection('users').update(locals.user.id, updateData);
+				return {
+					success: true,
+					message: 'Daten wurden erfolgreich aktualisiert.'
+				};
+			} else {
+				return {
+					error: true,
+					message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+				};
+			}
+		} catch (err) {
+			return {
+				error: true,
+				message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+			};
+		}
+	},
 
 
 	delete: async ({ locals, request }) => {
