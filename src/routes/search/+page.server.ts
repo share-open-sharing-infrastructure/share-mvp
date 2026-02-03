@@ -32,11 +32,11 @@ export async function load({ locals }) {
 }
 
 export const actions = {
-    startConversation: async ({ locals, request, params }) => {
+    startConversation: async ({ locals, request }) => {
 		const formData = await request.formData();
 
 		// get the message data from the form
-	 	const requesterId = locals.user.id;
+	 	const requesterId = locals?.user?.id;
 		const itemOwnerId = formData.get('ownerId');
 		const itemId = formData.get("itemId");
 
@@ -46,7 +46,6 @@ export const actions = {
 			requestedItem: itemId,
 			readByRequester: true,
 			readByOwner: false,
-			
 		};
 
 		let conversation;
