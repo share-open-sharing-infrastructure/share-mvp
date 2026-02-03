@@ -38,6 +38,17 @@
 	onDestroy(() => {
 		if (lastUrl) URL.revokeObjectURL(lastUrl);
 	});
+	
+	$effect(() => {
+		if (!isVisible) {
+			previewUrl = undefined;
+			if (lastUrl) {
+				URL.revokeObjectURL(lastUrl);
+				lastUrl = undefined;
+			}
+		}
+	});
+	
 </script>
 
 <Modal bind:open={isVisible} size="xs">
@@ -56,6 +67,8 @@
 		}}
 	>
 		<Input type="text" name="itemId" value={editingItem?.id} hidden />
+
+		<!-- IMAGE PREVIEW -->
 		<Img
 			src={previewUrl ?? imgUrl ?? placeholderimg}
 			class="mx-auto h-50 w-50 rounded-md object-cover p-5"
@@ -73,6 +86,7 @@
 			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
 		</Label>
 
+		<!-- ITEM DETAILS -->
 		<Label class="space-y-2">
 			<span>Name:</span>
 			<Input
@@ -83,6 +97,7 @@
 				required
 			/>
 		</Label>
+
 		<Label class="space-y-2">
 			<span>Beschreibung:</span>
 			<Input
@@ -93,6 +108,7 @@
 				required
 			/>
 		</Label>
+
 		<Label class="space-y-2">
 			<span>Ort:</span>
 			<Input
@@ -103,6 +119,8 @@
 				required
 			/>
 		</Label>
+
+		<!-- TRUST TOGGLE -->
 		<Label class="space-y-2">
 			<Toggle
 				name="trusteesOnly"
@@ -110,10 +128,17 @@
 				>Nur an Vertraute</Toggle
 			>
 		</Label>
-		<Button class="min-button" type="submit">
+
+		<!-- SUBMIT BUTTON -->
+		<Button
+			class="min-button"
+			type="submit"
+		>
 			{type === 'edit' ? 'Speichern' : 'Hinzufügen'}
 		</Button>
 	</form>
+
+	<!-- DELETE BUTTON -->
 	{#if type === 'edit'}
 		<form
 			method="POST"
