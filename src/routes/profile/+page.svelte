@@ -9,6 +9,9 @@
 
 	let { data, form } = $props();
 
+	let search = $state('');
+	let results = $state<any[]>([]);
+
 	let showAddModal = $state(false);
 
 	function getItemImageUrl(item: Item, baseUrl: string): string {

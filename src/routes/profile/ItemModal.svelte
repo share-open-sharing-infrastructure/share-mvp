@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle, Img } from 'flowbite-svelte';
+	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle, Img, Popover } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
+	import { ChevronRightOutline, QuestionCircleSolid } from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 
 	interface Props {
@@ -94,6 +95,7 @@
 				name="itemName"
 				placeholder="Name des Gegenstands"
 				value={editingItem?.name ? editingItem.name : ''}
+				autocomplete="off"
 				required
 			/>
 		</Label>
@@ -105,6 +107,7 @@
 				name="itemDescription"
 				placeholder="Beschreibung des Gegenstands"
 				value={editingItem?.description ? editingItem.description : ''}
+				autocomplete="off"
 				required
 			/>
 		</Label>
@@ -119,14 +122,18 @@
 				required
 			/>
 		</Label>
-
-		<!-- TRUST TOGGLE -->
-		<Label class="space-y-2">
+		<Label class="flex">
 			<Toggle
 				name="trusteesOnly"
 				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
 				>Nur an Vertraute</Toggle
 			>
+			<div class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400">
+				<button id="b4">
+					<QuestionCircleSolid class="ml-1 h-full" />
+					<span class="sr-only">Erkläre mir das</span>
+				</button>
+			</div>
 		</Label>
 
 		<!-- SUBMIT BUTTON -->
@@ -157,4 +164,18 @@
 			<Button class="min-button" type="submit">Löschen</Button>
 		</form>
 	{/if}
+	<Popover
+		triggeredBy="#b4"
+		class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+		placement="top-start"
+	>
+		<div class="space-y-2 p-3">
+			<h3 class="font-semibold text-gray-900 dark:text-white">Vertrauensfunktion</h3>
+			Wenn du diese Option aktivierst, ist der Gegenstand nur für deine vertrauten Kontakte sichtbar.
+			<a href="/social" class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium">
+				Vertraute hinzufügen<ChevronRightOutline class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4" />
+			</a>
+		</div>
+	</Popover>
 </Modal>
+
