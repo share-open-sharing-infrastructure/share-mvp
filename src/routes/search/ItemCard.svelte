@@ -6,11 +6,8 @@
 	import { QuestionCircleSolid, ChevronRightOutline } from "flowbite-svelte-icons";
 	export let item: Item;
 	export let imgUrl: string;
+	export let requesterId: string;
 </script>
-
-
-
-
 
 <div class="space-y-4">
 	<Card img={imgUrl} horizontal size="xl">
@@ -54,7 +51,7 @@
 								action="?/startConversation"
 							>
 								<Input name="itemId" value={item.id} hidden/>
-								<Input name="requesterId" value={item.expand?.requester?.id} hidden/>
+								<Input name="requesterId" value={requesterId} hidden/>
 								<Input name="ownerId" value={item.expand?.owner?.id} hidden/>
 								<Button pill class="
 									cursor-pointer 
