@@ -19,7 +19,9 @@ export const actions = {
 		}
 
 		try {
-			await locals.pb.collection('users').requestPasswordReset(email.toString());
+			await locals.pb
+				.collection('users')
+				.requestPasswordReset(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
 			return fail(500, { fail: true, message: errorObj.data.message });
@@ -30,13 +32,13 @@ export const actions = {
 			'flash',
 			JSON.stringify({
 				type: 'success',
-				message: 'If this email exists, a password reset email has been sent!'
+				message: 'If this email exists, a password reset email has been sent!',
 			}),
 			{
 				path: '/',
-				maxAge: 60 // seconds
+				maxAge: 60, // seconds
 			}
 		);
 		redirect(303, '/login');
-	}
+	},
 };

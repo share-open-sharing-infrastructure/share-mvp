@@ -12,7 +12,9 @@
 		{/snippet}
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			<form class="flex flex-col space-y-5" action="?/login" method="post">
-				<h3 class="p-0 text-xl font-medium text-accent-900 dark:text-white">Wilkommen zurück!</h3>
+				<h3 class="p-0 text-xl font-medium text-accent-900 dark:text-white">
+					Wilkommen zurück!
+				</h3>
 				{#if form?.fail}
 					<Alert>
 						<span class="font-medium">
@@ -43,7 +45,9 @@
 				</Label>
 
 				<p class="mt-2 text-sm font-light text-gray-500 dark:text-gray-400">
-					<a href="/reset" class="font-medium text-primary-800 hover:underline dark:text-primary-300"
+					<a
+						href="/reset"
+						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
 						>Passwort vergessen?</a
 					>
 				</p>
@@ -58,12 +62,13 @@
 						dark:hover:bg-primary-800 dark:focus:ring-primary-700
 						cursor-pointer
 
-						"
-					>Anmelden</Button
+						">Anmelden</Button
 				>
 				<p class="mt-4 text-sm font-light text-gray-500 dark:text-gray-400">
 					Noch keinen Account?
-					<a href="/register" class="font-medium text-primary-800 hover:underline dark:text-primary-300"
+					<a
+						href="/register"
+						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
 						>Registrieren</a
 					>
 				</p>

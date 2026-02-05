@@ -5,6 +5,7 @@ This file documents conceptual questions.
 # Class diagrams
 
 ## Base data model
+
 ```mermaid
 
 classDiagram
@@ -56,5 +57,5 @@ classDiagram
 
 ## Conversation
 
-- A conversation brings together  an item for which a request has been made, two users (the requester and the owner of the requested item), and a set of messages that were exchanged between the two users regarding that request. 
+- A conversation brings together an item for which a request has been made, two users (the requester and the owner of the requested item), and a set of messages that were exchanged between the two users regarding that request.
 - The conversation stores if it has been read by either party to enable notifications and an "unread" inbox.

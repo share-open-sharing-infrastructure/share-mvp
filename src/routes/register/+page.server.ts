@@ -23,7 +23,10 @@ export const actions = {
 		}
 
 		if (!email || !password) {
-			return fail(400, { emailRequired: email === null, passwordRequired: password === null });
+			return fail(400, {
+				emailRequired: email === null,
+				passwordRequired: password === null,
+			});
 		}
 
 		if (password.toString().length < 8) {
@@ -34,7 +37,9 @@ export const actions = {
 		data.set('passwordConfirm', password?.toString()); // TODO: Put into form eventually
 		try {
 			await locals.pb.collection('users').create(data);
-			await locals.pb.collection('users').authWithPassword(email.toString(), password.toString());
+			await locals.pb
+				.collection('users')
+				.authWithPassword(email.toString(), password.toString());
 			await locals.pb.collection('users').requestVerification(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
@@ -42,5 +47,5 @@ export const actions = {
 		}
 
 		redirect(303, '/');
-	}
+	},
 };

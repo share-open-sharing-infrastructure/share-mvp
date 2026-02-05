@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
-    import { PUBLIC_PB_URL } from '$env/static/public';
+	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
 	import Message from './Message.svelte';
@@ -75,7 +75,9 @@
 	}
 
 	// Set up real-time subscription
-	$effect(() => setupPocketBaseSubscription(pb, 'messages', '*', handleMessageEvent));
+	$effect(() =>
+		setupPocketBaseSubscription(pb, 'messages', '*', handleMessageEvent)
+	);
 
 	// Scroll chat window to bottom when messages change
 	$effect(() => {
@@ -83,7 +85,7 @@
 			setTimeout(() => {
 				chatWindow.scrollTo({
 					top: chatWindow.scrollHeight,
-					behavior: 'smooth'
+					behavior: 'smooth',
 				});
 			}, 0);
 		}
@@ -138,8 +140,9 @@
 				bind:value={messageText}
 			/>
 		</Label>
-		<Button 
-			class="min-button bg-primary-400 hover:bg-primary-500 cursor-pointer" 
-			type="submit">Senden</Button>
+		<Button
+			class="min-button bg-primary-400 hover:bg-primary-500 cursor-pointer"
+			type="submit">Senden</Button
+		>
 	</form>
 </div>

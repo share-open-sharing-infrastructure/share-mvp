@@ -32,7 +32,10 @@
 			}
 
 			// Filter by search text
-			if (searchText.value.length && !includesCaseInsensitive(item.name, searchText.value)) {
+			if (
+				searchText.value.length &&
+				!includesCaseInsensitive(item.name, searchText.value)
+			) {
 				return false;
 			}
 
@@ -46,8 +49,8 @@
 
 	<div class="mx-auto max-w-5xl space-y-4 overflow-x-auto p-4 md:space-y-6">
 		{#if isSearching}
-			<ResultsList 
-				filteredItemList={filteredItemList} 
+			<ResultsList
+				{filteredItemList}
 				PB_IMG_URL={data.PB_IMG_URL}
 				requesterId={data.userId}
 			/>

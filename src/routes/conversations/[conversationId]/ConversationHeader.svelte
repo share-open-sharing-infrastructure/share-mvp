@@ -9,7 +9,9 @@
 	<div class="flex justify-end h-full min-w-1/2 gap-1 pr-1 truncate">
 		<div class="flex flex-col items-end truncate">
 			<span class="text-m">{chatPartner.username}</span>
-			<span class="text-xs">aktiv seit {formatTimestamp(chatPartner.created, true)}</span>
+			<span class="text-xs"
+				>aktiv seit {formatTimestamp(chatPartner.created, true)}</span
+			>
 		</div>
 		<img
 			src={`https://ui-avatars.com/api/?name=${chatPartner.username}&background=random`}
@@ -26,7 +28,8 @@
 		<div class="flex flex-col items-start">
 			<span class="text-m">{conversation.requestedItem.name}</span>
 			<span class="flex text-xs">
-				<MapPinOutline class="h-3 w-3" />{conversation.requestedItem.place}</span
+				<MapPinOutline class="h-3 w-3" />{conversation.requestedItem
+					.place}</span
 			>
 		</div>
 	</div>

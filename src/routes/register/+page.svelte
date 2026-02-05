@@ -23,7 +23,9 @@
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			<!-- TODO: Check if login action is correct -->
 			<form class="flex flex-col space-y-5" action="?/login" method="post">
-				<h3 class="p-0 text-xl font-medium text-gray-900 dark:text-white">Wilkommen bei Share</h3>
+				<h3 class="p-0 text-xl font-medium text-gray-900 dark:text-white">
+					Wilkommen bei Share
+				</h3>
 				<Label class="space-y-2">
 					<span>Deine E-Mail Adresse</span>
 					<Input
@@ -54,10 +56,7 @@
 						required
 					/>
 				</Label>
-				<Button
-					type="submit"
-					formaction="?/register"
-					class="min-button"
+				<Button type="submit" formaction="?/register" class="min-button"
 					>Registrieren</Button
 				>
 			</form>

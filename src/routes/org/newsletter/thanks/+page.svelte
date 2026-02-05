@@ -11,10 +11,12 @@
 	});
 </script>
 
-
 <div class="flex flex-col items-center justify-center">
 	<div class="spinner"></div>
-	<h1 class="mt-4 text-xl">Du bist jetzt für den AllerLeih Newsletter registriert! Du wirst in 5 Sekunden auf die Homepage weitergeleitet.</h1>
+	<h1 class="mt-4 text-xl">
+		Du bist jetzt für den AllerLeih Newsletter registriert! Du wirst in 5
+		Sekunden auf die Homepage weitergeleitet.
+	</h1>
 </div>
 
 <style>

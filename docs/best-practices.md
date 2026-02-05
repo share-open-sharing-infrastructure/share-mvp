@@ -47,7 +47,9 @@ The important parts here concern the `action` and `use:enhance` props. `action="
 The important part here is that we **do not destructure the data object**. For ease of use, one might be tempted to do something like this in the script section of the component:
 
 ```js
-<script lang="ts">const {data} = $props(); let trustees = data.trustees;</script>
+<script lang="ts">
+	const {data} = $props(); let trustees = data.trustees;
+</script>
 ```
 
 However, this detaches the Svelte-internal reactivity from database updates, and hence deactivates the "use:enhance" functionality. Therefore, if a UI component should react to form actions, it needs to be getting its data directly from the "data"-prop.

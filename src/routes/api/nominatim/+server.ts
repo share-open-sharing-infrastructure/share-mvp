@@ -7,8 +7,7 @@ export async function GET({ url, fetch }) {
 		return json([]);
 	}
 
-	const nominatimUrl =
-		`https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(search)}&limit=10&countrycodes=de`;
+	const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(search)}&limit=10&countrycodes=de`;
 
 	const res = await fetch(nominatimUrl);
 	const results = await res.json();

@@ -7,7 +7,9 @@
 </script>
 
 <div class="mx-auto max-w-screen-sm text-center">
-	<h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+	<h2
+		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+	>
 		Willkommen!
 	</h2>
 	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
@@ -24,7 +26,9 @@
 			<Search
 				size="md"
 				class="m-2 flex flex-col"
-				classes={{ input: 'focus:ring-primary-700 focus:border-primary-700 search-bar' }}
+				classes={{
+					input: 'focus:ring-primary-700 focus:border-primary-700 search-bar',
+				}}
 				placeholder="Suche Dinge..."
 				bind:value={searchText.value}
 			/>
@@ -49,7 +53,9 @@
 			</Button>
 
 			<Dropdown simple class="w-48 p-2 text-sm">
-				<h6 class="mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">Ort</h6>
+				<h6 class="mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">
+					Ort
+				</h6>
 				{#each uniquePlaces as place}
 					<li class="rounded p-1 hover:bg-primary-50 dark:hover:bg-primary-900">
 						<Checkbox

@@ -19,23 +19,28 @@ export const actions = {
 			return fail(400, {
 				fail: true,
 				emailRequired: email === null,
-				passwordRequired: password === null
+				passwordRequired: password === null,
 			});
 		}
 
 		try {
-			await locals.pb.collection('users').authWithPassword(email.toString(), password.toString()); // TODO: Is this encrypted / does it need to be?
+			await locals.pb
+				.collection('users')
+				.authWithPassword(email.toString(), password.toString()); // TODO: Is this encrypted / does it need to be?
 		} catch (err) {
 			// if error is "failed to authenticate", display error message
 			console.error('Failed to login', err);
 			const e = err as Partial<ClientResponseError>;
 
 			if (e?.status == 400) {
-				return fail(400, { fail: true, message: 'Login fehlgeschlagen.' });
+				return fail(400, {
+					fail: true,
+					message: 'Login fehlgeschlagen.',
+				});
 			} else {
 				error(e.status ?? 500, 'Unable to login.');
 			}
 		}
 		redirect(303, '/');
-	}
+	},
 };

@@ -1,9 +1,22 @@
 <script lang="ts">
-	import { Modal, Button, Input, Label, Fileupload, Helper, Toggle, Img, Popover } from 'flowbite-svelte';
+	import {
+		Modal,
+		Button,
+		Input,
+		Label,
+		Fileupload,
+		Helper,
+		Toggle,
+		Img,
+		Popover,
+	} from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
-	import { ChevronRightOutline, QuestionCircleSolid } from 'flowbite-svelte-icons';
+	import {
+		ChevronRightOutline,
+		QuestionCircleSolid,
+	} from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 
 	interface Props {
@@ -15,7 +28,14 @@
 		lastUrl?: string;
 	}
 
-	let { isVisible = $bindable(), type, editingItem, imgUrl, previewUrl, lastUrl }: Props = $props();
+	let {
+		isVisible = $bindable(),
+		type,
+		editingItem,
+		imgUrl,
+		previewUrl,
+		lastUrl,
+	}: Props = $props();
 
 	function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -39,7 +59,7 @@
 	onDestroy(() => {
 		if (lastUrl) URL.revokeObjectURL(lastUrl);
 	});
-	
+
 	$effect(() => {
 		if (!isVisible) {
 			previewUrl = undefined;
@@ -49,7 +69,6 @@
 			}
 		}
 	});
-	
 </script>
 
 <Modal bind:open={isVisible} size="xs">
@@ -128,7 +147,9 @@
 				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
 				>Nur an Vertraute</Toggle
 			>
-			<div class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400">
+			<div
+				class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400"
+			>
 				<button id="b4">
 					<QuestionCircleSolid class="ml-1 h-full" />
 					<span class="sr-only">Erkläre mir das</span>
@@ -137,10 +158,7 @@
 		</Label>
 
 		<!-- SUBMIT BUTTON -->
-		<Button
-			class="min-button"
-			type="submit"
-		>
+		<Button class="min-button" type="submit">
 			{type === 'edit' ? 'Speichern' : 'Hinzufügen'}
 		</Button>
 	</form>
@@ -170,12 +188,19 @@
 		placement="top-start"
 	>
 		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-gray-900 dark:text-white">Vertrauensfunktion</h3>
-			Wenn du diese Option aktivierst, ist der Gegenstand nur für deine vertrauten Kontakte sichtbar.
-			<a href="/social" class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium">
-				Vertraute hinzufügen<ChevronRightOutline class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4" />
+			<h3 class="font-semibold text-gray-900 dark:text-white">
+				Vertrauensfunktion
+			</h3>
+			Wenn du diese Option aktivierst, ist der Gegenstand nur für deine vertrauten
+			Kontakte sichtbar.
+			<a
+				href="/social"
+				class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
+			>
+				Vertraute hinzufügen<ChevronRightOutline
+					class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4"
+				/>
 			</a>
 		</div>
 	</Popover>
 </Modal>
-

@@ -13,7 +13,6 @@ export const load = (event) => {
 
 	return {
 		flash,
-		currentUser: event.locals.user
+		currentUser: event.locals.user,
 	};
 };
-

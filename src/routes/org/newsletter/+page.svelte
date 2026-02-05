@@ -5,12 +5,14 @@
 </script>
 
 <div class="mx-auto max-w-screen-sm text-center">
-	<h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+	<h2
+		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+	>
 		AllerLeih News
 	</h2>
 	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
-		Vielen Dank für dein Interesse an AllerLeih! Trage unten deine E-Mail ein, um regelmäßige Infos
-		und Neuigkeiten von uns zu bekommen.
+		Vielen Dank für dein Interesse an AllerLeih! Trage unten deine E-Mail ein,
+		um regelmäßige Infos und Neuigkeiten von uns zu bekommen.
 	</p>
 </div>
 <Section name="login">
@@ -38,7 +40,12 @@
 					class="focus:border-primary-700 focus:ring-primary-700"
 					required
 				/>
-				<input aria-hidden="true" autocomplete="off" name="h[url]" style="display: none" />
+				<input
+					aria-hidden="true"
+					autocomplete="off"
+					name="h[url]"
+					style="display: none"
+				/>
 				<Button
 					type="submit"
 					class="
@@ -52,8 +59,9 @@
 				>
 			</form>
 			<div class="text-xs">
-				Wir senden keinen Spam und schicken maximal 1x pro Monat eine Mail. Deine Daten liegen
-				sicher auf europäischen Servern bei unserem open-source Newsletter-Anbieter <a
+				Wir senden keinen Spam und schicken maximal 1x pro Monat eine Mail.
+				Deine Daten liegen sicher auf europäischen Servern bei unserem
+				open-source Newsletter-Anbieter <a
 					href="https://www.keila.io/de"
 					class="text-blue-500 underline">keila.io</a
 				>. Wenn du dich abmelden willst, schicke uns einfach eine Mail an

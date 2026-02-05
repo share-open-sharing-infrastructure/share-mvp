@@ -3,7 +3,11 @@
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { PaperPlaneSolid } from 'flowbite-svelte-icons';
 
-	let { chatPartner, isSubmitting = $bindable(), messageText = $bindable() } = $props();
+	let {
+		chatPartner,
+		isSubmitting = $bindable(),
+		messageText = $bindable(),
+	} = $props();
 </script>
 
 <form

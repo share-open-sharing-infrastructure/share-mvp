@@ -9,11 +9,11 @@ export const POST: RequestHandler = async ({ locals, cookies }) => {
 		'flash',
 		JSON.stringify({
 			type: 'success',
-			message: 'Logged out succesfully'
+			message: 'Logged out succesfully',
 		}),
 		{
 			path: '/',
-			maxAge: 60 // seconds
+			maxAge: 60, // seconds
 		}
 	);
 

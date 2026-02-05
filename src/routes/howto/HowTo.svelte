@@ -9,11 +9,14 @@
 
 <div class="mx-auto max-w-4xl px-4 py-8">
 	<div class="mb-8">
-		<h2 class="text-2xl font-semibold tracking-tight">So funktioniert AllerLeih</h2>
+		<h2 class="text-2xl font-semibold tracking-tight">
+			So funktioniert AllerLeih
+		</h2>
 		<p class="mt-2 text-base leading-relaxed text-gray-600">
-			Allerleih ist eine offene Plattform, auf der du Dinge aus- und verleihen kannst. Im Gegensatz
-			zu anderen Plattformen steht bei uns die Gemeinnützigkeit im Sinne der sozialen und
-			ökologischen Wirkung im Vordergrund.
+			Allerleih ist eine offene Plattform, auf der du Dinge aus- und verleihen
+			kannst. Im Gegensatz zu anderen Plattformen steht bei uns die
+			Gemeinnützigkeit im Sinne der sozialen und ökologischen Wirkung im
+			Vordergrund.
 		</p>
 		<p class="mt-2 text-base leading-relaxed">
 			<strong>Und so funktioniert's:</strong>
@@ -59,6 +62,5 @@
 			Das kannst du für jeden deiner Gegenstände beim Hochladen oder im Nachhinein
 			festlegen."
 		/>
-
 	</div>
 </div>

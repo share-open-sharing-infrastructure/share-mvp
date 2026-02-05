@@ -23,10 +23,13 @@ export async function load({ locals, params, parent }) {
 	let currentMessages = [];
 	if (locals.user.id !== currentChatPartnerId) {
 		currentMessages = allMessages.filter(
-			(msg) => msg.from === currentChatPartnerId || msg.to === currentChatPartnerId
+			(msg) =>
+				msg.from === currentChatPartnerId || msg.to === currentChatPartnerId
 		);
 		//sort messages oldest to newest to display newer messages at the bottom
-		currentMessages.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
+		currentMessages.sort(
+			(a, b) => new Date(a.created).getTime() - new Date(b.created).getTime()
+		);
 	} else {
 		// If the user is trying to chat with themselves, redirect to a safe default (first chat partner)
 		// TODO: Find a more elegant way to do this maybe
@@ -40,7 +43,7 @@ export async function load({ locals, params, parent }) {
 
 	return {
 		currentMessages,
-		currentChatPartner: userRecord
+		currentChatPartner: userRecord,
 	};
 }
 
@@ -57,15 +60,15 @@ export const actions = {
 			const data = {
 				messageContent: messageContent,
 				from: fromUserId,
-				to: toUserId
+				to: toUserId,
 			};
 			await locals.pb.collection('messages').create(data);
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, {
 				fail: true,
-				message: e.data?.message ?? 'Failed to send message.'
+				message: e.data?.message ?? 'Failed to send message.',
 			});
 		}
-	}
+	},
 };

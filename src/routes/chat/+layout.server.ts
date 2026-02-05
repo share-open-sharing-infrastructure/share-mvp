@@ -7,13 +7,17 @@ export const load = async ({ locals }) => {
 	try {
 		const allMessages = await locals.pb.collection('messages').getFullList({
 			filter: `from = "${currentUserId}" || to = "${currentUserId}"`, // TODO: Check if this even needs the filter given PocketBase should only return records the user has access to based on API rules
-			sort: '-created' // sort by newest first
+			sort: '-created', // sort by newest first
 		});
-		const uniqueChatPartners = new Map<string, { id: string; username: string; email: string }>();
+		const uniqueChatPartners = new Map<
+			string,
+			{ id: string; username: string; email: string }
+		>();
 
 		for (const message of allMessages) {
 			// Find all unique chat partners based on messages
-			const chatPartnerId = message.from === currentUserId ? message.to : message.from;
+			const chatPartnerId =
+				message.from === currentUserId ? message.to : message.from;
 			if (!uniqueChatPartners.has(chatPartnerId)) {
 				const userRecord = await locals.pb
 					.collection('users')
@@ -21,7 +25,7 @@ export const load = async ({ locals }) => {
 				uniqueChatPartners.set(chatPartnerId, {
 					id: userRecord.id,
 					username: userRecord.username,
-					email: userRecord.email
+					email: userRecord.email,
 				});
 			}
 		}
@@ -30,7 +34,7 @@ export const load = async ({ locals }) => {
 		return {
 			chatPartners: Array.from(uniqueChatPartners.values()),
 			allMessages,
-			currentUserId
+			currentUserId,
 		};
 	} catch (err) {
 		console.error('Failed to load chat layout', err);

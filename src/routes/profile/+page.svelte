@@ -23,16 +23,20 @@
 		return date.toLocaleDateString('de-DE', {
 			day: '2-digit',
 			month: 'long',
-			year: 'numeric'
+			year: 'numeric',
 		});
 	}
 </script>
 
 <section class="bg-white dark:bg-gray-900">
 	<div class="max-w-7xl mx-auto">
-		<div class="grid grid-cols-1 px-4 pt-6 xl:grid-cols-2 xl:gap-4 dark:bg-gray-900">
+		<div
+			class="grid grid-cols-1 px-4 pt-6 xl:grid-cols-2 xl:gap-4 dark:bg-gray-900"
+		>
 			<div class="mb-4 col-span-full xl:mb-2">
-				<h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">Dein Profil</h1>
+				<h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">
+					Dein Profil
+				</h1>
 			</div>
 			<div class="col-span-full">
 				<div
@@ -41,7 +45,9 @@
 					<form method="POST" action="?/saveProfile">
 						<div class="grid grid-cols-6 gap-6">
 							<div class="col-span-6 sm:col-span-3">
-								<label for="username" class="block mb-2 text-sm font-medium text-gray-900"
+								<label
+									for="username"
+									class="block mb-2 text-sm font-medium text-gray-900"
 									>Nutzername:</label
 								>
 								<input
@@ -53,7 +59,9 @@
 								/>
 							</div>
 							<div class="col-span-6 sm:col-span-3">
-								<label for="location" class="block mb-2 text-sm font-medium text-gray-900"
+								<label
+									for="location"
+									class="block mb-2 text-sm font-medium text-gray-900"
 									>Standort/Postleitzahl:</label
 								>
 								<input
@@ -66,17 +74,28 @@
 								/>
 							</div>
 							<div class="col-span-6 sm:col-span-3">
-								<label for="country" class="block mb-2 text-sm font-medium text-gray-900"
+								<label
+									for="country"
+									class="block mb-2 text-sm font-medium text-gray-900"
 									>Registriert seit:</label
 								>
-								<div class="mt-2"><span class="italic text-lg">{formattedDate()}</span></div>
+								<div class="mt-2">
+									<span class="italic text-lg">{formattedDate()}</span>
+								</div>
 							</div>
 							<div class="col-span-6 sm:col-span-3">
-								<label for="mail" class="block mb-2 text-sm font-medium text-gray-900"
+								<label
+									for="mail"
+									class="block mb-2 text-sm font-medium text-gray-900"
 									>Mailadresse:</label
 								>
-								<div class="mt-2"><span class="italic text-lg">{data.user.email}</span></div>
-								<p id="helper-text-explanation" class="mt-2.5 text-sm text-body">
+								<div class="mt-2">
+									<span class="italic text-lg">{data.user.email}</span>
+								</div>
+								<p
+									id="helper-text-explanation"
+									class="mt-2.5 text-sm text-body"
+								>
 									Deine Mailadresse kannst du <a
 										href="/updatemail"
 										class="font-medium primary-text hover:underline">hier</a
@@ -108,10 +127,14 @@
 					{/if}
 
 					<div class="mb-4 col-span-full xl:mb-2">
-						<h1 class="text-xl font-semibold text-gray-900 sm:text-2xl mt-20 mb-6">
+						<h1
+							class="text-xl font-semibold text-gray-900 sm:text-2xl mt-20 mb-6"
+						>
 							Du verleihst
 							{#if data?.user?.expand?.items_via_owner?.length}
-								<span class="primary-text">{data.user.expand.items_via_owner.length}</span> Ding(e)...
+								<span class="primary-text"
+									>{data.user.expand.items_via_owner.length}</span
+								> Ding(e)...
 							{:else}
 								noch keine Ding(e)...
 							{/if}
@@ -120,7 +143,11 @@
 					<div class="grid gap-8 mb-2 lg:mb-16 md:grid-cols-2 grid-cols-1">
 						{#if data?.user?.expand?.items_via_owner?.length}
 							{#each data.user.expand.items_via_owner as item}
-								<UserItemCard {item} {data} imgUrl={getItemImageUrl(item, data.PB_URL)} />
+								<UserItemCard
+									{item}
+									{data}
+									imgUrl={getItemImageUrl(item, data.PB_URL)}
+								/>
 							{/each}
 							<AddButton
 								onclick={() => {
