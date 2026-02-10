@@ -29,11 +29,16 @@ export const actions = {
 
 		try {
 			await locals.pb.collection('feedback').create(feedbackData);
+			return {
+				success: true,
+				message: 'Feedback erfolgreich gesendet. Vielen Dank!',
+			};
 		} catch (error) {
 			console.log('Error saving feedback:', error);
-			return { success: false, error: 'Failed to save feedback.' };
+			return {
+				success: false,
+				message: 'Feedback konnte nicht gesendet werden.',
+			};
 		}
-
-		return { success: true };
 	},
 };

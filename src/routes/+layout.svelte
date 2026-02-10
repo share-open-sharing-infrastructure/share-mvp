@@ -76,7 +76,7 @@
 				cursor-pointer
 			"
 	>
-		Feedback geben
+		Feedback
 	</Button>
 
 	<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
