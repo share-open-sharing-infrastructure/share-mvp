@@ -38,8 +38,11 @@
 			</div>
 			<div class="col-span-full">
 				<div
-					class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800"
+				class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800"
 				>
+					{#if form}
+						<CustomAlert type={form.success ? 'success' : 'error'} message={form.message} />
+					{/if}
 					<form method="POST" action="?/saveProfile">
 						<div class="grid grid-cols-6 gap-6">
 							<div class="col-span-6 sm:col-span-3">
@@ -108,11 +111,6 @@
 							</div>
 						</div>
 					</form>
-					{#if form?.success}
-						<CustomAlert type="success" message={form?.message} />
-					{:else if form?.error}
-						<CustomAlert type="error" message={form?.message} />
-					{/if}
 				</div>
 
 				<div class="col-span-2">

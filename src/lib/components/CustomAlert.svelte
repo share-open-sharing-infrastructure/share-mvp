@@ -16,6 +16,7 @@
 
 	// Type can be success, warn or error - standard is warn
 	let color: 'green' | 'yellow' | 'red' = $state('yellow');
+	// svelte-ignore state_referenced_locally
 	if (type === 'success') {
 		color = 'green';
 	} else if (type === 'error') {
@@ -23,16 +24,42 @@
 	}
 </script>
 
+<style>
+	@keyframes shrink-width {
+		from {
+			width: 100%;
+		}
+		to {
+			width: 0%;
+		}
+	}
+
+	.progress-bar {
+		animation: shrink-width linear forwards;
+		animation-duration: var(--duration);
+		height: 2px;
+	}
+</style>
+
 {#if open}
-	<Alert
-		alertStatus={open}
-		class="mt-5"
-		{color}
-		dismissable
-		transition={fly}
-		params={{ x: 200 }}
-	>
-		{#snippet icon()}<InfoCircleSolid class="h-5 w-5" />{/snippet}
-		<span class="font-medium">{message}</span>
-	</Alert>
+	<div class="my-5">
+		<Alert
+			alertStatus={open}
+			{color}
+			dismissable
+			transition={fly}
+			params={{ x: 200 }}
+		>
+			{#snippet icon()}<InfoCircleSolid class="h-5 w-5" />{/snippet}
+			<span class="font-medium">{message}</span>
+		</Alert>
+		<div 
+			class="progress-bar" 
+			class:bg-green-500={color === 'green'} 
+			class:bg-yellow-500={color === 'yellow'} 
+			class:bg-red-500={color === 'red'}
+			style="--duration: {duration}ms"
+		></div>
+	</div>
 {/if}
+
