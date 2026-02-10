@@ -36,7 +36,8 @@
 		{/snippet}
 
 		{#if isSearching}
-			<Button color="light" style="border-radius:20px; cursor:pointer;">
+			<!-- FILTER DISABLED WHILE FUNCTION NOT IN USE  -->
+			<!-- <Button color="light" style="border-radius:20px; cursor:pointer;">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					aria-hidden="true"
@@ -68,7 +69,7 @@
 						>
 					</li>
 				{/each}
-			</Dropdown>
+			</Dropdown> -->
 		{/if}
 	</TableHeader>
 </Section>
