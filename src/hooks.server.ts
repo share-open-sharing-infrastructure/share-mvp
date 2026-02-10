@@ -6,12 +6,20 @@ import { redirect } from '@sveltejs/kit';
 
 export { PUBLIC_PB_URL };
 
-const unprotectedPrefix = ['/login', '/register', '/reset', '/search', '/updatemail'];
+const unprotectedPrefix = [
+	'/login',
+	'/register',
+	'/reset',
+	'/search',
+	'/updatemail',
+];
 
 export const authentication: Handle = async ({ event, resolve }) => {
 	event.locals.pb = new PocketBase(PUBLIC_PB_URL);
 
-	event.locals.pb.authStore.loadFromCookie(event.request.headers.get('cookie') || '');
+	event.locals.pb.authStore.loadFromCookie(
+		event.request.headers.get('cookie') || ''
+	);
 
 	try {
 		if (event.locals.pb.authStore.isValid) {
@@ -20,6 +28,7 @@ export const authentication: Handle = async ({ event, resolve }) => {
 		} else {
 			event.locals.user = null;
 		}
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	} catch (_) {
 		event.locals.pb.authStore.clear();
 		event.locals.user = null;
@@ -30,7 +39,7 @@ export const authentication: Handle = async ({ event, resolve }) => {
 	response.headers.append(
 		'set-cookie',
 		event.locals.pb.authStore.exportToCookie({
-			httpOnly: false // required for SvelteKit to access the cookie on the client side, necessary for /chat
+			httpOnly: false, // required for SvelteKit to access the cookie on the client side, necessary for /chat
 		})
 	);
 
@@ -44,7 +53,7 @@ export const authorization: Handle = async ({ event, resolve }) => {
 	) {
 		const loggedIn = await event.locals.pb.authStore.isValid;
 		if (!loggedIn) {
-			redirect(308, '/login');
+			redirect(307, '/login');
 		}
 	}
 	const result = await resolve(event);
@@ -53,10 +62,12 @@ export const authorization: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(authentication, authorization);
 
-export function handleError({ error, event }) {
+// TODO: Check if this is used anywhere implicitly
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function handleError({ error, event }): void {
 	console.error('Error occurred during request processing:', {
 		error,
 		url: event.url.href,
-		method: event.request.method
+		method: event.request.method,
 	});
 }

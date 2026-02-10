@@ -16,11 +16,17 @@
 
 	// Props and state variables
 	let { data } = $props();
-	// svelte-ignore state_referenced_locally
-	let messages = $state(data.conversation.messages ? [...data.conversation.messages] : []);
-	let loggedInUserIsItemOwner = $derived(data.currentUser.id === data.conversation.itemOwner.id);
+
+	let messages = $derived(
+		data.conversation.messages ? [...data.conversation.messages] : []
+	);
+	let loggedInUserIsItemOwner = $derived(
+		data.currentUser.id === data.conversation.itemOwner.id
+	);
 	let chatPartner = $derived(
-		loggedInUserIsItemOwner ? data.conversation.requester : data.conversation.itemOwner
+		loggedInUserIsItemOwner
+			? data.conversation.requester
+			: data.conversation.itemOwner
 	);
 	let messageText: string = $state('');
 
@@ -35,7 +41,7 @@
 			setTimeout(() => {
 				chatWindow.scrollTo({
 					top: chatWindow.scrollHeight,
-					behavior: 'smooth'
+					behavior: 'smooth',
 				});
 			}, 0);
 		}
@@ -52,28 +58,24 @@
 	async function handleConversationEvent(event: RecordSubscription<any>) {
 		if (event.action === 'update') {
 			// Extract the last message id from the updated conversation record
-			const lastMessageId = event.record.messages?.[event.record.messages.length - 1];
+			const lastMessageId =
+				event.record.messages?.[event.record.messages.length - 1];
 
 			// get last messages contents from pocketbase
-			let latestMessage: Message | null = null;
+			let latestMessage: Message;
 			if (lastMessageId) {
 				try {
 					latestMessage = await pb.collection('messages').getOne(lastMessageId);
+					// Append the latest message to local messages array
+					messages = [...messages, latestMessage];
 				} catch (error) {
 					console.error('Failed to fetch last message record:', error);
 				}
 			}
-
-			// Append the latest message to local messages array
-			messages = [...messages, latestMessage];
 		}
 	}
 
 	// Sync local messages with server data when messages prop changes
-	$effect(() => {
-		messages = data.conversation.messages ? [...data.conversation.messages] : [];
-	});
-
 	// Set up real-time subscription
 	$effect(() => {
 		if (!pb) return; // Wait for pb to be initialized
@@ -87,11 +89,15 @@
 	});
 </script>
 
-<ConversationHeader {chatPartner} conversation={data.conversation} PB_URL={PUBLIC_PB_URL} />
+<ConversationHeader
+	{chatPartner}
+	conversation={data.conversation}
+	PB_URL={PUBLIC_PB_URL}
+/>
 
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
-	{#each messages as message}
+	{#each messages as message (message.id)}
 		<MessageElement {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>
@@ -108,11 +114,17 @@
 </div>
 
 <Modal title="Anfrage löschen" form bind:open={deleteConversationModal}>
-	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung gehen dabei
-	verloren.
+	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung
+	gehen dabei verloren.
 
-	<form class="flex justify-end ml-2" method="POST" action="?/deleteConversation">
+	<form
+		class="flex justify-end ml-2"
+		method="POST"
+		action="?/deleteConversation"
+	>
 		<Input name="conversationId" value={data.conversation.id} hidden></Input>
-		<Button class="bg-red-700 rounded-[20px]" type="submit">Anfrage löschen</Button>
+		<Button class="bg-red-700 rounded-[20px]" type="submit"
+			>Anfrage löschen</Button
+		>
 	</form>
 </Modal>

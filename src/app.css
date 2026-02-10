@@ -71,7 +71,6 @@ Yellow: #ffd832
 Blue: #4da2ff
 */
 
-
 .min-button {
 	background-color: #ffd832;
 	color: black;
@@ -80,8 +79,8 @@ Blue: #4da2ff
 	border-radius: 20px;
 }
 .min-button:hover {
-	box-shadow: 0 0 11px rgba(33,33,33,.2); 
-	cursor:pointer;
+	box-shadow: 0 0 11px rgba(33, 33, 33, 0.2);
+	cursor: pointer;
 }
 
 .search-bar {

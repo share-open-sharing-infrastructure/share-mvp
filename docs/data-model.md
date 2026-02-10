@@ -19,7 +19,7 @@ erDiagram
         date updated
         User[] trusts FK
     }
-    
+
     USER 1 to zero or more USER: "trusts"
 
     ITEM{
@@ -59,7 +59,7 @@ erDiagram
         date created
         date updated
     }
-    
+
     CONVERSATION 1 to zero or more MESSAGE: contains
 
 ```

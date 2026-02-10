@@ -11,7 +11,7 @@
 	import { onDestroy } from 'svelte';
 	onDestroy(() => clearTimeout(timer));
 
-	const close = () => (open = false);
+	const close = (): boolean => (open = false);
 </script>
 
 {#if open}

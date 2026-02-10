@@ -2,27 +2,38 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import Flash from '$lib/Flash.svelte';
 	import '../app.css';
-	import { Navbar, NavBrand, NavLi, NavUl, NavHamburger, Button, Modal } from 'flowbite-svelte';
-	import { Footer, FooterBrand, FooterLinkGroup, FooterLink } from 'flowbite-svelte';
+	import {
+		Navbar,
+		NavBrand,
+		NavLi,
+		NavUl,
+		NavHamburger,
+		Button,
+		Modal,
+	} from 'flowbite-svelte';
+	import {
+		Footer,
+		FooterBrand,
+		FooterLinkGroup,
+		FooterLink,
+	} from 'flowbite-svelte';
 	import { APP_NAME } from '$lib/names';
 	import FeedbackForm from '$lib/FeedbackForm.svelte';
+	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts';
 
 	let { children, data } = $props();
 
 	let isFeedbackModalOpen = $state(false);
 
-	async function logout() {
-		const res = await fetch('/logout', {
-			method: 'POST'
+	async function logout(): Promise<void> {
+		await fetch('/logout', {
+			method: 'POST',
 		});
 
 		await invalidateAll();
 
-		if (res.redirected) {
-			goto(res.url);
-		} else {
-			goto('/');
-		}
+		goto(resolve('/'));
 	}
 </script>
 
@@ -30,22 +41,23 @@
 	<Navbar>
 		<NavBrand href="/">
 			<!-- img src="src/lib/images/share_logo.png" class="me-3 h-6 sm:h-9" alt="Logo" /> -->
-			<span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white logo"
+			<span
+				class="self-center text-xl font-semibold whitespace-nowrap dark:text-white logo"
 				>{APP_NAME}</span
 			>
 		</NavBrand>
 		<NavHamburger />
 		<NavUl>
 			{#if !data.currentUser}
-				<NavLi href="/login">Login</NavLi>
-				<NavLi href="/register">Registrieren</NavLi>
+				<NavLi href="/login">{texts.nav.login}</NavLi>
+				<NavLi href="/register">{texts.nav.register}</NavLi>
 			{/if}
-			<NavLi href="/search">Suche</NavLi>
+			<NavLi href="/search">{texts.nav.search}</NavLi>
 			{#if data.currentUser}
-				<NavLi href="/conversations">Anfragen</NavLi>
-				<NavLi href="/profile">Meine Dinge</NavLi>
-				<NavLi href="/social">Soziales</NavLi>
-				<NavLi href="/logout" onclick={logout}>Logout</NavLi>
+				<NavLi href="/conversations">{texts.nav.requests}</NavLi>
+				<NavLi href="/profile">{texts.nav.myItems}</NavLi>
+				<NavLi href="/social">{texts.nav.social}</NavLi>
+				<NavLi href="/logout" onclick={logout}>{texts.nav.logout}</NavLi>
 			{/if}
 		</NavUl>
 	</Navbar>
@@ -60,23 +72,21 @@
 
 	<Button
 		pill
-			onclick={() => {
-				isFeedbackModalOpen = true;
-			}}
-			class="
+		onclick={(): void => {
+			isFeedbackModalOpen = true;
+		}}
+		class="
 				min-button
 				fixed bottom-10 left-10 z-50
 				cursor-pointer
 			"
-		>
+	>
 		Feedback geben
 	</Button>
-
 
 	<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
 		<FeedbackForm />
 	</Modal>
-
 
 	<!-- to set bg color assign class="bg-primary-50"-->
 	<Footer footerType="socialmedia" class="">
@@ -95,21 +105,25 @@
 			<FooterLinkGroup
 				class="mb-6 flex flex-wrap items-center justify-center text-gray-900 dark:text-white"
 			>
-				<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/about"
-					>Über</FooterLink
+				<FooterLink
+					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+					href="/org/about">{texts.nav.about}</FooterLink
 				>
-				<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/imprint"
-					>Impressum</FooterLink
+				<FooterLink
+					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+					href="/org/imprint">{texts.nav.imprint}</FooterLink
 				>
-				<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/contact"
-					>Kontakt</FooterLink
+				<FooterLink
+					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+					href="/org/contact">{texts.nav.contact}</FooterLink
 				>
-				<FooterLink classes={{ link: 'mr-4 hover:underline md:mr-6' }} href="/org/newsletter"
-					>Newsletter</FooterLink
+				<FooterLink
+					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+					href="/org/newsletter">{texts.nav.newsletter}</FooterLink
 				>
 			</FooterLinkGroup>
 			<span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">
-				© 2026 <a href="/" class="hover:underline">{APP_NAME}</a>
+				© 2026 <a href={resolve('/')} class="hover:underline">{APP_NAME}</a>
 			</span>
 		</div>
 	</Footer>

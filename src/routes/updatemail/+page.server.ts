@@ -1,12 +1,8 @@
 import { fail } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 
-
-
-
 export const actions = {
 	updatemail: async ({ locals, request }) => {
-
 		const data = await request.formData();
 		const email = data.get('newEmail');
 
@@ -19,14 +15,15 @@ export const actions = {
 		} catch (error) {
 			return {
 				error: true,
-				message: (error as ClientResponseError).message || 'Ein unbekannter Fehler ist aufgetreten.'
+				message:
+					(error as ClientResponseError).message ||
+					'Ein unbekannter Fehler ist aufgetreten.',
 			};
 		}
 
-
 		return {
 			success: true,
-			message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${email} gesendet. Bitte überprüfe deinen Posteingang.`
+			message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${email} gesendet. Bitte überprüfe deinen Posteingang.`,
 		};
-	}
+	},
 };

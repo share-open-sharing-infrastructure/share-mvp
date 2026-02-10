@@ -1,9 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { texts } from '$lib/texts';
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { PaperPlaneSolid } from 'flowbite-svelte-icons';
 
-	let { chatPartner, isSubmitting = $bindable(), messageText = $bindable() } = $props();
+	let {
+		chatPartner,
+		isSubmitting = $bindable(),
+		messageText = $bindable(),
+	} = $props();
 </script>
 
 <form
@@ -24,7 +29,7 @@
 		<Input
 			name="messageContent"
 			type="text"
-			placeholder="Tippe deine Nachricht..."
+			placeholder={texts.forms.messagePlaceholder}
 			class="w-full search-bar"
 			required
 			autocomplete="off"

@@ -1,14 +1,14 @@
 import { json } from '@sveltejs/kit';
 
-export async function GET({ url, fetch }) {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export async function GET({ url, fetch }): Promise<Response> {
 	const search = url.searchParams.get('q');
 
 	if (!search) {
 		return json([]);
 	}
 
-	const nominatimUrl =
-		`https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(search)}&limit=10&countrycodes=de`;
+	const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&city=${encodeURIComponent(search)}&limit=10&countrycodes=de`;
 
 	const res = await fetch(nominatimUrl);
 	const results = await res.json();

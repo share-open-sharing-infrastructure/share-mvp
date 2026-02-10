@@ -1,7 +1,7 @@
 <script lang="ts">
 	let { message, isFromCurrentUser } = $props();
 
-	function formatTimestamp(timestamp: string) {
+	function formatTimestamp(timestamp: string): string {
 		const d = new Date(timestamp);
 		const day = d.getDate();
 		const month = d.getMonth() + 1; // months are 0-based

@@ -1,5 +1,5 @@
 <script>
-	import HowTo from "./HowTo.svelte";
-
+	import HowTo from './HowTo.svelte';
 </script>
+
 <HowTo />

@@ -1,9 +1,17 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { actions, load } from './+page.server';
 
 describe('Chat page', () => {
+	/**
+	 * @type {{ pb: any; user?: { id: string; }; }}
+	 */
 	let mockLocals;
 	let mockRequest;
+	/**
+	 * @type {{ userId: string; }}
+	 */
 	let mockParams;
 
 	beforeEach(() => {
@@ -15,18 +23,19 @@ describe('Chat page', () => {
 		mockLocals = {
 			pb: {
 				authStore: {
-					record: { id: currentUserId }
+					record: { id: currentUserId },
 				},
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				collection: vi.fn((collectionName) => ({
 					create: vi.fn(),
-					getOne: vi.fn()
-				}))
+					getOne: vi.fn(),
+				})),
 			},
-			user: { id: currentUserId }
+			user: { id: currentUserId },
 		};
 
 		mockParams = {
-			userId: 'user456'
+			userId: 'user456',
 		};
 	});
 
@@ -41,20 +50,20 @@ describe('Chat page', () => {
 			formData.append('messageContent', 'Hello, World!');
 
 			mockRequest = {
-				formData: vi.fn().mockResolvedValue(formData)
+				formData: vi.fn().mockResolvedValue(formData),
 			};
 
 			// Mock successful database creation
 			const mockCreate = vi.fn().mockResolvedValue({ id: 'msg123' });
 			mockLocals.pb.collection = vi.fn(() => ({
-				create: mockCreate
+				create: mockCreate,
 			}));
 
 			// Call the action
 			await actions.sendMessage({
 				locals: mockLocals,
 				request: mockRequest,
-				params: mockParams
+				params: mockParams,
 			});
 
 			// Verify the collection was called with correct name
@@ -64,7 +73,7 @@ describe('Chat page', () => {
 			expect(mockCreate).toHaveBeenCalledWith({
 				messageContent: 'Hello, World!',
 				from: 'user123',
-				to: 'user456'
+				to: 'user456',
 			});
 		});
 
@@ -73,34 +82,34 @@ describe('Chat page', () => {
 			formData.append('messageContent', 'Test message');
 
 			mockRequest = {
-				formData: vi.fn().mockResolvedValue(formData)
+				formData: vi.fn().mockResolvedValue(formData),
 			};
 
 			const statusCode = 400;
 			// Mock database error
 			const mockError = {
 				status: statusCode,
-				data: { message: 'Database error' }
+				data: { message: 'Database error' },
 			};
 
 			mockLocals.pb.collection = vi.fn(() => ({
-				create: vi.fn().mockRejectedValue(mockError)
+				create: vi.fn().mockRejectedValue(mockError),
 			}));
 
 			// Call the action
 			const result = await actions.sendMessage({
 				locals: mockLocals,
 				request: mockRequest,
-				params: mockParams
+				params: mockParams,
 			});
 
 			// Verify it returns a fail response
 			expect(result).toEqual({
 				data: {
 					fail: true,
-					message: 'Database error'
+					message: 'Database error',
 				},
-				status: statusCode
+				status: statusCode,
 			});
 		});
 
@@ -109,34 +118,34 @@ describe('Chat page', () => {
 			formData.append('messageContent', 'Test message');
 
 			mockRequest = {
-				formData: vi.fn().mockResolvedValue(formData)
+				formData: vi.fn().mockResolvedValue(formData),
 			};
 
 			const statusCode = null;
 			// Mock database error
 			const mockError = {
 				status: statusCode,
-				data: { message: 'Database error' }
+				data: { message: 'Database error' },
 			};
 
 			mockLocals.pb.collection = vi.fn(() => ({
-				create: vi.fn().mockRejectedValue(mockError)
+				create: vi.fn().mockRejectedValue(mockError),
 			}));
 
 			// Call the action
 			const result = await actions.sendMessage({
 				locals: mockLocals,
 				request: mockRequest,
-				params: mockParams
+				params: mockParams,
 			});
 
 			// Verify it returns a fail response
 			expect(result).toEqual({
 				data: {
 					fail: true,
-					message: 'Database error'
+					message: 'Database error',
 				},
-				status: 500
+				status: 500,
 			});
 		});
 
@@ -144,18 +153,18 @@ describe('Chat page', () => {
 			const formData = new FormData();
 
 			mockRequest = {
-				formData: vi.fn().mockResolvedValue(formData)
+				formData: vi.fn().mockResolvedValue(formData),
 			};
 
 			const mockCreate = vi.fn().mockResolvedValue({ id: 'msg123' });
 			mockLocals.pb.collection = vi.fn(() => ({
-				create: mockCreate
+				create: mockCreate,
 			}));
 
 			await actions.sendMessage({
 				locals: mockLocals,
 				request: mockRequest,
-				params: mockParams
+				params: mockParams,
 			});
 
 			// Verify create was called with null messageContent
@@ -163,7 +172,7 @@ describe('Chat page', () => {
 			expect(mockCreate).toHaveBeenCalledWith({
 				messageContent: null,
 				from: 'user123',
-				to: 'user456'
+				to: 'user456',
 			});
 		});
 	});
@@ -171,29 +180,44 @@ describe('Chat page', () => {
 	describe('load function', () => {
 		it('should filter and sort messages for current chat partner', async () => {
 			const mockMessages = [
-				{ id: '1', from: 'user456', to: 'user123', created: '2024-01-02T10:00:00Z' },
-				{ id: '2', from: 'user123', to: 'user456', created: '2024-01-01T10:00:00Z' },
-				{ id: '3', from: 'user789', to: 'user123', created: '2024-01-03T10:00:00Z' }
+				{
+					id: '1',
+					from: 'user456',
+					to: 'user123',
+					created: '2024-01-02T10:00:00Z',
+				},
+				{
+					id: '2',
+					from: 'user123',
+					to: 'user456',
+					created: '2024-01-01T10:00:00Z',
+				},
+				{
+					id: '3',
+					from: 'user789',
+					to: 'user123',
+					created: '2024-01-03T10:00:00Z',
+				},
 			];
 
 			const mockParent = vi.fn().mockResolvedValue({
-				allMessages: mockMessages
+				allMessages: mockMessages,
 			});
 
 			const mockGetOne = vi.fn().mockResolvedValue({
 				id: 'user456',
 				username: 'testuser',
-				email: 'test@example.com'
+				email: 'test@example.com',
 			});
 
 			mockLocals.pb.collection = vi.fn(() => ({
-				getOne: mockGetOne
+				getOne: mockGetOne,
 			}));
 
 			const result = await load({
 				locals: mockLocals,
 				params: mockParams,
-				parent: mockParent
+				parent: mockParent,
 			});
 
 			// Should only include messages between user123 and user456
@@ -209,14 +233,14 @@ describe('Chat page', () => {
 
 		it('should handle user not found error', async () => {
 			const mockParent = vi.fn().mockResolvedValue({
-				allMessages: []
+				allMessages: [],
 			});
 
 			mockLocals.pb.collection = vi.fn(() => ({
 				getOne: vi.fn().mockRejectedValue({
 					status: 404,
-					message: 'User not found'
-				})
+					message: 'User not found',
+				}),
 			}));
 
 			// The load function should throw an error
@@ -225,7 +249,7 @@ describe('Chat page', () => {
 				load({
 					locals: mockLocals,
 					params: mockParams,
-					parent: mockParent
+					parent: mockParent,
 				})
 			).rejects.toThrow();
 		});

@@ -2,13 +2,16 @@
 	import { Button, Checkbox, Dropdown, Search } from 'flowbite-svelte';
 	import { Section, TableHeader } from 'flowbite-svelte-blocks';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
+	import { texts } from '$lib/texts';
 
 	let { searchText, isSearching, selectedPlaces, uniquePlaces } = $props();
 </script>
 
 <div class="mx-auto max-w-screen-sm text-center">
-	<h2 class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white">
-		Willkommen!
+	<h2
+		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+	>
+		{texts.ui.welcomeShort}
 	</h2>
 	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
 		Bei <span
@@ -24,14 +27,17 @@
 			<Search
 				size="md"
 				class="m-2 flex flex-col"
-				classes={{ input: 'focus:ring-primary-700 focus:border-primary-700 search-bar' }}
-				placeholder="Suche Dinge..."
+				classes={{
+					input: 'focus:ring-primary-700 focus:border-primary-700 search-bar',
+				}}
+				placeholder={texts.forms.searchPlaceholder}
 				bind:value={searchText.value}
 			/>
 		{/snippet}
 
 		{#if isSearching}
-			<Button color="light" style="border-radius:20px; cursor:pointer;">
+			<!-- FILTER DISABLED WHILE FUNCTION NOT IN USE  -->
+			<!-- <Button color="light" style="border-radius:20px; cursor:pointer;">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					aria-hidden="true"
@@ -49,8 +55,10 @@
 			</Button>
 
 			<Dropdown simple class="w-48 p-2 text-sm">
-				<h6 class="mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">Ort</h6>
-				{#each uniquePlaces as place}
+				<h6 class="mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">
+					{texts.forms.place}
+				</h6>
+				{#each uniquePlaces as place (place)}
 					<li class="rounded p-1 hover:bg-primary-50 dark:hover:bg-primary-900">
 						<Checkbox
 							checked
@@ -61,7 +69,7 @@
 						>
 					</li>
 				{/each}
-			</Dropdown>
+			</Dropdown> -->
 		{/if}
 	</TableHeader>
 </Section>

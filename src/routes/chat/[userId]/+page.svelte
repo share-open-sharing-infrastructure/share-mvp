@@ -1,15 +1,16 @@
 <script lang="ts">
 	import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
-    import { PUBLIC_PB_URL } from '$env/static/public';
+	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
 	import Message from './Message.svelte';
 	import { onMount } from 'svelte';
 	import type { RecordSubscription } from 'pocketbase';
+	import { texts } from '$lib/texts';
 
 	let { data, form } = $props();
-	let messages = $state([...data.currentMessages]);
+	let messages = $derived([...data.currentMessages]);
 	let messageText: string = $state('');
 	let chatWindow: HTMLDivElement;
 
@@ -75,7 +76,9 @@
 	}
 
 	// Set up real-time subscription
-	$effect(() => setupPocketBaseSubscription(pb, 'messages', '*', handleMessageEvent));
+	$effect(() =>
+		setupPocketBaseSubscription(pb, 'messages', '*', handleMessageEvent)
+	);
 
 	// Scroll chat window to bottom when messages change
 	$effect(() => {
@@ -83,16 +86,13 @@
 			setTimeout(() => {
 				chatWindow.scrollTo({
 					top: chatWindow.scrollHeight,
-					behavior: 'smooth'
+					behavior: 'smooth',
 				});
 			}, 0);
 		}
 	});
 
 	// Sync local messages with server data when messages prop changes
-	$effect(() => {
-		messages = [...data.currentMessages];
-	});
 </script>
 
 <!-- Display all messages with selected other user -->
@@ -105,7 +105,7 @@
 </div>
 
 <div bind:this={chatWindow} class="mb-4 flex flex-col overflow-auto">
-	{#each messages as message}
+	{#each messages as message (message.id)}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>
@@ -138,8 +138,9 @@
 				bind:value={messageText}
 			/>
 		</Label>
-		<Button 
-			class="min-button bg-primary-400 hover:bg-primary-500 cursor-pointer" 
-			type="submit">Senden</Button>
+		<Button
+			class="min-button bg-primary-400 hover:bg-primary-500 cursor-pointer"
+			type="submit">{texts.buttons.send}</Button
+		>
 	</form>
 </div>

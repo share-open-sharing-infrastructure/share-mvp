@@ -1,16 +1,15 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
+import { texts } from '$lib/texts';
 
-
-export async function load({ locals, url, fetch }) {
-	const user = await locals.pb.collection('users').getOne(
-		locals.user.id,
-		{ expand: 'items_via_owner' }
-	);
+export async function load({ locals }) {
+	const user = await locals.pb
+		.collection('users')
+		.getOne(locals.user.id, { expand: 'items_via_owner' });
 
 	return {
 		user,
-		PB_URL: PUBLIC_PB_URL
+		PB_URL: PUBLIC_PB_URL,
 	};
 }
 
@@ -21,18 +20,31 @@ function validateItemData(data: FormData, isImageRequired: boolean = true) {
 	const image = data.get('itemImage');
 
 	// Check if image is a valid image file
-	const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-	const isValidImage = image instanceof File && image.size > 0 && validImageTypes.includes(image.type);
+	const validImageTypes = [
+		'image/jpeg',
+		'image/jpg',
+		'image/png',
+		'image/gif',
+		'image/webp',
+		'image/svg+xml',
+	];
+	const isValidImage =
+		image instanceof File &&
+		image.size > 0 &&
+		validImageTypes.includes(image.type);
 
 	const errors = {
 		nameIsMissing: !name,
 		descriptionIsMissing: !description,
 		placeIsMissing: !place,
-		imageIsMissing: isImageRequired ? (!image || !(image instanceof File) || image.size === 0) : false,
-		imageInvalidType: image instanceof File && image.size > 0 ? !isValidImage : false
+		imageIsMissing: isImageRequired
+			? !image || !(image instanceof File) || image.size === 0
+			: false,
+		imageInvalidType:
+			image instanceof File && image.size > 0 ? !isValidImage : false,
 	};
 
-	return { isValid: Object.values(errors).every(e => !e), errors };
+	return { isValid: Object.values(errors).every((e) => !e), errors };
 }
 
 export const actions = {
@@ -44,7 +56,8 @@ export const actions = {
 			return fail(400, {
 				fail: true,
 				missingFields: validationResult.errors,
-				message: 'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.'
+				message:
+					'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
 			});
 		}
 
@@ -55,10 +68,10 @@ export const actions = {
 				place: formData.get('itemPlace'),
 				image: formData.get('itemImage'),
 				owner: locals.user.id,
-				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false
+				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
 			});
-		} catch (error) {
-			console.error(error?.message || error);
+		} catch (error: Error | any) {
+			console.error(error ? error.message : error);
 		}
 	},
 
@@ -70,7 +83,8 @@ export const actions = {
 			return fail(400, {
 				fail: true,
 				missingFields: validationResult.errors,
-				message: 'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.'
+				message:
+					'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
 			});
 		}
 
@@ -78,39 +92,38 @@ export const actions = {
 			name: formData.get('itemName'),
 			description: formData.get('itemDescription'),
 			place: formData.get('itemPlace'),
-			trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false
+			trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
 		};
 
 		// Check if a new image was uploaded
 		const image = formData.get('itemImage');
 		if (image && image instanceof File && image.size > 0) {
-
 			updateData.image = image;
 		}
 
-		const itemId = formData.get('itemId').toString();
-		try {
-			await locals.pb
-				.collection('items')
-				.update(itemId, updateData);
-		} catch (err) {
-			console.error(err?.message || err);
+		const itemId = formData?.get('itemId')?.toString();
+		if (itemId) {
+			try {
+				await locals.pb.collection('items').update(itemId, updateData);
+			} catch (err: Error | any) {
+				console.error(err ? err.message : err);
+			}
 		}
 	},
 
 	saveProfile: async ({ locals, request }) => {
 		const formData = await request.formData();
 
-		const updateData = {};
+		const updateData: Record<string, any> = {};
 
 		// Get username separately to check for spaces
-		const username = formData.get('username').toString();
+		const username = formData?.get('username')?.toString();
 		if (username) {
 			const trimmedUsername = username.trim();
 			if (trimmedUsername.includes(' ')) {
 				return {
 					error: true,
-					message: 'Nutzername darf keine Leerzeichen enthalten.'
+					message: texts.errors.usernameNoSpaces,
 				};
 			} else if (trimmedUsername !== '') {
 				updateData['username'] = trimmedUsername;
@@ -118,7 +131,7 @@ export const actions = {
 		}
 
 		// Handle other fields
-		const city = formData.get('city').toString();
+		const city = formData?.get('city')?.toString();
 		if (city && city.trim() !== '') {
 			updateData['city'] = city.trim();
 		}
@@ -128,31 +141,33 @@ export const actions = {
 				await locals.pb.collection('users').update(locals.user.id, updateData);
 				return {
 					success: true,
-					message: 'Daten wurden erfolgreich aktualisiert.'
+					message: texts.success.dataUpdated,
 				};
 			} else {
 				return {
 					error: true,
-					message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+					message:
+						'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.',
 				};
 			}
-		} catch (err) {
+		} catch (err: Error | any) {
 			return {
 				error: true,
-				message: 'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.'
+				message:
+					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.' +
+					(err ? ` Fehler: ${err.message}` : ''),
 			};
 		}
 	},
 
-
 	delete: async ({ locals, request }) => {
-		const itemId = (await request.formData()).get('itemId').toString();
-		try {
-			await locals.pb
-				.collection('items')
-				.delete(itemId);
-		} catch (err) {
-			console.error(err?.message || err);
+		const itemId = (await request.formData()).get('itemId')?.toString();
+		if (itemId) {
+			try {
+				await locals.pb.collection('items').delete(itemId);
+			} catch (err: Error | any) {
+				console.error(err ? err.message : err);
+			}
 		}
-	}
+	},
 };

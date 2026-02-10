@@ -1,9 +1,8 @@
 import { redirect } from '@sveltejs/kit';
 
 export async function load() {
-	redirect(303, '/search');
+	return redirect(303, '/search');
 }
-
 
 export const actions = {
 	feedback: async ({ locals, request }) => {
@@ -20,12 +19,12 @@ export const actions = {
 
 		const feedbackData = {
 			feedbackMessage,
-			route,	
+			route,
 			device,
-			viewportSize,   
-			inputType,      
+			viewportSize,
+			inputType,
 			browser,
-			browserVersion
+			browserVersion,
 		};
 
 		try {
@@ -36,5 +35,5 @@ export const actions = {
 		}
 
 		return { success: true };
-	}
+	},
 };

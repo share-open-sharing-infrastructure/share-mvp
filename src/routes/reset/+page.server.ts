@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
+import { texts } from '$lib/texts';
 
 export async function load({ locals }) {
 	if (locals.user) {
@@ -19,10 +20,15 @@ export const actions = {
 		}
 
 		try {
-			await locals.pb.collection('users').requestPasswordReset(email.toString());
+			await locals.pb
+				.collection('users')
+				.requestPasswordReset(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
-			return fail(500, { fail: true, message: errorObj.data.message });
+			return fail(500, {
+				fail: true,
+				message: errorObj.data.message ?? texts.errors.somethingWentWrong,
+			});
 		}
 
 		// universal flash pattern:
@@ -30,13 +36,13 @@ export const actions = {
 			'flash',
 			JSON.stringify({
 				type: 'success',
-				message: 'If this email exists, a password reset email has been sent!'
+				message: texts.success.passwordResetSent,
 			}),
 			{
 				path: '/',
-				maxAge: 60 // seconds
+				maxAge: 60, // seconds
 			}
 		);
 		redirect(303, '/login');
-	}
+	},
 };
