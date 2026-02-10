@@ -3,7 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 
 export async function load({ locals }) {
 	if (locals.user) {
-		redirect(303, '/');
+		return redirect(303, '/');
 	}
 
 	return {};
