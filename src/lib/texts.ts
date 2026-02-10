@@ -101,6 +101,7 @@ export const texts = {
 		here: 'hier',
 		welcome: 'Willkommen bei AllerLeih',
 		welcomeShort: 'Willkommen!',
+		welcomeBack: 'Willkommen zurück!',
 		profileTitle: 'Dein Profil',
 		location: 'Standort/Postleitzahl:',
 		username: 'Nutzername:',
