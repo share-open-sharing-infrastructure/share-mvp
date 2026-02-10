@@ -7,6 +7,7 @@
 	import Message from './Message.svelte';
 	import { onMount } from 'svelte';
 	import type { RecordSubscription } from 'pocketbase';
+	import { texts } from '$lib/texts';
 
 	let { data, form } = $props();
 	let messages = $derived([...data.currentMessages]);
@@ -140,7 +141,7 @@
 		</Label>
 		<Button
 			class="min-button bg-primary-400 hover:bg-primary-500 cursor-pointer"
-			type="submit">Senden</Button
+			type="submit">{texts.buttons.send}</Button
 		>
 	</form>
 </div>

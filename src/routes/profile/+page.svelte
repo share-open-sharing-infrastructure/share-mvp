@@ -7,6 +7,7 @@
 	import SuccessAlert from '$lib/SuccessAlert.svelte';
 	import ErrorAlert from '$lib/ErrorAlert.svelte';
 	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts';
 
 	let { data, form } = $props();
 
@@ -33,7 +34,7 @@
 		>
 			<div class="mb-4 col-span-full xl:mb-2">
 				<h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">
-					Dein Profil
+					{texts.ui.profileTitle}
 				</h1>
 			</div>
 			<div class="col-span-full">
@@ -46,7 +47,7 @@
 								<label
 									for="username"
 									class="block mb-2 text-sm font-medium text-gray-900"
-									>Nutzername:</label
+									>{texts.ui.username}</label
 								>
 								<input
 									type="text"
@@ -60,7 +61,7 @@
 								<label
 									for="location"
 									class="block mb-2 text-sm font-medium text-gray-900"
-									>Standort/Postleitzahl:</label
+									>{texts.ui.location}</label
 								>
 								<input
 									type="text"
@@ -75,7 +76,7 @@
 								<label
 									for="country"
 									class="block mb-2 text-sm font-medium text-gray-900"
-									>Registriert seit:</label
+									>{texts.ui.registeredSince}</label
 								>
 								<div class="mt-2">
 									<span class="italic text-lg">{formattedDate()}</span>
@@ -85,7 +86,7 @@
 								<label
 									for="mail"
 									class="block mb-2 text-sm font-medium text-gray-900"
-									>Mailadresse:</label
+									>{texts.ui.emailAddress}</label
 								>
 								<div class="mt-2">
 									<span class="italic text-lg">{data.user.email}</span>
@@ -102,7 +103,7 @@
 							</div>
 
 							<div class="col-span-6 sm:col-full">
-								<Button class="min-button" type="submit">Speichern</Button>
+								<Button class="min-button" type="submit">{texts.buttons.save}</Button>
 							</div>
 						</div>
 					</form>

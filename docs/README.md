@@ -9,3 +9,4 @@ For diagramming, we use [Mermaid.js](https://mermaid.js.org/). Everything else i
 - [best-practices.md](best-practices.md) documents architecture or code patterns we rely on and would ask contributors to consider when implementing.
 - [testing-strategy.md](testing-strategy.md) contains the current status of and explanations for testing.
 - Actual TypeScript types as used in the source code live in "src/lib/types/models.ts".
+- Centralized text management and internationalization preparation is handled in "src/lib/texts.ts", see [text-management.md](text-management.md).

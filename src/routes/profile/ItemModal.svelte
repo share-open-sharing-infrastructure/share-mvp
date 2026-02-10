@@ -18,6 +18,7 @@
 	} from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts';
 
 	interface Props {
 		isVisible: boolean;
@@ -94,7 +95,7 @@
 			class="mx-auto h-50 w-50 rounded-md object-cover p-5"
 		/>
 		<Label class="space-y-2">
-			<span>{type === 'edit' ? 'Bild ändern:' : 'Bild hinzufügen:'}</span>
+			<span>{type === 'edit' ? texts.forms.changeImage : texts.forms.addImage}</span>
 			<input
 				type="file"
 				id="with_helper"
@@ -112,7 +113,7 @@
 			<Input
 				type="text"
 				name="itemName"
-				placeholder="Name des Gegenstands"
+				placeholder="{texts.forms.itemName}"
 				value={editingItem?.name ? editingItem.name : ''}
 				autocomplete="off"
 				required
@@ -120,11 +121,11 @@
 		</Label>
 
 		<Label class="space-y-2">
-			<span>Beschreibung:</span>
+			<span>{texts.forms.description}</span>
 			<Input
 				type="text"
 				name="itemDescription"
-				placeholder="Beschreibung des Gegenstands"
+				placeholder="{texts.forms.itemDescription}"
 				value={editingItem?.description ? editingItem.description : ''}
 				autocomplete="off"
 				required
@@ -136,7 +137,7 @@
 			<Input
 				type="text"
 				name="itemPlace"
-				placeholder="Ort des Gegenstands"
+				placeholder="{texts.forms.itemPlace}"
 				value={editingItem?.place ? editingItem.place : ''}
 				required
 			/>
@@ -145,21 +146,21 @@
 			<Toggle
 				name="trusteesOnly"
 				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
-				>Nur an Vertraute</Toggle
+				>{texts.ui.trustedOnly}</Toggle
 			>
 			<div
 				class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400"
 			>
 				<button id="b4">
 					<QuestionCircleSolid class="ml-1 h-full" />
-					<span class="sr-only">Erkläre mir das</span>
+					<span class="sr-only">{texts.ui.explainThis}</span>
 				</button>
 			</div>
 		</Label>
 
 		<!-- SUBMIT BUTTON -->
 		<Button class="min-button" type="submit">
-			{type === 'edit' ? 'Speichern' : 'Hinzufügen'}
+			{type === 'edit' ? texts.buttons.save : texts.buttons.add}
 		</Button>
 	</form>
 
@@ -179,7 +180,7 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button class="min-button" type="submit">Löschen</Button>
+			<Button class="min-button" type="submit">{texts.buttons.delete}</Button>
 		</form>
 	{/if}
 	<Popover

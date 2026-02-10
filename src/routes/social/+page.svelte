@@ -3,6 +3,7 @@
 	import { Button, Tooltip } from 'flowbite-svelte';
 	import { UserRemoveOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts.js';
 
 	const { data } = $props();
 
@@ -30,13 +31,13 @@
 		<h2
 			class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
 		>
-			Vertraute Personen
+			{texts.ui.trustedPeople}
 		</h2>
 		<p class="font-light text-gray-500 sm:text-xl dark:text-gray-400">
-			Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen
+			{texts.ui.trustDescriptionSocial}
 			zutraust. Du kannst dann <a
 				href={resolve('/profile')}
-				class="primary-text hover:underline">deine Dinge</a
+				class="primary-text hover:underline">{texts.pages.social.yourItems}</a
 			>
 			nur für diese Menschen sichtbar machen.
 		</p>
@@ -119,7 +120,7 @@
 					<UserRemoveOutline class="shrink-0 h-5 w-5" />
 				</Button>
 				<Tooltip type="light" placement="top"
-					>{trustee.username} das Vertrauen entziehen</Tooltip
+					>{trustee.username} {texts.ui.revokeTrust}</Tooltip
 				>
 			</form>
 		</div>

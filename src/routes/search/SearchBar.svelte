@@ -2,6 +2,7 @@
 	import { Button, Checkbox, Dropdown, Search } from 'flowbite-svelte';
 	import { Section, TableHeader } from 'flowbite-svelte-blocks';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
+	import { texts } from '$lib/texts';
 
 	let { searchText, isSearching, selectedPlaces, uniquePlaces } = $props();
 </script>
@@ -10,7 +11,7 @@
 	<h2
 		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
 	>
-		Willkommen!
+		{texts.ui.welcomeShort}
 	</h2>
 	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
 		Bei <span
@@ -29,7 +30,7 @@
 				classes={{
 					input: 'focus:ring-primary-700 focus:border-primary-700 search-bar',
 				}}
-				placeholder="Suche Dinge..."
+				placeholder="{texts.forms.searchPlaceholder}"
 				bind:value={searchText.value}
 			/>
 		{/snippet}
@@ -54,7 +55,7 @@
 
 			<Dropdown simple class="w-48 p-2 text-sm">
 				<h6 class="mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">
-					Ort
+					{texts.forms.place}
 				</h6>
 				{#each uniquePlaces as place (place)}
 					<li class="rounded p-1 hover:bg-primary-50 dark:hover:bg-primary-900">

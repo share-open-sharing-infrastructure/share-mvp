@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts.js';
 	let { data } = $props();
 </script>
 
@@ -11,12 +12,12 @@
 		>
 		<span class="text-gray-500"
 			>Gehe dazu auf die <a href={resolve('/search')} class="text-secondary-600 underline"
-				>Suche</a
+				>{texts.nav.search}</a
 			> und finde einen Gegenstand.</span
 		>
 	</div>
 {:else}
 	<div class="flex h-full flex-col items-center justify-center">
-		<span class="text-gray-500">Wähle einen Chat aus der Liste links.</span>
+		<span class="text-gray-500">{texts.ui.chooseFromList}</span>
 	</div>
 {/if}

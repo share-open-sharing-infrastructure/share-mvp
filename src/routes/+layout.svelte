@@ -20,6 +20,7 @@
 	import { APP_NAME } from '$lib/names';
 	import FeedbackForm from '$lib/FeedbackForm.svelte';
 	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts';
 
 	let { children, data } = $props();
 
@@ -48,15 +49,15 @@
 		<NavHamburger />
 		<NavUl>
 			{#if !data.currentUser}
-				<NavLi href="/login">Login</NavLi>
-				<NavLi href="/register">Registrieren</NavLi>
+				<NavLi href="/login">{texts.nav.login}</NavLi>
+				<NavLi href="/register">{texts.nav.register}</NavLi>
 			{/if}
-			<NavLi href="/search">Suche</NavLi>
+			<NavLi href="/search">{texts.nav.search}</NavLi>
 			{#if data.currentUser}
-				<NavLi href="/conversations">Anfragen</NavLi>
-				<NavLi href="/profile">Meine Dinge</NavLi>
-				<NavLi href="/social">Soziales</NavLi>
-				<NavLi href="/logout" onclick={logout}>Logout</NavLi>
+				<NavLi href="/conversations">{texts.nav.requests}</NavLi>
+				<NavLi href="/profile">{texts.nav.myItems}</NavLi>
+				<NavLi href="/social">{texts.nav.social}</NavLi>
+				<NavLi href="/logout" onclick={logout}>{texts.nav.logout}</NavLi>
 			{/if}
 		</NavUl>
 	</Navbar>
@@ -106,19 +107,19 @@
 			>
 				<FooterLink
 					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
-					href="/org/about">Über</FooterLink
+					href="/org/about">{texts.nav.about}</FooterLink
 				>
 				<FooterLink
 					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
-					href="/org/imprint">Impressum</FooterLink
+					href="/org/imprint">{texts.nav.imprint}</FooterLink
 				>
 				<FooterLink
 					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
-					href="/org/contact">Kontakt</FooterLink
+					href="/org/contact">{texts.nav.contact}</FooterLink
 				>
 				<FooterLink
 					classes={{ link: 'mr-4 hover:underline md:mr-6' }}
-					href="/org/newsletter">Newsletter</FooterLink
+					href="/org/newsletter">{texts.nav.newsletter}</FooterLink
 				>
 			</FooterLinkGroup>
 			<span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">

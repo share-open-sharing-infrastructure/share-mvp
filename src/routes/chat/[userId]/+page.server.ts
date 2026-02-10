@@ -1,5 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
+import { texts } from '$lib/texts';
 
 export async function load({ locals, params, parent }) {
 	// Get chat message data from parent layout
@@ -68,7 +69,7 @@ export const actions = {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, {
 				fail: true,
-				message: e.data?.message ?? 'Failed to send message.',
+				message: e.data?.message ?? texts.errors.failedToSendMessage,
 			});
 		}
 	},

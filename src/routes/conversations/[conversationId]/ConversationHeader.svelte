@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { MapPinOutline } from 'flowbite-svelte-icons';
 
@@ -10,7 +11,7 @@
 		<div class="flex flex-col items-end truncate">
 			<span class="text-m">{chatPartner.username}</span>
 			<span class="text-xs"
-				>aktiv seit {formatTimestamp(chatPartner.created, true)}</span
+				>{texts.ui.activeSince(formatTimestamp(chatPartner.created, true))}</span
 			>
 		</div>
 		<img

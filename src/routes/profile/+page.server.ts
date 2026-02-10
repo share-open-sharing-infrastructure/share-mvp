@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
+import { texts } from '$lib/texts';
 
 export async function load({ locals }) {
 	const user = await locals.pb
@@ -122,7 +123,7 @@ export const actions = {
 			if (trimmedUsername.includes(' ')) {
 				return {
 					error: true,
-					message: 'Nutzername darf keine Leerzeichen enthalten.',
+					message: texts.errors.usernameNoSpaces,
 				};
 			} else if (trimmedUsername !== '') {
 				updateData['username'] = trimmedUsername;
@@ -140,7 +141,7 @@ export const actions = {
 				await locals.pb.collection('users').update(locals.user.id, updateData);
 				return {
 					success: true,
-					message: 'Daten wurden erfolgreich aktualisiert.',
+					message: texts.success.dataUpdated,
 				};
 			} else {
 				return {

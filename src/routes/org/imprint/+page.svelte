@@ -1,8 +1,9 @@
 <script>
 	import { MAIN_CONTACT_MAIL } from '$lib/names';
+	import { texts } from '$lib/texts';
 </script>
 
-<h1 class="mb-4 text-2xl font-bold">Impressum</h1>
+<h1 class="mb-4 text-2xl font-bold">{texts.pages.imprint.title}</h1>
 <ul class="mx-auto max-w-md list-inside space-y-2">
 	<li>Matteo Ramin</li>
 	<li>Untere Augartenstraße 37/22</li>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { texts } from '$lib/texts';
 	import ConversationList from './ConversationList.svelte';
 
 	let { data, children } = $props();
@@ -9,7 +10,7 @@
 		<h2
 			class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
 		>
-			Alle Anfragen
+			{texts.ui.allRequests}
 		</h2>
 	</div>
 

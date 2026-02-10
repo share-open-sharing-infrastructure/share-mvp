@@ -3,6 +3,7 @@ import type { Item } from '$lib/types/models';
 import { filterTrustedItems } from '$lib/server/itemFilters';
 import type { ClientResponseError } from 'pocketbase';
 import { fail, redirect } from '@sveltejs/kit';
+import { texts } from '$lib/texts';
 
 export async function load({ locals }) {
 	// Fetch all items from PocketBase
@@ -59,7 +60,7 @@ export const actions = {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, {
 				fail: true,
-				message: e.data?.message ?? 'Failed to create conversation.',
+				message: e.data?.message ?? texts.errors.failedToCreateConversation,
 			});
 		}
 

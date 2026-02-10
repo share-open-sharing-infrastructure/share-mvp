@@ -2,6 +2,7 @@
 	import { Alert } from 'flowbite-svelte';
 	import { InfoCircleSolid } from 'flowbite-svelte-icons';
 	import { fly } from 'svelte/transition';
+	import { texts } from '$lib/texts';
 </script>
 
 <Alert
@@ -13,6 +14,6 @@
 >
 	{#snippet icon()}<InfoCircleSolid class="h-5 w-5" />{/snippet}
 	<span class="font-medium"
-		>Die Änderungen konnten nicht gespeichert werden!</span
+		>{texts.errors.changesNotSaved}</span
 	>
 </Alert>

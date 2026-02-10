@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { LOGIN_SECRET } from '$env/static/private';
 import type { ClientResponseError } from 'pocketbase';
+import { texts } from '$lib/texts';
 
 export async function load({ locals }) {
 	if (locals.user) {
@@ -43,7 +44,7 @@ export const actions = {
 			await locals.pb.collection('users').requestVerification(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
-			return fail(500, { fail: true, message: errorObj.data.message });
+			return fail(500, { fail: true, message: errorObj.data.message ?? texts.errors.somethingWentWrong });
 		}
 
 		redirect(303, '/');

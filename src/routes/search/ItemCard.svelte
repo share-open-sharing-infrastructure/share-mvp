@@ -8,6 +8,7 @@
 		ChevronRightOutline,
 	} from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts';
 	export let item: Item;
 	export let imgUrl: string;
 	export let requesterId: string;
@@ -28,7 +29,7 @@
 						>
 							<button id="b3">
 								<QuestionCircleSolid class="ml-1 h-full" />
-								<span class="sr-only">Erkläre mir das</span>
+								<span class="sr-only">{texts.ui.explainThis}</span>
 							</button>
 						</div>
 					{/if}
@@ -68,7 +69,7 @@
 									"
 								type="submit"
 							>
-								<MessagesOutline class="h-4 w-4 mr-2" /> Kontaktieren
+								<MessagesOutline class="h-4 w-4 mr-2" /> {texts.ui.contact}
 							</Button>
 						</form>
 					</span>
@@ -85,15 +86,14 @@
 >
 	<div class="space-y-2 p-3">
 		<h3 class="font-semibold text-gray-900 dark:text-white">
-			Vertrauensfunktion
+			{texts.ui.trustFunction}
 		</h3>
-		Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch
-		Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.
+		{texts.ui.trustDescription}
 		<a
 			href={resolve('/social')}
 			class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
 		>
-			Vertrauensfunktion <ChevronRightOutline
+			{texts.ui.trustFunction} <ChevronRightOutline
 				class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4"
 			/>
 		</a>

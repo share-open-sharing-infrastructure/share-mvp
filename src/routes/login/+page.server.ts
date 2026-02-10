@@ -1,5 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
+import { texts } from '$lib/texts';
 
 export async function load({ locals }) {
 	if (locals.user) {
@@ -35,7 +36,7 @@ export const actions = {
 			if (e?.status == 400) {
 				return fail(400, {
 					fail: true,
-					message: 'Login fehlgeschlagen.',
+					message: texts.errors.loginFailed,
 				});
 			} else {
 				error(e.status ?? 500, 'Unable to login.');

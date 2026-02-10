@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Conversation, Message } from '$lib/types/models.js';
+import { texts } from '$lib/texts';
 
 export async function load({ params, locals }) {
 	const conversationId: string = params.conversationId;
@@ -59,7 +60,7 @@ export const actions = {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, {
 				fail: true,
-				message: e.data?.message ?? 'Failed to send message.',
+				message: e.data?.message ?? texts.errors.failedToSendMessage,
 			});
 		}
 
@@ -81,7 +82,7 @@ export const actions = {
 				const e = err as Partial<ClientResponseError>;
 				return fail(e.status ?? 500, {
 					fail: true,
-					message: e.data?.message ?? 'Failed to send message.',
+					message: e.data?.message ?? texts.errors.failedToSendMessage,
 				});
 			}
 		}
@@ -96,7 +97,7 @@ export const actions = {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, {
 				fail: true,
-				message: e.data?.message ?? 'Failed to delete conversation.',
+				message: e.data?.message ?? texts.errors.failedToDeleteConversation,
 			});
 		}
 		redirect(303, '/conversations');

@@ -2,6 +2,7 @@
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input, Alert } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
+	import { texts } from '$lib/texts';
 
 	let { form } = $props();
 </script>
@@ -14,32 +15,32 @@
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			<form class="flex flex-col space-y-5" action="?/login" method="post">
 				<h3 class="p-0 text-xl font-medium text-accent-900 dark:text-white">
-					Wilkommen zurück!
+					{texts.auth.loginButton}
 				</h3>
 				{#if form?.fail}
 					<Alert>
 						<span class="font-medium">
 							{form.message}
-							Sind Nutzername & Passwort korrekt?
+							{texts.auth.loginFailed}
 						</span>
 					</Alert>
 				{/if}
 				<Label class="space-y-2">
-					<span>Deine E-Mail Adresse</span>
+					<span>{texts.forms.email}</span>
 					<Input
 						type="email"
 						name="email"
-						placeholder="E-Mail Adresse"
+						placeholder="{texts.auth.emailPlaceholder}"
 						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>
 				</Label>
 				<Label class="space-y-2">
-					<span>Dein Passwort</span>
+					<span>{texts.forms.password}</span>
 					<Input
 						type="password"
 						name="password"
-						placeholder="••••••••••"
+						placeholder="{texts.auth.passwordPlaceholder}"
 						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>
@@ -49,7 +50,7 @@
 					<a
 						href={resolve('/reset')}
 						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
-						>Passwort vergessen?</a
+						>{texts.auth.forgotPassword}</a
 					>
 				</p>
 
@@ -63,14 +64,14 @@
 						dark:hover:bg-primary-800 dark:focus:ring-primary-700
 						cursor-pointer
 
-						">Anmelden</Button
+						">{texts.auth.loginButton}</Button
 				>
 				<p class="mt-4 text-sm font-light text-gray-500 dark:text-gray-400">
-					Noch keinen Account?
+					{texts.auth.registerLink}
 					<a
 						href={resolve('/register')}
 						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
-						>Registrieren</a
+						>{texts.auth.registerLink}</a
 					>
 				</p>
 			</form>
