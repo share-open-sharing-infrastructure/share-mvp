@@ -35,9 +35,9 @@
 		</h2>
 		<p class="font-light text-gray-500 sm:text-xl dark:text-gray-400">
 			{texts.ui.trustDescriptionSocial}
-			zutraust. Du kannst dann <a
-				href={resolve('/profile')}
-				class="primary-text hover:underline">{texts.pages.social.yourItems}</a
+			zutraust. Du kannst dann
+			<a href={resolve('/profile')} class="primary-text hover:underline"
+				>{texts.pages.social.yourItems}</a
 			>
 			nur für diese Menschen sichtbar machen.
 		</p>

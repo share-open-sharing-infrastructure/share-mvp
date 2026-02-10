@@ -13,7 +13,5 @@
 	params={{ x: 200 }}
 >
 	{#snippet icon()}<InfoCircleSolid class="h-5 w-5" />{/snippet}
-	<span class="font-medium"
-		>{texts.errors.changesNotSaved}</span
-	>
+	<span class="font-medium">{texts.errors.changesNotSaved}</span>
 </Alert>

@@ -1,4 +1,4 @@
-import type { User } from "$lib/types/models.js";
+import type { User } from '$lib/types/models.js';
 
 export async function load({ locals }) {
 	let trustees: User[] = [];
@@ -33,9 +33,7 @@ export const actions = {
 		};
 
 		try {
-			await locals.pb
-				.collection('users')
-				.update(locals.user.id, updateData);
+			await locals.pb.collection('users').update(locals.user.id, updateData);
 		} catch (error: Error | any) {
 			console.error(error ? error.message : error);
 		}

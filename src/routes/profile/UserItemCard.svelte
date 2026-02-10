@@ -45,7 +45,8 @@
 		{#if item.trusteesOnly}
 			<div class="flex items-center">
 				<Badge rounded border color="green" class="my-2">
-					<span class="text-green-900 bg-green-100">{texts.ui.trustedOnly}</span>
+					<span class="text-green-900 bg-green-100">{texts.ui.trustedOnly}</span
+					>
 				</Badge>
 			</div>
 		{/if}

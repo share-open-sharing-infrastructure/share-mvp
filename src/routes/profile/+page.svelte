@@ -103,7 +103,9 @@
 							</div>
 
 							<div class="col-span-6 sm:col-full">
-								<Button class="min-button" type="submit">{texts.buttons.save}</Button>
+								<Button class="min-button" type="submit"
+									>{texts.buttons.save}</Button
+								>
 							</div>
 						</div>
 					</form>

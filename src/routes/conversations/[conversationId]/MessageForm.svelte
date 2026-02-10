@@ -29,7 +29,7 @@
 		<Input
 			name="messageContent"
 			type="text"
-			placeholder="{texts.forms.messagePlaceholder}"
+			placeholder={texts.forms.messagePlaceholder}
 			class="w-full search-bar"
 			required
 			autocomplete="off"

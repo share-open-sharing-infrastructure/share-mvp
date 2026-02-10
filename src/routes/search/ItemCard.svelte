@@ -69,7 +69,8 @@
 									"
 								type="submit"
 							>
-								<MessagesOutline class="h-4 w-4 mr-2" /> {texts.ui.contact}
+								<MessagesOutline class="h-4 w-4 mr-2" />
+								{texts.ui.contact}
 							</Button>
 						</form>
 					</span>
@@ -93,7 +94,8 @@
 			href={resolve('/social')}
 			class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
 		>
-			{texts.ui.trustFunction} <ChevronRightOutline
+			{texts.ui.trustFunction}
+			<ChevronRightOutline
 				class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4"
 			/>
 		</a>

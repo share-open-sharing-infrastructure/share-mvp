@@ -16,10 +16,10 @@
 
 	// Props and state variables
 	let { data } = $props();
-	
-	let messages = $derived(data.conversation.messages
-			? [...data.conversation.messages]
-			: []);
+
+	let messages = $derived(
+		data.conversation.messages ? [...data.conversation.messages] : []
+	);
 	let loggedInUserIsItemOwner = $derived(
 		data.currentUser.id === data.conversation.itemOwner.id
 	);
@@ -72,13 +72,10 @@
 					console.error('Failed to fetch last message record:', error);
 				}
 			}
-
 		}
 	}
 
 	// Sync local messages with server data when messages prop changes
-	;
-
 	// Set up real-time subscription
 	$effect(() => {
 		if (!pb) return; // Wait for pb to be initialized

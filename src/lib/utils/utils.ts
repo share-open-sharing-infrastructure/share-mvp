@@ -10,7 +10,7 @@ export function formatTimestamp(
 	const minutes = d.getMinutes();
 
 	// pad single digits (e.g. 3 → 03)
-	const pad = (n: number): string => String(n).padStart(2, '0') ;
+	const pad = (n: number): string => String(n).padStart(2, '0');
 
 	// if today, return only time
 	const today = new Date();
@@ -51,7 +51,7 @@ export function setupPocketBaseSubscription(
 		});
 
 	// Cleanup: unsubscribe when chat partner changes or component unmounts
-	return ():void => {
+	return (): void => {
 		pocketBaseInstance
 			?.collection(collectionName)
 			.unsubscribe(recordId)

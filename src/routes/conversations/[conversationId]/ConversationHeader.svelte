@@ -11,7 +11,9 @@
 		<div class="flex flex-col items-end truncate">
 			<span class="text-m">{chatPartner.username}</span>
 			<span class="text-xs"
-				>{texts.ui.activeSince(formatTimestamp(chatPartner.created, true))}</span
+				>{texts.ui.activeSince(
+					formatTimestamp(chatPartner.created, true)
+				)}</span
 			>
 		</div>
 		<img

@@ -11,8 +11,9 @@
 			>Starte ein Gespräch, indem du jemanden anschreibst!</span
 		>
 		<span class="text-gray-500"
-			>Gehe dazu auf die <a href={resolve('/search')} class="text-secondary-600 underline"
-				>{texts.nav.search}</a
+			>Gehe dazu auf die <a
+				href={resolve('/search')}
+				class="text-secondary-600 underline">{texts.nav.search}</a
 			> und finde einen Gegenstand.</span
 		>
 	</div>

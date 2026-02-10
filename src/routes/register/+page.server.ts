@@ -44,7 +44,10 @@ export const actions = {
 			await locals.pb.collection('users').requestVerification(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
-			return fail(500, { fail: true, message: errorObj.data.message ?? texts.errors.somethingWentWrong });
+			return fail(500, {
+				fail: true,
+				message: errorObj.data.message ?? texts.errors.somethingWentWrong,
+			});
 		}
 
 		redirect(303, '/');

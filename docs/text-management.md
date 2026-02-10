@@ -12,59 +12,59 @@ The main text repository is located at `src/lib/texts.ts` and contains all user-
 
 ```typescript
 export const texts = {
-  // Authentication-related text
-  auth: {
-    emailPlaceholder: "E-Mail Adresse",
-    passwordPlaceholder: "••••••••••",
-    loginFailed: "Login fehlgeschlagen.",
-    // ... more auth texts
-  },
-  
-  // Navigation text
-  nav: {
-    login: "Login",
-    register: "Registrieren",
-    // ... more navigation texts
-  },
-  
-  // Error messages
-  errors: {
-    changesNotSaved: "Die Änderungen konnten nicht gespeichert werden!",
-    // ... more error messages
-  },
-  
-  // Success messages
-  success: {
-    changesSaved: "Die Änderungen wurden gespeichert!",
-    // ... more success messages
-  },
-  
-  // Form labels and placeholders
-  forms: {
-    username: "Nutzername",
-    // ... more form texts
-  },
-  
-  // Buttons
-  buttons: {
-    save: "Speichern",
-    // ... more button texts
-  },
-  
-  // General UI text
-  ui: {
-    resultsFound: (count: number) => `${count} Dinge gefunden`,
-    // ... more UI texts
-  },
-  
-  // Page-specific text
-  pages: {
-    about: {
-      title: "Über AllerLeih",
-      // ... page-specific texts
-    }
-    // ... more pages
-  }
+	// Authentication-related text
+	auth: {
+		emailPlaceholder: 'E-Mail Adresse',
+		passwordPlaceholder: '••••••••••',
+		loginFailed: 'Login fehlgeschlagen.',
+		// ... more auth texts
+	},
+
+	// Navigation text
+	nav: {
+		login: 'Login',
+		register: 'Registrieren',
+		// ... more navigation texts
+	},
+
+	// Error messages
+	errors: {
+		changesNotSaved: 'Die Änderungen konnten nicht gespeichert werden!',
+		// ... more error messages
+	},
+
+	// Success messages
+	success: {
+		changesSaved: 'Die Änderungen wurden gespeichert!',
+		// ... more success messages
+	},
+
+	// Form labels and placeholders
+	forms: {
+		username: 'Nutzername',
+		// ... more form texts
+	},
+
+	// Buttons
+	buttons: {
+		save: 'Speichern',
+		// ... more button texts
+	},
+
+	// General UI text
+	ui: {
+		resultsFound: (count: number) => `${count} Dinge gefunden`,
+		// ... more UI texts
+	},
+
+	// Page-specific text
+	pages: {
+		about: {
+			title: 'Über AllerLeih',
+			// ... page-specific texts
+		},
+		// ... more pages
+	},
 };
 ```
 
@@ -76,12 +76,12 @@ Import the texts and use them directly in your components:
 
 ```svelte
 <script lang="ts">
-  import { texts } from '$lib/texts';
+	import { texts } from '$lib/texts';
 </script>
 
 <!-- Use in HTML -->
 <span>{texts.forms.email}</span>
-<input placeholder="{texts.auth.emailPlaceholder}" />
+<input placeholder={texts.auth.emailPlaceholder} />
 <button>{texts.buttons.save}</button>
 
 <!-- For dynamic text with parameters -->
@@ -97,14 +97,14 @@ import { texts } from '$lib/texts';
 
 // Use in error responses
 return fail(400, {
-  fail: true,
-  message: texts.errors.loginFailed,
+	fail: true,
+	message: texts.errors.loginFailed,
 });
 
 // Use in success responses
 return {
-  success: true,
-  message: texts.success.changesSaved,
+	success: true,
+	message: texts.success.changesSaved,
 };
 ```
 
@@ -125,36 +125,44 @@ return {
 ## Categories
 
 ### Authentication (`auth`)
+
 - Login, registration, password reset text
 - Form labels and placeholders for auth forms
 
 ### Navigation (`nav`)
+
 - Menu items, navigation links
 - Breadcrumbs and page titles
 
 ### Errors (`errors`)
+
 - Error messages for forms and API responses
 - Validation error messages
 
 ### Success (`success`)
+
 - Success messages and confirmations
 - Flash messages
 
 ### Forms (`forms`)
+
 - Form field labels
 - Input placeholders
 - Helper text
 
 ### Buttons (`buttons`)
+
 - Button labels
 - Call-to-action text
 
 ### UI (`ui`)
+
 - General UI elements
 - Dynamic text with parameters
 - Helper and explanatory text
 
 ### Pages (`pages`)
+
 - Page-specific content
 - Section headers and descriptions
 
@@ -173,14 +181,18 @@ The current structure is designed to be easily extendable for full international
 ```typescript
 // Future i18n structure
 export const texts = {
-  en: {
-    auth: { /* English texts */ },
-    // ... other categories
-  },
-  de: {
-    auth: { /* German texts */ },
-    // ... other categories
-  }
+	en: {
+		auth: {
+			/* English texts */
+		},
+		// ... other categories
+	},
+	de: {
+		auth: {
+			/* German texts */
+		},
+		// ... other categories
+	},
 };
 ```
 

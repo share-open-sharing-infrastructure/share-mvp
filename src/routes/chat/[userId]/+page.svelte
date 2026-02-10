@@ -93,7 +93,6 @@
 	});
 
 	// Sync local messages with server data when messages prop changes
-	;
 </script>
 
 <!-- Display all messages with selected other user -->
@@ -106,7 +105,7 @@
 </div>
 
 <div bind:this={chatWindow} class="mb-4 flex flex-col overflow-auto">
-	{#each messages as message(message.id)}
+	{#each messages as message (message.id)}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>

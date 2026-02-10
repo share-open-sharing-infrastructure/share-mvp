@@ -102,7 +102,7 @@ export const actions = {
 		}
 
 		const itemId = formData?.get('itemId')?.toString();
-		if(itemId){
+		if (itemId) {
 			try {
 				await locals.pb.collection('items').update(itemId, updateData);
 			} catch (err: Error | any) {
@@ -154,7 +154,8 @@ export const actions = {
 			return {
 				error: true,
 				message:
-					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.' + (err ? ` Fehler: ${err.message}` : ''),
+					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.' +
+					(err ? ` Fehler: ${err.message}` : ''),
 			};
 		}
 	},

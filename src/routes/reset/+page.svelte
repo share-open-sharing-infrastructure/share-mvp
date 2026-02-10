@@ -30,7 +30,7 @@
 					<Input
 						type="email"
 						name="email"
-						placeholder="{texts.forms.email}"
+						placeholder={texts.forms.email}
 						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>

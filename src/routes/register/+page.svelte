@@ -32,7 +32,7 @@
 					<Input
 						type="email"
 						name="email"
-						placeholder="{texts.auth.emailPlaceholder}"
+						placeholder={texts.auth.emailPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>
@@ -42,7 +42,7 @@
 					<Input
 						type="password"
 						name="password"
-						placeholder="{texts.auth.passwordPlaceholder}"
+						placeholder={texts.auth.passwordPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>
@@ -52,7 +52,7 @@
 					<Input
 						type="text"
 						name="secret"
-						placeholder="{texts.auth.secretPlaceholder}"
+						placeholder={texts.auth.secretPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
 						required
 					/>

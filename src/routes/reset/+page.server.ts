@@ -25,7 +25,10 @@ export const actions = {
 				.requestPasswordReset(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
-			return fail(500, { fail: true, message: errorObj.data.message ?? texts.errors.somethingWentWrong });
+			return fail(500, {
+				fail: true,
+				message: errorObj.data.message ?? texts.errors.somethingWentWrong,
+			});
 		}
 
 		// universal flash pattern:

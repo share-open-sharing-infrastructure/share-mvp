@@ -30,7 +30,7 @@
 				classes={{
 					input: 'focus:ring-primary-700 focus:border-primary-700 search-bar',
 				}}
-				placeholder="{texts.forms.searchPlaceholder}"
+				placeholder={texts.forms.searchPlaceholder}
 				bind:value={searchText.value}
 			/>
 		{/snippet}

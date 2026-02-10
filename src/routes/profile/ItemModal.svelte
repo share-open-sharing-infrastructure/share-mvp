@@ -95,7 +95,11 @@
 			class="mx-auto h-50 w-50 rounded-md object-cover p-5"
 		/>
 		<Label class="space-y-2">
-			<span>{type === 'edit' ? texts.forms.changeImage : texts.forms.addImage}</span>
+			<span
+				>{type === 'edit'
+					? texts.forms.changeImage
+					: texts.forms.addImage}</span
+			>
 			<input
 				type="file"
 				id="with_helper"
@@ -113,7 +117,7 @@
 			<Input
 				type="text"
 				name="itemName"
-				placeholder="{texts.forms.itemName}"
+				placeholder={texts.forms.itemName}
 				value={editingItem?.name ? editingItem.name : ''}
 				autocomplete="off"
 				required
@@ -125,7 +129,7 @@
 			<Input
 				type="text"
 				name="itemDescription"
-				placeholder="{texts.forms.itemDescription}"
+				placeholder={texts.forms.itemDescription}
 				value={editingItem?.description ? editingItem.description : ''}
 				autocomplete="off"
 				required
@@ -137,7 +141,7 @@
 			<Input
 				type="text"
 				name="itemPlace"
-				placeholder="{texts.forms.itemPlace}"
+				placeholder={texts.forms.itemPlace}
 				value={editingItem?.place ? editingItem.place : ''}
 				required
 			/>
