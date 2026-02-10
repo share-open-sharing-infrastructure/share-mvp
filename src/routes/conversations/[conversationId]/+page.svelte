@@ -16,10 +16,10 @@
 
 	// Props and state variables
 	let { data } = $props();
-	// svelte-ignore state_referenced_locally
-	let messages = $state(
-		data.conversation.messages ? [...data.conversation.messages] : []
-	);
+	
+	let messages = $derived(data.conversation.messages
+			? [...data.conversation.messages]
+			: []);
 	let loggedInUserIsItemOwner = $derived(
 		data.currentUser.id === data.conversation.itemOwner.id
 	);
@@ -62,26 +62,22 @@
 				event.record.messages?.[event.record.messages.length - 1];
 
 			// get last messages contents from pocketbase
-			let latestMessage: Message | null = null;
+			let latestMessage: Message;
 			if (lastMessageId) {
 				try {
 					latestMessage = await pb.collection('messages').getOne(lastMessageId);
+					// Append the latest message to local messages array
+					messages = [...messages, latestMessage];
 				} catch (error) {
 					console.error('Failed to fetch last message record:', error);
 				}
 			}
 
-			// Append the latest message to local messages array
-			messages = [...messages, latestMessage];
 		}
 	}
 
 	// Sync local messages with server data when messages prop changes
-	$effect(() => {
-		messages = data.conversation.messages
-			? [...data.conversation.messages]
-			: [];
-	});
+	;
 
 	// Set up real-time subscription
 	$effect(() => {
@@ -104,7 +100,7 @@
 
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
-	{#each messages as message}
+	{#each messages as message (message.id)}
 		<MessageElement {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>

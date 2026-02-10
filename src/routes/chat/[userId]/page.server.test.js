@@ -1,9 +1,17 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { actions, load } from './+page.server';
 
 describe('Chat page', () => {
+	/**
+	 * @type {{ pb: any; user?: { id: string; }; }}
+	 */
 	let mockLocals;
 	let mockRequest;
+	/**
+	 * @type {{ userId: string; }}
+	 */
 	let mockParams;
 
 	beforeEach(() => {
@@ -17,6 +25,7 @@ describe('Chat page', () => {
 				authStore: {
 					record: { id: currentUserId },
 				},
+				// eslint-disable-next-line @typescript-eslint/no-unused-vars
 				collection: vi.fn((collectionName) => ({
 					create: vi.fn(),
 					getOne: vi.fn(),

@@ -17,6 +17,7 @@ export interface PocketBaseEntity {
 	updated: string;
 
 	/** Optional expanded relations from PocketBase */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	expand?: Record<string, any>;
 }
 

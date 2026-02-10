@@ -10,7 +10,7 @@
 	<div id="chat-container" class="flex h-120 w-full max-w-3xl justify-center">
 		<!-- List of all users the present user chatted with -->
 		<ul id="chat-list" class="w-1/3 overflow-auto border-r p-4">
-			{#each data.chatPartners as chatPartner}
+			{#each data.chatPartners as chatPartner(chatPartner.id)}
 				<ChatPartnerListItem {...chatPartner} />
 			{/each}
 		</ul>

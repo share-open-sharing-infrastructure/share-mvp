@@ -6,11 +6,9 @@
 	import AddButton from './AddButton.svelte';
 	import SuccessAlert from '$lib/SuccessAlert.svelte';
 	import ErrorAlert from '$lib/ErrorAlert.svelte';
+	import { resolve } from '$app/paths';
 
 	let { data, form } = $props();
-
-	let search = $state('');
-	let results = $state<any[]>([]);
 
 	let showAddModal = $state(false);
 
@@ -18,7 +16,7 @@
 		return `${baseUrl}api/files/${item?.collectionId}/${item?.id}/${item?.image}`;
 	}
 
-	function formattedDate() {
+	function formattedDate(): string {
 		const date = new Date(data.user.created);
 		return date.toLocaleDateString('de-DE', {
 			day: '2-digit',
@@ -97,7 +95,7 @@
 									class="mt-2.5 text-sm text-body"
 								>
 									Deine Mailadresse kannst du <a
-										href="/updatemail"
+										href={resolve('/updatemail')}
 										class="font-medium primary-text hover:underline">hier</a
 									> ändern.
 								</p>
@@ -142,7 +140,7 @@
 					</div>
 					<div class="grid gap-8 mb-2 lg:mb-16 md:grid-cols-2 grid-cols-1">
 						{#if data?.user?.expand?.items_via_owner?.length}
-							{#each data.user.expand.items_via_owner as item}
+							{#each data.user.expand.items_via_owner as item (item.id)}
 								<UserItemCard
 									{item}
 									{data}

@@ -22,6 +22,7 @@
 				: 'mouse';
 
 		const ua = navigator.userAgent;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const uaData = (navigator as any).userAgentData;
 
 		// 1. Try Client Hints brands (best signal)

@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 
-export async function GET({ url, fetch }) {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export async function GET({ url, fetch }): Promise<Response> {
 	const search = url.searchParams.get('q');
 
 	if (!search) {

@@ -8,6 +8,7 @@
 	} from 'flowbite-svelte-icons';
 	import EditButton from './EditButton.svelte';
 	import ItemModal from './ItemModal.svelte';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		item: Item;
@@ -63,7 +64,7 @@
 						</h3>
 						Dieser Gegenstand ist nur für deine Vertrauten sichtbar.
 						<a
-							href="/social"
+							href={resolve('/social')}
 							class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
 						>
 							Vertrauensfunktion <ChevronRightOutline

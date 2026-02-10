@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { Button, Tooltip } from 'flowbite-svelte';
 	import { UserRemoveOutline } from 'flowbite-svelte-icons';
+	import { resolve } from '$app/paths';
 
 	const { data } = $props();
 
@@ -11,7 +12,7 @@
 	// Filter users based on input and exclude already added trustees
 	let filteredUsers = $derived(
 		usernameToBeAdded.length > 1 // only start filtering after 2 characters typed
-			? data.users.filter(
+			? data?.users?.filter(
 					(user) =>
 						user.username
 							.toLowerCase()
@@ -34,7 +35,7 @@
 		<p class="font-light text-gray-500 sm:text-xl dark:text-gray-400">
 			Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen
 			zutraust. Du kannst dann <a
-				href="/profile"
+				href={resolve('/profile')}
 				class="primary-text hover:underline">deine Dinge</a
 			>
 			nur für diese Menschen sichtbar machen.
@@ -56,11 +57,11 @@
 			/>
 		</div>
 
-		{#if showDropdown && filteredUsers.length > 0}
+		{#if showDropdown && filteredUsers && filteredUsers.length > 0}
 			<div
 				class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-primary-700 dark:bg-primary-900"
 			>
-				{#each filteredUsers as potentialFriend}
+				{#each filteredUsers as potentialFriend (potentialFriend.id)}
 					<form
 						method="POST"
 						action="?/addTrustee"
@@ -95,7 +96,7 @@
 			Du hast noch keine vertrauten Personen hinzugefügt. Na los ;)
 		</p>
 	{/if}
-	{#each data.trustees as trustee}
+	{#each data.trustees as trustee (trustee.id)}
 		<div
 			class="flex items-center space-x-4 border-b border-gray-200 p-4 dark:border-primary-700"
 		>

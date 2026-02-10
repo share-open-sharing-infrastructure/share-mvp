@@ -56,7 +56,7 @@
 				<h6 class="mb-1 ml-1 text-sm font-medium text-gray-900 dark:text-white">
 					Ort
 				</h6>
-				{#each uniquePlaces as place}
+				{#each uniquePlaces as place (place)}
 					<li class="rounded p-1 hover:bg-primary-50 dark:hover:bg-primary-900">
 						<Checkbox
 							checked

@@ -7,7 +7,7 @@ export async function load({ locals, params, parent }) {
 	const allMessages = parentData.allMessages;
 
 	// Get all messages only for the currently selected target user
-	let currentChatPartnerId: string = params.userId;
+	const currentChatPartnerId: string = params.userId;
 	let userRecord;
 
 	try {
@@ -34,6 +34,7 @@ export async function load({ locals, params, parent }) {
 		// If the user is trying to chat with themselves, redirect to a safe default (first chat partner)
 		// TODO: Find a more elegant way to do this maybe
 		let firstChatPartnerId: string;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		allMessages[0].from === locals.user.id
 			? (firstChatPartnerId = allMessages[0].to)
 			: (firstChatPartnerId = allMessages[0].from);

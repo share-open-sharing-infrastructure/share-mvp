@@ -1,6 +1,5 @@
 <script lang="ts">
 	import ConversationListItem from './ConversationListItem.svelte';
-	import type { Conversation, User } from '$lib/types/models.js';
 
 	let { conversations, currentUser, PB_IMG_URL } = $props();
 </script>
@@ -12,7 +11,7 @@
 		Unterhaltungen
 	</div>
 	<ul id="chat-list" class="w-full p-2 overflow-auto h-full">
-		{#each conversations as conversation}
+		{#each conversations as conversation (conversation.id)}
 			<ConversationListItem {conversation} {currentUser} {PB_IMG_URL} />
 		{/each}
 	</ul>

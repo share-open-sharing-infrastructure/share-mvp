@@ -17,12 +17,12 @@ export async function load({ params, locals }) {
 		error(500, 'Unable to load conversation.');
 	}
 
-	let conversation: Conversation = {
+	const conversation: Conversation = {
 		id: conversationRecord.id,
-		requester: conversationRecord.expand.requester,
-		itemOwner: conversationRecord.expand.itemOwner,
-		requestedItem: conversationRecord.expand.requestedItem,
-		messages: conversationRecord.expand.messages,
+		requester: conversationRecord.expand?.requester,
+		itemOwner: conversationRecord.expand?.itemOwner,
+		requestedItem: conversationRecord.expand?.requestedItem,
+		messages: conversationRecord.expand?.messages,
 		readByRequester: conversationRecord.readByRequester,
 		readByOwner: conversationRecord.readByOwner,
 		created: conversationRecord.created,

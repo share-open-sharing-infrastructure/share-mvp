@@ -62,7 +62,9 @@ export const authorization: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(authentication, authorization);
 
-export function handleError({ error, event }) {
+// TODO: Check if this is used anywhere implicitly
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function handleError({ error, event }): void {
 	console.error('Error occurred during request processing:', {
 		error,
 		url: event.url.href,

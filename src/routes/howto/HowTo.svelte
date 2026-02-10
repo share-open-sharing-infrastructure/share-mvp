@@ -3,7 +3,6 @@
 	import screenshot_upload from '$lib/images/screenshot_upload.png';
 	import screenshot_trust from '$lib/images/screenshot_trust.png';
 	import screenshot_request from '$lib/images/screenshot_request.png';
-	import placeholderimg from '$lib/images/placeholder_img.png';
 	import HowToElement from './HowToElement.svelte';
 </script>
 

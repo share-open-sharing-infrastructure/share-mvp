@@ -1,9 +1,10 @@
 <script lang="ts">
-	import type { ActionData, PageData } from './$types';
+	import type { ActionData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
 	export let form: ActionData;
 	import { Alert } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
 </script>
 
 <Section name="reset">
@@ -17,7 +18,7 @@
 		</div>
 	{/if}
 
-	<Register href="/" class="w-md">
+	<Register href={resolve('/')} class="w-md">
 		{#snippet top()}
 			Passwort zurücksetzen
 		{/snippet}

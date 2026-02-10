@@ -9,7 +9,7 @@
 	import type { RecordSubscription } from 'pocketbase';
 
 	let { data, form } = $props();
-	let messages = $state([...data.currentMessages]);
+	let messages = $derived([...data.currentMessages]);
 	let messageText: string = $state('');
 	let chatWindow: HTMLDivElement;
 
@@ -92,9 +92,7 @@
 	});
 
 	// Sync local messages with server data when messages prop changes
-	$effect(() => {
-		messages = [...data.currentMessages];
-	});
+	;
 </script>
 
 <!-- Display all messages with selected other user -->
@@ -107,7 +105,7 @@
 </div>
 
 <div bind:this={chatWindow} class="mb-4 flex flex-col overflow-auto">
-	{#each messages as message}
+	{#each messages as message(message.id)}
 		<Message {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>

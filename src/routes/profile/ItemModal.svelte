@@ -4,7 +4,6 @@
 		Button,
 		Input,
 		Label,
-		Fileupload,
 		Helper,
 		Toggle,
 		Img,
@@ -18,6 +17,7 @@
 		QuestionCircleSolid,
 	} from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		isVisible: boolean;
@@ -194,7 +194,7 @@
 			Wenn du diese Option aktivierst, ist der Gegenstand nur für deine vertrauten
 			Kontakte sichtbar.
 			<a
-				href="/social"
+				href={resolve('/social')}
 				class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
 			>
 				Vertraute hinzufügen<ChevronRightOutline

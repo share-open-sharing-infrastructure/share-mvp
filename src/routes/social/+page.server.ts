@@ -1,14 +1,16 @@
+import type { User } from "$lib/types/models.js";
+
 export async function load({ locals }) {
-	let trustees;
-	let users;
+	let trustees: User[] = [];
+	let users: User[] = [];
 
 	try {
 		users = await locals.pb.collection('users').getFullList();
 		trustees = users.filter(
 			(user) => locals.user.trusts && locals.user.trusts.includes(user.id)
 		);
-	} catch (error) {
-		console.error(error?.message || error);
+	} catch (error: Error | any) {
+		console.error(error.message ? error.message : error);
 	}
 
 	return {
@@ -22,7 +24,7 @@ export async function load({ locals }) {
 }
 
 export const actions = {
-	addTrustee: async ({ request, locals }) => {
+	addTrustee: async ({ request, locals }): Promise<void> => {
 		const formData = await request.formData();
 		const newTrusteeId = formData.get('trusteeId');
 
@@ -31,26 +33,26 @@ export const actions = {
 		};
 
 		try {
-			const record = await locals.pb
+			await locals.pb
 				.collection('users')
 				.update(locals.user.id, updateData);
-		} catch (err) {
-			console.error(err?.message || err);
+		} catch (error: Error | any) {
+			console.error(error ? error.message : error);
 		}
 	},
-	removeTrustee: async ({ request, locals }) => {
+	removeTrustee: async ({ request, locals }): Promise<void> => {
 		const formData = await request.formData();
 		const toRemoveTrusteeId = formData.get('trusteeId');
 
 		try {
 			const updatedTrusts = (locals.user.trusts || []).filter(
-				(id) => id !== toRemoveTrusteeId
+				(id: string) => id !== toRemoveTrusteeId
 			);
-			const record = await locals.pb
+			await locals.pb
 				.collection('users')
 				.update(locals.user.id, { trusts: updatedTrusts });
-		} catch (err) {
-			console.error(err?.message || err);
+		} catch (error: Error | any) {
+			console.error(error ? error.message : error);
 		}
 	},
 };

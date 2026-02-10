@@ -1,7 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 
-export async function load({ locals, url, fetch }) {
+export async function load({ locals }) {
 	const user = await locals.pb
 		.collection('users')
 		.getOne(locals.user.id, { expand: 'items_via_owner' });
@@ -69,8 +69,8 @@ export const actions = {
 				owner: locals.user.id,
 				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
 			});
-		} catch (error) {
-			console.error(error?.message || error);
+		} catch (error: Error | any) {
+			console.error(error ? error.message : error);
 		}
 	},
 
@@ -100,21 +100,23 @@ export const actions = {
 			updateData.image = image;
 		}
 
-		const itemId = formData.get('itemId').toString();
-		try {
-			await locals.pb.collection('items').update(itemId, updateData);
-		} catch (err) {
-			console.error(err?.message || err);
+		const itemId = formData?.get('itemId')?.toString();
+		if(itemId){
+			try {
+				await locals.pb.collection('items').update(itemId, updateData);
+			} catch (err: Error | any) {
+				console.error(err ? err.message : err);
+			}
 		}
 	},
 
 	saveProfile: async ({ locals, request }) => {
 		const formData = await request.formData();
 
-		const updateData = {};
+		const updateData: Record<string, any> = {};
 
 		// Get username separately to check for spaces
-		const username = formData.get('username').toString();
+		const username = formData?.get('username')?.toString();
 		if (username) {
 			const trimmedUsername = username.trim();
 			if (trimmedUsername.includes(' ')) {
@@ -128,7 +130,7 @@ export const actions = {
 		}
 
 		// Handle other fields
-		const city = formData.get('city').toString();
+		const city = formData?.get('city')?.toString();
 		if (city && city.trim() !== '') {
 			updateData['city'] = city.trim();
 		}
@@ -147,21 +149,23 @@ export const actions = {
 						'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.',
 				};
 			}
-		} catch (err) {
+		} catch (err: Error | any) {
 			return {
 				error: true,
 				message:
-					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.',
+					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.' + (err ? ` Fehler: ${err.message}` : ''),
 			};
 		}
 	},
 
 	delete: async ({ locals, request }) => {
-		const itemId = (await request.formData()).get('itemId').toString();
-		try {
-			await locals.pb.collection('items').delete(itemId);
-		} catch (err) {
-			console.error(err?.message || err);
+		const itemId = (await request.formData()).get('itemId')?.toString();
+		if (itemId) {
+			try {
+				await locals.pb.collection('items').delete(itemId);
+			} catch (err: Error | any) {
+				console.error(err ? err.message : err);
+			}
 		}
 	},
 };

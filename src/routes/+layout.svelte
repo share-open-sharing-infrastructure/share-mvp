@@ -19,23 +19,20 @@
 	} from 'flowbite-svelte';
 	import { APP_NAME } from '$lib/names';
 	import FeedbackForm from '$lib/FeedbackForm.svelte';
+	import { resolve } from '$app/paths';
 
 	let { children, data } = $props();
 
 	let isFeedbackModalOpen = $state(false);
 
-	async function logout() {
-		const res = await fetch('/logout', {
+	async function logout(): Promise<void> {
+		await fetch('/logout', {
 			method: 'POST',
 		});
 
 		await invalidateAll();
 
-		if (res.redirected) {
-			goto(res.url);
-		} else {
-			goto('/');
-		}
+		goto(resolve('/'));
 	}
 </script>
 
@@ -74,7 +71,7 @@
 
 	<Button
 		pill
-		onclick={() => {
+		onclick={(): void => {
 			isFeedbackModalOpen = true;
 		}}
 		class="
@@ -125,7 +122,7 @@
 				>
 			</FooterLinkGroup>
 			<span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">
-				© 2026 <a href="/" class="hover:underline">{APP_NAME}</a>
+				© 2026 <a href={resolve('/')} class="hover:underline">{APP_NAME}</a>
 			</span>
 		</div>
 	</Footer>

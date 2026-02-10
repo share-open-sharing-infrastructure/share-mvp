@@ -17,7 +17,7 @@ export const actions = {
 		const password = data.get('password');
 		const secret = data.get('secret');
 
-		if (secret.toString() !== LOGIN_SECRET) {
+		if (secret?.toString() !== LOGIN_SECRET) {
 			const error = 'Das eingegebene Geheimnis ist ungültig.';
 			return fail(500, { fail: true, message: error });
 		}

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input, Alert } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
 
 	let { form } = $props();
 </script>
@@ -46,7 +47,7 @@
 
 				<p class="mt-2 text-sm font-light text-gray-500 dark:text-gray-400">
 					<a
-						href="/reset"
+						href={resolve('/reset')}
 						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
 						>Passwort vergessen?</a
 					>
@@ -67,7 +68,7 @@
 				<p class="mt-4 text-sm font-light text-gray-500 dark:text-gray-400">
 					Noch keinen Account?
 					<a
-						href="/register"
+						href={resolve('/register')}
 						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
 						>Registrieren</a
 					>

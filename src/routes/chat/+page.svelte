@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	let { data } = $props();
 </script>
 
@@ -9,7 +10,7 @@
 			>Starte ein Gespräch, indem du jemanden anschreibst!</span
 		>
 		<span class="text-gray-500"
-			>Gehe dazu auf die <a href="/search" class="text-secondary-600 underline"
+			>Gehe dazu auf die <a href={resolve('/search')} class="text-secondary-600 underline"
 				>Suche</a
 			> und finde einen Gegenstand.</span
 		>
