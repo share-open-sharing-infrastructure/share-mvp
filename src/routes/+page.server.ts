@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 
-export async function load() {
+export async function load(): Promise<never> {
 	return redirect(303, '/search');
 }
 

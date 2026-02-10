@@ -70,6 +70,7 @@ export const actions = {
 				owner: locals.user.id,
 				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
 			});
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: Error | any) {
 			console.error(error ? error.message : error);
 		}
@@ -88,6 +89,7 @@ export const actions = {
 			});
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {
 			name: formData.get('itemName'),
 			description: formData.get('itemDescription'),
@@ -105,6 +107,7 @@ export const actions = {
 		if (itemId) {
 			try {
 				await locals.pb.collection('items').update(itemId, updateData);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err ? err.message : err);
 			}
@@ -114,6 +117,7 @@ export const actions = {
 	saveProfile: async ({ locals, request }) => {
 		const formData = await request.formData();
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {};
 
 		// Get username separately to check for spaces
@@ -150,6 +154,7 @@ export const actions = {
 						'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.',
 				};
 			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: Error | any) {
 			return {
 				error: true,
@@ -165,6 +170,7 @@ export const actions = {
 		if (itemId) {
 			try {
 				await locals.pb.collection('items').delete(itemId);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err ? err.message : err);
 			}

@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
-	import Flash from '$lib/Flash.svelte';
 	import '../app.css';
 	import {
 		Navbar,
@@ -18,7 +17,7 @@
 		FooterLink,
 	} from 'flowbite-svelte';
 	import { APP_NAME } from '$lib/names';
-	import FeedbackForm from '$lib/FeedbackForm.svelte';
+	import FeedbackForm from '$lib/components/FeedbackForm.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 
@@ -63,10 +62,6 @@
 	</Navbar>
 
 	<main class="flex-1">
-		{#if data.flash}
-			<Flash flash={data.flash} />
-		{/if}
-
 		{@render children()}
 	</main>
 

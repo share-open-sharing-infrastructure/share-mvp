@@ -55,6 +55,7 @@
 	});
 
 	// Handle incoming real-time message events
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	async function handleConversationEvent(event: RecordSubscription<any>) {
 		if (event.action === 'update') {
 			// Extract the last message id from the updated conversation record

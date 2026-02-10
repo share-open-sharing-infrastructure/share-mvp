@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { Alert, Button } from 'flowbite-svelte';
+	import { Button } from 'flowbite-svelte';
 	import UserItemCard from './UserItemCard.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import type { Item } from '$lib/types/models';
 	import AddButton from './AddButton.svelte';
-	import SuccessAlert from '$lib/SuccessAlert.svelte';
-	import ErrorAlert from '$lib/ErrorAlert.svelte';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 
@@ -110,20 +109,16 @@
 						</div>
 					</form>
 					{#if form?.success}
-						<SuccessAlert successMessage={form?.message} />
+						<CustomAlert type="success" message={form?.message} />
 					{:else if form?.error}
-						<ErrorAlert errorMessage={form?.message} />
+						<CustomAlert type="error" message={form?.message} />
 					{/if}
 				</div>
 
 				<div class="col-span-2">
 					{#if form?.fail}
 						<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-							<Alert>
-								<span class="font-medium">
-									{form.message}
-								</span>
-							</Alert>
+							<CustomAlert type="error" message={form?.message} />
 						</div>
 					{/if}
 
@@ -150,8 +145,9 @@
 									imgUrl={getItemImageUrl(item, data.PB_URL)}
 								/>
 							{/each}
+
 							<AddButton
-								onclick={() => {
+								onclick={(): void => {
 									showAddModal = true;
 								}}
 								floating={true}
@@ -160,7 +156,7 @@
 							<div class="flex flex-col items-center text-center text-gray-500">
 								<p>Bisher verleihst du noch keine Gegenstände.</p>
 								<AddButton
-									onclick={() => {
+									onclick={(): void => {
 										showAddModal = true;
 									}}
 									floating={false}

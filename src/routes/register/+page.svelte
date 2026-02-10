@@ -1,19 +1,15 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
-	import { Alert } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	let { form } = $props();
 </script>
 
 <Section name="register">
 	{#if form?.fail}
 		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-			<Alert>
-				<span class="font-medium">
-					{form.message}
-				</span>
-			</Alert>
+			<CustomAlert type="error" message={form?.message} />
 		</div>
 	{/if}
 	<Register href="/" class="w-md">

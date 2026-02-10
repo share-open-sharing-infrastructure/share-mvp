@@ -1,16 +1,19 @@
 <script lang="ts">
+	import type { Message } from '$lib/types/models.ts';
+	import type { RecordSubscription } from 'pocketbase';
+
 	import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
 	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { onMount } from 'svelte';
+
+	import { texts } from '$lib/texts';
 	import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
-	import Message from './Message.svelte';
-	import { onMount } from 'svelte';
-	import type { RecordSubscription } from 'pocketbase';
-	import { texts } from '$lib/texts';
+	import MessageComponent from './MessageComponent.svelte';
 
 	let { data, form } = $props();
-	let messages = $derived([...data.currentMessages]);
+	let messages: Message[] = $derived([...data.currentMessages]);
 	let messageText: string = $state('');
 	let chatWindow: HTMLDivElement;
 
@@ -22,8 +25,8 @@
 	});
 
 	// Handle incoming real-time message events
-	function handleMessageEvent(event: RecordSubscription<any>) {
-		const message = event.record;
+	function handleMessageEvent(event: RecordSubscription<Message>) {
+		const message: Message = event.record;
 		const currentUserId = data.currentUser?.id;
 		const chatPartnerId = data.currentChatPartner.id;
 
@@ -52,6 +55,7 @@
 		pocketBaseInstance: PocketBase,
 		collectionName: string,
 		recordId: string = '*',
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		eventHandler: (event: RecordSubscription<any>) => void
 	) {
 		// Subscribe to all message events
@@ -106,7 +110,7 @@
 
 <div bind:this={chatWindow} class="mb-4 flex flex-col overflow-auto">
 	{#each messages as message (message.id)}
-		<Message {message} isFromCurrentUser={data.currentUser?.id} />
+		<MessageComponent {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>
 

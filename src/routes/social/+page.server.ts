@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { User } from '$lib/types/models.js';
 
 export async function load({ locals }) {

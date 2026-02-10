@@ -1,19 +1,15 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
-	import { Badge, Popover } from 'flowbite-svelte';
-	import {
-		ChevronRightOutline,
-		MapPinOutline,
-		QuestionCircleSolid,
-	} from 'flowbite-svelte-icons';
+	import { Badge } from 'flowbite-svelte';
+	import { MapPinOutline } from 'flowbite-svelte-icons';
 	import EditButton from './EditButton.svelte';
 	import ItemModal from './ItemModal.svelte';
-	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 
 	interface Props {
 		item: Item;
 		imgUrl: string;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		data: any;
 	}
 	let { item, imgUrl, data }: Props = $props();

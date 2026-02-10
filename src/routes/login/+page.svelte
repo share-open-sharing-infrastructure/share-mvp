@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Label, Input, Alert } from 'flowbite-svelte';
+	import { Button, Label, Input } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
 	let { form } = $props();
 </script>
@@ -18,12 +19,10 @@
 					{texts.ui.welcomeBack}
 				</h3>
 				{#if form?.fail}
-					<Alert>
-						<span class="font-medium">
-							{form.message}
-							{texts.auth.loginFailed}
-						</span>
-					</Alert>
+					<CustomAlert
+						type="error"
+						message={form?.message + ' ' + texts.auth.loginFailed}
+					/>
 				{/if}
 				<Label class="space-y-2">
 					<span>{texts.forms.email}</span>

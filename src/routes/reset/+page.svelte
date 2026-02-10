@@ -3,19 +3,15 @@
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
 	export let form: ActionData;
-	import { Alert } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 </script>
 
 <Section name="reset">
 	{#if form?.fail}
 		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-			<Alert>
-				<span class="font-medium">
-					{form.message}
-				</span>
-			</Alert>
+			<CustomAlert type="error" message={form?.message} />
 		</div>
 	{/if}
 
