@@ -1,6 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { PUBLIC_PB_URL } from '../../hooks.server';
-import { texts } from '$lib/texts';
+import { PUBLIC_PB_URL } from '../../../hooks.server';
 
 export async function load({ locals }) {
 	const user = await locals.pb
@@ -70,6 +69,7 @@ export const actions = {
 				owner: locals.user.id,
 				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
 			});
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: Error | any) {
 			console.error(error ? error.message : error);
 		}
@@ -88,6 +88,7 @@ export const actions = {
 			});
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {
 			name: formData.get('itemName'),
 			description: formData.get('itemDescription'),
@@ -105,58 +106,10 @@ export const actions = {
 		if (itemId) {
 			try {
 				await locals.pb.collection('items').update(itemId, updateData);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err ? err.message : err);
 			}
-		}
-	},
-
-	saveProfile: async ({ locals, request }) => {
-		const formData = await request.formData();
-
-		const updateData: Record<string, any> = {};
-
-		// Get username separately to check for spaces
-		const username = formData?.get('username')?.toString();
-		if (username) {
-			const trimmedUsername = username.trim();
-			if (trimmedUsername.includes(' ')) {
-				return {
-					error: true,
-					message: texts.errors.usernameNoSpaces,
-				};
-			} else if (trimmedUsername !== '') {
-				updateData['username'] = trimmedUsername;
-			}
-		}
-
-		// Handle other fields
-		const city = formData?.get('city')?.toString();
-		if (city && city.trim() !== '') {
-			updateData['city'] = city.trim();
-		}
-
-		try {
-			if (Object.keys(updateData).length > 0) {
-				await locals.pb.collection('users').update(locals.user.id, updateData);
-				return {
-					success: true,
-					message: texts.success.dataUpdated,
-				};
-			} else {
-				return {
-					error: true,
-					message:
-						'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.',
-				};
-			}
-		} catch (err: Error | any) {
-			return {
-				error: true,
-				message:
-					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.' +
-					(err ? ` Fehler: ${err.message}` : ''),
-			};
 		}
 	},
 
@@ -165,6 +118,7 @@ export const actions = {
 		if (itemId) {
 			try {
 				await locals.pb.collection('items').delete(itemId);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err ? err.message : err);
 			}

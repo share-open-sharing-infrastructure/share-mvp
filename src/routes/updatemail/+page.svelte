@@ -3,19 +3,27 @@
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
 	export let form: ActionData;
-	import SuccessAlert from '$lib/SuccessAlert.svelte';
-	import ErrorAlert from '$lib/ErrorAlert.svelte';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
+	import { resolve } from '$app/paths';
 
 	let newEmail = '';
 </script>
 
 <Section name="reset">
-	<Register href="/" class="w-md">
+	<Register href={resolve('/')} class="w-md">
 		{#snippet top()}
 			{texts.pages.updatemail.title}
 		{/snippet}
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
+			{#if form}
+				<CustomAlert
+					type={form.success ? 'success' : 'error'}
+					message={form.message}
+					duration={10000}
+				/>
+			{/if}
+
 			<form class="flex flex-col space-y-5" action="?/updatemail" method="post">
 				<Label class="space-y-2">
 					<span>{texts.pages.updatemail.newEmailLabel}</span>
@@ -35,11 +43,6 @@
 					>{texts.pages.updatemail.updateButton}</Button
 				>
 			</form>
-			{#if form?.success}
-				<SuccessAlert successMessage={form?.message} />
-			{:else if form?.error}
-				<ErrorAlert errorMessage={form?.message} />
-			{/if}
 		</div>
 	</Register>
 </Section>

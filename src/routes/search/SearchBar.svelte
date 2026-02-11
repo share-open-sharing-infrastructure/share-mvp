@@ -1,10 +1,9 @@
 <script>
-	import { Button, Checkbox, Dropdown, Search } from 'flowbite-svelte';
+	import { Search } from 'flowbite-svelte';
 	import { Section, TableHeader } from 'flowbite-svelte-blocks';
-	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 
-	let { searchText, isSearching, selectedPlaces, uniquePlaces } = $props();
+	let { searchText, isSearching } = $props();
 </script>
 
 <div class="mx-auto max-w-screen-sm text-center">

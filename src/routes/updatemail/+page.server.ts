@@ -12,18 +12,18 @@ export const actions = {
 
 		try {
 			await locals.pb.collection('users').requestEmailChange(email.toString());
+
+			return {
+				success: true,
+				message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${email} gesendet. Bitte überprüfe deinen Posteingang.`,
+			};
 		} catch (error) {
 			return {
 				error: true,
 				message:
 					(error as ClientResponseError).message ||
-					'Ein unbekannter Fehler ist aufgetreten.',
+					"Ein unbekannter Fehler ist aufgetreten. Versuche es nochmal, oder komm' später wieder.",
 			};
 		}
-
-		return {
-			success: true,
-			message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${email} gesendet. Bitte überprüfe deinen Posteingang.`,
-		};
 	},
 };
