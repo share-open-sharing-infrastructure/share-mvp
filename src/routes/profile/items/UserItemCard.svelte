@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { Badge } from 'flowbite-svelte';
-	import { MapPinOutline } from 'flowbite-svelte-icons';
 	import EditButton from './EditButton.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import { texts } from '$lib/texts';
@@ -27,12 +26,20 @@
 	}
 </script>
 
-<div class="items-center border border-gray-200 rounded-lg shadow flex sm:flex-row overflow-hidden">
-	<img class="m-5 w-30 h-30 aspect-square rounded-lg" src={imgUrl} alt={item.name} />
+<div
+	class="items-center border border-gray-200 rounded-lg shadow flex sm:flex-row overflow-hidden"
+>
+	<img
+		class="m-5 w-30 h-30 aspect-square rounded-lg"
+		src={imgUrl}
+		alt={item.name}
+	/>
 
 	<div class="p-5 w-full min-w-0 h-full flex flex-col justify-between">
 		<div>
-			<h3 class="text-l font-bold tracking-tight text-gray-900 dark:text-white overflow-break-words">
+			<h3
+				class="text-l font-bold tracking-tight text-gray-900 dark:text-white overflow-break-words"
+			>
 				{item.name}
 			</h3>
 			<!-- <span class="flex items-center gap-1 text-sm">
@@ -42,7 +49,8 @@
 			{#if item.trusteesOnly}
 				<div class="flex items-center truncate">
 					<Badge rounded border color="green" class="my-2">
-						<span class="text-green-900 bg-green-100">{texts.ui.trustedOnly}</span
+						<span class="text-green-900 bg-green-100"
+							>{texts.ui.trustedOnly}</span
 						>
 					</Badge>
 				</div>

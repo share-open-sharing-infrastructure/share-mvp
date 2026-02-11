@@ -22,7 +22,7 @@ export const actions = {
 				error: true,
 				message:
 					(error as ClientResponseError).message ||
-					'Ein unbekannter Fehler ist aufgetreten. Versuche es nochmal, oder komm\' später wieder.',
+					"Ein unbekannter Fehler ist aufgetreten. Versuche es nochmal, oder komm' später wieder.",
 			};
 		}
 	},

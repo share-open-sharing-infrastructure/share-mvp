@@ -62,5 +62,5 @@ export const actions = {
 					(err ? ` Fehler: ${err.message}` : ''),
 			};
 		}
-	}
+	},
 };

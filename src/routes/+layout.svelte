@@ -67,18 +67,34 @@
 			{/if}
 			{#if data.currentUser}
 				<NavLi href={resolve('/conversations')}>{texts.nav.requests}</NavLi>
-				<NavLi class="cursor-pointer">Soziales<ChevronDownOutline class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white"/></NavLi>
+				<NavLi class="cursor-pointer"
+					>Soziales<ChevronDownOutline
+						class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white"
+					/></NavLi
+				>
 				<Dropdown simple class="w-44">
-					<DropdownItem href={resolve('/social')}>{texts.nav.social}</DropdownItem>
+					<DropdownItem href={resolve('/social')}
+						>{texts.nav.social}</DropdownItem
+					>
 					<!-- <DropdownItem href={resolve('/groups')}>Gruppen</DropdownItem> -->
 					<!-- <DropdownItem href={resolve('/users')}>Personen</DropdownItem> -->
-				</Dropdown>	
-				<NavLi class="cursor-pointer">Profil<ChevronDownOutline class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white"/></NavLi>
+				</Dropdown>
+				<NavLi class="cursor-pointer"
+					>Profil<ChevronDownOutline
+						class="text-primary-800 ms-2 inline h-6 w-6 dark:text-white"
+					/></NavLi
+				>
 				<Dropdown simple class="w-44">
-					<DropdownItem href={resolve('/profile/items')}>{texts.nav.myItems}</DropdownItem>
-					<DropdownItem href={resolve('/profile/user')}>{texts.nav.myProfile}</DropdownItem>
+					<DropdownItem href={resolve('/profile/items')}
+						>{texts.nav.myItems}</DropdownItem
+					>
+					<DropdownItem href={resolve('/profile/user')}
+						>{texts.nav.myProfile}</DropdownItem
+					>
 					<DropdownDivider />
-					<DropdownItem href={resolve('/logout')} onclick={logout}>{texts.nav.logout}</DropdownItem>
+					<DropdownItem href={resolve('/logout')} onclick={logout}
+						>{texts.nav.logout}</DropdownItem
+					>
 				</Dropdown>
 			{/if}
 		</NavUl>

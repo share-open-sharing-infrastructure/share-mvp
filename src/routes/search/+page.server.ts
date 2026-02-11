@@ -36,7 +36,7 @@ export async function load({ locals }) {
 
 export const actions = {
 	startConversation: async ({ locals, request }) => {
-		if(!locals.user) {
+		if (!locals.user) {
 			return redirect(303, '/login');
 		}
 

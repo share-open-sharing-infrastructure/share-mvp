@@ -13,11 +13,15 @@
 <Section name="reset">
 	<Register href={resolve('/')} class="w-md">
 		{#snippet top()}
-		{texts.pages.updatemail.title}
+			{texts.pages.updatemail.title}
 		{/snippet}
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			{#if form}
-				<CustomAlert type={form.success ? 'success' : 'error'} message={form.message} duration={10000} />
+				<CustomAlert
+					type={form.success ? 'success' : 'error'}
+					message={form.message}
+					duration={10000}
+				/>
 			{/if}
 
 			<form class="flex flex-col space-y-5" action="?/updatemail" method="post">

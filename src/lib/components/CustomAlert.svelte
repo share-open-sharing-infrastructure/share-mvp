@@ -24,6 +24,28 @@
 	}
 </script>
 
+{#if open}
+	<div class="my-5">
+		<Alert
+			alertStatus={open}
+			{color}
+			dismissable
+			transition={fly}
+			params={{ x: 200 }}
+		>
+			{#snippet icon()}<InfoCircleSolid class="h-5 w-5" />{/snippet}
+			<span class="font-medium">{message}</span>
+		</Alert>
+		<div
+			class="progress-bar"
+			class:bg-green-500={color === 'green'}
+			class:bg-yellow-500={color === 'yellow'}
+			class:bg-red-500={color === 'red'}
+			style="--duration: {duration}ms"
+		></div>
+	</div>
+{/if}
+
 <style>
 	@keyframes shrink-width {
 		from {
@@ -40,26 +62,3 @@
 		height: 2px;
 	}
 </style>
-
-{#if open}
-	<div class="my-5">
-		<Alert
-			alertStatus={open}
-			{color}
-			dismissable
-			transition={fly}
-			params={{ x: 200 }}
-		>
-			{#snippet icon()}<InfoCircleSolid class="h-5 w-5" />{/snippet}
-			<span class="font-medium">{message}</span>
-		</Alert>
-		<div 
-			class="progress-bar" 
-			class:bg-green-500={color === 'green'} 
-			class:bg-yellow-500={color === 'yellow'} 
-			class:bg-red-500={color === 'red'}
-			style="--duration: {duration}ms"
-		></div>
-	</div>
-{/if}
-
