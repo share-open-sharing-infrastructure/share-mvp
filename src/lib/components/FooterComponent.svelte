@@ -10,20 +10,20 @@
 </script>
 
 <Footer footerType="socialmedia" class="">
-	<div class="mx-auto my-10 max-w-screen-xl text-center">
+	<div class="mx-auto max-w-7xl text-center">
 		<FooterBrand
 			href="#"
-			alt="share Logo"
+			alt="AllerLeih Logo"
 			name=""
-			aClass="flex justify-center items-center text-md logo font-semibold text-gray-900 dark:text-white"
+			aClass="flex justify-center items-center text-md logo text-accent font-semibold "
 		>
 			{texts.names.app}
 		</FooterBrand>
-		<p class="my-6 text-gray-500 dark:text-gray-400">
+		<p class="my-6 text-light">
 			Ein gemeinnütziger open-source Verleih-Marktplatz. Für alle.
 		</p>
 		<FooterLinkGroup
-			class="mb-6 flex flex-wrap items-center justify-center text-gray-900 dark:text-white"
+			class="mb-6 flex flex-wrap items-center justify-center text-light"
 		>
 			<FooterLink
 				classes={{ link: 'mr-4 hover:underline md:mr-6' }}
@@ -42,8 +42,9 @@
 				href={resolve('/misc/newsletter')}>{texts.nav.newsletter}</FooterLink
 			>
 		</FooterLinkGroup>
-		<span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">
-			© 2026 <a href={resolve('/')} class="hover:underline">{texts.names.app}</a>
+		<span class="text-sm text-accent sm:text-center">
+			© 2026 <a href={resolve('/')} class="hover:underline">{texts.names.app}</a
+			>
 		</span>
 	</div>
 </Footer>

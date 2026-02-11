@@ -66,7 +66,8 @@
 					class="text-blue-500 underline">keila.io</a
 				>. Wenn du dich abmelden willst, schicke uns einfach eine Mail an
 				<a
-					href="mailto:{texts.names.mainContactMail}?subject=Newsletter%20Abmeldung&body=Bitte%20nehmt%20mich%20aus%20dem%20Newsletter!"
+					href="mailto:{texts.names
+						.mainContactMail}?subject=Newsletter%20Abmeldung&body=Bitte%20nehmt%20mich%20aus%20dem%20Newsletter!"
 					class="text-blue-500 underline">{texts.names.mainContactMail}</a
 				>.
 			</div>

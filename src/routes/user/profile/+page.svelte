@@ -21,7 +21,7 @@
 <main class="bg-white dark:bg-gray-900 min-h-screen">
 	<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
 		<!-- Page Header -->
-		<h1 class="text-3xl font-semibold text-gray-900 dark:text-white mb-8">
+		<h1 class="text-3xl font-semibold text-primary-50 dark:text-white mb-8">
 			{texts.ui.profileTitle}
 		</h1>
 
@@ -93,7 +93,7 @@
 						<span class="text-sm text-gray-600 dark:text-gray-400">
 							(<a
 								href={resolve('/user/profile/updatemail')}
-								class="font-medium primary-text hover:underline">ändern</a
+								class="font-medium text-primary hover:underline">ändern</a
 							>)
 						</span>
 					</label>
@@ -101,7 +101,7 @@
 
 				<!-- Submit Button -->
 				<div class="pt-4 justify-end flex">
-					<Button class="min-button" type="submit">
+					<Button class="min-button bg-primary" type="submit">
 						{texts.buttons.save}
 					</Button>
 				</div>

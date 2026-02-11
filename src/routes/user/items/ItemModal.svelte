@@ -104,7 +104,7 @@
 				type="file"
 				id="with_helper"
 				name="itemImage"
-				class="mb-2 min-button"
+				class="mb-2 min-button bg-primary"
 				accept="image/*"
 				onchange={handleFileChange}
 			/>
@@ -163,7 +163,7 @@
 		</Label>
 
 		<!-- SUBMIT BUTTON -->
-		<Button class="min-button" type="submit">
+		<Button class="min-button bg-primary" type="submit">
 			{type === 'edit' ? texts.buttons.save : texts.buttons.add}
 		</Button>
 	</form>
@@ -184,7 +184,9 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button class="min-button" type="submit">{texts.buttons.delete}</Button>
+			<Button class="min-button bg-danger" type="submit"
+				>{texts.buttons.delete}</Button
+			>
 		</form>
 	{/if}
 	<Popover
@@ -200,10 +202,10 @@
 			Kontakte sichtbar.
 			<a
 				href={resolve('/social')}
-				class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
+				class="text-accent hover:underline flex items-center font-medium"
 			>
 				Vertraute hinzufügen<ChevronRightOutline
-					class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4"
+					class="text-accent dark:text-primary-500 ms-1.5 h-4 w-4"
 				/>
 			</a>
 		</div>

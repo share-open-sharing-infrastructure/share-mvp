@@ -35,7 +35,7 @@
 					{/if}
 				</div>
 
-				<span class="flex items-center gap-1">
+				<span class="flex items-center gap-1 text-accent font-medium">
 					<MapPinOutline class="h-4 w-4" />
 					{item.place}
 				</span>
@@ -65,6 +65,7 @@
 								class="
 									cursor-pointer 
 									min-button
+									bg-primary
 									left-10 z-50
 									"
 								type="submit"
@@ -92,12 +93,10 @@
 		{texts.ui.trustDescription}
 		<a
 			href={resolve('/social')}
-			class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
+			class="text-accent hover:underline flex items-center font-medium mt-1"
 		>
 			{texts.ui.trustFunction}
-			<ChevronRightOutline
-				class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4"
-			/>
+			<ChevronRightOutline class="text-accent  ms-1.5 h-4 w-4" />
 		</a>
 	</div>
 </Popover>

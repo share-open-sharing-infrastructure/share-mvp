@@ -69,7 +69,7 @@
 					Du hast noch keinen Account?
 					<a
 						href={resolve('/auth/register')}
-						class="font-medium primary-text hover:underline dark:text-primary-300"
+						class="font-medium text-primary hover:underline dark:text-primary-300"
 						>{texts.auth.registerLink}</a
 					>
 				</p>

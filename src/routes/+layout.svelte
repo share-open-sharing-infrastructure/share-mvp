@@ -24,6 +24,7 @@
 		}}
 		class="
 				min-button
+				bg-secondary
 				fixed bottom-10 left-10 z-50
 				cursor-pointer
 			"

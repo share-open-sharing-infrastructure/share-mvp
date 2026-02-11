@@ -26,7 +26,7 @@
 </script>
 
 <!-- HEADER -->
-<div class="py-4 px-4 mx-auto max-w-screen-xl">
+<div class="py-4 px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">
 		<h2
 			class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
@@ -36,7 +36,7 @@
 		<p class="font-light text-gray-500 sm:text-xl dark:text-gray-400">
 			{texts.ui.trustDescriptionSocial}
 			zutraust. Du kannst dann
-			<a href={resolve('/user/items')} class="primary-text hover:underline"
+			<a href={resolve('/user/items')} class="text-primary hover:underline"
 				>{texts.pages.social.yourItems}</a
 			>
 			nur für diese Menschen sichtbar machen.
@@ -114,7 +114,7 @@
 			<form class="ml-auto" method="POST" action="?/removeTrustee" use:enhance>
 				<input type="hidden" name="trusteeId" value={trustee.id} />
 				<Button
-					class="min-button ml-auto cursor-pointer bg-secondary-500 hover:bg-secondary-600"
+					class="min-button ml-auto cursor-pointer bg-primary"
 					type="submit"
 				>
 					<UserRemoveOutline class="shrink-0 h-5 w-5" />

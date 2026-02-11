@@ -19,10 +19,6 @@
 	let { loggedIn } = $props();
 
 	let activeUrl = $derived(page.url.pathname);
-	let activeClass =
-		'text-white bg-[#ffd832] md:bg-transparent md:text-[#ffd832] md:hover:text-[#ffd832]';
-	let nonActiveClass =
-		'text-gray-700 hover:bg-transparent md:hover:bg-transparent md:border-0 md:hover:text-[#ffd832]';
 
 	async function logout(): Promise<void> {
 		await fetch('/auth/logout', {
@@ -38,14 +34,18 @@
 <Navbar>
 	<NavBrand href={resolve('/')}>
 		<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
-		<span class="self-center text-xl font-semibold whitespace-nowrap logo"
+		<span
+			class="text-accent self-center text-xl font-semibold whitespace-nowrap logo"
 			>{texts.names.app}</span
 		>
 	</NavBrand>
 	<NavHamburger />
 	<NavUl
 		{activeUrl}
-		classes={{ active: activeClass, nonActive: nonActiveClass }}
+		classes={{
+			active: 'text-accent color-accent bg-transparent',
+			nonActive: 'text-black hover:text-accent bg-transparent',
+		}}
 	>
 		<NavLi href={resolve('/search')}>{texts.nav.search}</NavLi>
 		{#if !loggedIn}

@@ -3,7 +3,7 @@ export const texts = {
 		app: 'AllerLeih',
 		mainContactMail: 'allerleih@posteo.de',
 	},
-	
+
 	// Authentication
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',
@@ -65,7 +65,7 @@ export const texts = {
 		messagePlaceholder: 'Tippe deine Nachricht...',
 		trustPlaceholder: 'Ich vertraue...',
 		newEmail: 'Deine neue E-Mail Adresse:',
-		email: 'E-Mail',
+		email: 'E-Mail eingeben',
 		firstName: 'Vorname',
 		password: 'Dein Passwort',
 		secret: 'Geheimnis',
