@@ -16,7 +16,7 @@
 	<p>{texts.pages.search.welcome}</p>
 	<!-- to set bg color assign class="bg-primary-500"-->
 
-	<Button class="me-2 mb-2 w-full min-button" href={resolve('/profile/items')}>
+	<Button class="me-2 mb-2 w-full min-button" href={resolve('/user/items')}>
 		{texts.buttons.offerSomething}
 		<ArrowUpOutline class="me-2 h-6 w-6" />
 	</Button>

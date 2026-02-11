@@ -7,7 +7,7 @@
 	class="fixed right-10 bottom-10 z-50 w-10 h-10 rounded-full text-sm shadow-lg focus:ring-4 focus:ring-gray-300 min-button p-0"
 >
 	<a
-		href={resolve('/howto')}
+		href={resolve('/misc/howto')}
 		class="block w-full h-full flex items-center justify-center leading-none"
 		>?</a
 	>

@@ -92,9 +92,9 @@
 						</span>
 						<span class="text-sm text-gray-600 dark:text-gray-400">
 							(<a
-								href={resolve('/updatemail')}
+								href={resolve('/user/profile/updatemail')}
 								class="font-medium primary-text hover:underline">ändern</a
-							>).
+							>)
 						</span>
 					</label>
 				</div>
