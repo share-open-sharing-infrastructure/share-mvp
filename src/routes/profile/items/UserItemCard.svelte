@@ -27,35 +27,36 @@
 	}
 </script>
 
-<div class="items-center border border-gray-200 rounded-lg shadow sm:flex">
-	<img class="m-5 w-40 h-40 rounded-lg" src={imgUrl} alt={item.name} />
+<div class="items-center border border-gray-200 rounded-lg shadow flex sm:flex-row overflow-hidden">
+	<img class="m-5 w-30 h-30 aspect-square rounded-lg" src={imgUrl} alt={item.name} />
 
-	<div class="p-5">
-		<h3 class="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-			{item.name}
-		</h3>
-		<span class="flex items-center gap-1 text-sm">
-			<MapPinOutline class="h-4 w-4" />
-			{item.place}
-		</span>
-		{#if item.trusteesOnly}
-			<div class="flex items-center">
-				<Badge rounded border color="green" class="my-2">
-					<span class="text-green-900 bg-green-100">{texts.ui.trustedOnly}</span
-					>
-				</Badge>
-			</div>
-		{/if}
-		<p class="mt-3 mb-4 font-light text-gray-500 dark:text-gray-400">
-			{item.description}
-		</p>
+	<div class="p-5 w-full min-w-0 h-full flex flex-col justify-between">
+		<div>
+			<h3 class="text-l font-bold tracking-tight text-gray-900 dark:text-white overflow-break-words">
+				{item.name}
+			</h3>
+			<!-- <span class="flex items-center gap-1 text-sm">
+				<MapPinOutline class="h-4 w-4" />
+				{item.place}
+			</span> -->
+			{#if item.trusteesOnly}
+				<div class="flex items-center truncate">
+					<Badge rounded border color="green" class="my-2">
+						<span class="text-green-900 bg-green-100">{texts.ui.trustedOnly}</span
+						>
+					</Badge>
+				</div>
+			{/if}
+		</div>
 
-		<EditButton
-			onclick={() => {
-				editingItemId = item.id;
-				showEditModal = true;
-			}}
-		/>
+		<div class="flex justify-end pt-4">
+			<EditButton
+				onclick={() => {
+					editingItemId = item.id;
+					showEditModal = true;
+				}}
+			/>
+		</div>
 	</div>
 </div>
 

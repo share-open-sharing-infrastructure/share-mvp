@@ -6,8 +6,9 @@
 
 <Button
 	class="
-        w-30
+        w-10
         h-10
+        cursor-pointer
         border
         bg-gray-800
         p-1 text-white 
@@ -17,5 +18,5 @@
         dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
 	{onclick}
 >
-	Bearbeiten <EditOutline class="me-2 h-4 w-4 ml-1" />
+	<EditOutline class="h-4 w-4" />
 </Button>

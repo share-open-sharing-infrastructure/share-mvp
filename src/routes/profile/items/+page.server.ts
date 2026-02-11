@@ -1,6 +1,5 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
-import { texts } from '$lib/texts';
 
 export async function load({ locals }) {
 	const user = await locals.pb
