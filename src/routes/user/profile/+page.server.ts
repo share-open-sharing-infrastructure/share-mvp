@@ -1,13 +1,8 @@
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { texts } from '$lib/texts';
 
-export async function load({ locals }) {
-	const user = await locals.pb
-		.collection('users')
-		.getOne(locals.user.id, { expand: 'items_via_owner' });
-
+export async function load() {
 	return {
-		user,
 		PB_URL: PUBLIC_PB_URL,
 	};
 }

@@ -54,7 +54,7 @@
 						type="text"
 						name="username"
 						id="username"
-						value={data.user.username}
+						value={data.currentUser.username}
 						class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 						required
 					/>
@@ -72,7 +72,7 @@
 						type="text"
 						name="city"
 						id="city"
-						value={data.user.city}
+						value={data.currentUser.city}
 						class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 						autocomplete="off"
 					/>
@@ -88,7 +88,7 @@
 						<span
 							class="rounded-lg text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
 						>
-							{data.user.email}
+							{data.currentUser.email}
 						</span>
 						<span class="text-sm text-gray-600 dark:text-gray-400">
 							(<a

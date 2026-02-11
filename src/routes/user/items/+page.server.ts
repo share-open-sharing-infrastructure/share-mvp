@@ -2,12 +2,12 @@ import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 
 export async function load({ locals }) {
-	const user = await locals.pb
+	const userExpanded = await locals.pb
 		.collection('users')
 		.getOne(locals.user.id, { expand: 'items_via_owner' });
 
 	return {
-		user,
+		user: userExpanded,
 		PB_URL: PUBLIC_PB_URL,
 	};
 }

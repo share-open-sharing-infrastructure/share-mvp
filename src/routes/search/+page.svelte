@@ -8,7 +8,7 @@
 
 	const { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { items, uniquePlaces } = data;
+	const { items } = data;
 
 	let selectedPlaces: string[] = $state([]);
 	let searchText = $state({ value: '' });
@@ -41,14 +41,14 @@
 </script>
 
 <Section>
-	<SearchBar {searchText} {isSearching} {selectedPlaces} {uniquePlaces} />
+	<SearchBar {searchText} {isSearching} />
 
 	<div class="mx-auto max-w-5xl space-y-4 overflow-x-auto p-4 md:space-y-6">
 		{#if isSearching}
 			<ResultsList
 				{filteredItemList}
 				PB_IMG_URL={data.PB_IMG_URL}
-				requesterId={data.userId}
+				requesterId={data.currentUser.userId}
 			/>
 		{:else}
 			<Welcome />
