@@ -10,109 +10,106 @@
 
 	let { data, form } = $props();
 
-	function formattedDate(): string {
-		const date = new Date(data.user.created);
-		return date.toLocaleDateString('de-DE', {
-			day: '2-digit',
-			month: 'long',
-			year: 'numeric',
-		});
-	}
+	// function formattedDate(): string {
+	// 	const date = new Date(data.user.created);
+	// 	return date.toLocaleDateString('de-DE', {
+	// 		day: '2-digit',
+	// 		month: 'long',
+	// 		year: 'numeric',
+	// 	});
+	// }
 </script>
 
-<section class="bg-white dark:bg-gray-900">
-	<div class="max-w-7xl mx-auto">
-		<div
-			class="grid grid-cols-1 px-4 pt-6 xl:grid-cols-2 xl:gap-4 dark:bg-gray-900"
-		>
-			<!-- HEADLINE -->
-			<div class="mb-4 col-span-full xl:mb-2">
-				<h1 class="text-xl font-semibold text-gray-900 sm:text-2xl">
-					{texts.ui.profileTitle}
-				</h1>
-			</div>
+<main class="bg-white dark:bg-gray-900 min-h-screen">
+	<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+		
+		<!-- Page Header -->
+		<h1 class="text-3xl font-semibold text-gray-900 dark:text-white mb-8">
+			{texts.ui.profileTitle}
+		</h1>
 
-			<!-- BODY -->
-			<div class="col-span-full">
-				<!-- PROFILE DATA -->
-				<div
-				class="p-4 mb-4 bg-white border border-gray-200 rounded-lg shadow-sm 2xl:col-span-2 dark:border-gray-700 sm:p-6 dark:bg-gray-800"
-				>
-					{#if form}
-						<CustomAlert type={form.success ? 'success' : 'error'} message={form.message} />
-					{/if}
-					<form method="POST" action="?/saveProfile" use:enhance>
-						<div class="grid grid-cols-6 gap-6">
-							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="username"
-									class="block mb-2 text-sm font-medium text-gray-900"
-									>{texts.ui.username}</label
-								>
-								<input
-									type="text"
-									name="username"
-									id="username"
-									class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-									value={data.user.username}
-								/>
-							</div>
-							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="location"
-									class="block mb-2 text-sm font-medium text-gray-900"
-									>{texts.ui.location}</label
-								>
-								<input
-									type="text"
-									name="city"
-									id="city"
-									class="shadow-sm bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5"
-									placeholder={data.user.city}
-									autocomplete="off"
-								/>
-							</div>
-							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="country"
-									class="block mb-2 text-sm font-medium text-gray-900"
-									>{texts.ui.registeredSince}</label
-								>
-								<div class="mt-2">
-									<span class="italic text-lg">{formattedDate()}</span>
-								</div>
-							</div>
-							<div class="col-span-6 sm:col-span-3">
-								<label
-									for="mail"
-									class="block mb-2 text-sm font-medium text-gray-900"
-									>{texts.ui.emailAddress}</label
-								>
-								<div class="mt-2">
-									<span class="italic text-lg">{data.user.email}</span>
-								</div>
-								<p
-									id="helper-text-explanation"
-									class="mt-2.5 text-sm text-body"
-								>
-									Deine Mailadresse kannst du <a
-										href={resolve('/updatemail')}
-										class="font-medium primary-text hover:underline">hier</a
-									> ändern.
-								</p>
-							</div>
-
-							<div class="col-span-6 sm:col-full">
-								<Button class="min-button" type="submit"
-									>{texts.buttons.save}</Button
-								>
-							</div>
-						</div>
-					</form>
+		<!-- Profile Form Section -->
+		<div class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8">
+			
+			{#if form}
+				<div class="mb-6">
+					<CustomAlert type={form.success ? 'success' : 'error'} message={form.message} />
 				</div>
+			{/if}
+			
+			<form 
+				method="POST" 
+				action="?/saveProfile"
+				class="space-y-6"
+			>
+				<!-- Editable Fields Section -->
+					<legend class="sr-only">Bearbeitbare Profilinformationen</legend>
+					
+					<!-- Username Field -->
+					<div>
+						<label 
+							for="username" 
+							class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
+						>
+							{texts.ui.username}
+						</label>
+						<input 
+							type="text" 
+							name="username" 
+							id="username" 
+							value={data.user.username}
+							class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" 
+							required
+						/>
+					</div>
 
-			</div>
+					<!-- Location Field -->
+					<div>
+						<label 
+							for="city" 
+							class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
+						>
+							{texts.ui.location}
+						</label>
+						<input 
+							type="text" 
+							name="city" 
+							id="city" 
+							value={data.user.city}
+							class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							autocomplete="off"
+						/>
+					</div>
+					<legend class="sr-only">Profilinformationen (schreibgeschützt)</legend>
+					<!-- Email Field -->
+					<div>
+						<label 
+							for="email" 
+							class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
+						>
+							{texts.ui.emailAddress}
+							<span class="rounded-lg text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
+								{data.user.email}
+							</span>
+							<span class="text-sm text-gray-600 dark:text-gray-400">
+								(<a 
+									href={resolve('/updatemail')} 
+									class="font-medium primary-text hover:underline"
+								>ändern</a>).
+							</span>
+						</label>
+					</div>	
+
+				<!-- Submit Button -->
+				<div class="pt-4 justify-end flex">
+					<Button 
+						class="min-button" 
+						type="submit"
+					>
+						{texts.buttons.save}
+					</Button>
+				</div>
+			</form>
 		</div>
 	</div>
-</section>
-
+</main>
