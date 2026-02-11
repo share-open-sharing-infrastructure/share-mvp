@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { Message } from '$lib/types/models.ts';
 	import type { RecordSubscription } from 'pocketbase';
+	import { texts } from '$lib/texts';
 
 	import PocketBase from 'pocketbase';
 	import { enhance } from '$app/forms';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { onMount } from 'svelte';
 
-	import { texts } from '$lib/texts';
 	import { Button, Input, Label, Toast } from 'flowbite-svelte';
 	import { UserCircleSolid } from 'flowbite-svelte-icons';
 	import MessageComponent from './MessageComponent.svelte';
