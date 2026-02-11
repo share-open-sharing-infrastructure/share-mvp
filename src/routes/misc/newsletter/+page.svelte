@@ -1,7 +1,7 @@
 <script>
-	import { MAIN_CONTACT_MAIL } from '$lib/names';
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { Register, Section } from 'flowbite-svelte-blocks';
+	import { texts } from '$lib/texts';
 </script>
 
 <div class="mx-auto max-w-screen-sm text-center">
@@ -66,8 +66,8 @@
 					class="text-blue-500 underline">keila.io</a
 				>. Wenn du dich abmelden willst, schicke uns einfach eine Mail an
 				<a
-					href="mailto:{MAIN_CONTACT_MAIL}?subject=Newsletter%20Abmeldung&body=Bitte%20nehmt%20mich%20aus%20dem%20Newsletter!"
-					class="text-blue-500 underline">{MAIN_CONTACT_MAIL}</a
+					href="mailto:{texts.names.mainContactMail}?subject=Newsletter%20Abmeldung&body=Bitte%20nehmt%20mich%20aus%20dem%20Newsletter!"
+					class="text-blue-500 underline">{texts.names.mainContactMail}</a
 				>.
 			</div>
 		</div>

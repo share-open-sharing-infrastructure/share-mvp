@@ -7,11 +7,11 @@ import { redirect } from '@sveltejs/kit';
 export { PUBLIC_PB_URL };
 
 const unprotectedPrefix = [
-	'/login',
-	'/register',
-	'/reset',
+	'/auth/login',
+	'/auth/register',
+	'/auth/reset',
 	'/search',
-	'/updatemail',
+	'/user/profile/updatemail',
 ];
 
 export const authentication: Handle = async ({ event, resolve }) => {
@@ -53,7 +53,7 @@ export const authorization: Handle = async ({ event, resolve }) => {
 	) {
 		const loggedIn = await event.locals.pb.authStore.isValid;
 		if (!loggedIn) {
-			redirect(307, '/login');
+			redirect(307, '/auth/login');
 		}
 	}
 	const result = await resolve(event);

@@ -3,9 +3,7 @@
 	import { Button, Label, Input, Popover } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import {
-		QuestionCircleSolid,
-	} from 'flowbite-svelte-icons';
+	import { QuestionCircleSolid } from 'flowbite-svelte-icons';
 	let { form } = $props();
 </script>
 
@@ -81,7 +79,7 @@
 >
 	<div class="space-y-2 p-3">
 		<h3 class="font-semibold text-gray-900 dark:text-white">Beta-Zugang</h3>
-		Wenn du einen Beta-Zugang möchtest, schreibe eine Mail an <a
+		Wenn du einen Beta-Zugang möchtest, schreibe eine Mail an<a
 			href="mailto:allerleih@posteo.de?subject=AllerLeih Beta-Zugang&body=Bitte schickt mir einen Beta-Code für AllerLeih"
 			class="primary-text hover:underline dark:text-primary-300"
 		>

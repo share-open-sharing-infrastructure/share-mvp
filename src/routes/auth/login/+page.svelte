@@ -45,7 +45,6 @@
 					/>
 				</Label>
 
-
 				<Button
 					type="submit"
 					class="
@@ -60,7 +59,7 @@
 				>
 				<p class="mt-2 text-sm font-light text-gray-500 dark:text-gray-400">
 					<a
-						href={resolve('/reset')}
+						href={resolve('/auth/reset')}
 						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
 						>{texts.auth.forgotPassword}</a
 					>
@@ -69,7 +68,7 @@
 				<p class="mt-4 text-sm font-light text-gray-500 dark:text-gray-400">
 					Du hast noch keinen Account?
 					<a
-						href={resolve('/register')}
+						href={resolve('/auth/register')}
 						class="font-medium primary-text hover:underline dark:text-primary-300"
 						>{texts.auth.registerLink}</a
 					>

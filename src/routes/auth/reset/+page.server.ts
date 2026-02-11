@@ -43,6 +43,6 @@ export const actions = {
 				maxAge: 60, // seconds
 			}
 		);
-		redirect(303, '/login');
+		redirect(303, '/auth/login');
 	},
 };

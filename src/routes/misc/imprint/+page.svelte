@@ -1,14 +1,13 @@
 <script>
-	import { MAIN_CONTACT_MAIL } from '$lib/names';
 	import { texts } from '$lib/texts';
 </script>
 
 <h1 class="mb-4 text-2xl font-bold">{texts.pages.imprint.title}</h1>
 <ul class="mx-auto max-w-md list-inside space-y-2">
 	<li>Matteo Ramin</li>
-	<li>Untere Augartenstraße 37/22</li>
-	<li>1020 Wien, Österreich</li>
-	<li>{MAIN_CONTACT_MAIL}</li>
+	<li>Lüner Weg 17</li>
+	<li>21337 Lüneburg, Deutschland</li>
+	<li>{texts.names.mainContactMail}</li>
 	<!-- Weitere Informationen unten nur falls zutreffend in Zukunft:  https://www.anwalt.de/rechtstipps/impressumspflicht-in-deutschland-was-muss-ins-impressum-und-welche-konsequenzen-drohen-241288.html -->
 	<li hidden>
 		Zuständige Aufsichtsbehörde: Falls der Betreiber einer behördlichen Aufsicht

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { APP_NAME } from '$lib/names';
 	import { texts } from '$lib/texts';
 	import {
 		Section,
@@ -37,7 +36,7 @@
 	<h1 class="mb-4 text-2xl font-bold">{texts.pages.about.title}</h1>
 	<div class="font-light text-gray-500 sm:text-xl lg:mb-16 dark:text-gray-400">
 		<p>
-			{APP_NAME} ist eine gemeinnützige open-source Verleih-Plattform, die es Menschen
+			{texts.names.app} ist eine gemeinnützige open-source Verleih-Plattform, die es Menschen
 			ermöglicht, Gegenstände in ihrer Gemeinschaft zu teilen und zu verleihen.
 		</p>
 		<br />
@@ -49,7 +48,7 @@
 		</p>
 		<br />
 		<p>
-			{APP_NAME} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode findest
+			{texts.names.app} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode findest
 			du auf
 			<a
 				href="https://github.com/share-open-sharing-infrastructure/share-mvp"

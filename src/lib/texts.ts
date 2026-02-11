@@ -1,4 +1,9 @@
 export const texts = {
+	names: {
+		app: 'AllerLeih',
+		mainContactMail: 'allerleih@posteo.de',
+	},
+	
 	// Authentication
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',

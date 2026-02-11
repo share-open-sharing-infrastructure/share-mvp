@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { ActionData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
-	export let form: ActionData;
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 
-	let newEmail = '';
+	let { form } = $props();
+
+	let newEmail = $state('');
 </script>
 
 <Section name="reset">
@@ -20,7 +20,7 @@
 				<CustomAlert
 					type={form.success ? 'success' : 'error'}
 					message={form.message}
-					duration={10000}
+					duration={5000}
 				/>
 			{/if}
 

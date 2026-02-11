@@ -18,6 +18,7 @@ export const actions = {
 				message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${email} gesendet. Bitte überprüfe deinen Posteingang.`,
 			};
 		} catch (error) {
+			console.log(error);
 			return {
 				error: true,
 				message:
