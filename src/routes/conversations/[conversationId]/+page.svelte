@@ -13,6 +13,7 @@
 	import type { Message } from '$lib/types/models';
 	import ConversationHeader from './ConversationHeader.svelte';
 	import MessageForm from './MessageForm.svelte';
+	import MessengerButtons from './MessengerButtons.svelte';
 
 	// Props and state variables
 	let { data } = $props();
@@ -95,6 +96,9 @@
 	conversation={data.conversation}
 	PB_URL={PUBLIC_PB_URL}
 />
+
+<!-- Messenger Contact Buttons -->
+<MessengerButtons {chatPartner} currentUser={data.currentUser} />
 
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
