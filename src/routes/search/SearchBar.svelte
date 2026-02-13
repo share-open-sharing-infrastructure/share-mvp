@@ -27,7 +27,7 @@
 				size="md"
 				class="m-2 flex flex-col"
 				classes={{
-					input: 'focus:ring-primary-700 focus:border-primary-700 search-bar',
+					input: 'focus:ring-primary focus:border-primary search-bar pulse-shadow',
 				}}
 				placeholder={texts.forms.searchPlaceholder}
 				bind:value={searchText.value}

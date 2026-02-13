@@ -7,8 +7,11 @@
 @theme {
 	--color-primary: #4da2ff;
 	--color-primary-50: #deeeff;
+	--color-primary-200: #6ab2ff;
 	--color-secondary: #5ec900;
 	--color-accent: #fb4a03;
+	--color-accent-50: #fb490380;
+	--color-accent-200: #ff6122;
 
 	--color-danger: #d9003d;
 	--color-light: #64748b;
@@ -18,9 +21,12 @@
 
 .theme-color-storage {
 	--color-primary: #4da2ff;
-	--color-primary: #deeeff;
+	--color-primary-50: #deeeff;
+	--color-primary-200: #6ab2ff;
 	--color-secondary: #5ec900;
 	--color-accent: #fb4a03;
+	--color-accent-50: #fb490380;
+	--color-accent-200: #ff6122;
 
 	--color-primary: #ffd735;
 	--color-secondary: #c0ff32;
@@ -43,6 +49,7 @@
 	border-color: black;
 	border: 1px solid;
 	border-radius: 20px;
+	cursor: pointer;
 }
 
 .min-button:hover {
@@ -54,8 +61,21 @@
 
 .search-bar {
 	border-radius: 20px;
-	color: black;
+	color: var(--color-primary);
 	border: 1px solid;
+}
+
+@keyframes pulse-shadow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(252, 252, 252, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 10px var(--color-primary-50);
+  }
+}
+
+.pulse-shadow {
+  animation: pulse-shadow 5s infinite;
 }
 
 .timo-theme {

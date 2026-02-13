@@ -64,7 +64,7 @@
 						</button>
 					</div>
 				</Label>
-				<Button type="submit" formaction="?/register" class="min-button"
+				<Button type="submit" formaction="?/register" class="min-button bg-primary cursor-pointer"
 					>{texts.auth.register}</Button
 				>
 			</form>

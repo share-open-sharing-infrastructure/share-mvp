@@ -26,19 +26,19 @@
 			class="mb-6 flex flex-wrap items-center justify-center text-light"
 		>
 			<FooterLink
-				classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/about')}>{texts.nav.about}</FooterLink
 			>
 			<FooterLink
-				classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/imprint')}>{texts.nav.imprint}</FooterLink
 			>
 			<FooterLink
-				classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/contact')}>{texts.nav.contact}</FooterLink
 			>
 			<FooterLink
-				classes={{ link: 'mr-4 hover:underline md:mr-6' }}
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/newsletter')}>{texts.nav.newsletter}</FooterLink
 			>
 		</FooterLinkGroup>

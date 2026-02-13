@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { Badge, Button, Card, Input } from 'flowbite-svelte';
-	import { MapPinOutline, MessagesOutline } from 'flowbite-svelte-icons';
+	import { MapPinOutline, MessagesOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 	import { Popover } from 'flowbite-svelte';
 	import {
 		QuestionCircleSolid,
@@ -17,9 +17,12 @@
 <div class="space-y-4">
 	<Card img={imgUrl} horizontal size="xl">
 		<div class="m-6 grow">
-			<div class="flex justify-between items-center font-thin mb-3">
+			<div class="flex justify-between items-center mb-3">
 				<div class="flex">
-					von {item.expand?.owner?.username ?? 'Unknown'}
+					<div class="text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-2 py-1">
+						<UserCircleOutline class="h-6 w-6 inline mr-1" />
+						<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
+					</div>
 					{#if item.trusteesOnly}
 						<Badge rounded border color="green" class="ml-2">
 							<span class="text-green-900 bg-green-100">vertraut dir</span>

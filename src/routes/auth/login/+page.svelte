@@ -48,11 +48,9 @@
 				<Button
 					type="submit"
 					class="
-						me-2 mb-2 w-full rounded-lg 
-						min-button px-5 py-2.5 text-sm font-medium text-white 
-						hover:bg-primary-500 focus:ring-4 focus:ring-primary-300 focus:outline-none 
-						dark:border-primary-700 dark:bg-primary-700 
-						dark:hover:bg-primary-800 dark:focus:ring-primary-700
+						me-2 mb-2 w-full
+						min-button 
+						bg-primary
 						cursor-pointer
 
 						">{texts.auth.loginButton}</Button

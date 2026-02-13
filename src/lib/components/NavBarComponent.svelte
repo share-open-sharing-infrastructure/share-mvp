@@ -14,9 +14,9 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
-	import { ChevronDownOutline } from 'flowbite-svelte-icons';
+	import { ChevronDownOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 
-	let { loggedIn } = $props();
+	let { loggedIn, currentUser } = $props();
 
 	let activeUrl = $derived(page.url.pathname);
 
@@ -59,26 +59,36 @@
 					class="text-primary-800 inline h-6 w-6 dark:text-white"
 				/></NavLi
 			>
-			<Dropdown simple class="w-44">
-				<DropdownItem href={resolve('/social')}>{texts.nav.social}</DropdownItem
+			<Dropdown class="w-44 ">
+				<DropdownItem href={resolve('/social')} class="hover:text-accent hover:bg-transparent"
+					>{texts.nav.social}</DropdownItem
 				>
 				<!-- <DropdownItem href={resolve('/groups')}>Gruppen</DropdownItem> -->
 				<!-- <DropdownItem href={resolve('/users')}>Personen</DropdownItem> -->
 			</Dropdown>
-			<NavLi class="cursor-pointer"
-				>Profil<ChevronDownOutline
+			<NavLi class="cursor-pointer">
+				<UserCircleOutline class="h-6 w-6 inline mr-1" />
+				{currentUser?.username}
+				<ChevronDownOutline
 					class="text-primary-800 inline h-6 w-6 dark:text-white"
-				/></NavLi
-			>
+				/>
+			</NavLi>
 			<Dropdown simple class="w-44">
-				<DropdownItem href={resolve('/user/items')}
+				<DropdownItem
+					href={resolve('/user/items')}
+					class="hover:text-accent hover:bg-transparent"
 					>{texts.nav.myItems}</DropdownItem
 				>
-				<DropdownItem href={resolve('/user/profile')}
+				<DropdownItem
+					href={resolve('/user/profile')}
+					class="hover:text-accent hover:bg-transparent"
 					>{texts.nav.myProfile}</DropdownItem
 				>
 				<DropdownDivider />
-				<DropdownItem href={resolve('/auth/logout')} onclick={logout}
+				<DropdownItem
+					href={resolve('/auth/logout')}
+					onclick={logout}
+					class="hover:text-danger hover:bg-transparent"
 					>{texts.nav.logout}</DropdownItem
 				>
 			</Dropdown>

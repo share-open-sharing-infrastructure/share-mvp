@@ -10,7 +10,7 @@
     mx-auto
     mt-2 flex max-w-md flex-col
     items-center justify-center gap-4
-    text-center text-lg text-gray-600 dark:text-white
+    text-center text-lg text-light dark:text-white
     "
 >
 	<p>{texts.pages.search.welcome}</p>
