@@ -6,6 +6,7 @@
 	import { QuestionCircleSolid } from 'flowbite-svelte-icons';
 
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import { enhance } from '$app/forms';
 
 	let { data, form } = $props();
 
@@ -39,7 +40,7 @@
 				</div>
 			{/if}
 
-			<form method="POST" action="?/saveProfile" class="space-y-6">
+			<form method="POST" action="?/saveProfile" class="space-y-6" use:enhance>
 				<!-- Editable Fields Section -->
 				<legend class="sr-only">Bearbeitbare Profilinformationen</legend>
 
