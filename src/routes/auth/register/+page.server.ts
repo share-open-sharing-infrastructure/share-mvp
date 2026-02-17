@@ -20,7 +20,7 @@ export const actions = {
 
 		if (secret?.toString() !== LOGIN_SECRET) {
 			const error = 'Das eingegebene Geheimnis ist ungültig.';
-			return fail(500, { fail: true, message: error });
+			return fail(400, { fail: true, message: error });
 		}
 
 		if (!email || !password) {
@@ -32,7 +32,7 @@ export const actions = {
 
 		if (password.toString().length < 8) {
 			const error = 'Das Passwort muss mindestens 8 Zeichen lang sein.';
-			return fail(500, { fail: true, message: error });
+			return fail(400, { fail: true, message: error });
 		}
 
 		data.set('passwordConfirm', password?.toString()); // TODO: Put into form eventually
