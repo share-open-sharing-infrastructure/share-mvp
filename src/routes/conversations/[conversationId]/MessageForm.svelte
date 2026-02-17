@@ -33,7 +33,7 @@
 			class="w-full search-bar"
 			required
 			autocomplete="off"
-			autofocus
+			autofocus={true}
 			bind:value={messageText}
 		/>
 	</Label>

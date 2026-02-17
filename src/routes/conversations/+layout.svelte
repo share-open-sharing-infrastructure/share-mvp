@@ -17,7 +17,7 @@
 	<!-- Main chat window container including chat list and messages -->
 	<div
 		id="chat-container"
-		class="flex h-150 w-full max-w-3xl justify-center gap-2"
+		class="flex h-130 w-full max-w-3xl justify-center gap-2"
 	>
 		<ConversationList
 			conversations={data.conversations}
