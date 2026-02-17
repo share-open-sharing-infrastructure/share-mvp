@@ -8,6 +8,7 @@
 		Toggle,
 		Img,
 		Popover,
+		Textarea,
 	} from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
@@ -136,9 +137,9 @@
 
 		<Label class="space-y-2">
 			<span>{texts.forms.description}</span>
-			<Input
-				type="text"
+			<Textarea
 				name="itemDescription"
+				class="w-full"
 				placeholder={texts.forms.itemDescription}
 				value={editingItem?.description ? editingItem.description : ''}
 				autocomplete="off"
@@ -146,16 +147,6 @@
 			/>
 		</Label>
 
-		<Label class="space-y-2">
-			<span>Ort:</span>
-			<Input
-				type="text"
-				name="itemPlace"
-				placeholder={texts.forms.itemPlace}
-				value={editingItem?.place ? editingItem.place : ''}
-				required
-			/>
-		</Label>
 		<Label class="flex">
 			<Toggle
 				name="trusteesOnly"

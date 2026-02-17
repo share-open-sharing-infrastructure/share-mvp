@@ -7,6 +7,7 @@
 		TeamBody,
 		TeamItem,
 	} from 'flowbite-svelte-blocks';
+	import placeholder_img from '$lib/images/placeholder_img.png';
 
 	let members = [
 		{
@@ -29,6 +30,17 @@
 			jobTitle: 'Initiator & Technik-Guru',
 			description: 'Ohne den läuft hier kein Server.',
 		},
+		{
+			id: 3,
+			linkedIn: 'mailto:allerleih@posteo.de?subject=Interesse%20an%20Mitmachen%20Bei%20AllerLeih',
+			gitHub: '',
+			src: placeholder_img,
+			alt: 'Du?',
+			name: 'Du',
+			jobTitle: 'Du?',
+			description: 'Falls du mitmachen willst, meld\' dich!',
+		},
+		
 	];
 </script>
 
@@ -36,30 +48,21 @@
 	<h1 class="mb-4 text-2xl font-bold">{texts.pages.about.title}</h1>
 	<div class="font-light text-gray-500 sm:text-xl lg:mb-16 dark:text-gray-400">
 		<p>
-			{texts.names.app} ist eine gemeinnützige open-source Verleih-Plattform, die
+			{texts.names.app} ist eine gemeinnützige Plattform, die
 			es Menschen ermöglicht, Gegenstände in ihrer Gemeinschaft zu teilen und zu verleihen.
 		</p>
 		<br />
 		<p>
-			Unser Ziele sind es, den Zugang zu Ressourcen zu erleichtern,
+			Unsere Ziele sind es, den Zugang zu Dingen zu erleichtern,
 			Umweltbelastungen zu reduzieren und lokale Gemeinschaften zu stärken. Im
-			Gegensatz zu anderen Plattformen steht bei uns diese Wirkung im
+			Gegensatz zu kommerziellen Plattformen steht bei uns die soziale Wirkung im
 			Vordergrund.
 		</p>
 		<br />
-		<p>
-			{texts.names.app} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode
-			findest du auf
-			<a
-				href="https://github.com/share-open-sharing-infrastructure/share-mvp"
-				class="underline"
-				target="_blank">GitHub</a
-			>. Wir freuen uns über Beiträge, Feedback und Unterstützung!
-		</p>
 	</div>
-	<TeamWrapper class="p-0 lg:p-0">
-		<TeamHeader h2Class="text-2xl mt-8">
-			{#snippet label()}Das Team{/snippet}
+	<TeamWrapper class="p-0">
+		<TeamHeader h2Class="text-2xl">
+			{#snippet label()}Team{/snippet}
 			<p class="font-light text-xl font-bold"></p>
 		</TeamHeader>
 		<TeamBody>
@@ -82,4 +85,16 @@
 			{/each}
 		</TeamBody>
 	</TeamWrapper>
+	<h1 class="mb-4 text-2xl font-bold">Open-Source</h1>
+	<div class="font-light text-gray-500 sm:text-xl lg:mb-16 dark:text-gray-400">
+		<p>
+			{texts.names.app} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode
+			findest du auf
+			<a
+				href="https://github.com/share-open-sharing-infrastructure/share-mvp"
+				class="underline"
+				target="_blank">GitHub</a
+			>. Wir freuen uns über Beiträge, Feedback und Unterstützung!
+		</p>
+	</div>
 </Section>
