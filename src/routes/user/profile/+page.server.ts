@@ -34,6 +34,57 @@ export const actions = {
 			updateData['city'] = city.trim();
 		}
 
+		// Handle Telegram username
+		const telegramUsername = formData?.get('telegramUsername')?.toString();
+		if (telegramUsername) {
+			const trimmedTelegram = telegramUsername.trim();
+			if (trimmedTelegram !== '') {
+				// Strip @ prefix if provided
+				const cleanedTelegram = trimmedTelegram.startsWith('@')
+					? trimmedTelegram.slice(1)
+					: trimmedTelegram;
+
+				// Validate Telegram username (alphanumeric and underscore only, 5-32 chars)
+				if (!/^[a-zA-Z0-9_]{5,32}$/.test(cleanedTelegram)) {
+					return {
+						error: true,
+						message: texts.errors.invalidTelegramUsername,
+					};
+				}
+				updateData['telegramUsername'] = cleanedTelegram;
+			} else {
+				updateData['telegramUsername'] = null;
+			}
+		}
+
+		// Handle Telegram visibility toggle
+		const telegramVisibleToTrustedOnly =
+			formData?.get('telegramVisibleToTrustedOnly') === 'on';
+		updateData['telegramVisibleToTrustedOnly'] = telegramVisibleToTrustedOnly;
+
+		// Handle Signal link
+		const signalLink = formData?.get('signalLink')?.toString();
+		if (signalLink) {
+			const trimmedSignal = signalLink.trim();
+			if (trimmedSignal !== '') {
+				// Validate Signal link format (should contain signal.me or similar)
+				if (!trimmedSignal.includes('signal.me')) {
+					return {
+						error: true,
+						message: texts.errors.invalidSignalLink,
+					};
+				}
+				updateData['signalLink'] = trimmedSignal;
+			} else {
+				updateData['signalLink'] = null;
+			}
+		}
+
+		// Handle Signal visibility toggle
+		const signalVisibleToTrustedOnly =
+			formData?.get('signalVisibleToTrustedOnly') === 'on';
+		updateData['signalVisibleToTrustedOnly'] = signalVisibleToTrustedOnly;
+
 		try {
 			if (Object.keys(updateData).length > 0) {
 				await locals.pb.collection('users').update(locals.user.id, updateData);
