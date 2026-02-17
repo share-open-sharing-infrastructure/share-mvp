@@ -19,6 +19,8 @@
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import type { ActionData } from './$types';
 
 	interface Props {
 		isVisible: boolean;
@@ -27,6 +29,7 @@
 		imgUrl?: string;
 		previewUrl?: string;
 		lastUrl?: string;
+		form?: ActionData;
 	}
 
 	let {
@@ -36,6 +39,7 @@
 		imgUrl,
 		previewUrl,
 		lastUrl,
+		form
 	}: Props = $props();
 
 	function handleFileChange(event: Event) {
@@ -64,6 +68,7 @@
 	$effect(() => {
 		if (!isVisible) {
 			previewUrl = undefined;
+			form = null;
 			if (lastUrl) {
 				URL.revokeObjectURL(lastUrl);
 				lastUrl = undefined;
@@ -73,6 +78,11 @@
 </script>
 
 <Modal bind:open={isVisible} size="xs">
+	{#if form?.fail}
+		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
+			<CustomAlert type="error" message={form?.message} />
+		</div>
+	{/if}
 	<form
 		class="items-right flex flex-col space-y-6"
 		action="?/{type === 'edit' ? 'update' : 'create'}"

@@ -17,12 +17,6 @@
 
 <section class="bg-white dark:bg-gray-900 min-h-screen">
 	<div class="max-w-7xl mx-auto px-4 pt-6">
-		{#if form?.fail}
-			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-				<CustomAlert type="error" message={form?.message} />
-			</div>
-		{/if}
-
 		<h1
 			class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mt-20 mb-6"
 		>
@@ -85,4 +79,4 @@
 </section>
 
 <!-- Add Modal -->
-<ItemModal bind:isVisible={showAddModal} type="add" />
+<ItemModal bind:isVisible={showAddModal} type="add" form={form} />
