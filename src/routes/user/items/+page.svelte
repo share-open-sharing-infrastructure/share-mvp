@@ -4,7 +4,7 @@
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import UserItemCard from './UserItemCard.svelte';
 	import ItemModal from './ItemModal.svelte';
-	import AddButton from './AddButton.svelte';
+	import { Button } from 'flowbite-svelte';
 
 	let { data, form } = $props();
 
@@ -17,18 +17,12 @@
 
 <section class="bg-white dark:bg-gray-900 min-h-screen">
 	<div class="max-w-7xl mx-auto px-4 pt-6">
-		{#if form?.fail}
-			<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-				<CustomAlert type="error" message={form?.message} />
-			</div>
-		{/if}
-
 		<h1
 			class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mt-20 mb-6"
 		>
 			Du verleihst
 			{#if data?.user?.expand?.items_via_owner?.length}
-				<span class="primary-text"
+				<span class="text-accent"
 					>{data.user.expand.items_via_owner.length}</span
 				> Ding(e)...
 			{:else}
@@ -37,7 +31,22 @@
 		</h1>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+			<Button
+				onclick={() => {
+					showAddModal = true;
+				}}
+				class="min-button bg-primary-50">Ding hinzufügen...</Button
+			>
 			{#if data?.user?.expand?.items_via_owner?.length}
+				{#each data.user.expand.items_via_owner as item (item.id)}
+					<UserItemCard
+						{item}
+						{data}
+						imgUrl={getItemImageUrl(item, data.PB_URL)}
+					/>
+				{/each}
+			{/if}
+			<!-- {#if data?.user?.expand?.items_via_owner?.length}
 				{#each data.user.expand.items_via_owner as item (item.id)}
 					<UserItemCard
 						{item}
@@ -64,10 +73,10 @@
 						floating={false}
 					/>
 				</div>
-			{/if}
+			{/if} -->
 		</div>
 	</div>
 </section>
 
 <!-- Add Modal -->
-<ItemModal bind:isVisible={showAddModal} type="add" />
+<ItemModal bind:isVisible={showAddModal} type="add" form={form} />

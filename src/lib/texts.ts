@@ -3,7 +3,7 @@ export const texts = {
 		app: 'AllerLeih',
 		mainContactMail: 'allerleih@posteo.de',
 	},
-	
+
 	// Authentication
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',
@@ -43,6 +43,8 @@ export const texts = {
 		loginFailed: 'Login fehlgeschlagen.',
 		usernameNoSpaces: 'Nutzername darf keine Leerzeichen enthalten.',
 		passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
+		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 	},
 
 	// Success messages
@@ -52,6 +54,28 @@ export const texts = {
 		passwordResetSent:
 			'If this email exists, a password reset email has been sent!',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
+	},
+
+	// Messenger contact
+	messenger: {
+		telegram: 'Telegram',
+		signal: 'Signal',
+		introText:
+			'Du kannst deine Kontaktdaten für Signal und Telegram hinzufügen, um anderen Nutzern:innen die Möglichkeit zu geben, dich über diese Dienste zu kontaktieren, ohne deine Telefonnummer zu teilen.',
+		telegramUsername: 'Telegram Nutzername',
+		telegramUsernamePlaceholder: 'z.B. @meinname',
+		signalLink: 'Signal-Link',
+		signalLinkPlaceholder: 'z.B. signal.me/#p/...',
+		telegramTooltipTitle: 'Telegram Nutzername hinzufügen',
+		telegramTooltipText:
+			'Dein Telegram-Nutzername findest du in der Telegram App unter Einstellungen > Nutzername. Kopiere nur den Namen ohne das @ Zeichen.',
+		signalTooltipTitle: 'Signal-Link hinzufügen',
+		signalTooltipText:
+			'In der Signal App kannst du einen teilbaren Link unter Einstellungen > Profil > Namen/Profillink erstellen. Kopiere den kompletten Link in dieses Feld.',
+		visibleToTrustedOnly: 'Nur Vertrauten zeigen',
+		contactViaTelegram: 'Nachricht via Telegram',
+		contactViaSignal: 'Nachricht via Signal',
+		onlyForTrusted: 'Nur für Vertraute sichtbar',
 	},
 
 	// Form labels and placeholders
@@ -65,7 +89,7 @@ export const texts = {
 		messagePlaceholder: 'Tippe deine Nachricht...',
 		trustPlaceholder: 'Ich vertraue...',
 		newEmail: 'Deine neue E-Mail Adresse:',
-		email: 'E-Mail',
+		email: 'E-Mail eingeben',
 		firstName: 'Vorname',
 		password: 'Dein Passwort',
 		secret: 'Geheimnis',
@@ -111,7 +135,7 @@ export const texts = {
 		profileTitle: 'Dein Profil',
 		location: 'Standort/Postleitzahl:',
 		username: 'Nutzername:',
-		contact: 'Kontaktieren',
+		contact: 'Kontaktdaten',
 		trustFunction: 'Vertrauensfunktion',
 		trustDescription:
 			'Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.',

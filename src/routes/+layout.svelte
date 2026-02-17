@@ -11,7 +11,7 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-	<NavBarComponent loggedIn={!!data.currentUser} />
+	<NavBarComponent loggedIn={!!data.currentUser} currentUser={data.currentUser} />
 
 	<main class="flex-1">
 		{@render children()}
@@ -24,6 +24,7 @@
 		}}
 		class="
 				min-button
+				bg-accent-200
 				fixed bottom-10 left-10 z-50
 				cursor-pointer
 			"

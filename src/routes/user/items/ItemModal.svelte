@@ -19,6 +19,8 @@
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import type { ActionData } from './$types';
 
 	interface Props {
 		isVisible: boolean;
@@ -27,6 +29,7 @@
 		imgUrl?: string;
 		previewUrl?: string;
 		lastUrl?: string;
+		form?: ActionData;
 	}
 
 	let {
@@ -36,6 +39,7 @@
 		imgUrl,
 		previewUrl,
 		lastUrl,
+		form
 	}: Props = $props();
 
 	function handleFileChange(event: Event) {
@@ -64,6 +68,7 @@
 	$effect(() => {
 		if (!isVisible) {
 			previewUrl = undefined;
+			form = null;
 			if (lastUrl) {
 				URL.revokeObjectURL(lastUrl);
 				lastUrl = undefined;
@@ -73,6 +78,11 @@
 </script>
 
 <Modal bind:open={isVisible} size="xs">
+	{#if form?.fail}
+		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
+			<CustomAlert type="error" message={form?.message} />
+		</div>
+	{/if}
 	<form
 		class="items-right flex flex-col space-y-6"
 		action="?/{type === 'edit' ? 'update' : 'create'}"
@@ -104,7 +114,7 @@
 				type="file"
 				id="with_helper"
 				name="itemImage"
-				class="mb-2 min-button"
+				class="mb-2 min-button bg-primary"
 				accept="image/*"
 				onchange={handleFileChange}
 			/>
@@ -163,7 +173,7 @@
 		</Label>
 
 		<!-- SUBMIT BUTTON -->
-		<Button class="min-button" type="submit">
+		<Button class="min-button bg-primary" type="submit">
 			{type === 'edit' ? texts.buttons.save : texts.buttons.add}
 		</Button>
 	</form>
@@ -184,7 +194,9 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button class="min-button" type="submit">{texts.buttons.delete}</Button>
+			<Button class="min-button bg-danger" type="submit"
+				>{texts.buttons.delete}</Button
+			>
 		</form>
 	{/if}
 	<Popover
@@ -200,10 +212,10 @@
 			Kontakte sichtbar.
 			<a
 				href={resolve('/social')}
-				class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
+				class="text-accent hover:underline flex items-center font-medium"
 			>
 				Vertraute hinzufügen<ChevronRightOutline
-					class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4"
+					class="text-accent dark:text-primary-500 ms-1.5 h-4 w-4"
 				/>
 			</a>
 		</div>

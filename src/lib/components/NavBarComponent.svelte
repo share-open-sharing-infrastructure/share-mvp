@@ -14,15 +14,11 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
-	import { ChevronDownOutline } from 'flowbite-svelte-icons';
+	import { ChevronDownOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 
-	let { loggedIn } = $props();
+	let { loggedIn, currentUser } = $props();
 
 	let activeUrl = $derived(page.url.pathname);
-	let activeClass =
-		'text-white bg-[#ffd832] md:bg-transparent md:text-[#ffd832] md:hover:text-[#ffd832]';
-	let nonActiveClass =
-		'text-gray-700 hover:bg-transparent md:hover:bg-transparent md:border-0 md:hover:text-[#ffd832]';
 
 	async function logout(): Promise<void> {
 		await fetch('/auth/logout', {
@@ -38,14 +34,18 @@
 <Navbar>
 	<NavBrand href={resolve('/')}>
 		<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
-		<span class="self-center text-xl font-semibold whitespace-nowrap logo"
+		<span
+			class="text-accent self-center text-xl font-semibold whitespace-nowrap logo"
 			>{texts.names.app}</span
 		>
 	</NavBrand>
 	<NavHamburger />
 	<NavUl
 		{activeUrl}
-		classes={{ active: activeClass, nonActive: nonActiveClass }}
+		classes={{
+			active: 'text-accent color-accent bg-transparent',
+			nonActive: 'text-black hover:text-accent bg-transparent',
+		}}
 	>
 		<NavLi href={resolve('/search')}>{texts.nav.search}</NavLi>
 		{#if !loggedIn}
@@ -59,26 +59,36 @@
 					class="text-primary-800 inline h-6 w-6 dark:text-white"
 				/></NavLi
 			>
-			<Dropdown simple class="w-44">
-				<DropdownItem href={resolve('/social')}>{texts.nav.social}</DropdownItem
+			<Dropdown class="w-44 ">
+				<DropdownItem href={resolve('/social')} class="hover:text-accent hover:bg-transparent"
+					>{texts.nav.social}</DropdownItem
 				>
 				<!-- <DropdownItem href={resolve('/groups')}>Gruppen</DropdownItem> -->
 				<!-- <DropdownItem href={resolve('/users')}>Personen</DropdownItem> -->
 			</Dropdown>
-			<NavLi class="cursor-pointer"
-				>Profil<ChevronDownOutline
+			<NavLi class="cursor-pointer">
+				<UserCircleOutline class="h-6 w-6 inline mr-1" />
+				{currentUser?.username}
+				<ChevronDownOutline
 					class="text-primary-800 inline h-6 w-6 dark:text-white"
-				/></NavLi
-			>
+				/>
+			</NavLi>
 			<Dropdown simple class="w-44">
-				<DropdownItem href={resolve('/user/items')}
+				<DropdownItem
+					href={resolve('/user/items')}
+					class="hover:text-accent hover:bg-transparent"
 					>{texts.nav.myItems}</DropdownItem
 				>
-				<DropdownItem href={resolve('/user/profile')}
+				<DropdownItem
+					href={resolve('/user/profile')}
+					class="hover:text-accent hover:bg-transparent"
 					>{texts.nav.myProfile}</DropdownItem
 				>
 				<DropdownDivider />
-				<DropdownItem href={resolve('/auth/logout')} onclick={logout}
+				<DropdownItem
+					href={resolve('/auth/logout')}
+					onclick={logout}
+					class="hover:text-danger hover:bg-transparent"
 					>{texts.nav.logout}</DropdownItem
 				>
 			</Dropdown>

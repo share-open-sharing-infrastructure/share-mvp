@@ -33,11 +33,11 @@
 			class="w-full search-bar"
 			required
 			autocomplete="off"
-			autofocus
+			autofocus={true}
 			bind:value={messageText}
 		/>
 	</Label>
-	<Button class="min-button" type="submit" disabled={isSubmitting}
+	<Button class="min-button bg-primary" type="submit" disabled={isSubmitting}
 		><PaperPlaneSolid class="shrink-0 h-full" /></Button
 	>
 </form>

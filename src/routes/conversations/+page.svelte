@@ -11,7 +11,8 @@
 	<br />
 	<p>
 		{texts.ui.noRequestsYet}
-		<a href={resolve('/search')} class="text-blue-500 hover:underline">Suche</a
+		<a href={resolve('/search')} class="text-primary-700 hover:underline"
+			>Suche</a
 		>, um Gegenstände in deiner Umgebung zu finden und eine neue Unterhaltung zu
 		starten.
 	</p>

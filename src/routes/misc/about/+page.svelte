@@ -36,8 +36,8 @@
 	<h1 class="mb-4 text-2xl font-bold">{texts.pages.about.title}</h1>
 	<div class="font-light text-gray-500 sm:text-xl lg:mb-16 dark:text-gray-400">
 		<p>
-			{texts.names.app} ist eine gemeinnützige open-source Verleih-Plattform, die es Menschen
-			ermöglicht, Gegenstände in ihrer Gemeinschaft zu teilen und zu verleihen.
+			{texts.names.app} ist eine gemeinnützige open-source Verleih-Plattform, die
+			es Menschen ermöglicht, Gegenstände in ihrer Gemeinschaft zu teilen und zu verleihen.
 		</p>
 		<br />
 		<p>
@@ -48,8 +48,8 @@
 		</p>
 		<br />
 		<p>
-			{texts.names.app} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode findest
-			du auf
+			{texts.names.app} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode
+			findest du auf
 			<a
 				href="https://github.com/share-open-sharing-infrastructure/share-mvp"
 				class="underline"

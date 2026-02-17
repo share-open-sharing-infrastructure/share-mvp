@@ -14,7 +14,7 @@
 	</h2>
 	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
 		Bei <span
-			class="self-center text-xl text-black font-semibold whitespace-nowrap dark:text-white logo"
+			class="self-center text-xl text-accent font-semibold whitespace-nowrap dark:text-white logo"
 			>AllerLeih</span
 		> findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...
 	</p>
@@ -27,7 +27,7 @@
 				size="md"
 				class="m-2 flex flex-col"
 				classes={{
-					input: 'focus:ring-primary-700 focus:border-primary-700 search-bar',
+					input: 'focus:ring-primary focus:border-primary search-bar pulse-shadow',
 				}}
 				placeholder={texts.forms.searchPlaceholder}
 				bind:value={searchText.value}

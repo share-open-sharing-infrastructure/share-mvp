@@ -5,41 +5,83 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-	--color-primary-50: #ecffeeff;
-	--color-primary-100: #9cdb9f;
-	--color-primary-200: #77cd7b;
-	--color-primary-300: #52bf57;
-	--color-primary-400: #3ca241;
-	--color-primary-500: #2e7d32;
-	--color-primary-600: #205823;
-	--color-primary-700: #133214;
-	--color-primary-800: #050d05;
-	--color-primary-900: #000000;
-	--color-primary-950: #000000;
+	--color-primary: #4da2ff;
+	--color-primary-50: #deeeff;
+	--color-primary-200: #6ab2ff;
+	--color-secondary: #5ec900;
+	--color-accent: #fb4a03;
+	--color-accent-50: #fb490380;
+	--color-accent-200: #ff6122;
 
-	--color-secondary-50: #fff1e5;
-	--color-secondary-100: #ffe2cc;
-	--color-secondary-200: #ffc599;
-	--color-secondary-300: #ffa966;
-	--color-secondary-400: #ff8c33;
-	--color-secondary-500: #ff6f00;
-	--color-secondary-600: #cc5900;
-	--color-secondary-700: #994300;
-	--color-secondary-800: #662c00;
-	--color-secondary-900: #331600;
-	--color-secondary-950: #1a0b00;
+	--color-danger: #d9003d;
+	--color-light: #64748b;
 
-	--color-accent-50: #90a8b4;
-	--color-accent-100: #819ca9;
-	--color-accent-200: #648393;
-	--color-accent-300: #4f6875;
-	--color-accent-400: #3b4d56;
-	--color-accent-500: #263238;
-	--color-accent-600: #11171a;
-	--color-accent-700: #000000;
-	--color-accent-800: #000000;
-	--color-accent-900: #000000;
-	--color-accent-950: #000000;
+	--color-primary-600: #239628; /* For some reason, the flowbite toggle element uses this color as its background */
+}
+
+.theme-color-storage {
+	--color-primary: #4da2ff;
+	--color-primary-50: #deeeff;
+	--color-primary-200: #6ab2ff;
+	--color-secondary: #5ec900;
+	--color-accent: #fb4a03;
+	--color-accent-50: #fb490380;
+	--color-accent-200: #ff6122;
+
+	--color-primary: #ffd735;
+	--color-secondary: #c0ff32;
+	--color-accent: #4c0519;
+
+	--color-danger: #d9003d;
+	--color-light: #64748b;
+
+	--color-primary-700: #f6c501;
+	--color-primary-600: #239628; /* For some reason, the flowbite toggle element uses this color as its background */
+}
+
+.logo {
+	font-family: 'Work Sans', sans-serif;
+	font-weight: 900;
+}
+
+.min-button {
+	color: black;
+	border-color: black;
+	border: 1px solid;
+	border-radius: 20px;
+	cursor: pointer;
+}
+
+.min-button:hover {
+	box-shadow: 0 0 11px rgba(33, 33, 33, 0.2);
+	cursor: pointer;
+	color: white;
+	border-color: black;
+}
+
+.search-bar {
+	border-radius: 20px;
+	color: black;
+	border: 1px solid;
+}
+
+@keyframes pulse-shadow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(252, 252, 252, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 10px var(--color-primary-50);
+  }
+}
+
+.pulse-shadow {
+  animation: pulse-shadow 5s infinite;
+}
+
+.timo-theme {
+	--color-primary: #ffd832;
+	--color-secondary: #fb4a03;
+	--color-accent: #4da2ff;
 }
 
 @source "../node_modules/flowbite-svelte/dist";
@@ -50,45 +92,4 @@
 	input[type='search']::-webkit-search-cancel-button {
 		display: none;
 	}
-}
-
-.primary-text {
-	color: #ffd832;
-}
-
-.primary-bg {
-	background-color: #ffd832;
-}
-
-.logo {
-	font-family: 'Work Sans', sans-serif;
-	font-weight: 900;
-}
-
-/* colors 
-Orange: #fb4a03 
-Yellow: #ffd832
-Blue: #4da2ff
-*/
-
-.min-button {
-	background-color: #ffd832;
-	color: black;
-	border-color: black;
-	border: 1px solid;
-	border-radius: 20px;
-}
-.min-button:hover {
-	box-shadow: 0 0 11px rgba(33, 33, 33, 0.2);
-	cursor: pointer;
-}
-
-.search-bar {
-	border-radius: 20px;
-	color: black;
-	border: 1px solid;
-}
-
-.border {
-	border: 1px solid;
 }

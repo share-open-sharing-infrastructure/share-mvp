@@ -3,7 +3,7 @@
 	let { conversation, currentUser, PB_IMG_URL } = $props();
 </script>
 
-<li class="w-full border mb-2 rounded-[20px] hover:bg-yellow-100 truncate">
+<li class="w-full border mb-2 rounded-[20px] hover:bg-yellow-50 truncate">
 	<a
 		href={resolve(`/conversations/${conversation.id}`)}
 		class="flex items-center justify-between p-1"

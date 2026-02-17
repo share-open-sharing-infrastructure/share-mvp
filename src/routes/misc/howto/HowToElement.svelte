@@ -3,7 +3,7 @@
 </script>
 
 <div
-	class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+	class="overflow-hidden rounded-2xl border border-accent bg-white shadow-sm"
 >
 	<div class="grid gap-0 md:grid-cols-5">
 		<!-- Image -->

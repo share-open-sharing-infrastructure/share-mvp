@@ -38,6 +38,26 @@ export interface User extends PocketBaseEntity {
 	 * List of trusted user ids (friends, family, ...) to whom the user is willing to lend certain items
 	 */
 	trusts: UserId[];
+
+	/**
+	 * Telegram username (without @ prefix)
+	 */
+	telegramUsername?: string;
+
+	/**
+	 * Whether telegram contact is visible only to trusted users
+	 */
+	telegramVisibleToTrustedOnly?: boolean;
+
+	/**
+	 * Signal shareable link
+	 */
+	signalLink?: string;
+
+	/**
+	 * Whether signal contact is visible only to trusted users
+	 */
+	signalVisibleToTrustedOnly?: boolean;
 }
 
 // --- ITEM ---

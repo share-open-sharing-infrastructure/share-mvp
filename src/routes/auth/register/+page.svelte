@@ -57,14 +57,14 @@
 						<button
 							id="b3"
 							type="button"
-							class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 flex-shrink-0"
+							class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 shrink-0"
 							aria-label={texts.ui.explainThis}
 						>
 							<QuestionCircleSolid class="h-5 w-5" />
 						</button>
 					</div>
 				</Label>
-				<Button type="submit" formaction="?/register" class="min-button"
+				<Button type="submit" formaction="?/register" class="min-button bg-primary cursor-pointer"
 					>{texts.auth.register}</Button
 				>
 			</form>
@@ -81,7 +81,7 @@
 		<h3 class="font-semibold text-gray-900 dark:text-white">Beta-Zugang</h3>
 		Wenn du einen Beta-Zugang möchtest, schreibe eine Mail an<a
 			href="mailto:allerleih@posteo.de?subject=AllerLeih Beta-Zugang&body=Bitte schickt mir einen Beta-Code für AllerLeih"
-			class="primary-text hover:underline dark:text-primary-300"
+			class="text-primary hover:underline dark:text-primary-300"
 		>
 			allerleih@posteo.de
 		</a>

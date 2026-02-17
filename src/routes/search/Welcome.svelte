@@ -10,13 +10,16 @@
     mx-auto
     mt-2 flex max-w-md flex-col
     items-center justify-center gap-4
-    text-center text-lg text-gray-600 dark:text-white
+    text-center text-lg text-light dark:text-white
     "
 >
 	<p>{texts.pages.search.welcome}</p>
 	<!-- to set bg color assign class="bg-primary-500"-->
 
-	<Button class="me-2 mb-2 w-full min-button" href={resolve('/user/items')}>
+	<Button
+		class="me-2 mb-2 w-full min-button bg-primary"
+		href={resolve('/user/items')}
+	>
 		{texts.buttons.offerSomething}
 		<ArrowUpOutline class="me-2 h-6 w-6" />
 	</Button>

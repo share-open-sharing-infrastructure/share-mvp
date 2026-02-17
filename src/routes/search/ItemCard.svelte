@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { Badge, Button, Card, Input } from 'flowbite-svelte';
-	import { MapPinOutline, MessagesOutline } from 'flowbite-svelte-icons';
+	import { MapPinOutline, MessagesOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 	import { Popover } from 'flowbite-svelte';
 	import {
 		QuestionCircleSolid,
@@ -17,9 +17,12 @@
 <div class="space-y-4">
 	<Card img={imgUrl} horizontal size="xl">
 		<div class="m-6 grow">
-			<div class="flex justify-between items-center font-thin mb-3">
+			<div class="flex justify-between items-center mb-3">
 				<div class="flex">
-					von {item.expand?.owner?.username ?? 'Unknown'}
+					<div class="text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-2 py-1">
+						<UserCircleOutline class="h-6 w-6 inline mr-1" />
+						<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
+					</div>
 					{#if item.trusteesOnly}
 						<Badge rounded border color="green" class="ml-2">
 							<span class="text-green-900 bg-green-100">vertraut dir</span>
@@ -35,7 +38,7 @@
 					{/if}
 				</div>
 
-				<span class="flex items-center gap-1">
+				<span class="flex items-center gap-1 text-accent font-medium">
 					<MapPinOutline class="h-4 w-4" />
 					{item.place}
 				</span>
@@ -65,6 +68,7 @@
 								class="
 									cursor-pointer 
 									min-button
+									bg-primary
 									left-10 z-50
 									"
 								type="submit"
@@ -92,12 +96,10 @@
 		{texts.ui.trustDescription}
 		<a
 			href={resolve('/social')}
-			class="text-primary-600 dark:text-primary-500 dark:hover:text-primary-600 hover:text-primary-700 flex items-center font-medium"
+			class="text-accent hover:underline flex items-center font-medium mt-1"
 		>
 			{texts.ui.trustFunction}
-			<ChevronRightOutline
-				class="text-primary-600 dark:text-primary-500 ms-1.5 h-4 w-4"
-			/>
+			<ChevronRightOutline class="text-accent  ms-1.5 h-4 w-4" />
 		</a>
 	</div>
 </Popover>
