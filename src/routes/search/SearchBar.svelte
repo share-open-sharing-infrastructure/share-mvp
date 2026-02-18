@@ -6,28 +6,16 @@
 	let { searchText, isSearching } = $props();
 </script>
 
-<div class="mx-auto max-w-screen-sm text-center">
-	<h2
-		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
-	>
-		{texts.ui.welcomeShort}
-	</h2>
-	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
-		Bei <span
-			class="self-center text-xl text-accent font-semibold whitespace-nowrap dark:text-white logo"
-			>AllerLeih</span
-		> findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...
-	</p>
-</div>
 
-<Section name="tableheader" sectionClass="flex p-4 mx-auto max-w-5xl">
-	<TableHeader headerType="search">
+
+
+	<TableHeader headerType="search" class="w-full p-0">
 		{#snippet search()}
 			<Search
 				size="md"
-				class="m-2 flex flex-col"
+				class="flex flex-col p-0"
 				classes={{
-					input: 'focus:ring-primary focus:border-primary search-bar pulse-shadow',
+					input: 'focus:ring-primary focus:border-primary search-bar pulse-shadow w-full',
 				}}
 				placeholder={texts.forms.searchPlaceholder}
 				bind:value={searchText.value}
@@ -71,4 +59,3 @@
 			</Dropdown> -->
 		{/if}
 	</TableHeader>
-</Section>
