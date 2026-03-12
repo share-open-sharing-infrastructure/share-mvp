@@ -63,7 +63,7 @@
 	<TeamWrapper class="p-0">
 		<TeamHeader h2Class="text-2xl">
 			{#snippet label()}Team{/snippet}
-			<p class="font-light text-xl font-bold"></p>
+			<p class="text-xl font-bold"></p>
 		</TeamHeader>
 		<TeamBody>
 			{#each members as member (member.id)}
