@@ -3,7 +3,10 @@
 	import { texts } from '$lib/texts';
 </script>
 
+
+
 <div class="mx-auto max-w-screen-sm p-4 text-sm">
+
 	<p>
 		{texts.ui.chooseFromList}
 	</p>

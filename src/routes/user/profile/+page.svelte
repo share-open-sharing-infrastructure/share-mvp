@@ -20,13 +20,19 @@
 	// }
 </script>
 
+<!-- HEADER -->
+<div class="px-4 mx-auto max-w-7xl">
+	<div class="mx-auto max-w-screen-sm text-center">
+		<h2
+			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+		>
+			{texts.pages.profile.title}
+		</h2>
+	</div>
+</div>
+
 <main class="bg-white dark:bg-gray-900 min-h-screen">
 	<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
-		<!-- Page Header -->
-		<h1 class="text-3xl font-semibold text-primary-50 dark:text-white mb-8">
-			{texts.ui.profileTitle}
-		</h1>
-
 		<!-- Profile Form Section -->
 		<div
 			class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8"

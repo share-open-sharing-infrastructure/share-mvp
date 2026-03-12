@@ -5,6 +5,7 @@
 	import UserItemCard from './UserItemCard.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import { Button } from 'flowbite-svelte';
+	import { texts } from '$lib/texts';
 
 	let { data, form } = $props();
 
@@ -15,11 +16,15 @@
 	}
 </script>
 
-<section class="bg-white dark:bg-gray-900 min-h-screen">
-	<div class="max-w-7xl mx-auto px-4 pt-6">
-		<h1
-			class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mt-20 mb-6"
+<!-- HEADER -->
+<div class="px-4 mx-auto max-w-7xl">
+	<div class="mx-auto max-w-screen-sm text-center">
+		<h2
+			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
 		>
+			{texts.pages.items.title}
+		</h2>
+		<div>
 			Du verleihst
 			{#if data?.user?.expand?.items_via_owner?.length}
 				<span class="text-accent"
@@ -28,7 +33,13 @@
 			{:else}
 				noch keine Ding(e)...
 			{/if}
-		</h1>
+
+		</div>
+	</div>
+</div>
+
+<section class="bg-white dark:bg-gray-900 min-h-screen">
+	<div class="max-w-7xl mx-auto px-4 pt-6">
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
 			<Button

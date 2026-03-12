@@ -26,14 +26,14 @@
 </script>
 
 <!-- HEADER -->
-<div class="py-4 px-4 mx-auto max-w-7xl">
+<div class="pb-4 px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">
 		<h2
-			class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+			class="mb-4 text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
 		>
 			{texts.ui.trustedPeople}
 		</h2>
-		<p class="font-light text-gray-500 sm:text-xl dark:text-gray-400">
+		<p class="font-light text-gray-500 dark:text-gray-400">
 			{texts.ui.trustDescriptionSocial}
 			zutraust. Du kannst dann
 			<a href={resolve('/user/items')} class="text-primary hover:underline"
