@@ -6,18 +6,11 @@
 </script>
 
 <div class="m-2 flex flex-col items-center justify-center">
-	<div class="mx-auto max-w-screen-sm text-center">
-		<h2
-			class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
-		>
-			{texts.ui.allRequests}
-		</h2>
-	</div>
 
 	<!-- Main chat window container including chat list and messages -->
 	<div
 		id="chat-container"
-		class="flex h-130 w-full max-w-3xl justify-center gap-2"
+		class="flex h-100 w-full max-w-3xl justify-center gap-2"
 	>
 		<ConversationList
 			conversations={data.conversations}
