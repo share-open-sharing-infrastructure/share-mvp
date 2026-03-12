@@ -40,20 +40,16 @@
 	);
 </script>
 
-<Section>
+<Section class="max-w-5xl mx-auto">
 	<SearchBar {searchText} {isSearching} />
 
-	<div class="mx-auto max-w-5xl space-y-4 overflow-x-auto p-4 md:space-y-6">
-		{#if isSearching}
-			<ResultsList
-				{filteredItemList}
-				PB_IMG_URL={data.PB_IMG_URL}
-				requesterId={data.currentUser?.userId}
-			/>
-		{:else}
-			<Welcome />
-		{/if}
-	</div>
+	<ResultsList
+		{filteredItemList}
+		PB_IMG_URL={data.PB_IMG_URL}
+		requesterId={data.currentUser?.userId}
+	/>
+
+
 </Section>
 
 <HowToButton />
