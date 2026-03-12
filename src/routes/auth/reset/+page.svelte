@@ -15,7 +15,7 @@
 		</div>
 	{/if}
 
-	<Register href={resolve('/')} class="w-md">
+	<Register href={resolve('/')} class="w-full sm:max-w-md">
 		{#snippet top()}
 			{texts.pages.reset.title}
 		{/snippet}
@@ -34,7 +34,7 @@
 				<Button
 					type="submit"
 					formaction="?/reset"
-					class="me-2 mb-2 w-full rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 focus:outline-none dark:border-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 dark:focus:ring-primary-700"
+					class="min-button bg-primary cursor-pointer w-full"
 					>{texts.pages.reset.resetButton}</Button
 				>
 			</form>

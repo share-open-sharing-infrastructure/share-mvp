@@ -9,7 +9,7 @@
 </script>
 
 <Section name="login">
-	<Register class="w-md">
+	<Register class="w-full sm:max-w-md">
 		{#snippet top()}
 			Einloggen
 		{/snippet}
