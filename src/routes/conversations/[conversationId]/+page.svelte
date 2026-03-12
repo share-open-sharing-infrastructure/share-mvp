@@ -18,9 +18,16 @@
 	// Props and state variables
 	let { data } = $props();
 
-	let messages = $derived(
+	// eslint-disable-next-line svelte/prefer-writable-derived -- messages must stay $state; it is also written by the async real-time event handler (using $derived here caused an OOM infinite loop)
+	let messages: Message[] = $state(
+		// eslint-disable-next-line svelte/no-unused-svelte-ignore
+		// svelte-ignore state_referenced_locally
 		data.conversation.messages ? [...data.conversation.messages] : []
 	);
+	// Sync messages when server data refreshes (e.g. after use:enhance reloads load())
+	$effect(() => {
+		messages = data.conversation.messages ? [...data.conversation.messages] : [];
+	});
 	let loggedInUserIsItemOwner = $derived(
 		data.currentUser.id === data.conversation.itemOwner.id
 	);
@@ -49,7 +56,8 @@
 	});
 
 	// Initialize PocketBase client once on component mount
-	let pb: PocketBase;
+	// Must be $state so the subscription $effect re-runs when pb is set
+	let pb: PocketBase | undefined = $state();
 	onMount(() => {
 		pb = new PocketBase(PUBLIC_PB_URL);
 		pb.authStore.loadFromCookie(document.cookie || '');
@@ -58,6 +66,7 @@
 	// Handle incoming real-time message events
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	async function handleConversationEvent(event: RecordSubscription<any>) {
+		if (!pb) return;
 		if (event.action === 'update') {
 			// Extract the last message id from the updated conversation record
 			const lastMessageId =
@@ -68,8 +77,10 @@
 			if (lastMessageId) {
 				try {
 					latestMessage = await pb.collection('messages').getOne(lastMessageId);
-					// Append the latest message to local messages array
-					messages = [...messages, latestMessage];
+					// Deduplicate: server reload via use:enhance may have already added this message
+					if (!messages.some((m) => m.id === latestMessage.id)) {
+						messages = [...messages, latestMessage];
+					}
 				} catch (error) {
 					console.error('Failed to fetch last message record:', error);
 				}
