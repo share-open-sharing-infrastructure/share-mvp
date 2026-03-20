@@ -2,9 +2,9 @@
 	import { Section } from 'flowbite-svelte-blocks';
 	import type { Item } from '$lib/types/models';
 	import SearchBar from './SearchBar.svelte';
-	import Welcome from './Welcome.svelte';
 	import ResultsList from './ResultsList.svelte';
 	import HowToButton from './HowToButton.svelte';
+	import { texts } from '$lib/texts';
 
 	const { data } = $props();
 	// svelte-ignore state_referenced_locally
@@ -39,8 +39,18 @@
 		})
 	);
 </script>
+<!-- HEADER -->
+<div class="px-4 mx-auto max-w-7xl">
+	<div class="mx-auto max-w-screen-sm text-center">
+		<h2
+			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+		>
+			{texts.pages.search.title}
+		</h2>
+	</div>
+</div>
 
-<Section class="max-w-5xl mx-auto">
+<Section class="max-w-5xl mx-auto py-0">
 	<SearchBar {searchText} {isSearching} />
 
 	<ResultsList

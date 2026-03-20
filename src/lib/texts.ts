@@ -168,6 +168,7 @@ export const texts = {
 			title: "Und so funktioniert's:",
 		},
 		search: {
+			title: 'Suche',
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
 				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
@@ -192,8 +193,14 @@ export const texts = {
 			title: 'Registrieren',
 		},
 		conversations: {
-			title: 'Chats',
+			title: 'Anfragen',
 		},
+		items: {
+			title: 'Meine Dinge',
+		},
+		profile: {
+			title: 'Mein Profil',
+		}
 	},
 
 	// Flash messages and alerts

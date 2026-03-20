@@ -5,8 +5,17 @@
 	let { data, children } = $props();
 </script>
 
+<!-- HEADER -->
+<div class="px-4 mx-auto max-w-7xl">
+	<div class="mx-auto max-w-screen-sm text-center">
+		<h2
+			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+		>
+			{texts.pages.conversations.title}
+		</h2>
+	</div>
+</div>
 <div class="m-2 flex flex-col items-center justify-center">
-
 	<!-- Main chat window container including chat list and messages -->
 	<div
 		id="chat-container"

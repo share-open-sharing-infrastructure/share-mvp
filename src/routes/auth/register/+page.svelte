@@ -13,7 +13,7 @@
 			<CustomAlert type="error" message={form?.message} />
 		</div>
 	{/if}
-	<Register href="/" class="w-md">
+	<Register href="/" class="w-full sm:max-w-md">
 		<!-- TODO: Why is this a snippet? -->
 		{#snippet top()}
 			{texts.pages.register.title}
