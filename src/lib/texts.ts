@@ -201,6 +201,32 @@ export const texts = {
 		errorPrefix: 'Error:',
 		successPrefix: 'Success:',
 	},
+
+	// Batch upload feature
+	batch: {
+		pageTitle: 'Mehrere Dinge hochladen',
+		stepUpload: 'Schritt 1 von 3: Fotos auswählen',
+		stepAnalyzing: 'Schritt 2 von 3: KI analysiert Bilder...',
+		stepReview: 'Schritt 3 von 3: Überprüfen & Speichern',
+		placeLabel: 'Ort aller Gegenstände',
+		placePlaceholder: 'z.B. Berlin, Wohnzimmer',
+		placeHelper: 'Dieser Ort gilt für alle Gegenstände in diesem Upload.',
+		selectPhotos: 'Fotos auswählen:',
+		photoHelper: 'JPG, PNG, GIF oder WebP (max. 5 MB pro Bild).',
+		photosSelected: 'Foto(s) ausgewählt',
+		analyzeButton: 'Weiter: KI-Analyse →',
+		analyzingProgress: (done: number, total: number) =>
+			`Analysiere ${done} von ${total} Bildern...`,
+		analysisError: 'KI-Analyse fehlgeschlagen – bitte manuell ausfüllen.',
+		networkError: 'Netzwerkfehler bei der Analyse.',
+		imageTooLarge: 'Bild zu groß (max. 5 MB) – bitte manuell ausfüllen.',
+		removeItem: 'Entfernen',
+		noItemsLeft: 'Alle Gegenstände wurden entfernt.',
+		backButton: '← Zurück',
+		saveAllButton: 'Alle speichern',
+		saveError: 'Fehler beim Speichern von',
+		saveNetworkError: 'Netzwerkfehler beim Speichern.',
+	},
 };
 
 export type Texts = typeof texts;

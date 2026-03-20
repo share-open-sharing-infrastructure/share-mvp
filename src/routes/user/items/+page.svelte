@@ -37,6 +37,9 @@
 				}}
 				class="min-button bg-primary-50">Ding hinzufügen...</Button
 			>
+			<Button href="/user/items/batch" class="min-button bg-primary-50"
+				>Mehrere Dinge hochladen...</Button
+			>
 			{#if data?.user?.expand?.items_via_owner?.length}
 				{#each data.user.expand.items_via_owner as item (item.id)}
 					<UserItemCard
