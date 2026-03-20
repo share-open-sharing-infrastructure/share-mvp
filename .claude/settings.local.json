@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find 'c:\\\\Users\\\\matte\\\\Documents\\\\VSCode Projects\\\\share-mvp\\\\share-mvp' -name Register* -o -name register*)"
-    ]
-  }
-}
