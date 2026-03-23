@@ -5,7 +5,7 @@
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
-	let { form } = $props();
+	let { form, data } = $props();
 </script>
 
 <Section name="login">
@@ -15,6 +15,7 @@
 		{/snippet}
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			<form class="flex flex-col space-y-5" action="?/login" method="post">
+				<input type="hidden" name="redirectTo" value={data.redirectTo ?? ''} />
 				<h3 class="p-0 text-xl font-medium text-accent-900 dark:text-white">
 					{texts.ui.welcomeBack}
 				</h3>

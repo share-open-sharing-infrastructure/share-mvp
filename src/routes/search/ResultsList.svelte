@@ -15,7 +15,6 @@
 		<ItemCard
 			{item}
 			imgUrl={`${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
-			{requesterId}
 		/>
 	{/each}
 </Gallery>

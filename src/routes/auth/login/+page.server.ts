@@ -2,12 +2,13 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 
-export async function load({ locals }) {
+export async function load({ locals, url }) {
 	if (locals.user) {
 		return redirect(303, '/');
 	}
 
-	return {};
+	const redirectTo = url.searchParams.get('redirectTo');
+	return { redirectTo };
 }
 
 export const actions = {
@@ -42,6 +43,8 @@ export const actions = {
 				error(e.status ?? 500, 'Unable to login.');
 			}
 		}
-		redirect(303, '/');
+		const redirectTo = data.get('redirectTo');
+		const safeRedirect = typeof redirectTo === 'string' && redirectTo.startsWith('/') ? redirectTo : '/';
+		redirect(303, safeRedirect);
 	},
 };
