@@ -20,6 +20,8 @@ export async function load({ params, locals }) {
 	const ownerTrusts: string[] = item.expand?.owner?.trusts ?? [];
 	const isTrustRestricted =
 		item.trusteesOnly && isAuthenticated && !ownerTrusts.includes(currentUserId);
+	const isOwnItem = currentUserId === item.expand?.owner?.id;
+	const viewerTrustsOwner = locals.user?.trusts?.includes(item.expand?.owner?.id) ?? false;
 
 	return {
 		item,
@@ -27,6 +29,8 @@ export async function load({ params, locals }) {
 		currentUserId,
 		isAuthenticated,
 		isTrustRestricted,
+		isOwnItem,
+		viewerTrustsOwner,
 	};
 }
 

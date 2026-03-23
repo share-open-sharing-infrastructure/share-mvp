@@ -99,18 +99,21 @@
 	{/if}
 	{#each data.trustees as trustee (trustee.id)}
 		<div
-			class="flex items-center space-x-4 border-b border-gray-200 p-4 dark:border-primary-700"
+			class="flex items-center space-x-4 border-b border-gray-200 p-4 dark:border-primary-700 hover:bg-primary-50 rounded-lg"
 		>
-			<img
+			<a href={resolve(`/users/[id]`, { id: trustee.id })}
+			class="flex items-center gap-4 text-gray-900 dark:text-white w-full ">
+				<img
 				src={trustee.profilePic}
 				alt="Profile picture of {trustee.username}"
 				class="primary-bg h-10 w-10 rounded-full object-cover"
-			/>
-			<div class="text-left">
-				<p class="text-lg font-medium text-gray-900 dark:text-white">
-					@{trustee.username}
-				</p>
-			</div>
+				/>
+				<div class="text-left">
+					<span class="text-lg font-medium text-gray-900 dark:text-white">
+						@{trustee.username}
+					</span>
+				</div>
+			</a>
 			<form class="ml-auto" method="POST" action="?/removeTrustee" use:enhance>
 				<input type="hidden" name="trusteeId" value={trustee.id} />
 				<Button

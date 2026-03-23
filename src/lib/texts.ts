@@ -208,6 +208,17 @@ export const texts = {
 			locationLabel: 'Ort',
 			noImage: 'Kein Bild vorhanden',
 		},
+		userProfile: {
+			activeSince: (date: string) => `Aktiv seit ${date}`,
+			trustsYou: 'Diese Person vertraut dir.',
+			doesNotTrustYou: 'Diese Person vertraut dir (noch) nicht.',
+			trustsThisUser: 'Du vertraust diesem Account',
+			doesNotTrustThisUser: 'Du vertraust diesem Account (noch) nicht.',
+			publicItems: 'Öffentliche Gegenstände',
+			trustedItems: 'Nur für Vertraute',
+			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
+			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
+		},
 	},
 
 	// Flash messages and alerts

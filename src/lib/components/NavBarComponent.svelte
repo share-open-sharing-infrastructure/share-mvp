@@ -35,7 +35,7 @@
 <Navbar>
 	<NavBrand href={resolve('/')}>
 		<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
-		<div id="b3" class="relative flex flex-col items-center">
+		<div id="beta" class="relative flex flex-col items-center">
 			<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none">
 				Beta
 			</span>
@@ -102,7 +102,7 @@
 	</NavUl>
 	
 	<Popover
-		triggeredBy="#b3"
+		triggeredBy="#beta"
 		class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
 		placement="bottom-start"
 	>
