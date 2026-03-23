@@ -200,7 +200,14 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
-		}
+		},
+		itemDetail: {
+			backToSearch: '← Zurück zur Suche',
+			requestButton: 'Anfragen',
+			trustRestrictedTooltip: 'Dieser Gegenstand wird nur an vertraute Nutzer verliehen.',
+			locationLabel: 'Ort',
+			noImage: 'Kein Bild vorhanden',
+		},
 	},
 
 	// Flash messages and alerts

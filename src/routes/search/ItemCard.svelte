@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
-	import { Badge, Button, Card, Input } from 'flowbite-svelte';
-	import { MapPinOutline, MessagesOutline, UserCircleOutline } from 'flowbite-svelte-icons';
+	import { Badge, Card } from 'flowbite-svelte';
+	import { MapPinOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 	import { Popover } from 'flowbite-svelte';
 	import {
 		QuestionCircleSolid,
@@ -11,11 +11,10 @@
 	import { texts } from '$lib/texts';
 	export let item: Item;
 	export let imgUrl: string;
-	export let requesterId: string;
 </script>
 
 <div class="space-y-4">
-	<Card img={imgUrl} horizontal size="xl">
+	<Card href="/items/{item.id}" img={imgUrl} imgClass="h-48 w-48 object-cover shrink-0 md:h-48 mx-auto md:mx-0" horizontal size="xl">
 		<div class="m-6 grow">
 			<div class="flex justify-between items-center mb-3">
 				<div class="flex">
@@ -40,7 +39,7 @@
 
 				<span class="flex items-center gap-1 text-accent font-medium">
 					<MapPinOutline class="h-4 w-4" />
-					{item.place}
+					{item.expand?.owner?.city ?? ''}
 				</span>
 			</div>
 
@@ -52,35 +51,7 @@
 			<p class="mb-3 leading-tight font-normal text-gray-700">
 				{item.description}
 			</p>
-			<div class="flex justify-between items-center text-xs font-thin mb-3">
-				{#if item.expand?.owner?.id}
-					<span class="ml-auto">
-						<form
-							class="inline-flex"
-							method="POST"
-							action="?/startConversation"
-						>
-							<Input name="itemId" value={item.id} hidden />
-							<Input name="requesterId" value={requesterId} hidden />
-							<Input name="ownerId" value={item.expand?.owner?.id} hidden />
-							<Button
-								pill
-								class="
-									cursor-pointer 
-									min-button
-									bg-primary
-									left-10 z-50
-									"
-								type="submit"
-							>
-								<MessagesOutline class="h-4 w-4 mr-2" />
-								{texts.ui.contact}
-							</Button>
-						</form>
-					</span>
-				{/if}
 			</div>
-		</div>
 	</Card>
 </div>
 

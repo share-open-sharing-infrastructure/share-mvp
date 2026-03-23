@@ -1,9 +1,6 @@
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { Item } from '$lib/types/models';
 import { filterTrustedItems } from '$lib/server/itemFilters';
-import type { ClientResponseError } from 'pocketbase';
-import { fail, redirect } from '@sveltejs/kit';
-import { texts } from '$lib/texts';
 
 export async function load({ locals }) {
 	// Fetch all items from PocketBase
@@ -30,48 +27,6 @@ export async function load({ locals }) {
 		items: filteredItems,
 		PB_IMG_URL: PUBLIC_PB_URL,
 		uniquePlaces: uniquePlaces,
-		userId: locals.user ? locals.user.id : null,
 	};
 }
 
-export const actions = {
-	startConversation: async ({ locals, request }) => {
-		if (!locals.user) {
-			return redirect(303, '/auth/login');
-		}
-
-		const formData = await request.formData();
-
-		// get the message data from the form
-		const requesterId = locals?.user?.id;
-		const itemOwnerId = formData.get('ownerId');
-		const itemId = formData.get('itemId');
-
-		const conversationData = {
-			requester: requesterId,
-			itemOwner: itemOwnerId,
-			requestedItem: itemId,
-			readByRequester: true,
-			readByOwner: false,
-		};
-
-		let conversation;
-		try {
-			conversation = await locals.pb
-				.collection('conversations')
-				.create(conversationData);
-		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, {
-				fail: true,
-				message: e.data?.message ?? texts.errors.failedToCreateConversation,
-			});
-		}
-
-		// Conversation created
-		if (conversation) {
-			const conversationId: string = conversation.id;
-			redirect(303, `/conversations/${conversationId}`);
-		}
-	},
-};

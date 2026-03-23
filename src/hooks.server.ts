@@ -11,6 +11,7 @@ const unprotectedPrefix = [
 	'/auth/register',
 	'/auth/reset',
 	'/search',
+	'/items',
 ];
 
 export const authentication: Handle = async ({ event, resolve }) => {
