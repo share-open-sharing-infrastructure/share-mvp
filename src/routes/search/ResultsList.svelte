@@ -3,7 +3,7 @@
 	import ItemCard from './ItemCard.svelte';
 	import { texts } from '$lib/texts';
 
-	let { filteredItemList, PB_IMG_URL, requesterId } = $props();
+	let { filteredItemList, PB_IMG_URL } = $props();
 </script>
 
 <div class="flex items-center justify-center pt-2">

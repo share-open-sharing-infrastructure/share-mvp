@@ -8,7 +8,7 @@
 	<div
 		class="flex justify-center font-bold text-lg items-center h-15 truncate border-b"
 	>
-		Unterhaltungen
+		Liste
 	</div>
 	<ul id="chat-list" class="w-full p-2 overflow-auto h-full">
 		{#each conversations as conversation (conversation.id)}

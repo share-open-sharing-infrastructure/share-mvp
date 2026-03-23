@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { Button, Tooltip, Input } from 'flowbite-svelte';
 	import { MapPinOutline, UserCircleOutline, ImageOutline, MessagesOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
@@ -6,7 +7,10 @@
 
 	const { data } = $props();
 	// svelte-ignore state_referenced_locally
-	const { item, PB_IMG_URL, isTrustRestricted } = data;
+	const { item, PB_IMG_URL } = data;
+	const isTrustRestricted = $derived(data.isTrustRestricted);
+	const isOwnItem = $derived(data.isOwnItem);
+	const viewerTrustsOwner = $derived(data.viewerTrustsOwner);
 
 	const imageUrl =
 		item.image
@@ -38,10 +42,11 @@
 
 	<!-- Owner + Location (directly below image) -->
 	<div class="flex items-center justify-between">
-		<div class="flex items-center gap-2 text-primary-200 border border-primary-200 rounded-full px-3 py-1">
-			<UserCircleOutline class="h-5 w-5 shrink-0" />
-			<!-- TODO: link to owner profile page once implemented -->
-			<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
+		<div class="flex items-center gap-2">
+			<a href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })} class="flex items-center gap-2 text-primary-200 border border-primary-200 rounded-full px-3 py-1 hover:bg-primary-50">
+				<UserCircleOutline class="h-5 w-5 shrink-0" />
+				<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
+			</a>
 		</div>
 		{#if item.expand?.owner?.city}
 			<span class="flex items-center gap-1 text-accent font-medium">
