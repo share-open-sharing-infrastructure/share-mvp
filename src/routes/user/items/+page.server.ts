@@ -15,7 +15,6 @@ export async function load({ locals }) {
 function validateItemData(data: FormData, isImageRequired: boolean = true) {
 	const name = data.get('itemName');
 	const description = data.get('itemDescription');
-	const place = data.get('itemPlace');
 	const image = data.get('itemImage');
 
 	// Check if image is a valid image file
@@ -35,7 +34,6 @@ function validateItemData(data: FormData, isImageRequired: boolean = true) {
 	const errors = {
 		nameIsMissing: !name,
 		descriptionIsMissing: !description,
-		placeIsMissing: !place,
 		imageIsMissing: isImageRequired
 			? !image || !(image instanceof File) || image.size === 0
 			: false,
