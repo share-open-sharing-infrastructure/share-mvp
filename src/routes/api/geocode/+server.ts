@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { ORS_API_KEY } from '$env/static/private';
 
 export async function GET({ url }) {
 	const q = url.searchParams.get('q') ?? '';
@@ -10,7 +10,7 @@ export async function GET({ url }) {
 
 	try {
 		const params = new URLSearchParams({
-			api_key: env.ORS_API_KEY ?? '',
+			api_key: ORS_API_KEY ?? '',
 			text: q,
 			lang: 'de',
 			size: '5',

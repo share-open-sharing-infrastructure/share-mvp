@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
+import { ORS_API_KEY } from '$env/static/private';
 
 type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -46,7 +46,7 @@ export async function POST({ request }) {
 				method: 'POST',
 				headers: {
 					Accept: 'application/json',
-					Authorization: env.ORS_API_KEY ?? '',
+					Authorization: ORS_API_KEY ?? '',
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
