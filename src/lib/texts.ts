@@ -133,7 +133,7 @@ export const texts = {
 		welcomeShort: 'Willkommen!',
 		welcomeBack: 'Willkommen zurück!',
 		profileTitle: 'Dein Profil',
-		location: 'Standort/Postleitzahl:',
+		location: 'Deine Adresse:',
 		username: 'Nutzername:',
 		contact: 'Kontaktieren',
 		trustFunction: 'Vertrauensfunktion',
@@ -172,6 +172,18 @@ export const texts = {
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
 				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
+			transportModes: {
+				foot: 'Zu Fuß',
+				bicycle: 'Fahrrad',
+				car: 'Auto',
+			},
+			noLocation:
+				'Setze deinen Standort in deinem Profil, um Reisezeiten zu sehen.',
+			minutesAway: (n: number) => `${n} min`,
+			durationFilter: {
+				noLimit: 'Beliebig',
+				maxMinutes: (n: number) => `max. ${n} Min.`,
+			},
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -218,6 +230,7 @@ export const texts = {
 			trustedItems: 'Nur für Vertraute',
 			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
+			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen. Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen. Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.',
 		},
 	},
 
