@@ -65,6 +65,7 @@
 	);
 
 	let userLocation: { lon: number; lat: number } | null = null;
+	const travelTimesCache = new SvelteMap<TransportMode, Record<string, number | null>>();
 
 	function isNullIsland(loc: { lon: number; lat: number } | undefined | null) {
 		return !loc || (loc.lon === 0 && loc.lat === 0);
@@ -102,6 +103,13 @@
 			return;
 		}
 
+		// Return cached result if this mode was already fetched
+		const cached = travelTimesCache.get(transportMode);
+		if (cached) {
+			travelTimes = { ...newTimes, ...cached };
+			return;
+		}
+
 		try {
 			const response = await fetch('/api/travel-times', {
 				method: 'POST',
@@ -110,7 +118,9 @@
 			});
 			if (response.ok) {
 				const result: Record<string, number> = await response.json();
-				travelTimes = { ...newTimes, ...result };
+				const merged = { ...newTimes, ...result };
+				travelTimesCache.set(transportMode, result);
+				travelTimes = merged;
 			}
 		} catch (err) {
 			console.error('Travel time fetch failed:', err);
