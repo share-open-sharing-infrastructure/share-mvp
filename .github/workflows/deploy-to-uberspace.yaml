@@ -21,6 +21,7 @@ jobs:
         env:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
           LOGIN_SECRET: ${{ secrets.LOGIN_SECRET }}
+          ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:

@@ -3,7 +3,19 @@
 	import ItemCard from './ItemCard.svelte';
 	import { texts } from '$lib/texts';
 
-	let { filteredItemList, PB_IMG_URL } = $props();
+	type TransportMode = 'foot' | 'bicycle' | 'car';
+
+	let {
+		filteredItemList,
+		PB_IMG_URL,
+		travelTimes = {},
+		transportMode = 'bicycle',
+	}: {
+		filteredItemList: import('$lib/types/models').Item[];
+		PB_IMG_URL: string;
+		travelTimes: Record<string, number | null>;
+		transportMode: TransportMode;
+	} = $props();
 </script>
 
 <div class="flex items-center justify-center pt-2">
@@ -15,6 +27,8 @@
 		<ItemCard
 			{item}
 			imgUrl={`${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
+			travelMinutes={travelTimes[item.expand?.owner?.id]}
+			{transportMode}
 		/>
 	{/each}
 </Gallery>

@@ -30,7 +30,7 @@ export const actions = {
 
 		// Handle other fields
 		const city = formData?.get('city')?.toString();
-		if (city && city.trim() !== '') {
+		if(city || city === '') {
 			updateData['city'] = city.trim();
 		}
 
@@ -84,6 +84,20 @@ export const actions = {
 		const signalVisibleToTrustedOnly =
 			formData?.get('signalVisibleToTrustedOnly') === 'on';
 		updateData['signalVisibleToTrustedOnly'] = signalVisibleToTrustedOnly;
+
+		// Handle geolocation (only set when user explicitly selected a geocode suggestion)
+		const geoLon = formData?.get('geolocation_lon')?.toString();
+		const geoLat = formData?.get('geolocation_lat')?.toString();
+		if (geoLon && geoLat) {
+			const lon = parseFloat(geoLon);
+			const lat = parseFloat(geoLat);
+			if (!isNaN(lon) && !isNaN(lat)) {
+				updateData['geolocation'] = { lon, lat };
+			}
+		} else if (city === ''){
+			// If city is cleared, also clear geolocation
+			updateData['geolocation'] = null;
+		}
 
 		try {
 			if (Object.keys(updateData).length > 0) {
