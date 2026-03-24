@@ -28,7 +28,7 @@
 	<div class="flex gap-2 w-full max-w-3xl">
 		<button
 			onclick={() => (activeTab = 'borrowing')}
-			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-primary
+			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-primary hover:cursor-pointer
 				{activeTab === 'borrowing'
 				? 'bg-blue-500 text-white shadow-sm'
 				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300 hover:bg-primary-50'}"
@@ -47,9 +47,9 @@
 		</button>
 		<button
 			onclick={() => (activeTab = 'lending')}
-			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-accent
+			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-accent hover:cursor-pointer
 				{activeTab === 'lending'
-				? 'bg-amber-400 text-amber-900 shadow-sm'
+				? 'bg-accent-100 text-amber-900 shadow-sm'
 				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300 '}"
 		>
 			{texts.pages.conversations.lending}
