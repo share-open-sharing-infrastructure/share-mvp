@@ -180,6 +180,10 @@ export const texts = {
 			noLocation:
 				'Setze deinen Standort in deinem Profil, um Reisezeiten zu sehen.',
 			minutesAway: (n: number) => `${n} min`,
+			durationFilter: {
+				noLimit: 'Beliebig',
+				maxMinutes: (n: number) => `max. ${n} Min.`,
+			},
 		},
 		logout: {
 			message: 'Ausloggen...',

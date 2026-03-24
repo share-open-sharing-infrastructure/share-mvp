@@ -26,6 +26,9 @@
 	// Travel times: ownerId → minutes (null means owner has no geolocation)
 	let travelTimes = $state<Record<string, number | null>>({});
 
+	// Duration filter: max travel time in minutes (60 = no filter)
+	let maxMinutes = $state(60);
+
 	// Whether the current user has no resolvable location
 	let noLocationAvailable = $state(false);
 	// Show no-location prompt when user interacts with transport selector without a location
@@ -50,6 +53,14 @@
 				) {
 					return false;
 				}
+
+				// Duration filter — only active below maximum (60 = no limit)
+				if (maxMinutes < 60) {
+					const ownerId = item.expand?.owner?.id;
+					const t = ownerId !== undefined ? travelTimes[ownerId] : undefined;
+					if (t !== undefined && t !== null && t > maxMinutes) return false;
+				}
+
 				return true;
 			})
 			.sort((a: Item, b: Item) => {
@@ -189,8 +200,24 @@
 <Section class="max-w-5xl mx-auto py-0">
 	<SearchBar {searchText} {isSearching} />
 
-	<div class="flex justify-center mt-3">
+	<div class="flex flex-wrap justify-center items-center gap-3 mt-3">
 		<TransportModeSelector mode={transportMode} onchange={handleTransportModeChange} />
+		<span>Filtern:</span>
+		<div class="flex items-center gap-2">
+			<input
+				type="range"
+				min="5"
+				max="60"
+				step="5"
+				bind:value={maxMinutes}
+				class="w-32 h-2 accent-primary cursor-pointer"
+			/>
+			<span class="text-sm text-gray-600 dark:text-gray-300 w-28">
+				{maxMinutes >= 60
+					? texts.pages.search.durationFilter.noLimit
+					: texts.pages.search.durationFilter.maxMinutes(maxMinutes)}
+			</span>
+		</div>
 	</div>
 
 	{#if showNoLocationPrompt}
