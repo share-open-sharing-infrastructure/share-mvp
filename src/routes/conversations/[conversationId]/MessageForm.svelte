@@ -8,7 +8,6 @@
 		isSubmitting = $bindable(),
 		messageText = $bindable(),
 	} = $props();
-	
 </script>
 
 <form
@@ -18,7 +17,7 @@
 	use:enhance={() => {
 		isSubmitting = true;
 		return async ({ update }) => {
-			await update();
+			await update({reset: false}); // Have to disable reset, otherwise Svelte clears the form data and the target user is not found
 			isSubmitting = false;
 			messageText = '';
 		};
