@@ -172,6 +172,14 @@ export const texts = {
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
 				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
+			transportModes: {
+				foot: 'Zu Fuß',
+				bicycle: 'Fahrrad',
+				car: 'Auto',
+			},
+			noLocation:
+				'Setze deinen Standort in deinem Profil, um Reisezeiten zu sehen.',
+			minutesAway: (n: number) => `${n} min`,
 		},
 		logout: {
 			message: 'Ausloggen...',

@@ -63,6 +63,17 @@ export interface User extends PocketBaseEntity {
 	 * Whether signal contact is visible only to trusted users
 	 */
 	signalVisibleToTrustedOnly?: boolean;
+
+	/**
+	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
+	 * Zero value {"lon":0,"lat":0} means no location set (Null Island).
+	 */
+	geolocation?: { lon: number; lat: number };
+
+	/**
+	 * Preferred transport mode for distance-based search
+	 */
+	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
 }
 
 // --- ITEM ---

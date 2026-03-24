@@ -27,6 +27,19 @@ export async function load({ locals }) {
 		items: filteredItems,
 		PB_IMG_URL: PUBLIC_PB_URL,
 		uniquePlaces: uniquePlaces,
+		currentUser: locals.user ?? null,
 	};
 }
 
+export const actions = {
+	saveTransportMode: async ({ locals, request }) => {
+		if (!locals.user) return;
+		const formData = await request.formData();
+		const mode = formData.get('mode')?.toString();
+		if (mode === 'foot' || mode === 'bicycle' || mode === 'car') {
+			await locals.pb
+				.collection('users')
+				.update(locals.user.id, { preferredTransportMode: mode });
+		}
+	},
+};
