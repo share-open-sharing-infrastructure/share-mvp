@@ -6,7 +6,6 @@
 	import { PUBLIC_PB_URL } from '$env/static/public';
 
 	// Other imports
-	import { TrashBinSolid } from 'flowbite-svelte-icons';
 	import { Button, Modal, Input } from 'flowbite-svelte';
 	import MessageElement from './MessageElement.svelte';
 	import { setupPocketBaseSubscription } from '$lib/utils/utils';
@@ -106,26 +105,21 @@
 	{chatPartner}
 	conversation={data.conversation}
 	PB_URL={PUBLIC_PB_URL}
+	onDelete={() => (deleteConversationModal = true)}
 />
 
 <!-- Messenger Contact Buttons -->
 <MessengerButtons {chatPartner} currentUser={data.currentUser} />
 
 <!-- Messages list -->
-<div bind:this={chatWindow} class="flex flex-col overflow-auto p-2">
+<div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto p-3 gap-0.5">
 	{#each messages as message (message.id)}
 		<MessageElement {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>
 
-<!-- Input field to type and send new messages -->
-<div id="message-input" class="flex p-2 mt-auto gap-2">
-	<Button
-		class="min-button bg-danger"
-		onclick={() => (deleteConversationModal = true)}
-		><TrashBinSolid class="shrink-0 h-full" /></Button
-	>
-
+<!-- Input bar -->
+<div class="border-t p-3">
 	<MessageForm {chatPartner} bind:isSubmitting bind:messageText />
 </div>
 

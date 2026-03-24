@@ -39,8 +39,9 @@ export async function load({ params, locals }) {
 export const actions = {
 	sendMessage: async ({ locals, request, params }) => {
 		const formData = await request.formData();
-
+		
 		const messageContent = formData.get('messageContent');
+		console.log('Sending message...', messageContent);
 		const fromUserId = locals.user.id;
 		const toUserId = formData.get('chatPartnerId') as string;
 
@@ -49,6 +50,7 @@ export const actions = {
 			from: fromUserId,
 			to: toUserId,
 		};
+		console.log('Sending message...', messageData);
 
 		let createdMessage: Message;
 		// try to send message to database

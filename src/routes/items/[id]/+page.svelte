@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import { Button, Tooltip, Input } from 'flowbite-svelte';
 	import { MapPinOutline, UserCircleOutline, ImageOutline, MessagesOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
@@ -9,8 +8,6 @@
 	// svelte-ignore state_referenced_locally
 	const { item, PB_IMG_URL } = data;
 	const isTrustRestricted = $derived(data.isTrustRestricted);
-	const isOwnItem = $derived(data.isOwnItem);
-	const viewerTrustsOwner = $derived(data.viewerTrustsOwner);
 
 	const imageUrl =
 		item.image
@@ -20,7 +17,7 @@
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<a
-		class="text-sm text-primary hover:underline cursor-pointer"
+		class="text-lg text-primary hover:underline cursor-pointer mb-2 inline-block"
 		href={resolve('/search')}
 	>
 		{texts.pages.itemDetail.backToSearch}

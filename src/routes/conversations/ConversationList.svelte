@@ -1,18 +1,27 @@
 <script lang="ts">
+	import { texts } from '$lib/texts';
 	import ConversationListItem from './ConversationListItem.svelte';
 
-	let { conversations, currentUser, PB_IMG_URL } = $props();
+	let { activeTab, lendingConversations, borrowingConversations, currentUser, PB_IMG_URL } =
+		$props();
+
+	const visibleConversations = $derived(
+		activeTab === 'lending' ? lendingConversations : borrowingConversations
+	);
 </script>
 
-<div class="w-1/4 border rounded-[20px] overflow-hidden">
-	<div
-		class="flex justify-center font-bold text-lg items-center h-15 truncate border-b"
-	>
-		Liste
-	</div>
-	<ul id="chat-list" class="w-full p-2 overflow-auto h-full">
-		{#each conversations as conversation (conversation.id)}
-			<ConversationListItem {conversation} {currentUser} {PB_IMG_URL} />
-		{/each}
+<div class="flex w-1/4 flex-col border rounded-2xl overflow-hidden">
+	<ul class="flex-1 overflow-auto p-2 flex flex-col gap-1 {activeTab === 'borrowing' ? 'bg-primary-50' : 'bg-accent-100'}">
+		{#if visibleConversations.length === 0}
+			<li class="p-3 text-xs text-gray-400 text-center ">
+				{activeTab === 'lending'
+					? texts.pages.conversations.noLendingConversations
+					: texts.pages.conversations.noBorrowingConversations}
+			</li>
+		{:else}
+			{#each visibleConversations as conversation (conversation.id)}
+				<ConversationListItem {conversation} {currentUser} {PB_IMG_URL} />
+			{/each}
+		{/if}
 	</ul>
 </div>

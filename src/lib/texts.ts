@@ -73,8 +73,8 @@ export const texts = {
 		signalTooltipText:
 			'In der Signal App kannst du einen teilbaren Link unter Einstellungen > Profil > Namen/Profillink erstellen. Kopiere den kompletten Link in dieses Feld.',
 		visibleToTrustedOnly: 'Nur Vertrauten zeigen',
-		contactViaTelegram: 'Nachricht via Telegram',
-		contactViaSignal: 'Nachricht via Signal',
+		contactViaTelegram: 'Telegram',
+		contactViaSignal: 'Signal',
 		onlyForTrusted: 'Nur für Vertraute sichtbar',
 	},
 
@@ -206,6 +206,10 @@ export const texts = {
 		},
 		conversations: {
 			title: 'Anfragen',
+			lending: 'Verleihen',
+			borrowing: 'Ausleihen',
+			noLendingConversations: 'Keine Anfragen für deine Sachen.',
+			noBorrowingConversations: 'Du hast noch nichts angefragt.',
 		},
 		items: {
 			title: 'Meine Dinge',
