@@ -194,6 +194,10 @@ export const texts = {
 		},
 		conversations: {
 			title: 'Anfragen',
+			lending: 'Verleihen',
+			borrowing: 'Leihen',
+			noLendingConversations: 'Keine Anfragen für deine Sachen.',
+			noBorrowingConversations: 'Du hast noch nichts angefragt.',
 		},
 		items: {
 			title: 'Meine Dinge',
