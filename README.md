@@ -4,8 +4,8 @@ share is a platform for sharing! The apps purpose is to allow users to find ever
 
 Here, we develop a first minimum viable product. Next milestones are roughly:
 
-- 01/2026: Ready for user testing
-- 03/2026: Most important feedback incorporated, remaining issues documented and planned for
+- 03/2026: Ready for user testing
+- 05/2026: Most important feedback incorporated, remaining issues documented and planned for
 - 06/2026: Ready for integration with lending organisations
 - 12/2026: Integration with lending organisations possible and demonstrated
 
