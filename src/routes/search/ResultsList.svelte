@@ -10,7 +10,7 @@
 	<h5>{texts.ui.resultsFound(filteredItemList.length)}</h5>
 </div>
 
-<Gallery class="grid-cols-1 gap-4 pt-2 max-md:grid-cols-2 max-sm:grid-cols-1">
+<Gallery class="gap-2 mt-4 grid-cols-1 md:grid-cols-2">
 	{#each filteredItemList as item (item.id)}
 		<ItemCard
 			{item}

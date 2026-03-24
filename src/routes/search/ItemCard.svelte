@@ -19,51 +19,49 @@
 
 </script>
 
-<div class="space-y-4">
-	<Card href="/items/{item.id}" img={imgUrl} classes={{ image: "h-48 w-48 object-cover shrink-0 md:h-48 mx-auto md:mx-0" }} horizontal size="xl">
-		<div class="m-6 grow">
-			{#if !profileView}
-			<div class="flex justify-between items-center mb-3">
-				<div class="flex">
-					<button
-					type="button"
-					onclick={(e) => { 
-						e.preventDefault(); // Prevent the default anchor behavior
-						goto(resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })); 
-						}} 
-					class="text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-2"
-				>
-						<UserCircleOutline class="h-6 w-6 inline mr-1" />
-						<span class="font-medium text-xs">{item.expand?.owner?.username ?? 'Unknown'}</span>
-					</button>
-					{#if item.trusteesOnly}
-						<Badge rounded border color="green" class="ml-2 text-xs">
-							<span class="text-green-900 bg-green-100">vertraut dir</span>
-						</Badge>
-						<div
-							class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400"
-						>
-							<button id="b3">
-								<QuestionCircleSolid class="ml-1 h-full" />
-								<span class="sr-only">{texts.ui.explainThis}</span>
-							</button>
-						</div>
-					{/if}
-				</div>
-			</div>
-			{/if}
-
-			<h5
-				class="mb-2 overflow-hidden text-2xl font-bold tracking-tight text-ellipsis text-gray-900 dark:text-white"
+<Card href="/items/{item.id}" img={imgUrl} classes={{ image: "h-48 w-48 object-cover shrink-0 md:h-48 mx-auto my-auto md:mx-0" }} horizontal size="xl">
+	<div class="m-6">
+		{#if !profileView}
+		<div class="flex justify-between items-center mb-3">
+			<div class="flex">
+				<button
+				type="button"
+				onclick={(e) => { 
+					e.preventDefault(); // Prevent the default anchor behavior
+					goto(resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })); 
+					}} 
+				class="text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-2"
 			>
-				{item.name}
-			</h5>
-			<p class="mb-3 leading-tight font-normal text-gray-700">
-				{item.description}
-			</p>
+					<UserCircleOutline class="h-6 w-6 inline mr-1" />
+					<span class="font-medium text-xs">{item.expand?.owner?.username ?? 'Unknown'}</span>
+				</button>
+				{#if item.trusteesOnly}
+					<Badge rounded border color="green" class="ml-2 text-xs">
+						<span class="text-green-900 bg-green-100">vertraut dir</span>
+					</Badge>
+					<div
+						class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400"
+					>
+						<button id="b3">
+							<QuestionCircleSolid class="ml-1 h-full" />
+							<span class="sr-only">{texts.ui.explainThis}</span>
+						</button>
+					</div>
+				{/if}
 			</div>
-	</Card>
-</div>
+		</div>
+		{/if}
+
+		<h5
+			class="mb-2 overflow-hidden text-xl font-bold tracking-tight text-ellipsis text-gray-900 dark:text-white"
+		>
+			{item.name}
+		</h5>
+		<!-- <p class="mb-3 leading-tight font-normal text-gray-700">
+			{item.description}
+		</p> -->
+		</div>
+</Card>
 
 {#if !profileView}
 	<Popover
