@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { User } from '$lib/types/models.js';
+import { texts } from '$lib/texts';
+import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 
 export async function load({ locals }) {
 	let trustees: User[] = [];
@@ -38,6 +40,13 @@ export const actions = {
 		} catch (error: Error | any) {
 			console.error(error ? error.message : error);
 		}
+
+		// Notify the newly trusted user
+		const adderName = locals.user.username ?? locals.user.name ?? 'Jemand';
+		const notificationBody = texts.notifications.trustAdded(adderName);
+
+		await createNotification(locals.pb, newTrusteeId as string, 'trust_added', locals.user.id, notificationBody);
+		await sendPushToUser(locals.pb, newTrusteeId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
 	},
 	removeTrustee: async ({ request, locals }): Promise<void> => {
 		const formData = await request.formData();

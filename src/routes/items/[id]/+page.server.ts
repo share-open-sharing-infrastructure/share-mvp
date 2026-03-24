@@ -3,6 +3,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import type { Item } from '$lib/types/models';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 
 export async function load({ params, locals }) {
 	let item: Item;
@@ -66,6 +67,17 @@ export const actions = {
 
 		if (conversation) {
 			const conversationId: string = conversation.id;
+
+			// Notify the item owner about the new request
+			const itemRecord = await locals.pb.collection('items').getOne(itemId as string).catch(() => null);
+			const requesterName = locals.user.username ?? locals.user.name ?? 'Jemand';
+			const itemName = itemRecord?.name ?? 'einem Gegenstand';
+			const notificationBody = texts.notifications.newRequest(requesterName, itemName);
+			const conversationUrl = `/conversations/${conversationId}`;
+
+			await createNotification(locals.pb, itemOwnerId as string, 'new_request', conversationId, notificationBody);
+			await sendPushToUser(locals.pb, itemOwnerId as string, texts.notifications.pushTitle, notificationBody, conversationUrl);
+
 			redirect(303, `/conversations/${conversationId}`);
 		}
 	},

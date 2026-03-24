@@ -23,6 +23,7 @@ export const texts = {
 		register: 'Registrieren',
 		search: 'Suche',
 		requests: 'Anfragen',
+		notifications: 'Benachrichtigungen',
 		myItems: 'Meine Dinge',
 		myProfile: 'Mein Profil',
 		social: 'Vertraute',
@@ -236,6 +237,16 @@ export const texts = {
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
 			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen. Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen. Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.',
 		},
+	},
+
+	// Notifications
+	notifications: {
+		title: 'Benachrichtigungen',
+		empty: 'Keine Benachrichtigungen',
+		newMessage: (from: string) => `Neue Nachricht von ${from}`,
+		newRequest: (from: string, item: string) => `${from} möchte „${item}" ausleihen`,
+		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
+		pushTitle: 'AllerLeih',
 	},
 
 	// Flash messages and alerts

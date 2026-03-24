@@ -15,9 +15,13 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
-	import { ChevronDownOutline, ChevronRightOutline, UserCircleOutline } from 'flowbite-svelte-icons';
+	import { BellOutline, ChevronDownOutline, ChevronRightOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 
-	let { loggedIn, currentUser } = $props();
+	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
+		loggedIn: boolean;
+		currentUser: unknown;
+		unreadCount?: number;
+	}>();
 
 	let activeUrl = $derived(page.url.pathname);
 
@@ -60,6 +64,16 @@
 		{/if}
 		{#if loggedIn}
 			<NavLi href={resolve('/conversations')}>{texts.nav.requests}</NavLi>
+			<NavLi href={resolve('/notifications')} class="relative">
+				<span class="relative inline-flex items-center gap-1">
+					<BellOutline class="h-5 w-5" />
+					{#if unreadCount > 0}
+						<span class="absolute -top-2 -right-3 min-w-[1.1rem] h-[1.1rem] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
+							{unreadCount > 9 ? '9+' : unreadCount}
+						</span>
+					{/if}
+				</span>
+			</NavLi>
 			<NavLi class="cursor-pointer"
 				>Soziales<ChevronDownOutline
 					class="text-primary-800 inline h-6 w-6 dark:text-white"

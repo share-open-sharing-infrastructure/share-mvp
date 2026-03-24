@@ -126,3 +126,20 @@ export interface Conversation extends PocketBaseEntity {
 	readByRequester: boolean;
 	readByOwner: boolean;
 }
+
+// --- NOTIFICATION ---
+
+export type NotificationType = 'new_message' | 'new_request' | 'trust_added';
+
+export interface Notification extends PocketBaseEntity {
+	/** Foreign key: recipient user id */
+	recipient: UserId;
+	/** Type of notification */
+	type: NotificationType;
+	/** Related record id (conversation id or user id) */
+	relatedId: string;
+	/** Pre-formatted German display text */
+	body: string;
+	/** Whether the recipient has seen this notification */
+	read: boolean;
+}
