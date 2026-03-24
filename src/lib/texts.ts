@@ -230,6 +230,7 @@ export const texts = {
 			trustedItems: 'Nur für Vertraute',
 			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
+			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen. Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen. Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.',
 		},
 	},
 

@@ -22,7 +22,7 @@
 	let suggestionsEl: HTMLUListElement | undefined = $state(undefined);
 
 	const fetchSuggestions = debounce(async (q: string) => {
-		if (q.length < 2) {
+		if (q.length < 3) {
 			suggestions = [];
 			isLoadingGeo = false;
 			return;
@@ -42,9 +42,11 @@
 	function handleCityInput(e: Event) {
 		cityText = (e.target as HTMLInputElement).value;
 		selectedGeo = null;
-		isLoadingGeo = true;
-		showSuggestions = false;
-		fetchSuggestions(cityText);
+		if(cityText.length > 3) {
+			isLoadingGeo = true;
+			showSuggestions = false;
+			fetchSuggestions(cityText);
+		}
 	}
 
 	function selectSuggestion(s: { label: string; lon: number; lat: number }) {
@@ -123,12 +125,9 @@
 						{texts.ui.location}
 					</label>
 					<p class="text-sm text-gray-600 dark:text-gray-400 my-2">
-						AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. 
-						Wir geben deine Adresse nicht nach außen.
-						Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen.
-						Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.
-						<!-- {texts.messenger.introText} -->
+						{texts.pages.userProfile.addressNote}
 					</p>
+				
 					<div class="relative">
 						<input
 							type="text"
@@ -143,8 +142,8 @@
 						{#if isLoadingGeo}
 							<span class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
 								<svg class="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-									<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+									<circle class="opacity-75" cx="12" cy="12" r="10" stroke="green" stroke-width="4"></circle>
+									<path class="opacity-100" fill="green" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
 								</svg>
 							</span>
 						{/if}
@@ -153,7 +152,7 @@
 								bind:this={suggestionsEl}
 								class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60 overflow-auto"
 							>
-								{#each suggestions as s (s.label)}
+								{#each suggestions as s (suggestions.indexOf(s))}
 									<li>
 										<button
 											type="button"

@@ -30,7 +30,7 @@ export const actions = {
 
 		// Handle other fields
 		const city = formData?.get('city')?.toString();
-		if (city && city.trim() !== '') {
+		if(city || city === '') {
 			updateData['city'] = city.trim();
 		}
 
@@ -94,6 +94,9 @@ export const actions = {
 			if (!isNaN(lon) && !isNaN(lat)) {
 				updateData['geolocation'] = { lon, lat };
 			}
+		} else if (city === ''){
+			// If city is cleared, also clear geolocation
+			updateData['geolocation'] = null;
 		}
 
 		try {
