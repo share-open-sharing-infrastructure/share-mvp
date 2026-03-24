@@ -4,7 +4,7 @@
 
 	let { data, children } = $props();
 
-	let activeTab: 'lending' | 'borrowing' = $state('lending');
+	let activeTab: 'lending' | 'borrowing' = $state('borrowing');
 
 	const lendingConversations = $derived(
 		data.conversations.filter((c: any) => c.itemOwner === data.currentUser.id)
@@ -27,30 +27,11 @@
 <div class="flex justify-center px-2 mt-3 mb-1">
 	<div class="flex gap-2 w-full max-w-3xl">
 		<button
-			onclick={() => (activeTab = 'lending')}
-			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors
-				{activeTab === 'lending'
-				? 'bg-amber-400 text-amber-900 shadow-sm'
-				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300'}"
-		>
-			{texts.pages.conversations.lending}
-			{#if lendingConversations.length > 0}
-				<span
-					class="rounded-full px-2 py-0.5 text-xs leading-none
-						{activeTab === 'lending'
-						? 'bg-amber-600 text-white'
-						: 'bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}"
-				>
-					{lendingConversations.length}
-				</span>
-			{/if}
-		</button>
-		<button
 			onclick={() => (activeTab = 'borrowing')}
-			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors
+			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-primary
 				{activeTab === 'borrowing'
 				? 'bg-blue-500 text-white shadow-sm'
-				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300'}"
+				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300 hover:bg-primary-50'}"
 		>
 			{texts.pages.conversations.borrowing}
 			{#if borrowingConversations.length > 0}
@@ -61,6 +42,25 @@
 						: 'bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}"
 				>
 					{borrowingConversations.length}
+				</span>
+			{/if}
+		</button>
+		<button
+			onclick={() => (activeTab = 'lending')}
+			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-accent
+				{activeTab === 'lending'
+				? 'bg-amber-400 text-amber-900 shadow-sm'
+				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300 '}"
+		>
+			{texts.pages.conversations.lending}
+			{#if lendingConversations.length > 0}
+				<span
+					class="rounded-full px-2 py-0.5 text-xs leading-none
+						{activeTab === 'lending'
+						? 'bg-accent text-white'
+						: 'bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300 '}"
+				>
+					{lendingConversations.length}
 				</span>
 			{/if}
 		</button>

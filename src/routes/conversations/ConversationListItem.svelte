@@ -30,7 +30,7 @@
 		href={resolve(`/conversations/${conversation.id}`)}
 		class="flex items-center gap-2.5 rounded-xl p-2 transition-colors
 			{isActive
-			? 'bg-amber-50 dark:bg-amber-900/20'
+			? 'border border-accent dark:bg-amber-900/20'
 			: 'hover:bg-gray-50 dark:hover:bg-gray-800'}"
 	>
 		<!-- Item thumbnail -->

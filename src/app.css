@@ -6,11 +6,12 @@
 
 @theme {
 	--color-primary: #4da2ff;
-	--color-primary-50: #deeeff;
+	--color-primary-50: #eaf4ff;
 	--color-primary-200: #6ab2ff;
 	--color-secondary: #5ec900;
 	--color-accent: #fb4a03;
 	--color-accent-50: #fb490380;
+	--color-accent-100: #ffd9ca;
 	--color-accent-200: #ff6122;
 
 	--color-danger: #d9003d;

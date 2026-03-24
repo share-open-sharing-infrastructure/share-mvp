@@ -195,7 +195,7 @@ export const texts = {
 		conversations: {
 			title: 'Anfragen',
 			lending: 'Verleihen',
-			borrowing: 'Leihen',
+			borrowing: 'Ausleihen',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
 			noBorrowingConversations: 'Du hast noch nichts angefragt.',
 		},
