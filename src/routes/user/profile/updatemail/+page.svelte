@@ -11,7 +11,7 @@
 </script>
 
 <Section name="reset">
-	<Register href={resolve('/')} class="w-md">
+	<Register href={resolve('/')} class="w-full max-w-md">
 		{#snippet top()}
 			{texts.pages.updatemail.title}
 		{/snippet}
