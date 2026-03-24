@@ -133,7 +133,7 @@ export const texts = {
 		welcomeShort: 'Willkommen!',
 		welcomeBack: 'Willkommen zurück!',
 		profileTitle: 'Dein Profil',
-		location: 'Standort/Postleitzahl:',
+		location: 'Deine Adresse:',
 		username: 'Nutzername:',
 		contact: 'Kontaktieren',
 		trustFunction: 'Vertrauensfunktion',

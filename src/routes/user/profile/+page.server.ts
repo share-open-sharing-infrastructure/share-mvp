@@ -85,6 +85,17 @@ export const actions = {
 			formData?.get('signalVisibleToTrustedOnly') === 'on';
 		updateData['signalVisibleToTrustedOnly'] = signalVisibleToTrustedOnly;
 
+		// Handle geolocation (only set when user explicitly selected a geocode suggestion)
+		const geoLon = formData?.get('geolocation_lon')?.toString();
+		const geoLat = formData?.get('geolocation_lat')?.toString();
+		if (geoLon && geoLat) {
+			const lon = parseFloat(geoLon);
+			const lat = parseFloat(geoLat);
+			if (!isNaN(lon) && !isNaN(lat)) {
+				updateData['geolocation'] = { lon, lat };
+			}
+		}
+
 		try {
 			if (Object.keys(updateData).length > 0) {
 				await locals.pb.collection('users').update(locals.user.id, updateData);
