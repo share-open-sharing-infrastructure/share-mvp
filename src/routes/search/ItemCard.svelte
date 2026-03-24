@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { Badge, Card } from 'flowbite-svelte';
-	import { MapPinOutline, UserCircleOutline } from 'flowbite-svelte-icons';
+	import { UserCircleOutline } from 'flowbite-svelte-icons';
 	import { Popover } from 'flowbite-svelte';
 	import {
 		QuestionCircleSolid,
@@ -31,13 +31,13 @@
 						e.preventDefault(); // Prevent the default anchor behavior
 						goto(resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })); 
 						}} 
-					class="text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-2 py-1"
+					class="text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-2"
 				>
 						<UserCircleOutline class="h-6 w-6 inline mr-1" />
-						<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
+						<span class="font-medium text-xs">{item.expand?.owner?.username ?? 'Unknown'}</span>
 					</button>
 					{#if item.trusteesOnly}
-						<Badge rounded border color="green" class="ml-2">
+						<Badge rounded border color="green" class="ml-2 text-xs">
 							<span class="text-green-900 bg-green-100">vertraut dir</span>
 						</Badge>
 						<div
@@ -50,11 +50,6 @@
 						</div>
 					{/if}
 				</div>
-
-				<span class="flex items-center gap-1 text-accent font-medium">
-					<MapPinOutline class="h-4 w-4" />
-					{item.expand?.owner?.city ?? ''}
-				</span>
 			</div>
 			{/if}
 

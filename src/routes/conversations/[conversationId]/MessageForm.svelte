@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
-	import { Button, Input, Label } from 'flowbite-svelte';
 	import { PaperPlaneSolid } from 'flowbite-svelte-icons';
 
 	let {
@@ -9,10 +8,11 @@
 		isSubmitting = $bindable(),
 		messageText = $bindable(),
 	} = $props();
+	
 </script>
 
 <form
-	class="flex w-full items-end gap-2"
+	class="flex w-full items-center gap-2"
 	method="POST"
 	action="?/sendMessage"
 	use:enhance={() => {
@@ -24,20 +24,23 @@
 		};
 	}}
 >
-	<Input name="chatPartnerId" value={chatPartner.id} hidden></Input>
-	<Label class="w-full ">
-		<Input
-			name="messageContent"
-			type="text"
-			placeholder={texts.forms.messagePlaceholder}
-			class="w-full search-bar"
-			required
-			autocomplete="off"
-			autofocus={true}
-			bind:value={messageText}
-		/>
-	</Label>
-	<Button class="min-button bg-primary" type="submit" disabled={isSubmitting}
-		><PaperPlaneSolid class="shrink-0 h-full" /></Button
+	<input name="chatPartnerId" value={chatPartner.id} hidden />
+	<!-- svelte-ignore a11y_autofocus -->
+	<input
+		name="messageContent"
+		type="text"
+		placeholder={texts.forms.messagePlaceholder}
+		class="flex-1 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-300 dark:focus:ring-primary-700 transition"
+		required
+		autocomplete="off"
+		autofocus={true}
+		bind:value={messageText}
+	/>
+	<button
+		type="submit"
+		disabled={isSubmitting}
+		class="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-white hover:bg-primary-600 disabled:opacity-50 transition-colors shrink-0"
 	>
+		<PaperPlaneSolid class="w-4 h-4" />
+	</button>
 </form>

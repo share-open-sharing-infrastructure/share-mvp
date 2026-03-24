@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { Button, Tooltip } from 'flowbite-svelte';
-	import { MessagesOutline, PaperPlaneSolid } from 'flowbite-svelte-icons';
+	import { Tooltip } from 'flowbite-svelte';
 	import type { User } from '$lib/types/models';
+	import telegramLogo from '$lib/images/telegram-logo.svg';
+	import signalLogo from '$lib/images/Signal-Logo-White.svg';
 
 	interface Props {
 		chatPartner: User;
@@ -11,34 +12,24 @@
 
 	let { chatPartner, currentUser }: Props = $props();
 
-	// Determine if current user is trusted
-	const isUserTrusted = $derived(
-		chatPartner.trusts?.includes(currentUser.id) ?? false
-	);
+	const isUserTrusted = $derived(chatPartner.trusts?.includes(currentUser.id) ?? false);
 
-	// Telegram: check if contact is available and permitted
 	const telegramAvailable = $derived(
 		chatPartner.telegramUsername &&
 			chatPartner.telegramUsername.trim() !== '' &&
 			(!chatPartner.telegramVisibleToTrustedOnly || isUserTrusted)
 	);
-
-	// Telegram: check if hidden due to trust restriction
 	const telegramHidden = $derived(
 		chatPartner.telegramUsername &&
 			chatPartner.telegramUsername.trim() !== '' &&
 			chatPartner.telegramVisibleToTrustedOnly &&
 			!isUserTrusted
 	);
-
-	// Signal: check if contact is available and permitted
 	const signalAvailable = $derived(
 		chatPartner.signalLink &&
 			chatPartner.signalLink.trim() !== '' &&
 			(!chatPartner.signalVisibleToTrustedOnly || isUserTrusted)
 	);
-
-	// Signal: check if hidden due to trust restriction
 	const signalHidden = $derived(
 		chatPartner.signalLink &&
 			chatPartner.signalLink.trim() !== '' &&
@@ -46,81 +37,59 @@
 			!isUserTrusted
 	);
 
-	// Build Telegram link using t.me (works on web and app)
 	const telegramLink = $derived(
 		telegramAvailable ? `tg:https://t.me/${chatPartner.telegramUsername}` : null
 	);
-
-	// Signal link is already stored
 	const signalLink = $derived(signalAvailable ? chatPartner.signalLink : null);
 
 	function handleTelegramClick() {
-		if (telegramLink) {
-			// Open in new tab to ensure web fallback works if app not installed
-			window.open(telegramLink, '_blank', 'noopener,noreferrer');
-		}
+		if (telegramLink) window.open(telegramLink, '_blank', 'noopener,noreferrer');
 	}
-
 	function handleSignalClick() {
-		if (signalLink) {
-			// Open in new tab for Signal as well
-			window.open(signalLink, '_blank', 'noopener,noreferrer');
-		}
+		if (signalLink) window.open(signalLink, '_blank', 'noopener,noreferrer');
 	}
 </script>
 
 {#if telegramAvailable || telegramHidden || signalAvailable || signalHidden}
-	<div class="flex gap-2 p-2 justify-center mb-2">
-		<!-- Telegram Button -->
+	<div class="flex gap-2 px-3 py-2 border-b justify-center">
+		<!-- Telegram -->
 		{#if telegramAvailable}
-			<Button
-				color="blue"
-				size="sm"
+			<button
 				onclick={handleTelegramClick}
-				class="flex items-center gap-2"
+				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-white bg-[#2CA5E0] hover:bg-[#229ED9] transition-colors"
 			>
-				<MessagesOutline class="h-4 w-4" />
+				<img src={telegramLogo} class="w-4 h-4" alt="Telegram" />
 				{texts.messenger.contactViaTelegram}
-			</Button>
+			</button>
 		{:else if telegramHidden}
-			<Button
+			<button
 				disabled
-				color="gray"
-				size="sm"
-				class="flex items-center gap-2 opacity-50 cursor-not-allowed"
+				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed"
 			>
-				<MessagesOutline class="h-4 w-4" />
+				<img src={telegramLogo} class="w-4 h-4 opacity-50" alt="Telegram" />
 				{texts.messenger.contactViaTelegram}
-			</Button>
-			<Tooltip type="light" placement="top">
-				{texts.messenger.onlyForTrusted}
-			</Tooltip>
+			</button>
+			<Tooltip type="light" placement="top">{texts.messenger.onlyForTrusted}</Tooltip>
 		{/if}
 
-		<!-- Signal Button -->
+		<!-- Signal -->
 		{#if signalAvailable}
-			<Button
-				color="purple"
-				size="sm"
+			<button
 				onclick={handleSignalClick}
-				class="flex items-center gap-2"
+				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-white bg-[#2C6BED] hover:bg-[#2460D4] transition-colors"
 			>
-				<PaperPlaneSolid class="h-4 w-4" />
+				<img src={signalLogo} class="w-4 h-4" alt="Signal" />
 				{texts.messenger.contactViaSignal}
-			</Button>
+			</button>
 		{:else if signalHidden}
-			<Button
+			<button
 				disabled
-				color="gray"
-				size="sm"
-				class="flex items-center gap-2 opacity-50 cursor-not-allowed"
+				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed"
 			>
-				<PaperPlaneSolid class="h-4 w-4" />
+				<img src={signalLogo} class="w-4 h-4 opacity-50" alt="Signal" />
 				{texts.messenger.contactViaSignal}
-			</Button>
-			<Tooltip type="light" placement="top">
-				{texts.messenger.onlyForTrusted}
-			</Tooltip>
+			</button>
+			<Tooltip type="light" placement="top">{texts.messenger.onlyForTrusted}</Tooltip>
 		{/if}
 	</div>
 {/if}
