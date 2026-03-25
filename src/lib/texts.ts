@@ -249,6 +249,19 @@ export const texts = {
 		pushTitle: 'AllerLeih',
 	},
 
+	// PWA install and notification prompts
+	pwa: {
+		notifBannerText: 'Erhalte Benachrichtigungen für neue Nachrichten und Anfragen.',
+		notifEnable: 'Aktivieren',
+		notifDismiss: 'Später',
+		installBannerText: 'Installiere AllerLeih für das beste Erlebnis.',
+		installButton: 'Installieren',
+		installDismiss: 'Nicht jetzt',
+		installManualFirefox: 'Tippe auf ⋮ → „Zum Startbildschirm hinzufügen"',
+		installManualIos: 'Tippe auf ⬆ → „Zum Home-Bildschirm"',
+		installManualGeneric: 'Tippe im Browser-Menü auf „Zum Startbildschirm hinzufügen"',
+	},
+
 	// Flash messages and alerts
 	alerts: {
 		errorPrefix: 'Error:',
