@@ -22,6 +22,9 @@ jobs:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
           LOGIN_SECRET: ${{ secrets.LOGIN_SECRET }}
           ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
+          PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:
