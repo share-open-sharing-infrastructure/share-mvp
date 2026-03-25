@@ -2,6 +2,8 @@ import { error, redirect } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
+import { texts } from '$lib/texts';
+import { createNotification, sendPushToUser } from '$lib/server/notifications';
 
 export async function load({ params, locals }) {
 	if (!locals.pb.authStore.isValid) {
@@ -57,6 +59,13 @@ export const actions = {
 		} catch (err) {
 			console.error('Failed to add trust', err);
 		}
+
+		// Notify the newly trusted user
+		const adderName = locals.user.username ?? locals.user.name ?? 'Jemand';
+		const notificationBody = texts.notifications.trustAdded(adderName);
+
+		await createNotification(locals.pb, profileUserId as string, 'trust_added', locals.user.id, notificationBody);
+		await sendPushToUser(locals.pb, profileUserId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
 	},
 	removeTrust: async ({ params, locals }): Promise<void> => {
 		const profileUserId = params.id;
