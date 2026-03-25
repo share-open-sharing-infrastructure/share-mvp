@@ -4,15 +4,24 @@
 	import FeedbackForm from '$lib/components/FeedbackForm.svelte';
 	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
+	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import PocketBase from 'pocketbase';
 	import { PUBLIC_PB_URL, PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { SvelteSet } from 'svelte/reactivity';
+
+	interface BeforeInstallPromptEvent extends Event {
+		prompt(): Promise<void>;
+		userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+	}
 
 	let { children, data } = $props();
 
 	let isFeedbackModalOpen = $state(false);
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let unreadCount = $state(0);
+	let installPromptEvent = $state<BeforeInstallPromptEvent | null>(null);
 
 	// Keep the local unread count in sync when the server reloads page data
 	$effect(() => {
@@ -20,6 +29,12 @@
 	});
 
 	onMount(() => {
+		// Capture Chrome/Edge's install prompt before it shows the mini-infobar
+		window.addEventListener('beforeinstallprompt', (e) => {
+			e.preventDefault();
+			installPromptEvent = e as BeforeInstallPromptEvent;
+		});
+
 		if (!data.currentUser) return;
 
 		// ── Realtime notification badge ──────────────────────────────────────
@@ -27,7 +42,7 @@
 		pb.authStore.loadFromCookie(document.cookie || '');
 
 		// Track IDs we silently absorbed so we don't double-decrement
-		const suppressedIds = new Set<string>();
+		const suppressedIds = new SvelteSetSet<string>();
 
 		pb.collection('notifications').subscribe('*', (e) => {
 			if (e.record.recipient !== data.currentUser?.id) return;
@@ -51,44 +66,46 @@
 			}
 		});
 
-		// ── PWA push subscription ────────────────────────────────────────────
-		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
-		navigator.serviceWorker.ready.then(async (registration) => {
-			// Don't prompt again if already granted/denied
-			if (Notification.permission === 'denied') return;
-
-			const permission = await Notification.requestPermission();
-			if (permission !== 'granted') return;
-
-			try {
-				const existing = await registration.pushManager.getSubscription();
-				const subscription =
-					existing ??
-					(await registration.pushManager.subscribe({
-						userVisibleOnly: true,
-						applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_PUBLIC_KEY),
-					}));
-
-				const { endpoint, keys } = subscription.toJSON() as {
-					endpoint: string;
-					keys: { p256dh: string; auth: string };
-				};
-
-				await fetch('/api/push-subscribe', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ endpoint, keys }),
-				});
-			} catch (err) {
-				console.error('Push subscription failed:', err);
-			}
-		});
+		// If push permission was already granted on a previous session, re-register
+		// the subscription silently (covers cleared browser data / new device scenarios)
+		if ('Notification' in window && Notification.permission === 'granted') {
+			setupPushSubscription();
+		}
 
 		return () => {
 			pb.collection('notifications').unsubscribe('*');
 		};
 	});
+
+	/** Sets up the Web Push subscription and registers it with the server.
+	 *  Called either silently (permission already granted) or after the user
+	 *  taps "Aktivieren" in PwaPrompts (satisfying the user-gesture requirement). */
+	async function setupPushSubscription(): Promise<void> {
+		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+		try {
+			const registration = await navigator.serviceWorker.ready;
+			const existing = await registration.pushManager.getSubscription();
+			const subscription =
+				existing ??
+				(await registration.pushManager.subscribe({
+					userVisibleOnly: true,
+					applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_PUBLIC_KEY),
+				}));
+
+			const { endpoint, keys } = subscription.toJSON() as {
+				endpoint: string;
+				keys: { p256dh: string; auth: string };
+			};
+
+			await fetch('/api/push-subscribe', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ endpoint, keys }),
+			});
+		} catch (err) {
+			console.error('Push subscription failed:', err);
+		}
+	}
 
 	/** Convert a base64url VAPID public key to a Uint8Array for the Web Push API. */
 	function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
@@ -113,6 +130,12 @@
 	<main class="flex-1">
 		{@render children()}
 	</main>
+
+	<PwaPrompts
+		loggedIn={!!data.currentUser}
+		onNotificationGranted={setupPushSubscription}
+		{installPromptEvent}
+	/>
 
 	<Button
 		pill
