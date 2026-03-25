@@ -42,7 +42,7 @@
 		pb.authStore.loadFromCookie(document.cookie || '');
 
 		// Track IDs we silently absorbed so we don't double-decrement
-		const suppressedIds = new SvelteSetSet<string>();
+		const suppressedIds = new SvelteSet<string>();
 
 		pb.collection('notifications').subscribe('*', (e) => {
 			if (e.record.recipient !== data.currentUser?.id) return;
