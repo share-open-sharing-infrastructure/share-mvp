@@ -9,6 +9,7 @@ declare global {
 		// interface Error {}
 		interface PageData {
 			currentUser: import('pocketbase').Record | null;
+			unreadNotificationCount?: number;
 		}
 		// interface PageState {}
 		// interface Platform {}

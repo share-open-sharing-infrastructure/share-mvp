@@ -3,6 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Conversation, Message } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
+import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 
 export async function load({ params, locals }) {
 	const conversationId: string = params.conversationId;
@@ -30,6 +31,22 @@ export async function load({ params, locals }) {
 		updated: conversationRecord.updated,
 	};
 
+	// Mark the conversation as read for the current viewer
+	if (locals.user) {
+		const isRequester = conversationRecord.requester === locals.user.id;
+		const isOwner = conversationRecord.itemOwner === locals.user.id;
+		const needsUpdate =
+			(isRequester && !conversationRecord.readByRequester) ||
+			(isOwner && !conversationRecord.readByOwner);
+
+		if (needsUpdate) {
+			await locals.pb.collection('conversations').update(conversationId, {
+				...(isRequester && { readByRequester: true }),
+				...(isOwner && { readByOwner: true }),
+			});
+		}
+	}
+
 	return {
 		conversation,
 		PB_URL: PUBLIC_PB_URL,
@@ -39,9 +56,8 @@ export async function load({ params, locals }) {
 export const actions = {
 	sendMessage: async ({ locals, request, params }) => {
 		const formData = await request.formData();
-		
+
 		const messageContent = formData.get('messageContent');
-		console.log('Sending message...', messageContent);
 		const fromUserId = locals.user.id;
 		const toUserId = formData.get('chatPartnerId') as string;
 
@@ -50,7 +66,6 @@ export const actions = {
 			from: fromUserId,
 			to: toUserId,
 		};
-		console.log('Sending message...', messageData);
 
 		let createdMessage: Message;
 		// try to send message to database
@@ -66,20 +81,27 @@ export const actions = {
 			});
 		}
 
-		// Append created messages to conversation
+		// Append created message to conversation and update unread status for recipient
 		if (createdMessage) {
 			const conversationId: string = params.conversationId;
 			const conversationRecord = await locals.pb
 				.collection('conversations')
-				.getOne(conversationId);
+				.getOne(conversationId, { expand: 'requester,itemOwner,requestedItem' });
 			const updatedMessages = conversationRecord.messages
 				? [...conversationRecord.messages, createdMessage.id]
 				: [createdMessage.id];
 
+			// Mark conversation as unread for the recipient
+			const recipientIsRequester = conversationRecord.requester === toUserId;
 			try {
 				await locals.pb
 					.collection('conversations')
-					.update(conversationId, { messages: updatedMessages });
+					.update(conversationId, {
+						messages: updatedMessages,
+						...(recipientIsRequester
+							? { readByRequester: false }
+							: { readByOwner: false }),
+					});
 			} catch (err) {
 				const e = err as Partial<ClientResponseError>;
 				return fail(e.status ?? 500, {
@@ -87,6 +109,14 @@ export const actions = {
 					message: e.data?.message ?? texts.errors.failedToSendMessage,
 				});
 			}
+
+			// Create in-app notification and send push for the recipient
+			const senderName = locals.user.username ?? locals.user.name ?? 'Jemand';
+			const notificationBody = texts.notifications.newMessage(senderName);
+			const conversationUrl = `/conversations/${conversationId}`;
+
+			await createNotification(locals.pb, toUserId, 'new_message', conversationId, notificationBody);
+			await sendPushToUser(locals.pb, toUserId, texts.notifications.pushTitle, notificationBody, conversationUrl);
 		}
 	},
 	deleteConversation: async ({ locals, request }) => {

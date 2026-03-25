@@ -1,17 +1,47 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import ConversationList from './ConversationList.svelte';
+	import PocketBase from 'pocketbase';
+	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { onMount } from 'svelte';
 
 	let { data, children } = $props();
 
 	let activeTab: 'lending' | 'borrowing' = $state('borrowing');
 
+	// Local mutable copy so realtime updates can clear the unread dots
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let conversations: any[] = $state([]);
+
+	// Sync from server data on first render and whenever data refreshes
+	$effect(() => {
+		conversations = [...data.conversations];
+	});
+
 	const lendingConversations = $derived(
-		data.conversations.filter((c: any) => c.itemOwner === data.currentUser.id)
+		conversations.filter((c: any) => c.itemOwner === data.currentUser.id)
 	);
 	const borrowingConversations = $derived(
-		data.conversations.filter((c: any) => c.requester === data.currentUser.id)
+		conversations.filter((c: any) => c.requester === data.currentUser.id)
 	);
+
+	onMount(() => {
+		const pb = new PocketBase(PUBLIC_PB_URL);
+		pb.authStore.loadFromCookie(document.cookie || '');
+
+		pb.collection('conversations').subscribe('*', (e) => {
+			if (e.action !== 'update') return;
+			conversations = conversations.map((c) =>
+				c.id === e.record.id
+					? { ...c, readByOwner: e.record.readByOwner, readByRequester: e.record.readByRequester }
+					: c
+			);
+		});
+
+		return () => {
+			pb.collection('conversations').unsubscribe('*');
+		};
+	});
 </script>
 
 <!-- HEADER -->
