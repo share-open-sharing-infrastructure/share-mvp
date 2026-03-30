@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AllerLeih** is an item-sharing platform. Users list items they are willing to share or lend, and browse and request items from others. The trust system lets owners restrict certain items to trusted users only. The UI is entirely in German.
 
+## User interaction
+
+- Claude always asks the user relevant questions before developing an implementation plan.
+
 ## Tech stack
 
 | Layer | Technology |
