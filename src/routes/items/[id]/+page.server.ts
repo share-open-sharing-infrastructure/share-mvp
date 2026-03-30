@@ -36,6 +36,30 @@ export async function load({ params, locals }) {
 }
 
 export const actions = {
+	toggleStatus: async ({ locals, request, params }) => {
+		if (!locals.user) {
+			redirect(303, `/auth/login?redirectTo=/items/${params.id}`);
+		}
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		let item: any;
+		try {
+			item = await locals.pb.collection('items').getOne(params.id);
+		} catch {
+			return fail(404, { fail: true, message: 'Gegenstand nicht gefunden.' });
+		}
+
+		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: 'Keine Berechtigung.' });
+
+		const newStatus = item.status === 'available' ? 'unavailable' : 'available';
+		try {
+			await locals.pb.collection('items').update(params.id, { status: newStatus });
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} catch (err: Error | any) {
+			console.error(err?.message ?? err);
+		}
+	},
+
 	startConversation: async ({ locals, request, params }) => {
 		if (!locals.user) {
 			redirect(303, `/auth/login?redirectTo=/items/${params.id}`);

@@ -7,7 +7,9 @@ export async function load({ locals }) {
 	const items: Item[] = await locals.pb.collection('items').getFullList({
 		expand: 'owner', // expand the relation to the 'owner' (user) collection
 		sort: '-updated', // sort by update date descending
-		filter: locals.user ? `owner != "${locals.user.id}"` : undefined, // exclude user's own items from search results (if logged in)
+		filter: locals.user
+			? `owner != "${locals.user.id}" && status = "available"`
+			: `status = "available"`, // exclude user's own items and unavailable items from search results
 	});
 
 	// Filter out items which the current user is not trusted with

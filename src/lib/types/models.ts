@@ -100,6 +100,9 @@ export interface Item extends PocketBaseEntity {
 	/** If true, only users in the owner's trusts list can borrow this item */
 	trusteesOnly: boolean;
 
+	/** Availability status set by the owner */
+	status: 'available' | 'unavailable';
+
 	/** PocketBase collection id to which the item belongs */
 	/** TODO: I don't know why we save this? This should always be the "items" collection, right? */
 	collectionId: string;
