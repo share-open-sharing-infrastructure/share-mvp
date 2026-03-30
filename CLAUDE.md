@@ -2,7 +2,7 @@
 
 ## Project overview
 
-**AllerLeih** ("share for all") is a local item-sharing/lending platform. Users list items they are willing to lend, browse and request items from others, and manage a trust network that controls item visibility. The UI is entirely in German for now.
+**AllerLeih** is a local item-sharing/lending platform. Users list items they are willing to lend, browse and request items from others, and manage a trust network that controls item visibility. The UI is entirely in German for now.
 
 - Hosted PocketBase backend: `https://pocketbase.menkent.uber.space/`
 - Current milestone: user testing MVP (Jan 2026); organizational integration targeted for mid-to-late 2026
@@ -43,7 +43,7 @@ src/
 │   ├── server/
 │   │   └── itemFilters.ts      # Trust-based item visibility filtering
 │   ├── types/
-│   │   └── models.ts           # TypeScript interfaces for PocketBase collections
+│   │   └── models.ts           # TypeScript interfaces for PocketBase collections / data model
 │   ├── utils/
 │   │   └── utils.ts            # formatTimestamp(), setupPocketBaseSubscription()
 │   └── texts.ts                # ALL German UI strings — add new strings here
@@ -83,22 +83,6 @@ Use the new runes API throughout:
 ### CRITICAL: do not destructure the `data` prop
 
 Breaking `use:enhance` reactivity is the #1 footgun in this codebase. Always access page data directly from the `data` prop:
-
-```svelte
-<!-- CORRECT -->
-<script lang="ts">
-  const { data } = $props();
-</script>
-{#each data.items as item}...{/each}
-
-<!-- WRONG — breaks use:enhance, UI won't update after form actions -->
-<script lang="ts">
-  const { data } = $props();
-  let items = data.items;  // detached from reactivity
-</script>
-```
-
-See [docs/best-practices.md](docs/best-practices.md) for the full explanation with examples.
 
 ### PocketBase access pattern
 
@@ -152,33 +136,9 @@ See [docs/data-model.md](docs/data-model.md) for ER diagrams.
 
 Unprotected routes: `/auth/login`, `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`, `/` (home)
 
-## Trust system
-
-Users maintain a `trusts` array of other user IDs. Items can be marked `trusteesOnly`, making them visible only to users in the owner's trust list.
-
-- Filtering logic: `filterTrustedItems()` in [src/lib/server/itemFilters.ts](src/lib/server/itemFilters.ts)
-- Trust management UI: `/social/` route
-- Other user profiles: `/users/[id]/` (add/remove trust from here)
 
 ## Text management
 
 All German UI strings live in [src/lib/texts.ts](src/lib/texts.ts), organized by feature (`auth`, `nav`, `forms`, `errors`, `buttons`, etc.). Always add new user-facing strings there rather than inline in components. The file is structured for future i18n migration.
 
-## Environment variables
 
-```bash
-PUBLIC_PB_URL="..."    # PocketBase URL — accessible in browser and server
-PB_URL="..."           # PocketBase URL — server-side only
-LOGIN_SECRET="..."     # Registration secret (beta access control)
-```
-
-`PUBLIC_` prefix makes a variable available on the client side. Both PB URL variables should point to the same PocketBase instance.
-
-## Real-time subscriptions
-
-For live updates (e.g. new messages), use the helper in [src/lib/utils/utils.ts](src/lib/utils/utils.ts):
-
-```typescript
-const unsubscribe = setupPocketBaseSubscription(pb, 'messages', recordId, handleEvent);
-// call unsubscribe() on component destroy
-```
