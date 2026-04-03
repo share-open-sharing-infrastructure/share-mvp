@@ -146,6 +146,8 @@ export const texts = {
 			'Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.',
 		trustLink: 'Vertrauensfunktion',
 		trustedPeople: 'Vertraute Personen',
+		trustedByPeople: 'Personen, die dir vertrauen',
+		noOneTrustsYet: 'Noch vertraut dir niemand.',
 		trustDescriptionSocial:
 			'Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen',
 		yourItemsLink: 'deine Dinge',
