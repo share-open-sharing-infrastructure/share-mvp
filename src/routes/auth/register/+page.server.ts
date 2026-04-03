@@ -56,6 +56,14 @@ export const actions = {
 			return fail(400, { fail: true, message: texts.errors.passwordTooShort });
 		}
 
+		const username = data.get('username')?.toString().trim();
+		if (!username) {
+			return fail(400, { fail: true, message: texts.errors.usernameRequired });
+		}
+		if (username.includes(' ')) {
+			return fail(400, { fail: true, message: texts.errors.usernameNoSpaces });
+		}
+
 		const newInviteCode = crypto.randomUUID();
 		data.set('passwordConfirm', password.toString()); // TODO: Put into form eventually
 		data.set('inviteCode', newInviteCode);
@@ -70,6 +78,7 @@ export const actions = {
 			await locals.pb.collection('users').requestVerification(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
+			console.log('Registration error:', errorObj);
 			return fail(500, {
 				fail: true,
 				message: errorObj.data.message ?? texts.errors.somethingWentWrong,

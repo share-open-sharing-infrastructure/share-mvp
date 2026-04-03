@@ -8,6 +8,7 @@ export const texts = {
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',
 		passwordPlaceholder: '••••••••••',
+		usernamePlaceholder: 'z.B. NoahLüni',
 		loginFailed: 'Login fehlgeschlagen.',
 		resetPassword: 'Setze mein Passwort zurück!',
 		register: 'Registrieren',
@@ -43,6 +44,8 @@ export const texts = {
 		failedToDeleteConversation: 'Failed to delete conversation.',
 		loginFailed: 'Login fehlgeschlagen.',
 		usernameNoSpaces: 'Nutzername darf keine Leerzeichen enthalten.',
+		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
+		usernameTaken: 'Dieser Nutzername ist bereits vergeben.',
 		passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
@@ -51,6 +54,7 @@ export const texts = {
 	// Success messages
 	success: {
 		changesSaved: 'Die Änderungen wurden gespeichert!',
+		usernameAvailable: 'Nutzername ist verfügbar.',
 		loggedOut: 'Erfolgreich ausgeloggt',
 		passwordResetSent:
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
