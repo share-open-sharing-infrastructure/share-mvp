@@ -2,6 +2,7 @@
 	import { Section } from 'flowbite-svelte-blocks';
 	import SearchBar from './SearchBar.svelte';
 	import ResultsList from './ResultsList.svelte';
+	import Pagination from './Pagination.svelte';
 	import HowToButton from './HowToButton.svelte';
 	// import TransportModeSelector from './TransportModeSelector.svelte';
 	import { texts } from '$lib/texts';
@@ -144,6 +145,13 @@
 			PB_IMG_URL={data.PB_IMG_URL}
 			travelTimes={{}}
 			transportMode="bicycle"
+			totalItems={data.totalItems}
+		/>
+		<Pagination
+			page={data.page}
+			totalPages={data.totalPages}
+			perPage={data.perPage}
+			q={data.q}
 		/>
 	{/if}
 </Section>

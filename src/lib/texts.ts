@@ -192,6 +192,8 @@ export const texts = {
 				noLimit: 'Beliebig',
 				maxMinutes: (n: number) => `max. ${n} Min.`,
 			},
+			perPage: 'Pro Seite:',
+			pageInfo: (current: number, total: number) => `Seite ${current} von ${total}`,
 		},
 		logout: {
 			message: 'Ausloggen...',
