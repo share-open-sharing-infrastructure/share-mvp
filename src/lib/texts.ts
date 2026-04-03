@@ -158,7 +158,6 @@ export const texts = {
 	pages: {
 		landing: {
 			tagline: 'Leihe und teile Dinge aus deiner Umgebung.',
-			searchButton: 'Gegenstände suchen',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',

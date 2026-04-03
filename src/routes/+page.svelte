@@ -2,6 +2,7 @@
 	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
+	import SearchBar from './search/SearchBar.svelte';
 
 	let { data } = $props();
 </script>
@@ -12,17 +13,15 @@
 		<p class="mt-4 text-xl text-gray-600 dark:text-gray-400">{texts.pages.landing.tagline}</p>
 	</div>
 
-	<div class="flex flex-col sm:flex-row gap-4">
-		<Button href="/search" class="min-button bg-primary" size="xl" color="primary">
-			{texts.pages.landing.searchButton}
-		</Button>
-
-		{#if data.currentUser}
-			<Button href="/user/items" size="xl" class="min-button bg-primary">
-				{texts.pages.landing.lendButton}
-			</Button>
-		{/if}
+	<div class="w-full max-w-xl">
+		<SearchBar q="" />
 	</div>
+
+	{#if data.currentUser}
+		<Button href="/user/items" size="xl" class="min-button bg-primary">
+			{texts.pages.landing.lendButton}
+		</Button>
+	{/if}
 
 	{#if !data.currentUser}
 		<p class="text-sm text-gray-500 dark:text-gray-400">
