@@ -155,6 +155,13 @@ export const texts = {
 
 	// Pages
 	pages: {
+		landing: {
+			tagline: 'Leihe und teile Dinge aus deiner Umgebung.',
+			searchButton: 'Gegenstände suchen',
+			lendButton: 'Gegenstände verleihen',
+			or: 'oder',
+			registerCta: 'um Gegenstände anzubieten.',
+		},
 		about: {
 			title: 'Über AllerLeih',
 			description: 'von und für Freunde, Familie und die lokale Gemeinschaft',
