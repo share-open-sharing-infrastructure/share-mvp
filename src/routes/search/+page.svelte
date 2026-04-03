@@ -5,12 +5,15 @@
 	import Pagination from './Pagination.svelte';
 	import HowToButton from './HowToButton.svelte';
 	// import TransportModeSelector from './TransportModeSelector.svelte';
+	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	// import { SvelteMap } from 'svelte/reactivity';
 
 	// type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	const { data } = $props();
+
+	const browseAllUrl = resolve('/search') + '?q=*';
 
 	// Transport mode and travel time features are temporarily disabled pending fixes
 	// let transportMode: TransportMode = $state(
@@ -111,6 +114,13 @@
 
 <Section class="max-w-5xl mx-auto py-0">
 	<SearchBar q={data.q} />
+
+	<div class="mt-2 text-center">
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={browseAllUrl} class="text-sm text-primary hover:underline">
+			{texts.pages.search.browseAll}
+		</a>
+	</div>
 
 	<!-- Transport mode and travel time filter — temporarily disabled pending fixes
 	<div class="flex flex-wrap justify-center items-center gap-3 mt-3">

@@ -194,6 +194,7 @@ export const texts = {
 			},
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} von ${total}`,
+			browseAll: 'Alle Gegenstände anzeigen',
 		},
 		logout: {
 			message: 'Ausloggen...',

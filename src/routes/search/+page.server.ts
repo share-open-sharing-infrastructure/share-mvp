@@ -20,15 +20,19 @@ export async function load({ locals, url }) {
 		};
 	}
 
-	// Escape double-quotes to prevent filter injection
+	const isAllItems = q === '*';
+
+	// Escape double-quotes to prevent filter injection (only needed for name filter)
 	const safeQ = q.replace(/"/g, '\\"');
+
+	const nameFilter = isAllItems ? null : `name ~ "${safeQ}"`;
+	const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
+	const filter = [nameFilter, ownerFilter].filter(Boolean).join(' && ') || undefined;
 
 	const result = await locals.pb.collection('items').getList<Item>(page, perPage, {
 		expand: 'owner',
 		sort: '-updated',
-		filter: locals.user
-			? `name ~ "${safeQ}" && owner != "${locals.user.id}"`
-			: `name ~ "${safeQ}"`,
+		filter,
 	});
 
 	const filteredItems = filterTrustedItems(
