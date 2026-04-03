@@ -218,6 +218,15 @@ export const texts = {
 		profile: {
 			title: 'Mein Profil',
 		},
+		invite: {
+			sectionTitle: 'Freunde einladen',
+			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir und du ihnen automatisch vertrauen.',
+			copyButton: 'Link kopieren',
+			copied: 'Link kopiert!',
+			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
+			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
+			invalidInvite: 'Dieser Einladungslink ist ungültig.',
+		},
 		itemDetail: {
 			backToSearch: '← Zurück zur Suche',
 			requestButton: 'Anfragen',
@@ -247,6 +256,7 @@ export const texts = {
 		newRequest: (from: string, item: string) => `${from} möchte „${item}" ausleihen`,
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
 		pushTitle: 'AllerLeih',
+		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – vertraue ihnen, um euch zu verbinden.`,
 	},
 
 	// PWA install and notification prompts
