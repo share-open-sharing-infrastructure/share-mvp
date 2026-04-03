@@ -2,31 +2,39 @@ import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { Item } from '$lib/types/models';
 import { filterTrustedItems } from '$lib/server/itemFilters';
 
-export async function load({ locals }) {
-	// Fetch all items from PocketBase
+export async function load({ locals, url }) {
+	const q = url.searchParams.get('q')?.trim() ?? '';
+
+	if (!q) {
+		return {
+			items: [] as Item[],
+			PB_IMG_URL: PUBLIC_PB_URL,
+			q: '',
+			currentUser: locals.user ?? null,
+		};
+	}
+
+	// Escape double-quotes to prevent filter injection
+	const safeQ = q.replace(/"/g, '\\"');
+
 	const items: Item[] = await locals.pb.collection('items').getFullList({
-		expand: 'owner', // expand the relation to the 'owner' (user) collection
-		sort: '-updated', // sort by update date descending
-		filter: locals.user ? `owner != "${locals.user.id}"` : undefined, // exclude user's own items from search results (if logged in)
+		expand: 'owner',
+		sort: '-updated',
+		filter: locals.user
+			? `name ~ "${safeQ}" && owner != "${locals.user.id}"`
+			: `name ~ "${safeQ}"`,
 	});
 
-	// Filter out items which the current user is not trusted with
 	const filteredItems = filterTrustedItems(
 		items,
 		locals.user ? locals.user.id : null,
 		locals.pb.authStore.isValid
 	);
 
-	// Extract unique places and names for filtering options
-	const uniquePlaces = Array.from(
-		new Set(filteredItems.map((item) => item.place))
-	); // deduplicates places by creating a Set
-
-	// Return data to the page
 	return {
 		items: filteredItems,
 		PB_IMG_URL: PUBLIC_PB_URL,
-		uniquePlaces: uniquePlaces,
+		q,
 		currentUser: locals.user ?? null,
 	};
 }

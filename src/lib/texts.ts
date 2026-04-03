@@ -114,6 +114,7 @@ export const texts = {
 		goToSearch: 'Gehe dazu auf die',
 		findItem: 'und finde einen Gegenstand.',
 		offerSomething: 'Biete selbst etwas an!',
+		search: 'Suchen',
 	},
 
 	// General UI
