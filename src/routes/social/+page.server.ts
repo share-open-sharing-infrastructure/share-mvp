@@ -16,6 +16,8 @@ export async function load({ locals }) {
 		console.error(error.message ? error.message : error);
 	}
 
+	const trustedBy = users.filter((user) => user.trusts?.includes(locals.user.id));
+
 	return {
 		users: users,
 		trustees:
@@ -23,6 +25,7 @@ export async function load({ locals }) {
 				...trustee,
 				profilePic: `https://ui-avatars.com/api/?name=${trustee.username}&background=random`,
 			})) ?? [],
+		trustedBy: trustedBy.map((user) => ({ id: user.id, username: user.username })),
 	};
 }
 

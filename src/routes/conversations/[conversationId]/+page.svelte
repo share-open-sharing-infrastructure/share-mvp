@@ -106,6 +106,7 @@
 	conversation={data.conversation}
 	PB_URL={PUBLIC_PB_URL}
 	onDelete={() => (deleteConversationModal = true)}
+	{loggedInUserIsItemOwner}
 />
 
 <!-- Messenger Contact Buttons -->

@@ -11,6 +11,15 @@
 
 	let { data, form } = $props();
 
+	let inviteCopied = $state(false);
+
+	function copyInviteLink() {
+		navigator.clipboard.writeText(data.inviteUrl).then(() => {
+			inviteCopied = true;
+			setTimeout(() => (inviteCopied = false), 2000);
+		});
+	}
+
 	// City autocomplete state
 	// svelte-ignore state_referenced_locally
 	let cityText = $state(data.currentUser.city ?? '');
@@ -273,6 +282,29 @@
 		</div>
 	</div>
 </main>
+
+<!-- Invite Link Section -->
+<div class="max-w-2xl mx-auto px-4 pb-8">
+	<div class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8">
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+			{texts.pages.invite.sectionTitle}
+		</h2>
+		<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+			{texts.pages.invite.description}
+		</p>
+		<div class="flex gap-2">
+			<input
+				type="text"
+				readonly
+				value={data.inviteUrl}
+				class="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white truncate"
+			/>
+			<Button type="button" class="min-button bg-primary shrink-0" onclick={copyInviteLink}>
+				{inviteCopied ? texts.pages.invite.copied : texts.pages.invite.copyButton}
+			</Button>
+		</div>
+	</div>
+</div>
 
 <!-- Telegram Tooltip Popover -->
 <Popover

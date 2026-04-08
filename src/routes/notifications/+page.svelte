@@ -11,7 +11,7 @@
 		if (n.type === 'new_message' || n.type === 'new_request') {
 			return resolve(`/conversations/${n.relatedId}`);
 		}
-		if (n.type === 'trust_added') {
+		if (n.type === 'trust_added' || n.type === 'invite_accepted') {
 			return resolve(`/users/${n.relatedId}`);
 		}
 		return resolve('/notifications');
@@ -43,7 +43,7 @@
 								<EnvelopeOutline class="h-5 w-5" />
 							{:else if notification.type === 'new_request'}
 								<EnvelopeOutline class="h-5 w-5" />
-							{:else if notification.type === 'trust_added'}
+							{:else if notification.type === 'trust_added' || notification.type === 'invite_accepted'}
 								<UserAddOutline class="h-5 w-5" />
 							{/if}
 						</div>
