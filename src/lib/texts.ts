@@ -118,6 +118,7 @@ export const texts = {
 		goToSearch: 'Gehe dazu auf die',
 		findItem: 'und finde einen Gegenstand.',
 		offerSomething: 'Biete selbst etwas an!',
+		search: 'Suchen',
 	},
 
 	// General UI
@@ -169,6 +170,12 @@ export const texts = {
 
 	// Pages
 	pages: {
+		landing: {
+			tagline: 'Leihe und teile Dinge aus deiner Umgebung.',
+			lendButton: 'Gegenstände verleihen',
+			or: 'oder',
+			registerCta: 'um Gegenstände anzubieten.',
+		},
 		about: {
 			title: 'Über AllerLeih',
 			description: 'von und für Freunde, Familie und die lokale Gemeinschaft',
@@ -199,6 +206,9 @@ export const texts = {
 				noLimit: 'Beliebig',
 				maxMinutes: (n: number) => `max. ${n} Min.`,
 			},
+			perPage: 'Pro Seite:',
+			pageInfo: (current: number, total: number) => `Seite ${current} von ${total}`,
+			browseAll: 'Alle Gegenstände anzeigen',
 		},
 		logout: {
 			message: 'Ausloggen...',

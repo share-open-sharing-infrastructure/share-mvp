@@ -2,34 +2,54 @@ import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { Item } from '$lib/types/models';
 import { filterTrustedItems } from '$lib/server/itemFilters';
 
-export async function load({ locals }) {
-	// Fetch all items from PocketBase
-	const items: Item[] = await locals.pb.collection('items').getFullList({
-		expand: 'owner', // expand the relation to the 'owner' (user) collection
-		sort: '-updated', // sort by update date descending
-		filter: locals.user
-			? `owner != "${locals.user.id}" && status = "available"`
-			: `status = "available"`, // exclude user's own items and unavailable items from search results
+export async function load({ locals, url }) {
+	const q = url.searchParams.get('q')?.trim() ?? '';
+	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
+	const perPage = Math.min(50, Math.max(1, parseInt(url.searchParams.get('perPage') ?? '10', 10) || 10));
+
+	if (!q) {
+		return {
+			items: [] as Item[],
+			PB_IMG_URL: PUBLIC_PB_URL,
+			q: '',
+			currentUser: locals.user ?? null,
+			page: 1,
+			perPage,
+			totalItems: 0,
+			totalPages: 0,
+		};
+	}
+
+	const isAllItems = q === '*';
+
+	// Escape double-quotes to prevent filter injection (only needed for name filter)
+	const safeQ = q.replace(/"/g, '\\"');
+
+	const nameFilter = isAllItems ? null : `name ~ "${safeQ}"`;
+	const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
+	const filter = [nameFilter, ownerFilter].filter(Boolean).join(' && ') || undefined;
+
+	const result = await locals.pb.collection('items').getList<Item>(page, perPage, {
+		expand: 'owner',
+		sort: '-updated',
+		filter,
 	});
 
-	// Filter out items which the current user is not trusted with
 	const filteredItems = filterTrustedItems(
-		items,
+		result.items,
 		locals.user ? locals.user.id : null,
 		locals.pb.authStore.isValid
 	);
 
-	// Extract unique places and names for filtering options
-	const uniquePlaces = Array.from(
-		new Set(filteredItems.map((item) => item.place))
-	); // deduplicates places by creating a Set
-
-	// Return data to the page
 	return {
 		items: filteredItems,
 		PB_IMG_URL: PUBLIC_PB_URL,
-		uniquePlaces: uniquePlaces,
+		q,
 		currentUser: locals.user ?? null,
+		page: result.page,
+		perPage: result.perPage,
+		totalItems: result.totalItems,
+		totalPages: result.totalPages,
 	};
 }
 

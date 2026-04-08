@@ -18,12 +18,12 @@
 </script>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
-	<a
+	<!-- <a
 		class="text-lg text-primary hover:underline cursor-pointer mb-2 inline-block"
 		href={resolve('/search')}
 	>
 		{texts.pages.itemDetail.backToSearch}
-	</a>
+	</a> -->
 
 	<!-- Image -->
 	{#if imageUrl}

@@ -1,9 +1,3 @@
-import { redirect } from '@sveltejs/kit';
-
-export async function load(): Promise<never> {
-	return redirect(303, '/search');
-}
-
 export const actions = {
 	feedback: async ({ locals, request }) => {
 		const formData = await request.formData();
