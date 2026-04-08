@@ -54,7 +54,7 @@ export const authorization: Handle = async ({ event, resolve }) => {
 	) {
 		const loggedIn = await event.locals.pb.authStore.isValid;
 		if (!loggedIn) {
-			redirect(307, '/auth/login');
+			redirect(307, `/auth/login?redirectTo=${encodeURIComponent(event.url.pathname + event.url.search)}`);
 		}
 	}
 	const result = await resolve(event);
