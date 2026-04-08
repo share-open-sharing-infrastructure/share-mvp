@@ -262,7 +262,7 @@ export const texts = {
 		newRequest: (from: string, item: string) => `${from} möchte „${item}" ausleihen`,
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
 		pushTitle: 'AllerLeih',
-		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – vertraue ihnen, um euch zu verbinden.`,
+		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
 	},
 
 	// PWA install and notification prompts
