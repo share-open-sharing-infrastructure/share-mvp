@@ -46,6 +46,19 @@
 	font-weight: 900;
 }
 
+.landing-img {
+	border-radius:5%;
+	overflow:hidden
+}
+
+.cta-button {
+	color: black;
+	border-color: black;
+	border: 1px solid;
+	border-radius: 25px;
+	cursor: pointer;
+}
+
 .min-button {
 	color: black;
 	border-color: black;
@@ -54,7 +67,7 @@
 	cursor: pointer;
 }
 
-.min-button:hover {
+.min-button:hover .cta-button:hover {
 	box-shadow: 0 0 11px rgba(33, 33, 33, 0.2);
 	cursor: pointer;
 	color: white;

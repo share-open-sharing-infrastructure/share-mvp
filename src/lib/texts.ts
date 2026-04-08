@@ -114,6 +114,7 @@ export const texts = {
 		goToSearch: 'Gehe dazu auf die',
 		findItem: 'und finde einen Gegenstand.',
 		offerSomething: 'Biete selbst etwas an!',
+		newsletter: 'Für Newsletter registrieren',
 		search: 'Suchen',
 	},
 
@@ -157,7 +158,9 @@ export const texts = {
 	// Pages
 	pages: {
 		landing: {
-			tagline: 'Leihe und teile Dinge aus deiner Umgebung.',
+			tagline: 'Leihe und teile Dinge in',
+			lendingButtonSearch: 'Suche nach Dingen',
+			city: 'Lüneburg.',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',
