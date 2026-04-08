@@ -157,8 +157,8 @@ export const texts = {
 	itemStatus: {
 		available: 'Verfügbar',
 		unavailable: 'Nicht verfügbar',
-		markAvailable: 'Als verfügbar markieren',
-		markUnavailable: 'Als nicht verfügbar markieren',
+		markAvailable: 'auf "Verfügbar" setzen',
+		markUnavailable: 'auf "Nicht verfügbar" setzen',
 	},
 
 	// Pages

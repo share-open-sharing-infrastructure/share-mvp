@@ -92,6 +92,7 @@ export const actions = {
 			description: formData.get('itemDescription'),
 			place: formData.get('itemPlace'),
 			trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
+			status: formData.get('isAvailable') === 'on' ? 'available' : 'unavailable',
 		};
 
 		// Check if a new image was uploaded
