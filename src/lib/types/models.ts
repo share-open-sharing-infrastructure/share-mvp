@@ -74,6 +74,17 @@ export interface User extends PocketBaseEntity {
 	 * Preferred transport mode for distance-based search
 	 */
 	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
+
+	/**
+	 * Unique invite code for this user's invite link.
+	 * Generated lazily on first profile visit if not set.
+	 */
+	inviteCode?: string;
+
+	/**
+	 * Foreign key: the user who invited this user (set at registration via invite link).
+	 */
+	invitedBy?: UserId;
 }
 
 // --- ITEM ---
@@ -129,7 +140,7 @@ export interface Conversation extends PocketBaseEntity {
 
 // --- NOTIFICATION ---
 
-export type NotificationType = 'new_message' | 'new_request' | 'trust_added';
+export type NotificationType = 'new_message' | 'new_request' | 'trust_added' | 'invite_accepted';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */

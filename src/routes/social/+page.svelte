@@ -129,3 +129,21 @@
 		</div>
 	{/each}
 </div>
+
+<!-- TRUSTED BY LIST -->
+<div class="mx-auto max-w-sm items-center mt-10">
+	<h3 class="mb-4 text-xl font-bold text-center text-gray-900 dark:text-white">
+		{texts.ui.trustedByPeople}
+	</h3>
+	{#if data.trustedBy.length === 0}
+		<p class="text-center text-gray-500 dark:text-gray-400">{texts.ui.noOneTrustsYet}</p>
+	{/if}
+	{#each data.trustedBy as user (user.id)}
+		<a
+			href={resolve(`/users/[id]`, { id: user.id })}
+			class="flex items-center gap-4 border-b border-gray-200 p-4 dark:border-primary-700 hover:bg-primary-50 rounded-lg text-gray-900 dark:text-white"
+		>
+			<span class="text-lg font-medium">@{user.username}</span>
+		</a>
+	{/each}
+</div>

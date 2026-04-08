@@ -8,6 +8,7 @@ export const texts = {
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',
 		passwordPlaceholder: '••••••••••',
+		usernamePlaceholder: 'z.B. NoahLüni',
 		loginFailed: 'Login fehlgeschlagen.',
 		resetPassword: 'Setze mein Passwort zurück!',
 		register: 'Registrieren',
@@ -43,6 +44,8 @@ export const texts = {
 		failedToDeleteConversation: 'Failed to delete conversation.',
 		loginFailed: 'Login fehlgeschlagen.',
 		usernameNoSpaces: 'Nutzername darf keine Leerzeichen enthalten.',
+		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
+		usernameTaken: 'Dieser Nutzername ist bereits vergeben.',
 		passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
@@ -51,6 +54,7 @@ export const texts = {
 	// Success messages
 	success: {
 		changesSaved: 'Die Änderungen wurden gespeichert!',
+		usernameAvailable: 'Nutzername ist verfügbar.',
 		loggedOut: 'Erfolgreich ausgeloggt',
 		passwordResetSent:
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
@@ -142,6 +146,8 @@ export const texts = {
 			'Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.',
 		trustLink: 'Vertrauensfunktion',
 		trustedPeople: 'Vertraute Personen',
+		trustedByPeople: 'Personen, die dir vertrauen',
+		noOneTrustsYet: 'Noch vertraut dir niemand.',
 		trustDescriptionSocial:
 			'Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen',
 		yourItemsLink: 'deine Dinge',
@@ -218,6 +224,15 @@ export const texts = {
 		profile: {
 			title: 'Mein Profil',
 		},
+		invite: {
+			sectionTitle: 'Freunde einladen',
+			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir und du ihnen automatisch vertrauen.',
+			copyButton: 'Link kopieren',
+			copied: 'Link kopiert!',
+			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
+			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
+			invalidInvite: 'Dieser Einladungslink ist ungültig.',
+		},
 		itemDetail: {
 			backToSearch: '← Zurück zur Suche',
 			requestButton: 'Anfragen',
@@ -247,6 +262,7 @@ export const texts = {
 		newRequest: (from: string, item: string) => `${from} möchte „${item}" ausleihen`,
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
 		pushTitle: 'AllerLeih',
+		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
 	},
 
 	// PWA install and notification prompts
