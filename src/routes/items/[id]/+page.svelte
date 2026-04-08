@@ -3,11 +3,13 @@
 	import { MapPinOutline, UserCircleOutline, ImageOutline, MessagesOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
+	import { enhance } from '$app/forms';
 
 	const { data } = $props();
 	// svelte-ignore state_referenced_locally
 	const { item, PB_IMG_URL } = data;
 	const isTrustRestricted = $derived(data.isTrustRestricted);
+	const isOwnItem = $derived(data.isOwnItem);
 
 	const imageUrl =
 		item.image
@@ -65,9 +67,24 @@
 		</p>
 	{/if}
 
-	<!-- Anfragen CTA -->
+	<!-- Anfragen CTA / Status Toggle -->
 	<div class="flex justify-end">
-		{#if isTrustRestricted}
+		{#if isOwnItem}
+			<form method="POST" action="?/toggleStatus" use:enhance>
+				<button
+					type="submit"
+					class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold border transition-colors cursor-pointer
+						{data.item.status === 'available'
+							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+							: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
+				>
+					{data.item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
+					<span class="ml-2 text-xs opacity-60">
+						{'→ ' + (data.item.status === 'available' ? texts.itemStatus.markUnavailable : texts.itemStatus.markAvailable)}
+					</span>
+				</button>
+			</form>
+		{:else if isTrustRestricted}
 			<Button pill disabled class="min-button bg-primary opacity-50 cursor-not-allowed">
 				<MessagesOutline class="h-4 w-4 mr-2" />
 				{texts.pages.itemDetail.requestButton}

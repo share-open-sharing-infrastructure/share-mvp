@@ -159,6 +159,14 @@ export const texts = {
 		findItems: 'und finde einen Gegenstand.',
 	},
 
+	// Item status
+	itemStatus: {
+		available: 'Verfügbar',
+		unavailable: 'Nicht verfügbar',
+		markAvailable: 'auf "Verfügbar" setzen',
+		markUnavailable: 'auf "Nicht verfügbar" setzen',
+	},
+
 	// Pages
 	pages: {
 		about: {

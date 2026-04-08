@@ -2,8 +2,9 @@
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { MapPinOutline, TrashBinSolid } from 'flowbite-svelte-icons';
+	import { enhance } from '$app/forms';
 
-	let { chatPartner, conversation, PB_URL, onDelete } = $props();
+	let { chatPartner, conversation, PB_URL, onDelete, loggedInUserIsItemOwner = false } = $props();
 </script>
 
 <div class="flex items-center gap-3 px-3 py-2 border-b min-h-14">
@@ -18,6 +19,33 @@
 		<span class="flex items-center gap-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
 			<MapPinOutline class="w-3 h-3 shrink-0" />{conversation.requestedItem.place}
 		</span>
+		{#if loggedInUserIsItemOwner}
+			<form method="POST" action="?/toggleStatus" use:enhance class="w-fit">
+				<input type="hidden" name="itemId" value={conversation.requestedItem.id} />
+				<button
+					type="submit"
+					class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border transition-colors cursor-pointer
+						{conversation.requestedItem.status === 'available'
+							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+							: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
+				>
+					{conversation.requestedItem.status === 'available'
+						? texts.itemStatus.available
+						: texts.itemStatus.unavailable}
+				</button>
+			</form>
+		{:else}
+			<span
+				class="mt-0.5 self-start inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border
+					{conversation.requestedItem.status === 'available'
+						? 'bg-green-100 text-green-800 border-green-300'
+						: 'bg-red-100 text-red-800 border-red-300'}"
+			>
+				{conversation.requestedItem.status === 'available'
+					? texts.itemStatus.available
+					: texts.itemStatus.unavailable}
+			</span>
+		{/if}
 	</div>
 
 	<!-- Chat partner info + delete (right) -->

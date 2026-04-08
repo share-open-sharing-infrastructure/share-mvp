@@ -43,6 +43,8 @@
 		form
 	}: Props = $props();
 
+	let isAvailable = $derived(editingItem?.status === 'available' ? true : false);
+
 	function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
@@ -163,6 +165,24 @@
 			</div>
 		</Label>
 
+		{#if type === 'edit'}
+			<Label class="flex">
+				<Toggle
+					name="isAvailable"
+					bind:checked={isAvailable}
+					>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle
+				>
+				<div
+					class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400"
+				>
+					<button id="b4">
+						<QuestionCircleSolid class="ml-1 h-full" />
+						<span class="sr-only">{texts.ui.explainThis}</span>
+					</button>
+				</div>
+			</Label>
+		{/if}
+
 		<!-- SUBMIT BUTTON -->
 		<Button class="min-button bg-primary" type="submit">
 			{type === 'edit' ? texts.buttons.save : texts.buttons.add}
@@ -171,6 +191,7 @@
 
 	<!-- DELETE BUTTON -->
 	{#if type === 'edit'}
+		
 		<form
 			method="POST"
 			action="?/delete"

@@ -4,6 +4,7 @@
 	import EditButton from './EditButton.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import { texts } from '$lib/texts';
+	import { enhance } from '$app/forms';
 
 	interface Props {
 		item: Item;
@@ -57,7 +58,22 @@
 			{/if}
 		</div>
 
-		<div class="flex justify-end pt-4">
+		<div class="flex items-center gap-2 justify-end pt-4">
+			<form method="POST" action="?/toggleStatus" use:enhance>
+				<input type="hidden" name="itemId" value={item.id} />
+				<button
+					type="submit"
+					class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors cursor-pointer
+						{item.status === 'available'
+							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+							: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
+					title={item.status === 'available'
+						? texts.itemStatus.markUnavailable
+						: texts.itemStatus.markAvailable}
+				>
+					{item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
+				</button>
+			</form>
 			<EditButton
 				onclick={() => {
 					editingItemId = item.id;
