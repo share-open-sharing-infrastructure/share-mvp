@@ -173,11 +173,15 @@ export const texts = {
 	pages: {
 		landing: {
 			tagline: 'Leihe und teile Dinge in',
-			lendingButtonSearch: 'Suche nach Dingen',
+			ctaButtonSearch: 'Suche nach Dingen',
+			ctaButtonUpload: 'Biete selbst etwas an',
 			city: 'Lüneburg.',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',
+			how: 'Wie funktioniert das?',
+			who: 'Wer sind wir?',
+			support: 'Was passiert gerade?'
 		},
 		about: {
 			title: 'Über AllerLeih',
@@ -306,4 +310,3 @@ export const texts = {
 	},
 };
 
-export type Texts = typeof texts;
