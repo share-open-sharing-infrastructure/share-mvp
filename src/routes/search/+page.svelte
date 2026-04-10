@@ -4,6 +4,7 @@
 	import ResultsList from './ResultsList.svelte';
 	import Pagination from './Pagination.svelte';
 	import HowToButton from './HowToButton.svelte';
+	import CategoryFilter from './CategoryFilter.svelte';
 	// import TransportModeSelector from './TransportModeSelector.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -122,6 +123,13 @@
 		</a>
 	</div>
 
+	<CategoryFilter
+		selectedCategories={data.selectedCategories}
+		op={data.op}
+		q={data.q}
+		perPage={data.perPage}
+	/>
+
 	<!-- Transport mode and travel time filter — temporarily disabled pending fixes
 	<div class="flex flex-wrap justify-center items-center gap-3 mt-3">
 		<TransportModeSelector mode={transportMode} onchange={handleTransportModeChange} />
@@ -149,7 +157,7 @@
 	{/if}
 	-->
 
-	{#if data.q}
+	{#if data.q || data.selectedCategories.length > 0}
 		<ResultsList
 			filteredItemList={data.items}
 			PB_IMG_URL={data.PB_IMG_URL}
@@ -162,6 +170,8 @@
 			totalPages={data.totalPages}
 			perPage={data.perPage}
 			q={data.q}
+			selectedCategories={data.selectedCategories}
+			op={data.op}
 		/>
 	{/if}
 </Section>
