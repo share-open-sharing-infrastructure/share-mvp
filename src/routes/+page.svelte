@@ -77,8 +77,8 @@
 				</span>
 
 				<p class="text-lg font-normal text-gray-500 dark:text-gray-400">
-					Wir befinden uns derzeit in einer Testphase, in der wir die Plattform
-					mit einer kleinen Gruppe von Nutzer:innen testen. Wenn du Interesse
+					Wir befinden uns derzeit in einer Testphase
+					mit einer kleinen Gruppe von Nutzer:innen. Wenn du Interesse
 					hast, an diesem Test teilzunehmen, melde dich gerne bei uns.
 				</p>
 			</div>
