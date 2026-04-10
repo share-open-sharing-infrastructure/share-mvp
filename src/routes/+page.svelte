@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
+	  import { ChartPieSolid, LandmarkSolid, BriefcaseSolid, DollarOutline, RocketSolid, CogOutline } from "flowbite-svelte-icons";
+
 	import landingimg from '$lib/images/landing-img.png';
 	let { data } = $props();
 </script>
 
 <section class="bg-white dark:bg-gray-900">
 	<div
-		class="grid max-w-screen-xl px-20 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12"
+		class="grid max-w-screen-xl px-8 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12"
 	>
 		<div class="mr-auto place-self-center mt-15 lg:col-span-7">
 			<h1
@@ -22,10 +24,10 @@
 				<span class="text-accent">{texts.pages.landing.city}</span>
 			</p>
 
-			<Button href="/search" class="cta-button py-4 px-10 m-4 bg-primary">
+			<Button href="/search" class="cta-button py-4 px-10 m-3 bg-primary w-xs">
 				{texts.pages.landing.ctaButtonSearch}
 			</Button>
-				<Button href="/user/items" class="cta-button py-4 px-10 bg-accent ">
+				<Button href="/user/items" class="cta-button py-4 m-3 px-10 bg-accent w-xs">
 				{texts.pages.landing.ctaButtonUpload}
 			</Button>
 		</div>
@@ -41,8 +43,9 @@
 			class="grid grid-cols-1 mt-12 text-center sm:mt-16 gap-x-20 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
 		>
 			<div class="space-y-4">
+			
 				<span
-					class="bg-primary-100 text-gray-900 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300"
+					class="bg-primary-100 text-gray-900 text-md font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300"
 				>
 					{texts.pages.landing.how}
 				</span>
@@ -56,7 +59,7 @@
 
 			<div class="space-y-4">
 				<span
-					class="bg-primary-100 text-gray-900 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300"
+					class="bg-primary-100 text-gray-900 text-md font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300"
 				>
 					{texts.pages.landing.who}
 				</span>
@@ -70,8 +73,9 @@
 			</div>
 
 			<div class="space-y-4">
+			 {#snippet icon()}<ChartPieSolid class="text-primary-600 dark:text-primary-300" />{/snippet}
 				<span
-					class="bg-primary-100 text-gray-900 text-xs font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300"
+					class="bg-primary-100 text-gray-900 text-md font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300"
 				>
 					{texts.pages.landing.support}
 				</span>
@@ -79,7 +83,7 @@
 				<p class="text-lg font-normal text-gray-500 dark:text-gray-400">
 					Wir befinden uns derzeit in einer Testphase
 					mit einer kleinen Gruppe von Nutzer:innen. Wenn du Interesse
-					hast, an diesem Test teilzunehmen, melde dich gerne bei uns.
+					hast, an diesem Test teilzunehmen, <a href="/misc/contact" class="text-accent">melde dich gerne bei uns</a>.
 				</p>
 			</div>
 		</div>
