@@ -30,9 +30,8 @@
 			method: 'POST',
 		});
 
+		await goto(resolve('/'));
 		await invalidateAll();
-
-		goto(resolve('/'));
 	}
 </script>
 
@@ -106,9 +105,8 @@
 				>
 				<DropdownDivider />
 				<DropdownItem
-					href={resolve('/auth/logout')}
 					onclick={logout}
-					class="hover:text-danger hover:bg-transparent"
+					class="hover:text-danger hover:bg-transparent hover:cursor-pointer"
 					>{texts.nav.logout}</DropdownItem
 				>
 			</Dropdown>
