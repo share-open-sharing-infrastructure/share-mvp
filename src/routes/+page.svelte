@@ -24,12 +24,12 @@
 				<span class="text-accent">{texts.pages.landing.city}</span>
 			</p>
 
-			<Button href="/search" class="cta-button py-4 px-10 m-3 bg-primary w-xs">
+			<Button href="/search" class="cta-button py-4 px-6 sm:px-10 m-3 bg-primary w-full md:w-xs">
 				{texts.pages.landing.ctaButtonSearch}
 			</Button>
 			<Button
 				href="/user/items"
-				class="cta-button py-4 m-3 px-10 bg-accent w-xs"
+				class="cta-button py-4 m-3 px-6 sm:px-10 bg-accent w-full md:w-xs"
 			>
 				{texts.pages.landing.ctaButtonUpload}
 			</Button>
