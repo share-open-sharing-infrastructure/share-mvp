@@ -148,6 +148,8 @@ export type NotificationType = 'new_message' | 'new_request' | 'trust_added' | '
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
 	recipient: UserId;
+	/** Foreign key: sender user id */
+	sender?: UserId;
 	/** Type of notification */
 	type: NotificationType;
 	/** Related record id (conversation id or user id) */
