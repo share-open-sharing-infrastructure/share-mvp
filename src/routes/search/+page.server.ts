@@ -46,13 +46,12 @@ export async function load({ locals, url }) {
 			: null;
 	const filter = [nameFilter, ownerFilter, categoryFilter].filter(Boolean).join(' && ') || undefined;
 
-	console.log('Constructed filter:', filter);
+
 	const result = await locals.pb.collection('items').getList<Item>(page, perPage, {
 		expand: 'owner',
 		sort: '-updated',
 		filter,
 	});
-	console.log('Raw search result:', result);
 
 	const filteredItems = filterTrustedItems(
 		result.items,
