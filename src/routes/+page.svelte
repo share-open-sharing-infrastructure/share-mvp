@@ -75,9 +75,6 @@
 			</div>
 
 			<div class="space-y-4">
-				{#snippet icon()}<ChartPieSolid
-						class="text-primary-600 dark:text-primary-300"
-					/>{/snippet}
 				<span
 					class="bg-primary-100 text-gray-900 text-md font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-gray-700 dark:text-gray-300"
 				>
