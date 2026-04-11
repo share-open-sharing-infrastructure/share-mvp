@@ -15,8 +15,8 @@ export async function load({ params, locals }) {
 				expand: 'requester, itemOwner, requestedItem, messages',
 			});
 	} catch (err) {
-		console.error('Failed to load conversation', err);
-		error(500, 'Unable to load conversation.');
+		const e = err as Partial<ClientResponseError>;
+		error(e.status === 404 ? 404 : 500, e.status === 404 ? texts.errors.conversationNotFound : 'Unable to load conversation.');
 	}
 
 	const conversation: Conversation = {
@@ -156,6 +156,17 @@ export const actions = {
 				message: e.data?.message ?? texts.errors.failedToDeleteConversation,
 			});
 		}
+
+		// Clean up notifications pointing to this conversation
+		try {
+			const orphaned = await locals.pb.collection('notifications').getFullList({
+				filter: `relatedId="${conversationId}"`,
+			});
+			await Promise.all(orphaned.map((n) => locals.pb.collection('notifications').delete(n.id)));
+		} catch {
+			// Non-critical — ignore cleanup errors
+		}
+
 		redirect(303, '/conversations');
 	},
 };
