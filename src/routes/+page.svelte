@@ -11,7 +11,7 @@
 	<div
 		class="grid max-w-7xl px-8 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12"
 	>
-		<div class="mr-auto place-self-center mt-15 lg:col-span-7">
+		<div class="mr-auto place-self-center mt-15 col-span-12 xl:col-span-7">
 			<h1
 				class="max-w-2xl mb-4 text-4xl font-extrabold tracking-tight leading-none md:text-5xl xl:text-6xl dark:text-white"
 			>
@@ -24,17 +24,17 @@
 				<span class="text-accent">{texts.pages.landing.city}</span>
 			</p>
 
-			<Button href="/search" class="cta-button py-4 px-6 sm:px-10 m-3 bg-primary w-full md:w-xs">
+			<Button href="/search" class="cta-button text-lg py-4 px-6 sm:px-10 m-3 bg-primary w-full md:w-xs">
 				{texts.pages.landing.ctaButtonSearch}
 			</Button>
 			<Button
 				href="/user/items"
-				class="cta-button py-4 m-3 px-6 sm:px-10 bg-accent w-full md:w-xs"
+				class="cta-button text-lg py-4 m-3 px-6 sm:px-10 bg-accent w-full md:w-xs"
 			>
 				{texts.pages.landing.ctaButtonUpload}
 			</Button>
 		</div>
-		<div class="hidden lg:mt-0 lg:col-span-5 lg:flex landing-img">
+		<div class="hidden xl:mt-0 xl:col-span-5 xl:flex landing-img">
 			<img src={landingimg} alt="landing-png" />
 		</div>
 	</div>
