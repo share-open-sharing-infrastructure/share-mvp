@@ -115,7 +115,7 @@ export const actions = {
 			const notificationBody = texts.notifications.newMessage(senderName);
 			const conversationUrl = `/conversations/${conversationId}`;
 
-			await createNotification(locals.pb, toUserId, 'new_message', conversationId, notificationBody);
+			await createNotification(locals.pb, toUserId, locals.user.id, 'new_message', conversationId, notificationBody);
 			await sendPushToUser(locals.pb, toUserId, texts.notifications.pushTitle, notificationBody, conversationUrl);
 		}
 	},
@@ -163,8 +163,8 @@ export const actions = {
 				filter: `relatedId="${conversationId}"`,
 			});
 			await Promise.all(orphaned.map((n) => locals.pb.collection('notifications').delete(n.id)));
-		} catch {
-			// Non-critical — ignore cleanup errors
+		} catch (err) {
+			console.error('Failed to clean up orphaned notifications for conversation', err);
 		}
 
 		redirect(303, '/conversations');
