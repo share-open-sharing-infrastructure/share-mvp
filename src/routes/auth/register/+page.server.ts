@@ -79,9 +79,14 @@ export const actions = {
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
 			console.log('Registration error:', errorObj);
+
+			if (errorObj.status === 400 && errorObj.data?.data?.email?.code === 'validation_not_unique') {
+				return fail(400, { fail: true, message: texts.errors.emailAlreadyTaken });
+			}
+
 			return fail(500, {
 				fail: true,
-				message: errorObj.data.message ?? texts.errors.somethingWentWrong,
+				message: texts.errors.somethingWentWrong,
 			});
 		}
 
