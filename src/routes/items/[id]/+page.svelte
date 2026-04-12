@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Tooltip, Input } from 'flowbite-svelte';
+	import { Button, Tooltip, Input, Badge } from 'flowbite-svelte';
 	import { MapPinOutline, UserCircleOutline, ImageOutline, MessagesOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
@@ -59,6 +59,15 @@
 	<h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
 		{item.name}
 	</h1>
+
+	<!-- Categories -->
+	{#if item.categories && item.categories.length > 0}
+		<div class="flex flex-wrap gap-2">
+			{#each item.categories as cat}
+				<Badge color="indigo">{cat}</Badge>
+			{/each}
+		</div>
+	{/if}
 
 	<!-- Description -->
 	{#if item.description}

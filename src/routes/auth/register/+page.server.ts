@@ -78,7 +78,7 @@ export const actions = {
 			await locals.pb.collection('users').requestVerification(email.toString());
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
-			console.log('Registration error:', errorObj);
+			console.error('Registration error:', errorObj);
 			return fail(500, {
 				fail: true,
 				message: errorObj.data.message ?? texts.errors.somethingWentWrong,

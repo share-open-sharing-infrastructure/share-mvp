@@ -9,6 +9,7 @@
 		Img,
 		Popover,
 		Textarea,
+		Checkbox,
 	} from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
@@ -19,7 +20,7 @@
 	} from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { texts } from '$lib/texts';
+	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import type { ActionData } from './$types';
 
@@ -45,6 +46,29 @@
 
 	let isAvailable = $derived(editingItem?.status === 'available' ? true : false);
 
+	let selectedCategories = $state<string[]>([]);
+
+	$effect(() => {
+		if (isVisible) {
+			selectedCategories = [...(editingItem?.categories ?? [])];
+		} else {
+			selectedCategories = [];
+		}
+	});
+
+	function handleCategoryChange(e: Event) {
+		const cb = e.target as HTMLInputElement;
+		if (cb.checked) {
+			if (selectedCategories.length >= 3) {
+				cb.checked = false;
+				return;
+			}
+			selectedCategories = [...selectedCategories, cb.value];
+		} else {
+			selectedCategories = selectedCategories.filter((c) => c !== cb.value);
+		}
+	}
+
 	function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
@@ -54,6 +78,50 @@
 			lastUrl = URL.createObjectURL(file);
 			previewUrl = lastUrl;
 		}
+	}
+
+	async function compressImage(file: File): Promise<Blob> {
+		const MAX_DIMENSION = 1920;
+		const QUALITY = 0.8;
+
+		return new Promise((resolve, reject) => {
+			const img = new Image();
+			const url = URL.createObjectURL(file);
+
+			img.onload = () => {
+				URL.revokeObjectURL(url);
+				let w = img.naturalWidth;
+				let h = img.naturalHeight;
+
+				if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
+					if (w >= h) {
+						h = Math.round((h / w) * MAX_DIMENSION);
+						w = MAX_DIMENSION;
+					} else {
+						w = Math.round((w / h) * MAX_DIMENSION);
+						h = MAX_DIMENSION;
+					}
+				}
+
+				const canvas = document.createElement('canvas');
+				canvas.width = w;
+				canvas.height = h;
+				canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
+
+				canvas.toBlob(
+					(blob) => (blob ? resolve(blob) : reject(new Error('Compression failed'))),
+					'image/jpeg',
+					QUALITY
+				);
+			};
+
+			img.onerror = () => {
+				URL.revokeObjectURL(url);
+				reject(new Error('Failed to load image'));
+			};
+
+			img.src = url;
+		});
 	}
 
 	$effect(() => {
@@ -91,7 +159,12 @@
 		action="?/{type === 'edit' ? 'update' : 'create'}"
 		method="POST"
 		enctype="multipart/form-data"
-		use:enhance={() => {
+		use:enhance={async ({ formData }) => {
+			const file = formData.get('itemImage');
+			if (file instanceof File && file.size > 0 && file.type !== 'image/svg+xml') {
+				const compressed = await compressImage(file);
+				formData.set('itemImage', compressed, file.name);
+			}
 			return async ({ result, update }) => {
 				if (result.type === 'success') {
 					isVisible = false;
@@ -148,6 +221,25 @@
 				required
 			/>
 		</Label>
+
+		<!-- CATEGORIES -->
+		<div class="space-y-2">
+			<span class="text-sm font-medium">{texts.forms.itemCategories}</span>
+			<div class="flex flex-wrap gap-x-4 gap-y-2">
+				{#each ITEM_CATEGORIES as cat}
+					<Label class="flex items-center gap-1.5 cursor-pointer font-normal">
+						<Checkbox
+							name="categories"
+							value={cat}
+							checked={selectedCategories.includes(cat)}
+							disabled={selectedCategories.length >= 3 && !selectedCategories.includes(cat)}
+							onchange={handleCategoryChange}
+						/>
+						{cat}
+					</Label>
+				{/each}
+			</div>
+		</div>
 
 		<Label class="flex">
 			<Toggle

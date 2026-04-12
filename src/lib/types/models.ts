@@ -114,6 +114,9 @@ export interface Item extends PocketBaseEntity {
 	/** Availability status set by the owner */
 	status: 'available' | 'unavailable';
 
+	/** Up to 3 categories selected from the fixed 9-option list */
+	categories?: string[];
+
 	/** PocketBase collection id to which the item belongs */
 	/** TODO: I don't know why we save this? This should always be the "items" collection, right? */
 	collectionId: string;
@@ -148,6 +151,8 @@ export type NotificationType = 'new_message' | 'new_request' | 'trust_added' | '
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
 	recipient: UserId;
+	/** Foreign key: sender user id */
+	sender?: UserId;
 	/** Type of notification */
 	type: NotificationType;
 	/** Related record id (conversation id or user id) */
