@@ -40,7 +40,7 @@
 
 <div class="mt-3 space-y-2">
 	<div class="flex flex-wrap justify-center gap-2">
-		{#each ITEM_CATEGORIES as cat}
+		{#each ITEM_CATEGORIES as cat(cat)}
 			{@const active = selectedCategories.includes(cat)}
 			<button
 				type="button"
