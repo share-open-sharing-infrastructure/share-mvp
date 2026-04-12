@@ -32,6 +32,8 @@ erDiagram
         date created
         date updated
         bool trusteesOnly
+        string[] categories
+        string status
     }
 
     USER 1 to zero or more ITEM: owns

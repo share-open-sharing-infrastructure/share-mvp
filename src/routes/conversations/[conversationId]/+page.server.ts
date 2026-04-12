@@ -15,8 +15,8 @@ export async function load({ params, locals }) {
 				expand: 'requester, itemOwner, requestedItem, messages',
 			});
 	} catch (err) {
-		console.error('Failed to load conversation', err);
-		error(500, 'Unable to load conversation.');
+		const e = err as Partial<ClientResponseError>;
+		error(e.status === 404 ? 404 : 500, e.status === 404 ? texts.errors.conversationNotFound : 'Unable to load conversation.');
 	}
 
 	const conversation: Conversation = {
@@ -115,7 +115,7 @@ export const actions = {
 			const notificationBody = texts.notifications.newMessage(senderName);
 			const conversationUrl = `/conversations/${conversationId}`;
 
-			await createNotification(locals.pb, toUserId, 'new_message', conversationId, notificationBody);
+			await createNotification(locals.pb, toUserId, locals.user.id, 'new_message', conversationId, notificationBody);
 			await sendPushToUser(locals.pb, toUserId, texts.notifications.pushTitle, notificationBody, conversationUrl);
 		}
 	},
@@ -156,6 +156,17 @@ export const actions = {
 				message: e.data?.message ?? texts.errors.failedToDeleteConversation,
 			});
 		}
+
+		// Clean up notifications pointing to this conversation
+		try {
+			const orphaned = await locals.pb.collection('notifications').getFullList({
+				filter: `relatedId="${conversationId}"`,
+			});
+			await Promise.all(orphaned.map((n) => locals.pb.collection('notifications').delete(n.id)));
+		} catch (err) {
+			console.error('Failed to clean up orphaned notifications for conversation', err);
+		}
+
 		redirect(303, '/conversations');
 	},
 };

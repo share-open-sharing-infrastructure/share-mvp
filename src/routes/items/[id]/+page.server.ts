@@ -95,7 +95,7 @@ export const actions = {
 			const notificationBody = texts.notifications.newRequest(requesterName, itemName);
 			const conversationUrl = `/conversations/${conversationId}`;
 
-			await createNotification(locals.pb, itemOwnerId as string, 'new_request', conversationId, notificationBody);
+			await createNotification(locals.pb, itemOwnerId as string, locals.user.id as string, 'new_request', conversationId, notificationBody);
 			await sendPushToUser(locals.pb, itemOwnerId as string, texts.notifications.pushTitle, notificationBody, conversationUrl);
 
 			redirect(303, `/conversations/${conversationId}`);

@@ -8,14 +8,22 @@
 		totalPages: number;
 		perPage: number;
 		q: string;
+		selectedCategories: string[];
+		op: 'or' | 'and';
 	}
 
-	let { page, totalPages, perPage, q }: Props = $props();
+	let { page, totalPages, perPage, q, selectedCategories, op }: Props = $props();
 
 	const perPageOptions = [10, 20, 50];
 
 	function pageUrl(n: number): string {
-		return resolve('/search') + `?q=${encodeURIComponent(q)}&page=${n}&perPage=${perPage}`;
+		const params = new URLSearchParams();
+		if (q) params.set('q', q);
+		params.set('page', String(n));
+		params.set('perPage', String(perPage));
+		if (selectedCategories.length > 0) params.set('cats', selectedCategories.join(','));
+		if (op === 'and') params.set('op', 'and');
+		return resolve('/search') + '?' + params.toString();
 	}
 
 	function getPages(): (number | '...')[] {
@@ -39,6 +47,12 @@
 		<form method="GET" action={resolve('/search')} class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
 			<input type="hidden" name="q" value={q} />
 			<input type="hidden" name="page" value="1" />
+			{#if selectedCategories.length > 0}
+				<input type="hidden" name="cats" value={selectedCategories.join(',')} />
+			{/if}
+			{#if op === 'and'}
+				<input type="hidden" name="op" value="and" />
+			{/if}
 			<span>{texts.pages.search.perPage}</span>
 			<select
 				name="perPage"
