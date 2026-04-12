@@ -58,6 +58,7 @@ export const texts = {
 		conversationNotFound: 'Unterhaltung wurde nicht gefunden.',
 		loginFailed: 'Login fehlgeschlagen.',
 		usernameNoSpaces: 'Nutzername darf keine Leerzeichen enthalten.',
+		emailAlreadyTaken: 'Diese E-Mail-Adresse wird bereits verwendet.',
 		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
 		usernameTaken: 'Dieser Nutzername ist bereits vergeben.',
 		passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',

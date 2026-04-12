@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
+	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import debounce from 'debounce';
@@ -55,7 +56,7 @@
 			{#if !data.inviteCode}
 				<p class="text-gray-700 dark:text-gray-300">{texts.pages.invite.noInvite}</p>
 			{:else}
-				<form class="flex flex-col space-y-5" action="?/register" method="post">
+				<form class="flex flex-col space-y-5" action="?/register" method="post" use:enhance>
 					<h3 class="p-0 text-xl font-medium text-gray-900 dark:text-white">
 						{texts.ui.welcome}
 					</h3>
