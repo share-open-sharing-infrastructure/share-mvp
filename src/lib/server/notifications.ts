@@ -12,6 +12,7 @@ webpush.setVapidDetails(VAPID_SUBJECT, PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KE
 export async function createNotification(
 	pb: PocketBase,
 	recipientId: string,
+	senderId: string | undefined,
 	type: NotificationType,
 	relatedId: string,
 	body: string
@@ -19,6 +20,7 @@ export async function createNotification(
 	try {
 		await pb.collection('notifications').create({
 			recipient: recipientId,
+			sender: senderId,
 			type,
 			relatedId,
 			body,

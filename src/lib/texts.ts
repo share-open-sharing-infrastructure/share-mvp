@@ -55,6 +55,7 @@ export const texts = {
 		failedToCreateConversation: 'Failed to create conversation.',
 		failedToSendMessage: 'Failed to send message.',
 		failedToDeleteConversation: 'Failed to delete conversation.',
+		conversationNotFound: 'Unterhaltung wurde nicht gefunden.',
 		loginFailed: 'Login fehlgeschlagen.',
 		usernameNoSpaces: 'Nutzername darf keine Leerzeichen enthalten.',
 		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
