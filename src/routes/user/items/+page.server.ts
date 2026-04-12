@@ -71,6 +71,7 @@ export const actions = {
 				image: formData.get('itemImage'),
 				owner: locals.user.id,
 				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
+				status: 'available',
 				categories: createCategories,
 			});
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
