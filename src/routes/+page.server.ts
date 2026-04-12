@@ -28,7 +28,7 @@ export const actions = {
 				message: 'Feedback erfolgreich gesendet. Vielen Dank!',
 			};
 		} catch (error) {
-			console.log('Error saving feedback:', error);
+			console.error('Error saving feedback:', error);
 			return {
 				success: false,
 				message: 'Feedback konnte nicht gesendet werden.',

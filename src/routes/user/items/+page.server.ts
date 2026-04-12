@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
+import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
 
 export async function load({ locals }) {
 	const userExpanded = await locals.pb
@@ -58,6 +59,10 @@ export const actions = {
 			});
 		}
 
+		const createCategories = (formData.getAll('categories') as string[]).filter((c) =>
+			ITEM_CATEGORIES.includes(c as ItemCategory)
+		);
+
 		try {
 			await locals.pb.collection('items').create({
 				name: formData.get('itemName'),
@@ -66,6 +71,7 @@ export const actions = {
 				image: formData.get('itemImage'),
 				owner: locals.user.id,
 				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
+				categories: createCategories,
 			});
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (error: Error | any) {
@@ -86,6 +92,10 @@ export const actions = {
 			});
 		}
 
+		const updateCategories = (formData.getAll('categories') as string[]).filter((c) =>
+			ITEM_CATEGORIES.includes(c as ItemCategory)
+		);
+
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {
 			name: formData.get('itemName'),
@@ -93,6 +103,7 @@ export const actions = {
 			place: formData.get('itemPlace'),
 			trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
 			status: formData.get('isAvailable') === 'on' ? 'available' : 'unavailable',
+			categories: updateCategories,
 		};
 
 		// Check if a new image was uploaded

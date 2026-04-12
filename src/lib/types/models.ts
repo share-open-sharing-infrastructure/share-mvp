@@ -114,6 +114,9 @@ export interface Item extends PocketBaseEntity {
 	/** Availability status set by the owner */
 	status: 'available' | 'unavailable';
 
+	/** Up to 3 categories selected from the fixed 9-option list */
+	categories?: string[];
+
 	/** PocketBase collection id to which the item belongs */
 	/** TODO: I don't know why we save this? This should always be the "items" collection, right? */
 	collectionId: string;

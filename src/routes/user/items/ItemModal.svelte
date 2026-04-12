@@ -9,6 +9,7 @@
 		Img,
 		Popover,
 		Textarea,
+		Checkbox,
 	} from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
@@ -19,7 +20,7 @@
 	} from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { texts } from '$lib/texts';
+	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import type { ActionData } from './$types';
 
@@ -44,6 +45,29 @@
 	}: Props = $props();
 
 	let isAvailable = $derived(editingItem?.status === 'available' ? true : false);
+
+	let selectedCategories = $state<string[]>([]);
+
+	$effect(() => {
+		if (isVisible) {
+			selectedCategories = [...(editingItem?.categories ?? [])];
+		} else {
+			selectedCategories = [];
+		}
+	});
+
+	function handleCategoryChange(e: Event) {
+		const cb = e.target as HTMLInputElement;
+		if (cb.checked) {
+			if (selectedCategories.length >= 3) {
+				cb.checked = false;
+				return;
+			}
+			selectedCategories = [...selectedCategories, cb.value];
+		} else {
+			selectedCategories = selectedCategories.filter((c) => c !== cb.value);
+		}
+	}
 
 	function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
@@ -148,6 +172,25 @@
 				required
 			/>
 		</Label>
+
+		<!-- CATEGORIES -->
+		<div class="space-y-2">
+			<span class="text-sm font-medium">{texts.forms.itemCategories}</span>
+			<div class="flex flex-wrap gap-x-4 gap-y-2">
+				{#each ITEM_CATEGORIES as cat}
+					<Label class="flex items-center gap-1.5 cursor-pointer font-normal">
+						<Checkbox
+							name="categories"
+							value={cat}
+							checked={selectedCategories.includes(cat)}
+							disabled={selectedCategories.length >= 3 && !selectedCategories.includes(cat)}
+							onchange={handleCategoryChange}
+						/>
+						{cat}
+					</Label>
+				{/each}
+			</div>
+		</div>
 
 		<Label class="flex">
 			<Toggle

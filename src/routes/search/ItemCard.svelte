@@ -120,6 +120,14 @@
 		>
 			{item.name}
 		</h5>
+
+		{#if item.categories && item.categories.length > 0}
+			<div class="flex flex-wrap gap-1">
+				{#each item.categories as cat}
+					<Badge color="indigo" class="text-xs">{cat}</Badge>
+				{/each}
+			</div>
+		{/if}
 	</div>
 </Card>
 

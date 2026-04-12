@@ -1,3 +1,16 @@
+export const ITEM_CATEGORIES = [
+	'Freizeit und Sport',
+	'Werkzeug und Garten',
+	'Bücher',
+	'Spiele',
+	'Küche',
+	'Ton und Licht',
+	'Elektronik',
+	'Für Kinder',
+	'Sonstiges',
+] as const;
+export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
+
 export const texts = {
 	names: {
 		app: 'AllerLeih',
@@ -102,6 +115,7 @@ export const texts = {
 		addImage: 'Bild hinzufügen:',
 		changeImage: 'Bild ändern:',
 		description: 'Beschreibung:',
+		itemCategories: 'Kategorien (max. 3):',
 	},
 
 	// Buttons
@@ -213,6 +227,7 @@ export const texts = {
 				noLimit: 'Beliebig',
 				maxMinutes: (n: number) => `max. ${n} Min.`,
 			},
+			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} von ${total}`,
 			browseAll: 'Alle Gegenstände anzeigen',
