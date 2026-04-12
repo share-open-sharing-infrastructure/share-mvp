@@ -128,6 +128,14 @@ export const actions = {
 		const itemId = (await request.formData()).get('itemId')?.toString();
 		if (itemId) {
 			try {
+				const conversations = await locals.pb
+					.collection('conversations')
+					.getFullList({ filter: `requestedItem = "${itemId}"` });
+
+				for (const conversation of conversations) {
+					await locals.pb.collection('conversations').delete(conversation.id);
+				}
+
 				await locals.pb.collection('items').delete(itemId);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
