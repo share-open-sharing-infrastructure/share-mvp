@@ -46,6 +46,7 @@ export const texts = {
 		imprint: 'Impressum',
 		contact: 'Kontakt',
 		newsletter: 'Newsletter',
+		faq: 'FAQ',
 	},
 
 	// Error messages
@@ -208,6 +209,9 @@ export const texts = {
 		},
 		imprint: {
 			title: 'Impressum',
+		},
+		faq: {
+			title: 'Häufige Fragen (FAQ)',
 		},
 		howTo: {
 			title: "Und so funktioniert's:",
