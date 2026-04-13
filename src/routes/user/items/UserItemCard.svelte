@@ -31,7 +31,7 @@
 	class="items-center border border-gray-200 rounded-lg shadow flex sm:flex-row overflow-hidden"
 >
 	<img
-		class="m-5 w-30 h-30 aspect-square rounded-lg"
+		class="m-5 w-30 h-30 object-cover aspect-square rounded-lg"
 		src={imgUrl}
 		alt={item.name}
 	/>
