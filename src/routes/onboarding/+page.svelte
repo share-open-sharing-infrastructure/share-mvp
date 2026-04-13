@@ -3,6 +3,7 @@
 	import StepHowItWorks from './StepHowItWorks.svelte';
 	import StepLocation from './StepLocation.svelte';
 	import StepContact from './StepContact.svelte';
+	import StepTrustees from './StepTrustees.svelte';
 	import StepBrowserLocation from './StepBrowserLocation.svelte';
 	import StepPushNotifications from './StepPushNotifications.svelte';
 	import StepDone from './StepDone.svelte';
@@ -10,7 +11,7 @@
 	let { data } = $props();
 
 	let step = $state(1);
-	const totalSteps = 7;
+	const totalSteps = 8;
 
 	function next() {
 		if (step < totalSteps) step++;
@@ -59,10 +60,17 @@
 		{:else if step === 4}
 			<StepContact onNext={next} />
 		{:else if step === 5}
-			<StepBrowserLocation onNext={next} />
+			<StepTrustees
+				onNext={next}
+				users={data.users}
+				trustIds={data.trustIds}
+				currentUserId={data.currentUser.id}
+			/>
 		{:else if step === 6}
-			<StepPushNotifications onNext={next} />
+			<StepBrowserLocation onNext={next} />
 		{:else if step === 7}
+			<StepPushNotifications onNext={next} />
+		{:else if step === 8}
 			<StepDone inviteUrl={data.inviteUrl} />
 		{/if}
 

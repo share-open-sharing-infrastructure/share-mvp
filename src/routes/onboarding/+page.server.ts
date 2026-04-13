@@ -1,18 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { fail } from '@sveltejs/kit';
 import { texts } from '$lib/texts';
 import { PUBLIC_PB_URL } from '../../hooks.server';
+import type { User } from '$lib/types/models';
+import { createNotification, sendPushToUser } from '$lib/server/notifications';
 
 export async function load({ locals, url }) {
-
 	let inviteCode = locals.user.inviteCode as string | undefined;
 	if (!inviteCode) {
 		inviteCode = crypto.randomUUID();
 		await locals.pb.collection('users').update(locals.user.id, { inviteCode });
 	}
 
+	const users = await locals.pb.collection('users').getFullList<User>();
+
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl: `${url.origin}/auth/register?invite=${inviteCode}`,
+		users,
+		trustIds: (locals.user.trusts as string[]) ?? [],
 	};
 }
 
@@ -20,7 +26,6 @@ export const actions = {
 	saveLocation: async ({ locals, request }) => {
 		const formData = await request.formData();
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {};
 
 		const city = formData.get('city')?.toString();
@@ -48,10 +53,27 @@ export const actions = {
 		}
 	},
 
+	addTrustee: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const newTrusteeId = formData.get('trusteeId');
+
+		try {
+			await locals.pb.collection('users').update(locals.user.id, {
+				trusts: [...(locals.user.trusts || []), newTrusteeId],
+			});
+		} catch (error: Error | any) {
+			console.error(error?.message ?? error);
+		}
+
+		const adderName = locals.user.username ?? 'Jemand';
+		const notificationBody = texts.notifications.trustAdded(adderName);
+		await createNotification(locals.pb, newTrusteeId as string, locals.user.id, 'trust_added', locals.user.id, notificationBody);
+		await sendPushToUser(locals.pb, newTrusteeId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+	},
+
 	complete: async ({ locals, request }) => {
 		const formData = await request.formData();
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = { hasOnboarded: true };
 
 		const telegramUsername = formData.get('telegramUsername')?.toString();

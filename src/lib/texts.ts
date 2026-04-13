@@ -327,6 +327,14 @@ export const texts = {
 			inApp: 'In-App Benachrichtigungen',
 			email: 'E-Mail Benachrichtigungen',
 		},
+		trustees: {
+			title: 'Wem vertraust du?',
+			explanation:
+				'Füge Personen hinzu, denen du vertraust. Du kannst dann bestimmte Gegenstände nur für sie sichtbar machen.',
+			searchPlaceholder: 'Nutzername suchen...',
+			noResults: 'Keine Personen gefunden.',
+			noTrusteesYet: 'Noch niemanden hinzugefügt.',
+		},
 		browserLocation: {
 			title: 'Standort freigeben?',
 			explanation:
