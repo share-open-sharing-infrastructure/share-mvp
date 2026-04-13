@@ -296,6 +296,64 @@ export const texts = {
 		},
 	},
 
+	// Onboarding
+	onboarding: {
+		welcome: {
+			title: 'Willkommen bei AllerLeih!',
+			subtitle:
+				'Die Plattform zum Teilen und Ausleihen von Dingen – mit Freund:innen, deiner Nachbarschaft oder neuen Bekannten in deiner Umgebung.',
+			ethos: 'Gemeinwohlorientiert und open-source.',
+		},
+		howItWorks: {
+			title: "So funktioniert's",
+			search: 'Stöbere in Gegenständen aus deiner Umgebung und frage direkt an, was du brauchst.',
+			share: 'Stelle Gegenstände ein, die du verleihen möchtest – von der Bohrmaschine bis zum Buch.',
+			trust:
+				'Baue ein Vertrauensnetzwerk auf und teile bestimmte Dinge nur mit ausgewählten Personen.',
+			contact:
+				'Kontaktiere andere direkt über Telegram oder Signal – ohne deine Telefonnummer zu teilen.',
+		},
+		location: {
+			title: 'Wo bist du?',
+			explanation:
+				'AllerLeih nutzt deine Adresse, um dir und anderen die Reisezeit zueinander anzuzeigen. Deine Adresse wird nicht öffentlich angezeigt. Du kannst auch nur einen ungefähren Ort angeben oder das Feld überspringen.',
+		},
+		contact: {
+			title: 'Wie kann man dich erreichen?',
+			explanation:
+				'Füge deinen Telegram-Nutzernamen oder Signal-Link hinzu, damit andere dich bei Interesse direkt kontaktieren können – ganz ohne Telefonnummer. Das ist natürlich optional, du kannst auch über AllerLeih kontaktiert werden, ohne diese Informationen anzugeben.',
+			notificationsTitle: 'Benachrichtigungen',
+			notificationsNote: 'Kommt bald',
+			inApp: 'In-App Benachrichtigungen',
+			email: 'E-Mail Benachrichtigungen',
+		},
+		browserLocation: {
+			title: 'Standort freigeben?',
+			explanation:
+				'AllerLeih kann deinen aktuellen GPS-Standort nutzen, um dir Dinge in deiner unmittelbaren Nähe anzuzeigen. Dein Standort wird dabei nicht gespeichert.',
+			allow: 'Standort freigeben',
+			denied: 'Standort konnte nicht abgerufen werden.',
+		},
+		pushNotifications: {
+			title: 'Benachrichtigungen aktivieren?',
+			explanation:
+				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
+			allow: 'Benachrichtigungen aktivieren',
+		},
+		done: {
+			title: 'Alles bereit! 🎉',
+			subtitle: 'Schön, dass du dabei bist. Womit möchtest du loslegen?',
+			searchCta: 'Dinge suchen',
+			uploadCta: 'Dinge anbieten',
+			inviteCta: 'Freunde einladen',
+		},
+		buttons: {
+			next: 'Weiter',
+			skip: 'Überspringen',
+			finish: "Los geht's!",
+		},
+	},
+
 	// Notifications
 	notifications: {
 		title: 'Benachrichtigungen',

@@ -121,11 +121,13 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-	<NavBarComponent
-		loggedIn={!!data.currentUser}
-		currentUser={data.currentUser}
-		{unreadCount}
-	/>
+	{#if page.url.pathname !== '/onboarding'}
+		<NavBarComponent
+			loggedIn={!!data.currentUser}
+			currentUser={data.currentUser}
+			{unreadCount}
+		/>
+	{/if}
 
 	<main class="flex-1">
 		{@render children()}
@@ -137,24 +139,26 @@
 		{installPromptEvent}
 	/>
 
-	<Button
-		pill
-		onclick={(): void => {
-			isFeedbackModalOpen = true;
-		}}
-		class="
-				min-button
-				bg-accent-200
-				fixed bottom-10 left-10 z-50
-				cursor-pointer
-			"
-	>
-		Feedback
-	</Button>
+	{#if page.url.pathname !== '/onboarding'}
+		<Button
+			pill
+			onclick={(): void => {
+				isFeedbackModalOpen = true;
+			}}
+			class="
+					min-button
+					bg-accent-200
+					fixed bottom-10 left-10 z-50
+					cursor-pointer
+				"
+		>
+			Feedback
+		</Button>
 
-	<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
-		<FeedbackForm />
-	</Modal>
+		<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
+			<FeedbackForm />
+		</Modal>
 
-	<FooterComponent />
+		<FooterComponent />
+	{/if}
 </div>
