@@ -66,39 +66,53 @@ export const actions = {
 		const itemOwnerId = formData.get('ownerId');
 		const itemId = formData.get('itemId');
 
-		const conversationData = {
-			requester: requesterId,
-			itemOwner: itemOwnerId,
-			requestedItem: itemId,
-			readByRequester: true,
-			readByOwner: false,
-		};
-
-		let conversation;
-		try {
-			conversation = await locals.pb.collection('conversations').create(conversationData);
-		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, {
-				fail: true,
-				message: e.data?.message ?? texts.errors.failedToCreateConversation,
+		
+		// Check if conversation already exists between requester and item owner for the same item
+		let targetConversationId: string = "";
+		const existingConversations = await locals.pb
+			.collection('conversations')
+			.getFullList({
+				filter: `requester = "${requesterId}" && itemOwner = "${itemOwnerId}" && requestedItem = "${itemId}"`,
 			});
+		if (existingConversations.length > 0) {
+			targetConversationId = existingConversations[0].id;
+			redirect(303, `/conversations/${targetConversationId ?? targetConversationId}`);
+		} else {
+			const conversationData = {
+				requester: requesterId,
+				itemOwner: itemOwnerId,
+				requestedItem: itemId,
+				readByRequester: true,
+				readByOwner: false,
+			};
+	
+			let conversation;
+			try {
+				conversation = await locals.pb.collection('conversations').create(conversationData);
+			} catch (err) {
+				const e = err as Partial<ClientResponseError>;
+				return fail(e.status ?? 500, {
+					fail: true,
+					message: e.data?.message ?? texts.errors.failedToCreateConversation,
+				});
+			}
+	
+			if (conversation) {
+				targetConversationId = conversation.id;
+	
+				// Notify the item owner about the new request
+				const itemRecord = await locals.pb.collection('items').getOne(itemId as string).catch(() => null);
+				const requesterName = locals.user.username ?? locals.user.name ?? 'Jemand';
+				const itemName = itemRecord?.name ?? 'einem Gegenstand';
+				const notificationBody = texts.notifications.newRequest(requesterName, itemName);
+				const conversationUrl = `/conversations/${targetConversationId ?? targetConversationId}`;
+	
+				await createNotification(locals.pb, itemOwnerId as string, locals.user.id as string, 'new_request', targetConversationId, notificationBody);
+				await sendPushToUser(locals.pb, itemOwnerId as string, texts.notifications.pushTitle, notificationBody, conversationUrl);
+			}
 		}
+		
+		redirect(303, `/conversations/${targetConversationId ?? targetConversationId}`);
 
-		if (conversation) {
-			const conversationId: string = conversation.id;
-
-			// Notify the item owner about the new request
-			const itemRecord = await locals.pb.collection('items').getOne(itemId as string).catch(() => null);
-			const requesterName = locals.user.username ?? locals.user.name ?? 'Jemand';
-			const itemName = itemRecord?.name ?? 'einem Gegenstand';
-			const notificationBody = texts.notifications.newRequest(requesterName, itemName);
-			const conversationUrl = `/conversations/${conversationId}`;
-
-			await createNotification(locals.pb, itemOwnerId as string, locals.user.id as string, 'new_request', conversationId, notificationBody);
-			await sendPushToUser(locals.pb, itemOwnerId as string, texts.notifications.pushTitle, notificationBody, conversationUrl);
-
-			redirect(303, `/conversations/${conversationId}`);
-		}
 	},
 };
