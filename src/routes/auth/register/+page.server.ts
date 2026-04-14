@@ -99,9 +99,9 @@ export const actions = {
 
 		// Notify inviter so they can choose to trust back
 		const body = texts.notifications.inviteAccepted(newUser.username);
-		await createNotification(locals.pb, inviter.id, 'invite_accepted', newUser.id, body);
+		await createNotification(locals.pb, inviter.id, newUser.id, 'invite_accepted', newUser.id, body);
 		await sendPushToUser(locals.pb, inviter.id, texts.notifications.pushTitle, body, `/users/${newUser.id}`);
 
-		redirect(303, '/');
+		redirect(303, '/onboarding');
 	},
 };

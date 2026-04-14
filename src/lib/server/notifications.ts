@@ -6,6 +6,32 @@ import type PocketBase from 'pocketbase';
 
 webpush.setVapidDetails(VAPID_SUBJECT, PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+/** Minimum gap between new_message notifications for the same conversation (ms). */
+export const MESSAGE_NOTIFICATION_COOLDOWN_MS = 60_000; // 1 minute — adjust to taste
+
+/**
+ * Returns true if a new_message notification for this recipient+conversation
+ * was already sent within the cooldown window and a new one should be suppressed.
+ */
+export async function isMessageNotificationThrottled(
+	pb: PocketBase,
+	recipientId: string,
+	conversationId: string
+): Promise<boolean> {
+	try {
+		const recent = await pb.collection('notifications').getList(1, 1, {
+			filter: `recipient="${recipientId}" && relatedId="${conversationId}" && type="new_message"`,
+			sort: '-created',
+		});
+		if (recent.items.length === 0) return false;
+		const lastCreated = new Date(recent.items[0].created).getTime();
+		return Date.now() - lastCreated < MESSAGE_NOTIFICATION_COOLDOWN_MS;
+	} catch (err) {
+		console.error('Failed to check notification throttle:', err);
+		return false; // fail open — send the notification if the check itself fails
+	}
+}
+
 /**
  * Creates a notification record in PocketBase for the given recipient.
  */

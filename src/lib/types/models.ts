@@ -85,6 +85,11 @@ export interface User extends PocketBaseEntity {
 	 * Foreign key: the user who invited this user (set at registration via invite link).
 	 */
 	invitedBy?: UserId;
+
+	/**
+	 * Whether the user has completed the onboarding flow.
+	 */
+	hasOnboarded?: boolean;
 }
 
 // --- ITEM ---
