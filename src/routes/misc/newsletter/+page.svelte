@@ -4,7 +4,7 @@
 	import { texts } from '$lib/texts';
 </script>
 
-<div class="mx-auto max-w-screen-sm text-center">
+<div class="mx-auto text-center">
 	<h2
 		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
 	>
@@ -16,8 +16,8 @@
 	</p>
 </div>
 <Section name="login">
-	<Register class="w-md">
-		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
+	<Register class="w-full">
+		<div class="space-y-4 p-4">
 			<form
 				action="https://app.keila.io/forms/nfrm_b94Bj5RD"
 				class="flex flex-col gap-2"
