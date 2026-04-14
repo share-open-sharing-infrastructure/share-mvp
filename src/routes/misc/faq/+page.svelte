@@ -47,10 +47,8 @@
 	<AccordionItem>
 		{#snippet header()}Was passiert mit meinen Daten?{/snippet}
 		<p class="text-gray-500 dark:text-gray-400">
-			Aktuell liegen eure Daten auf einem Server in Deutschland, der vom Anbieter https://uberspace.de/de/ betrieben wird.
-			Wir sind noch im Aufbau, deswegen läuft hier vielleicht noch nicht alles 100% deutsch-bürokratisch-konform, aber wir sind
-			überzeugte Datenschützer und versprechen, dass wir eure Daten nicht verkaufen, für Werbung nutzen oder anderweitig missbrauchen.
-			Datensparsamkeit und Privatsphäre sind für uns hohe Güter, und wir werden AllerLeih so entwickeln, dass ihr die volle Kontrolle über eure Daten habt. 
+			
+			Wir sind noch im Aufbau und es gibt noch Allerlei(h) zu tun, deswegen läuft hier vielleicht noch nicht alles 100% rund. Aber digitale Freiheitsrechte (Persönlichkeitsrecht, Datenschutz, Teilhabe) sind für uns Grundwerte und wir werden AllerLeih so entwickeln, dass ihr die volle Kontrolle über eure Daten habt. Zu jeder Zeit. immer.
 		</p>
 	</AccordionItem>
 </Accordion>
