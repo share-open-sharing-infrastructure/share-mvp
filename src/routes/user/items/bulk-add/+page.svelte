@@ -22,10 +22,10 @@
 
 	let allAnalyzed = $derived(drafts.every((draft) => draft.status === 'done' || draft.status === 'error'));
 
-	// 800px keeps token count low enough to stay within Mistral's per-request limit
-	const ANALYZE_MAX_DIM = 1000;
+	// Keeps token count low enough to stay within Mistral's per-request limit
+	const ANALYZE_MAX_DIM = 800;
 	// Mistral allows 2 req/s; 1100ms gives a small safety margin
-	const ANALYZE_INTERVAL_MS = 500;
+	const ANALYZE_INTERVAL_MS = 1100;
 
 	async function analyzeAll() {
 		if (drafts.length === 0) {
