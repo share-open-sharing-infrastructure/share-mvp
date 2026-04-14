@@ -1,6 +1,5 @@
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { Item } from '$lib/types/models';
-import { filterTrustedItems } from '$lib/server/itemFilters';
 import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
 
 export async function load({ locals, url }) {
@@ -44,7 +43,10 @@ export async function load({ locals, url }) {
 		selectedCategories.length > 0
 			? `(${selectedCategories.map((c) => `categories ~ '${escapeCatValue(c)}'`).join(op === 'and' ? ' && ' : ' || ')})`
 			: null;
-	const filter = [nameFilter, ownerFilter, categoryFilter].filter(Boolean).join(' && ') || undefined;
+	const trustFilter = locals.user
+		? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
+		: `trusteesOnly = false`;
+	const filter = [nameFilter, ownerFilter, categoryFilter, trustFilter].filter(Boolean).join(' && ') || undefined;
 
 
 	const result = await locals.pb.collection('items').getList<Item>(page, perPage, {
@@ -53,14 +55,8 @@ export async function load({ locals, url }) {
 		filter,
 	});
 
-	const filteredItems = filterTrustedItems(
-		result.items,
-		locals.user ? locals.user.id : null,
-		locals.pb.authStore.isValid
-	);
-
 	return {
-		items: filteredItems,
+		items: result.items,
 		PB_IMG_URL: PUBLIC_PB_URL,
 		q,
 		selectedCategories,
