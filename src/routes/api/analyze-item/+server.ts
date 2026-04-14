@@ -34,7 +34,6 @@ export async function POST({ request, locals }) {
 	const { imageBase64, mimeType } = await request.json();
 	if (!imageBase64 || !mimeType) throw error(400, 'Missing image data');
 
-	console.log(imageRecognitionPrompt);
 	const response = await client.chat.complete({
 		model: 'pixtral-12b-2409',
 		messages: [

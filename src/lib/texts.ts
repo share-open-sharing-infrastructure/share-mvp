@@ -262,6 +262,10 @@ export const texts = {
 		},
 		items: {
 			title: 'Meine Dinge',
+			countSome: (n: number) => `Du verleihst ${n} Ding(e)...`,
+			countNone: 'Du verleihst noch keine Ding(e)...',
+			addSingle: 'Dinge einzeln hochladen',
+			addBulk: 'KI-gestützt mehrere Dinge gleichzeitig hochladen',
 		},
 		profile: {
 			title: 'Mein Profil',

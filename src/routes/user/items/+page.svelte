@@ -24,15 +24,11 @@
 			{texts.pages.items.title}
 		</h2>
 		<div>
-			Du verleihst
 			{#if data?.user?.expand?.items_via_owner?.length}
-				<span class="text-accent"
-					>{data.user.expand.items_via_owner.length}</span
-				> Ding(e)...
+				<span class="text-accent">{texts.pages.items.countSome(data.user.expand.items_via_owner.length)}</span>
 			{:else}
-				noch keine Ding(e)...
+				{texts.pages.items.countNone}
 			{/if}
-
 		</div>
 	</div>
 </div>
@@ -40,16 +36,25 @@
 <section class="bg-white dark:bg-gray-900 min-h-screen">
 	<div class="max-w-7xl mx-auto px-4 pt-6">
 
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+		<!-- Action buttons -->
+		<div class="flex flex-col sm:flex-row gap-4 mb-8">
 			<Button
-				onclick={() => {
-					showAddModal = true;
-				}}
-				class="min-button bg-primary-50">Ding hinzufügen...</Button
+				onclick={() => { showAddModal = true; }}
+				class="flex-1 cursor-pointer flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-primary-200 bg-primary-50 hover:bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-100 dark:border-primary-700"
 			>
-			<Button href="/user/items/bulk-add" class="min-button bg-primary-50">
-				{texts.bulkUpload.buttonLabel}
+				<span class="text-xl">📦</span>
+				{texts.pages.items.addSingle}
 			</Button>
+			<Button
+				href="/user/items/bulk-add"
+				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-secondary-200 bg-secondary-50 hover:bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-100 dark:border-secondary-700"
+			>
+				<span class="text-xl">✨</span>
+				{texts.pages.items.addBulk}
+			</Button>
+		</div>
+
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
 			{#if data?.user?.expand?.items_via_owner?.length}
 				{#each data.user.expand.items_via_owner as item (item.id)}
 					<UserItemCard
