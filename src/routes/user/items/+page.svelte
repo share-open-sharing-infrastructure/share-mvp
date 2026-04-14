@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 
-	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import UserItemCard from './UserItemCard.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import { Button } from 'flowbite-svelte';
@@ -48,6 +47,9 @@
 				}}
 				class="min-button bg-primary-50">Ding hinzufügen...</Button
 			>
+			<Button href="/user/items/bulk-add" class="min-button bg-primary-50">
+				{texts.bulkUpload.buttonLabel}
+			</Button>
 			{#if data?.user?.expand?.items_via_owner?.length}
 				{#each data.user.expand.items_via_owner as item (item.id)}
 					<UserItemCard

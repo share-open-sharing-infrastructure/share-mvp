@@ -296,6 +296,30 @@ export const texts = {
 		},
 	},
 
+	// Bulk photo upload / AI item recognition
+	bulkUpload: {
+		buttonLabel: 'KI-gestützt Fotos hochladen',
+		pageTitle: 'Mehrere Dinge mit KI hinzufügen',
+		dropzoneLabel: 'Weitere Fotos hinzufügen oder hierher ziehen',
+		disclaimer: 'Lade pro Gegenstand genau EIN Foto hoch. Sorge für gute Beleuchtung und einen aufgeräumten Hintergrund – so erkennt die KI den Gegenstand am besten.',
+		selectFiles: 'Fotos auswählen',
+		filesSelected: (n: number) => `${n} Foto(s) ausgewählt`,
+		continue: 'KI-Analyse starten',
+		analyzing: 'Wird erkannt…',
+		analysisError: 'Erkennung fehlgeschlagen – bitte manuell ausfüllen',
+		reviewTitle: 'Prüfe die von der KI erkannten Dinge! Die KI kann Fehler machen, also korrigiere die Angaben bei Bedarf.',
+		removeItem: 'Entfernen',
+		createAll: (n: number) => `Alle erstellen (${n})`,
+		creating: 'Wird erstellt…',
+		noPhotosSelected: 'Bitte wähle mindestens ein Foto aus.',
+		howItWorksHeader: 'Wie funktioniert das?',
+		howItWorksBody: 'Die KI erkennt deine Gegenstände und schlägt dir Titel, Kategorie(n) und Beschreibung vor. \
+			Das spart dir Zeit — kostet aber pro Bild etwas Strom (ca. 1–3 Wattstunden), Wasser (ca. 5–30 Milliliter), CO₂ (ca. 0,1–0,3 Gramm) und basiert auf einer Industrie mit ethischen Problemen.\
+			Wir bieten diese Option an, weil sie das Hochladen von Gegenständen stark vereinfacht und somit den Verleih fördert.\
+			Mistral nutzt diese Bilder unter Umständen zur Verbesserung ihrer KI, also lade keine Fotos hoch, die du nicht teilen möchtest. \
+			Alle Analysen finden auf den Servern von Mistral in Frankreich nach europäischem und französischem Recht statt, wir haben keinen Einfluss darauf.',
+	},
+
 	// Notifications
 	notifications: {
 		title: 'Benachrichtigungen',

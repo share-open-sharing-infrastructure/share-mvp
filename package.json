@@ -51,6 +51,7 @@
 		]
 	},
 	"dependencies": {
+		"@mistralai/mistralai": "^2.2.0",
 		"debounce": "^3.0.0",
 		"dotenv": "^17.2.3",
 		"flowbite-svelte-blocks": "^2.1.0",
