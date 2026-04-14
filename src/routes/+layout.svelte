@@ -156,7 +156,7 @@
 		</Button>
 
 		<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
-			<FeedbackForm />
+			<FeedbackForm onsuccess={() => { isFeedbackModalOpen = false; }} />
 		</Modal>
 
 		<FooterComponent />

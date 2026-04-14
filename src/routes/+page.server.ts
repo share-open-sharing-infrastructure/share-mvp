@@ -1,3 +1,6 @@
+import { fail } from '@sveltejs/kit';
+import { texts } from '$lib/texts';
+
 export const actions = {
 	feedback: async ({ locals, request }) => {
 		const formData = await request.formData();
@@ -23,16 +26,10 @@ export const actions = {
 
 		try {
 			await locals.pb.collection('feedback').create(feedbackData);
-			return {
-				success: true,
-				message: 'Feedback erfolgreich gesendet. Vielen Dank!',
-			};
+			return { message: texts.success.feedbackSent };
 		} catch (error) {
 			console.error('Error saving feedback:', error);
-			return {
-				success: false,
-				message: 'Feedback konnte nicht gesendet werden.',
-			};
+			return fail(500, { message: texts.errors.feedbackFailed });
 		}
 	},
 };
