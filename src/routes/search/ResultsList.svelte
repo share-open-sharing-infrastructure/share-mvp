@@ -11,12 +11,14 @@
 		travelTimes = {},
 		transportMode = 'bicycle',
 		totalItems,
+		currentUserId,
 	}: {
 		filteredItemList: import('$lib/types/models').Item[];
 		PB_IMG_URL: string;
 		travelTimes: Record<string, number | null>;
 		transportMode: TransportMode;
 		totalItems?: number;
+		currentUserId?: string;
 	} = $props();
 </script>
 
@@ -31,6 +33,7 @@
 			imgUrl={`${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
 			travelMinutes={travelTimes[item.expand?.owner?.id]}
 			{transportMode}
+			{currentUserId}
 		/>
 	{/each}
 </Gallery>
