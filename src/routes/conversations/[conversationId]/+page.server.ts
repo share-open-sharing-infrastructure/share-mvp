@@ -3,7 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Conversation, Message } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
-import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
+import { createNotification, sendPushToUser, isMessageNotificationThrottled } from '$lib/server/notifications.js';
 
 export async function load({ params, locals }) {
 	const conversationId: string = params.conversationId;
@@ -115,8 +115,11 @@ export const actions = {
 			const notificationBody = texts.notifications.newMessage(senderName);
 			const conversationUrl = `/conversations/${conversationId}`;
 
-			await createNotification(locals.pb, toUserId, locals.user.id, 'new_message', conversationId, notificationBody);
-			await sendPushToUser(locals.pb, toUserId, texts.notifications.pushTitle, notificationBody, conversationUrl);
+			const throttled = await isMessageNotificationThrottled(locals.pb, toUserId, conversationId);
+			if (!throttled) {
+				await createNotification(locals.pb, toUserId, locals.user.id, 'new_message', conversationId, notificationBody);
+				await sendPushToUser(locals.pb, toUserId, texts.notifications.pushTitle, notificationBody, conversationUrl);
+			}
 		}
 	},
 	toggleStatus: async ({ locals, request }) => {
