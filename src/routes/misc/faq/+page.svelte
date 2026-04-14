@@ -39,8 +39,8 @@
 		{#snippet header()}Was habt ihr vor?{/snippet}
 		<p class="text-gray-500 dark:text-gray-400">
 			AllerLeih für alle! Wir wollen AllerLeih zu DER Plattform für das Teilen und Leihen machen. 
-			Im Gegensatz zu unseren Mitbewerbern (müssen wir nicht gendern ;)) setzen wir dafür auf open-source und versuchen, ein dezentrales Modell zu entwickeln, das nicht von uns abhängt. 
-			In Zukunft soll also jeder Mensch in seiner Stadt oder Kommune die Möglichkeit haben, eine eigene AllerLeih-Instanz zu betreiben und sich vor Ort um die Community zu kümmern.
+			Im Gegensatz zu anderen Plattformen setzen wir dafür auf open-source und versuchen, ein dezentrales Modell zu entwickeln, das nicht von uns abhängt. 
+			In Zukunft soll also jeder Mensch in seiner Stadt, seinem Quartier oder seiner Kommune die Möglichkeit haben, eine eigene AllerLeih-Instanz zu betreiben und sich vor Ort um die Community zu kümmern. 
 		</p>
 	</AccordionItem>
 
