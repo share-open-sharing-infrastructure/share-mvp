@@ -63,7 +63,7 @@
 	<!-- Categories -->
 	{#if item.categories && item.categories.length > 0}
 		<div class="flex flex-wrap gap-2">
-			{#each item.categories as cat}
+			{#each item.categories as cat(cat)}
 				<Badge color="indigo">{cat}</Badge>
 			{/each}
 		</div>

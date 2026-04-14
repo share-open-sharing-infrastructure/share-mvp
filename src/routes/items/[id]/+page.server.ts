@@ -36,7 +36,7 @@ export async function load({ params, locals }) {
 }
 
 export const actions = {
-	toggleStatus: async ({ locals, request, params }) => {
+	toggleStatus: async ({ locals, params }) => {
 		if (!locals.user) {
 			redirect(303, `/auth/login?redirectTo=/items/${params.id}`);
 		}
@@ -60,7 +60,7 @@ export const actions = {
 		}
 	},
 
-	startConversation: async ({ locals, request, params }) => {
+	startConversation: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const requesterId = locals.user.id;
 		const itemOwnerId = formData.get('ownerId');

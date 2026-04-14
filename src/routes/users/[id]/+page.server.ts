@@ -64,7 +64,7 @@ export const actions = {
 		const adderName = locals.user.username ?? locals.user.name ?? 'Jemand';
 		const notificationBody = texts.notifications.trustAdded(adderName);
 
-		await createNotification(locals.pb, profileUserId as string, 'trust_added', locals.user.id, notificationBody);
+		await createNotification(locals.pb, profileUserId as string, locals.user.id, 'trust_added', locals.user.id, notificationBody);
 		await sendPushToUser(locals.pb, profileUserId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
 	},
 	removeTrust: async ({ params, locals }): Promise<void> => {

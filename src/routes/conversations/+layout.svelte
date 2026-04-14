@@ -10,7 +10,7 @@
 	let activeTab: 'lending' | 'borrowing' = $state('borrowing');
 
 	// Local mutable copy so realtime updates can clear the unread dots
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, svelte/prefer-writable-derived
 	let conversations: any[] = $state([]);
 
 	// Sync from server data on first render and whenever data refreshes
@@ -19,9 +19,11 @@
 	});
 
 	const lendingConversations = $derived(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		conversations.filter((c: any) => c.itemOwner === data.currentUser.id)
 	);
 	const borrowingConversations = $derived(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		conversations.filter((c: any) => c.requester === data.currentUser.id)
 	);
 

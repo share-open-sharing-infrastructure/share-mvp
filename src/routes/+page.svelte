@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
-	import { ChartPieSolid } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 
 	import landingimg from '$lib/images/landing-img.png';
