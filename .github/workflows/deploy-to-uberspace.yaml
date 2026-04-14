@@ -25,6 +25,7 @@ jobs:
           PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:
