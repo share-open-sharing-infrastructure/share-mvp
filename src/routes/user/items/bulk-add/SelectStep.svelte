@@ -95,6 +95,10 @@
 		{texts.bulkUpload.disclaimer}
 	</p>
 
+	<p class="hidden [@media(hover:none)_and_(pointer:coarse)]:block max-w-sm rounded-lg bg-blue-50 px-3 py-2 text-center text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+		{texts.bulkUpload.mobileTip}
+	</p>
+
 	<p class="text-sm text-gray-500 dark:text-gray-400">{texts.bulkUpload.dropzoneLabel}</p>
 
 	<label

@@ -307,6 +307,7 @@ export const texts = {
 		dropzoneLabel: 'Weitere Fotos hinzufügen oder hierher ziehen',
 		disclaimer: 'Lade pro Gegenstand genau EIN Foto hoch. Sorge für gute Beleuchtung und einen aufgeräumten Hintergrund – so erkennt die KI den Gegenstand am besten.',
 		selectFiles: 'Fotos auswählen',
+		mobileTip: 'Tipp für Handys: Nimm alle Fotos zuerst mit der Kamera-App auf, und wähle sie danach hier auf einmal aus der Galerie aus.',
 		filesSelected: (n: number) => `${n} Foto(s) ausgewählt`,
 		continue: 'KI-Analyse starten',
 		analyzing: 'Wird erkannt…',
