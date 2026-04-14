@@ -22,18 +22,23 @@
 
 	let allAnalyzed = $derived(drafts.every((draft) => draft.status === 'done' || draft.status === 'error'));
 
+	// 800px keeps token count low enough to stay within Mistral's per-request limit
+	const ANALYZE_MAX_DIM = 1000;
+	// Mistral allows 2 req/s; 1100ms gives a small safety margin
+	const ANALYZE_INTERVAL_MS = 500;
+
 	async function analyzeAll() {
 		if (drafts.length === 0) {
 			noPhotosError = true;
 			return;
 		}
 		phase = 'review';
-		drafts = drafts.map((d) => ({ ...d, status: 'analyzing' })); // Update draft status to show loading state in UI
+		drafts = drafts.map((d) => ({ ...d, status: 'analyzing' }));
 
-		const results = await Promise.allSettled(
-			drafts.map(async (draft, i) => {
-				// 700px is enough for item recognition and keeps token count low
-				const compressed = await compressImage(draft.file, 1368, 0.8);
+		for (let i = 0; i < drafts.length; i++) {
+			if (i > 0) await new Promise((r) => setTimeout(r, ANALYZE_INTERVAL_MS));
+			try {
+				const compressed = await compressImage(drafts[i].file, ANALYZE_MAX_DIM, 0.8);
 				const base64 = await blobToBase64(compressed);
 				const res = await fetch('/api/analyze-item', {
 					method: 'POST',
@@ -41,23 +46,18 @@
 					body: JSON.stringify({ imageBase64: base64, mimeType: 'image/jpeg' }),
 				});
 				if (!res.ok) throw new Error('Analysis failed');
-				return { i, data: await res.json() };
-			})
-		);
-
-		results.forEach((result, i) => {
-			if (result.status === 'fulfilled') {
+				const data = await res.json();
 				drafts[i] = {
 					...drafts[i],
-					name: result.value.data.name ?? '',
-					description: result.value.data.description ?? '',
-					categories: result.value.data.categories ?? [],
+					name: data.name ?? '',
+					description: data.description ?? '',
+					categories: data.categories ?? [],
 					status: 'done',
 				};
-			} else {
+			} catch {
 				drafts[i] = { ...drafts[i], name: '', description: '', categories: [], status: 'error' };
 			}
-		});
+		}
 	}
 
 	async function blobToBase64(blob: Blob): Promise<string> {
