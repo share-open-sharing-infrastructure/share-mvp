@@ -323,6 +323,8 @@ export const texts = {
 			Wir bieten diese Option an, weil sie das Hochladen von Gegenständen stark vereinfacht und somit den Verleih fördert.\
 			Mistral nutzt diese Bilder unter Umständen zur Verbesserung ihrer KI, also lade keine Fotos hoch, die du nicht teilen möchtest. \
 			Alle Analysen finden auf den Servern von Mistral in Frankreich nach europäischem und französischem Recht statt, wir haben keinen Einfluss darauf.',
+	},
+	
 	// Onboarding
 	onboarding: {
 		welcome: {
