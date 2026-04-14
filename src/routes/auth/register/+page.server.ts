@@ -102,6 +102,6 @@ export const actions = {
 		await createNotification(locals.pb, inviter.id, newUser.id, 'invite_accepted', newUser.id, body);
 		await sendPushToUser(locals.pb, inviter.id, texts.notifications.pushTitle, body, `/users/${newUser.id}`);
 
-		redirect(303, '/');
+		redirect(303, '/onboarding');
 	},
 };
