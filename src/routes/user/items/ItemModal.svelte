@@ -21,6 +21,7 @@
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
 	import { texts, ITEM_CATEGORIES } from '$lib/texts';
+	import { compressImage } from '$lib/utils/imageUtils';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import type { ActionData } from './$types';
 
@@ -80,49 +81,6 @@
 		}
 	}
 
-	async function compressImage(file: File): Promise<Blob> {
-		const MAX_DIMENSION = 1920;
-		const QUALITY = 0.8;
-
-		return new Promise((resolve, reject) => {
-			const img = new Image();
-			const url = URL.createObjectURL(file);
-
-			img.onload = () => {
-				URL.revokeObjectURL(url);
-				let w = img.naturalWidth;
-				let h = img.naturalHeight;
-
-				if (w > MAX_DIMENSION || h > MAX_DIMENSION) {
-					if (w >= h) {
-						h = Math.round((h / w) * MAX_DIMENSION);
-						w = MAX_DIMENSION;
-					} else {
-						w = Math.round((w / h) * MAX_DIMENSION);
-						h = MAX_DIMENSION;
-					}
-				}
-
-				const canvas = document.createElement('canvas');
-				canvas.width = w;
-				canvas.height = h;
-				canvas.getContext('2d')!.drawImage(img, 0, 0, w, h);
-
-				canvas.toBlob(
-					(blob) => (blob ? resolve(blob) : reject(new Error('Compression failed'))),
-					'image/jpeg',
-					QUALITY
-				);
-			};
-
-			img.onerror = () => {
-				URL.revokeObjectURL(url);
-				reject(new Error('Failed to load image'));
-			};
-
-			img.src = url;
-		});
-	}
 
 	$effect(() => {
 		if (isVisible) {
