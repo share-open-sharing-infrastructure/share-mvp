@@ -5,103 +5,105 @@
 	import Pagination from './Pagination.svelte';
 	import HowToButton from './HowToButton.svelte';
 	import CategoryFilter from './CategoryFilter.svelte';
-	// import TransportModeSelector from './TransportModeSelector.svelte';
+	import TransportModeSelector from './TransportModeSelector.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
-	// import { SvelteMap } from 'svelte/reactivity';
+	import { SvelteMap } from 'svelte/reactivity';
 
-	// type TransportMode = 'foot' | 'bicycle' | 'car';
+	type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	const { data } = $props();
 
 	const browseAllUrl = resolve('/search') + '?q=*';
 
-	// Transport mode and travel time features are temporarily disabled pending fixes
-	// let transportMode: TransportMode = $state(
-	// 	(data.currentUser?.preferredTransportMode as TransportMode) ?? 'bicycle'
-	// );
-	// let travelTimes = $state<Record<string, number | null>>({});
-	// let maxMinutes = $state(60);
-	// let noLocationAvailable = $state(false);
-	// let showNoLocationPrompt = $state(false);
-	// let userLocation: { lon: number; lat: number } | null = null;
-	// const travelTimesCache = new SvelteMap<TransportMode, Record<string, number | null>>();
+	let transportMode: TransportMode = $state(
+		(data.currentUser?.preferredTransportMode as TransportMode) ?? 'bicycle'
+	);
+	let travelTimes = $state<Record<string, number | null>>({});
+	let maxMinutes = $state(60);
+	let noLocationAvailable = $state(false);
+	let showNoLocationPrompt = $state(false);
+	let userLocation: { lon: number; lat: number } | null = null;
+	const travelTimesCache = new SvelteMap<TransportMode, Record<string, number | null>>();
 
-	// function isNullIsland(loc: { lon: number; lat: number } | undefined | null) {
-	// 	return !loc || (loc.lon === 0 && loc.lat === 0);
-	// }
+	function isNullIsland(loc: { lon: number; lat: number } | undefined | null) {
+		return !loc || (loc.lon === 0 && loc.lat === 0);
+	}
 
-	// async function fetchTravelTimes() {
-	// 	if (!userLocation || data.items.length === 0) return;
-	// 	const ownerMap = new SvelteMap<string, { id: string; lon: number; lat: number }>();
-	// 	const ownerlessIds: string[] = [];
-	// 	for (const item of data.items) {
-	// 		const owner = item.expand?.owner;
-	// 		if (!owner?.id) continue;
-	// 		if (ownerMap.has(owner.id) || ownerlessIds.includes(owner.id)) continue;
-	// 		const geo = owner.geolocation;
-	// 		if (isNullIsland(geo)) {
-	// 			ownerlessIds.push(owner.id);
-	// 		} else {
-	// 			ownerMap.set(owner.id, { id: owner.id, lon: geo.lon, lat: geo.lat });
-	// 		}
-	// 	}
-	// 	const newTimes: Record<string, number | null> = {};
-	// 	for (const id of ownerlessIds) newTimes[id] = null;
-	// 	const owners = Array.from(ownerMap.values());
-	// 	if (owners.length === 0) { travelTimes = newTimes; return; }
-	// 	const cached = travelTimesCache.get(transportMode);
-	// 	if (cached) { travelTimes = { ...newTimes, ...cached }; return; }
-	// 	try {
-	// 		const response = await fetch('/api/travel-times', {
-	// 			method: 'POST',
-	// 			headers: { 'Content-Type': 'application/json' },
-	// 			body: JSON.stringify({ userLocation, transportMode, owners }),
-	// 		});
-	// 		if (response.ok) {
-	// 			const result: Record<string, number> = await response.json();
-	// 			const merged = { ...newTimes, ...result };
-	// 			travelTimesCache.set(transportMode, result);
-	// 			travelTimes = merged;
-	// 		}
-	// 	} catch (err) {
-	// 		console.error('Travel time fetch failed:', err);
-	// 		travelTimes = newTimes;
-	// 	}
-	// }
+	async function fetchTravelTimes() {
+		console.log('Fetching travel times for mode:', transportMode);
+		if (!userLocation || data.items.length === 0) return;
+		const ownerMap = new SvelteMap<string, { id: string; lon: number; lat: number }>();
+		const ownerlessIds: string[] = [];
+		console.log('Processing items to extract owner locations...');
+		for (const item of data.items) {
+			const owner = item.expand?.owner;
+			if (!owner?.id) continue;
+			if (ownerMap.has(owner.id) || ownerlessIds.includes(owner.id)) continue;
+			const geo = owner.geolocation;
+			if (isNullIsland(geo)) {
+				ownerlessIds.push(owner.id);
+			} else {
+				ownerMap.set(owner.id, { id: owner.id, lon: geo.lon, lat: geo.lat });
+			}
+		}
+		const newTimes: Record<string, number | null> = {};
+		for (const id of ownerlessIds) newTimes[id] = null;
+		const owners = Array.from(ownerMap.values());
+		if (owners.length === 0) { travelTimes = newTimes; return; }
+		const cached = travelTimesCache.get(transportMode);
+		if (cached) { travelTimes = { ...newTimes, ...cached }; return; }
+		try {
+			const response = await fetch('/api/travel-times', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userLocation, transportMode, owners }),
+			});
+			if (response.ok) {
+				const result: Record<string, number> = await response.json();
+				const merged = { ...newTimes, ...result };
+				travelTimesCache.set(transportMode, result);
+				travelTimes = merged;
+				console.log('Fetched travel times:', result);
+			}
+		} catch (err) {
+			console.error('Travel time fetch failed:', err);
+			travelTimes = newTimes;
+		}
+	}
 
-	// async function handleTransportModeChange(mode: TransportMode) {
-	// 	transportMode = mode;
-	// 	if (noLocationAvailable) { showNoLocationPrompt = true; return; }
-	// 	showNoLocationPrompt = false;
-	// 	if (userLocation) await fetchTravelTimes();
-	// 	if (data.currentUser) {
-	// 		const fd = new FormData();
-	// 		fd.append('mode', mode);
-	// 		fetch('?/saveTransportMode', { method: 'POST', body: fd }).catch(
-	// 			(err) => console.error('Failed to save transport mode:', err)
-	// 		);
-	// 	}
-	// }
+	async function handleTransportModeChange(mode: TransportMode) {
+		transportMode = mode;
+		if (noLocationAvailable) { showNoLocationPrompt = true; return; }
+		showNoLocationPrompt = false;
+		if (userLocation) await fetchTravelTimes();
+		if (data.currentUser) {
+			const fd = new FormData();
+			fd.append('mode', mode);
+			fetch('?/saveTransportMode', { method: 'POST', body: fd }).catch(
+				(err) => console.error('Failed to save transport mode:', err)
+			);
+		}
+	}
 
-	// $effect(() => {
-	// 	if (typeof navigator === 'undefined') return;
-	// 	navigator.geolocation.getCurrentPosition(
-	// 		(pos) => {
-	// 			userLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
-	// 			fetchTravelTimes();
-	// 		},
-	// 		() => {
-	// 			const profileGeo = data.currentUser?.geolocation;
-	// 			if (!isNullIsland(profileGeo)) {
-	// 				userLocation = profileGeo!;
-	// 				fetchTravelTimes();
-	// 			} else {
-	// 				noLocationAvailable = true;
-	// 			}
-	// 		}
-	// 	);
-	// });
+	$effect(() => {
+		if (typeof navigator === 'undefined') return;
+		navigator.geolocation.getCurrentPosition(
+			(pos) => {
+				userLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
+				fetchTravelTimes();
+			},
+			() => {
+				const profileGeo = data.currentUser?.geolocation;
+				if (!isNullIsland(profileGeo)) {
+					userLocation = profileGeo!;
+					fetchTravelTimes();
+				} else {
+					noLocationAvailable = true;
+				}
+			}
+		);
+	});
 </script>
 
 <!-- HEADER -->
@@ -130,7 +132,7 @@
 		perPage={data.perPage}
 	/>
 
-	<!-- Transport mode and travel time filter — temporarily disabled pending fixes
+	<!-- Transport Mode filter -->
 	<div class="flex flex-wrap justify-center items-center gap-3 mt-3">
 		<TransportModeSelector mode={transportMode} onchange={handleTransportModeChange} />
 		<span>Filtern:</span>
@@ -155,13 +157,13 @@
 			{texts.pages.search.noLocation}
 		</p>
 	{/if}
-	-->
+	
 
 	{#if data.q || data.selectedCategories.length > 0}
 		<ResultsList
 			filteredItemList={data.items}
 			PB_IMG_URL={data.PB_IMG_URL}
-			travelTimes={{}}
+			travelTimes={travelTimes}
 			transportMode="bicycle"
 			totalItems={data.totalItems}
 			currentUserId={data.currentUser?.id}
