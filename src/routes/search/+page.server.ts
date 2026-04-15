@@ -75,7 +75,7 @@ export const actions = {
 		const formData = await request.formData();
 		const mode = formData.get('mode')?.toString();
 		if (mode === 'foot' || mode === 'bicycle' || mode === 'car') {
-			await locals.pb
+			locals.pb
 				.collection('users')
 				.update(locals.user.id, { preferredTransportMode: mode });
 		}

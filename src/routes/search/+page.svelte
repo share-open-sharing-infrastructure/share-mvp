@@ -8,7 +8,8 @@
 	import TransportModeSelector from './TransportModeSelector.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
-	import { SvelteMap } from 'svelte/reactivity';
+	import type { OwnerLocation } from '$lib/types/models';
+	import { untrack, onMount } from 'svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -16,67 +17,59 @@
 
 	const browseAllUrl = resolve('/search') + '?q=*';
 
-	let transportMode: TransportMode = $state(
-		(data.currentUser?.preferredTransportMode as TransportMode) ?? 'bicycle'
-	);
-	let travelTimes = $state<Record<string, number | null>>({});
+	const initialMode = untrack(() => (data.currentUser?.preferredTransportMode as TransportMode) ?? 'bicycle');
+	let transportMode: TransportMode = $state(initialMode);
+	let travelTimes = $state<Record<string, number>>({});
 	let maxMinutes = $state(60);
-	let noLocationAvailable = $state(false);
 	let showNoLocationPrompt = $state(false);
-	let userLocation: { lon: number; lat: number } | null = null;
-	const travelTimesCache = new SvelteMap<TransportMode, Record<string, number | null>>();
+	let cachedUserLocation: { lon: number; lat: number } | null = null;
 
-	function isNullIsland(loc: { lon: number; lat: number } | undefined | null) {
-		return !loc || (loc.lon === 0 && loc.lat === 0);
-	}
-
-	async function fetchTravelTimes() {
-		console.log('Fetching travel times for mode:', transportMode);
-		if (!userLocation || data.items.length === 0) return;
-		const ownerMap = new SvelteMap<string, { id: string; lon: number; lat: number }>();
-		const ownerlessIds: string[] = [];
-		console.log('Processing items to extract owner locations...');
+	function extractOwnerLocations(): OwnerLocation[] {
+		const seen: Record<string, true> = {};
+		const result: OwnerLocation[] = [];
 		for (const item of data.items) {
 			const owner = item.expand?.owner;
-			if (!owner?.id) continue;
-			if (ownerMap.has(owner.id) || ownerlessIds.includes(owner.id)) continue;
-			const geo = owner.geolocation;
-			if (isNullIsland(geo)) {
-				ownerlessIds.push(owner.id);
-			} else {
-				ownerMap.set(owner.id, { id: owner.id, lon: geo.lon, lat: geo.lat });
+			if (!owner?.id || seen[owner.id]) continue;
+			const geo = owner.geolocation as { lon: number; lat: number } | undefined;
+			if (geo && !(geo.lon === 0 && geo.lat === 0)) {
+				seen[owner.id] = true;
+				result.push({ id: owner.id, lon: geo.lon, lat: geo.lat });
 			}
 		}
-		const newTimes: Record<string, number | null> = {};
-		for (const id of ownerlessIds) newTimes[id] = null;
-		const owners = Array.from(ownerMap.values());
-		if (owners.length === 0) { travelTimes = newTimes; return; }
-		const cached = travelTimesCache.get(transportMode);
-		if (cached) { travelTimes = { ...newTimes, ...cached }; return; }
+		return result;
+	}
+
+	async function fetchTravelTimes(mode: TransportMode, userLocation: { lon: number; lat: number }) {
+		const owners = extractOwnerLocations();
+		if (owners.length === 0) return;
 		try {
 			const response = await fetch('/api/travel-times', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userLocation, transportMode, owners }),
+				body: JSON.stringify({ userLocation, transportMode: mode, owners }),
 			});
-			if (response.ok) {
-				const result: Record<string, number> = await response.json();
-				const merged = { ...newTimes, ...result };
-				travelTimesCache.set(transportMode, result);
-				travelTimes = merged;
-				console.log('Fetched travel times:', result);
-			}
+			if (response.ok) travelTimes = await response.json();
 		} catch (err) {
 			console.error('Travel time fetch failed:', err);
-			travelTimes = newTimes;
 		}
+	}
+
+	function requestLocationAndFetch(mode: TransportMode) {
+		navigator.geolocation.getCurrentPosition(
+			(pos) => {
+				cachedUserLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
+				fetchTravelTimes(mode, cachedUserLocation);
+			},
+			() => {
+				showNoLocationPrompt = true;
+			}
+		);
 	}
 
 	async function handleTransportModeChange(mode: TransportMode) {
 		transportMode = mode;
-		if (noLocationAvailable) { showNoLocationPrompt = true; return; }
 		showNoLocationPrompt = false;
-		if (userLocation) await fetchTravelTimes();
+
 		if (data.currentUser) {
 			const fd = new FormData();
 			fd.append('mode', mode);
@@ -84,25 +77,17 @@
 				(err) => console.error('Failed to save transport mode:', err)
 			);
 		}
+
+		if (cachedUserLocation) {
+			fetchTravelTimes(mode, cachedUserLocation);
+			return;
+		}
+
+		requestLocationAndFetch(mode);
 	}
 
-	$effect(() => {
-		if (typeof navigator === 'undefined') return;
-		navigator.geolocation.getCurrentPosition(
-			(pos) => {
-				userLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
-				fetchTravelTimes();
-			},
-			() => {
-				const profileGeo = data.currentUser?.geolocation;
-				if (!isNullIsland(profileGeo)) {
-					userLocation = profileGeo!;
-					fetchTravelTimes();
-				} else {
-					noLocationAvailable = true;
-				}
-			}
-		);
+	onMount(() => {
+		if (data.currentUser) requestLocationAndFetch(transportMode);
 	});
 </script>
 
@@ -132,30 +117,32 @@
 		perPage={data.perPage}
 	/>
 
-	<!-- Transport Mode filter -->
-	<div class="flex flex-wrap justify-center items-center gap-3 mt-3">
-		<TransportModeSelector mode={transportMode} onchange={handleTransportModeChange} />
-		<span>Filtern:</span>
-		<div class="flex items-center gap-2">
-			<input
-				type="range"
-				min="5"
-				max="60"
-				step="5"
-				bind:value={maxMinutes}
-				class="w-32 h-2 accent-primary cursor-pointer"
-			/>
-			<span class="text-sm text-gray-600 dark:text-gray-300 w-28">
-				{maxMinutes >= 60
-					? texts.pages.search.durationFilter.noLimit
-					: texts.pages.search.durationFilter.maxMinutes(maxMinutes)}
-			</span>
+	<!-- Transport Mode filter (logged-in users only) -->
+	{#if data.currentUser}
+		<div class="flex flex-wrap justify-center items-center gap-3 mt-3">
+			<TransportModeSelector mode={transportMode} onchange={handleTransportModeChange} />
+			<span>Filtern:</span>
+			<div class="flex items-center gap-2">
+				<input
+					type="range"
+					min="5"
+					max="60"
+					step="5"
+					bind:value={maxMinutes}
+					class="w-32 h-2 accent-primary cursor-pointer"
+				/>
+				<span class="text-sm text-gray-600 dark:text-gray-300 w-28">
+					{maxMinutes >= 60
+						? texts.pages.search.durationFilter.noLimit
+						: texts.pages.search.durationFilter.maxMinutes(maxMinutes)}
+				</span>
+			</div>
 		</div>
-	</div>
-	{#if showNoLocationPrompt}
-		<p class="text-center text-sm text-gray-500 mt-2">
-			{texts.pages.search.noLocation}
-		</p>
+		{#if showNoLocationPrompt}
+			<p class="text-center text-sm text-gray-500 mt-2">
+				{texts.pages.search.noLocation}
+			</p>
+		{/if}
 	{/if}
 	
 
@@ -164,7 +151,7 @@
 			filteredItemList={data.items}
 			PB_IMG_URL={data.PB_IMG_URL}
 			travelTimes={travelTimes}
-			transportMode="bicycle"
+			transportMode={transportMode}
 			totalItems={data.totalItems}
 			currentUserId={data.currentUser?.id}
 		/>
