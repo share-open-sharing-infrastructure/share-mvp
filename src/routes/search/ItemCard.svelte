@@ -17,6 +17,7 @@
 		/** Travel time in minutes. undefined = not yet fetched, null = owner has no location */
 		travelMinutes?: number | null;
 		transportMode?: TransportMode;
+		currentUserId?: string;
 	}
 	let {
 		item,
@@ -24,6 +25,7 @@
 		profileView = false,
 		travelMinutes,
 		transportMode = 'bicycle',
+		currentUserId,
 	}: Props = $props();
 </script>
 
@@ -55,7 +57,7 @@
 				</button>
 
 				<!-- Trust badge -->
-				{#if item.trusteesOnly}
+				{#if currentUserId && item.expand?.owner?.trusts?.includes(currentUserId)}
 					<Badge id="b3" rounded border color="green">
 						<span class="text-green-900 bg-green-100 truncate"
 							>vertraut dir</span

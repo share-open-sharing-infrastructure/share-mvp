@@ -164,6 +164,7 @@
 			travelTimes={{}}
 			transportMode="bicycle"
 			totalItems={data.totalItems}
+			currentUserId={data.currentUser?.id}
 		/>
 		<Pagination
 			page={data.page}
