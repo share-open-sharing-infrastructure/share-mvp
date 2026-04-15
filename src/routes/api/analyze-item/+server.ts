@@ -11,10 +11,10 @@ const imageRecognitionPrompt = `Du bist ein Assistent für eine offene Verleih-P
 	"categories": ["max. 3 Einträge aus: ${ITEM_CATEGORIES.join(', ')}"]
 	}`;
 
-// Rate limiting: max 20 requests per user per hour, to prevent abuse of the AI feature. We identify users by their PocketBase user ID, which is stored in locals after authentication. 
+// Rate limiting: to prevent abuse of the AI feature. We identify users by their PocketBase user ID. 
 // This is a simple in-memory implementation, which means it will reset if the server restarts and won't work across multiple server instances. 
 // For a production application, consider using a more robust solution.
-const LIMIT = 20;
+const LIMIT = 300;
 const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
@@ -26,7 +26,7 @@ export async function POST({ request, locals }) {
 	if (!entry || now > entry.resetAt) {
 		rateLimits.set(userId, { count: 1, resetAt: now + WINDOW_MS });
 	} else if (entry.count >= LIMIT) {
-		throw error(429, 'Too many requests');
+		throw error(429, 'Too many requests	 - please try again later :*');
 	} else {
 		entry.count++;
 	}
@@ -34,8 +34,9 @@ export async function POST({ request, locals }) {
 	const { imageBase64, mimeType } = await request.json();
 	if (!imageBase64 || !mimeType) throw error(400, 'Missing image data');
 
+	const model = 'pixtral-12b-2409';
 	const response = await client.chat.complete({
-		model: 'pixtral-12b-2409',
+		model: model,
 		messages: [
 			{
 				role: 'user',

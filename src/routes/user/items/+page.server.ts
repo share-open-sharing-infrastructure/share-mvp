@@ -1,14 +1,20 @@
 import { fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import type { Item } from '$lib/types/models';
 
 export async function load({ locals }) {
-	const userExpanded = await locals.pb
-		.collection('users')
-		.getOne(locals.user.id, { expand: 'items_via_owner' });
+	const [user, items] = await Promise.all([
+		locals.pb.collection('users').getOne(locals.user.id),
+		locals.pb.collection('items').getFullList({
+			filter: `owner = "${locals.user.id}"`,
+			sort: '-updated',
+		}) as Promise<Item[]>,
+	]);
 
 	return {
-		user: userExpanded,
+		user,
+		items,
 		PB_URL: PUBLIC_PB_URL,
 	};
 }
