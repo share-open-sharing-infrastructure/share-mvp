@@ -230,6 +230,8 @@ export const texts = {
 			durationFilter: {
 				noLimit: 'Beliebig',
 				maxMinutes: (n: number) => `max. ${n} Min.`,
+				paginationHidden:
+					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf „Beliebig", um alle Seiten zu sehen.',
 			},
 			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',

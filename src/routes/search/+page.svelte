@@ -21,6 +21,15 @@
 	let transportMode: TransportMode = $state(initialMode);
 	let travelTimes = $state<Record<string, number>>({});
 	let maxMinutes = $state(60);
+	let filterActive = $derived(maxMinutes < 60 && Object.keys(travelTimes).length > 0);
+	let filteredItems = $derived(
+		filterActive
+			? data.items.filter((item) => {
+					const minutes = travelTimes[item.expand?.owner?.id ?? ''];
+					return minutes === undefined || minutes <= maxMinutes;
+				})
+			: data.items
+	);
 	let showNoLocationPrompt = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 
@@ -148,21 +157,28 @@
 
 	{#if data.q || data.selectedCategories.length > 0}
 		<ResultsList
-			filteredItemList={data.items}
+			filteredItemList={filteredItems}
 			PB_IMG_URL={data.PB_IMG_URL}
 			travelTimes={travelTimes}
 			transportMode={transportMode}
-			totalItems={data.totalItems}
+			totalItems={filterActive ? filteredItems.length : data.totalItems}
 			currentUserId={data.currentUser?.id}
 		/>
-		<Pagination
-			page={data.page}
-			totalPages={data.totalPages}
-			perPage={data.perPage}
-			q={data.q}
-			selectedCategories={data.selectedCategories}
-			op={data.op}
-		/>
+		{#if filterActive}
+			<p class="text-center text-sm text-gray-500 mt-2">
+				{texts.pages.search.durationFilter.paginationHidden}
+			</p>
+		{/if}
+		{#if !filterActive}
+			<Pagination
+				page={data.page}
+				totalPages={data.totalPages}
+				perPage={data.perPage}
+				q={data.q}
+				selectedCategories={data.selectedCategories}
+				op={data.op}
+			/>
+		{/if}
 	{/if}
 </Section>
 
