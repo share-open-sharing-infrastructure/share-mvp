@@ -1,12 +1,24 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import { texts } from '$lib/texts';
 
-	let device = 'unknown';
-	let viewportSize = '';
-	let inputType = 'unknown';
+	interface Props {
+		onsuccess?: () => void;
+	}
 
-	let browser = 'unknown';
-	let browserVersion = 'unknown';
+	let { onsuccess }: Props = $props();
+
+	let successMessage = $state<string | undefined>(undefined);
+	let errorMessage = $state<string | undefined>(undefined);
+
+	let device = $state('unknown');
+	let viewportSize = $state('');
+	let inputType = $state('unknown');
+
+	let browser = $state('unknown');
+	let browserVersion = $state('unknown');
 
 	onMount(() => {
 		// mobile vs desktop (interaction-based, not UA-based)
@@ -79,11 +91,37 @@
 	});
 </script>
 
-<form method="POST" action="/?/feedback" class="space-y-2">
+<form
+	method="POST"
+	action="/?/feedback"
+	class="space-y-2"
+	use:enhance={({ formData }) => {
+		formData.set('device', device);
+		formData.set('viewportSize', viewportSize);
+		formData.set('inputType', inputType);
+		formData.set('browser', browser);
+		formData.set('browserVersion', browserVersion);
+		return ({ result }) => {
+			if (result.type === 'success') {
+				successMessage = texts.success.feedbackSent;
+				setTimeout(() => onsuccess?.(), 1500);
+			} else if (result.type === 'failure') {
+				errorMessage = (result.data?.message as string) ?? texts.errors.feedbackFailed;
+			}
+		};
+	}}
+>
 	<p>
 		Vielen Dank für dein Feedback! Bitte beschreibe kurz, was dich auf dieser
 		Seite stört, dir auffällt oder gefällt.
 	</p>
+
+	{#if successMessage}
+		<CustomAlert type="success" message={successMessage} />
+	{/if}
+	{#if errorMessage}
+		<CustomAlert type="error" message={errorMessage} />
+	{/if}
 
 	<textarea
 		name="feedbackMessage"
@@ -91,13 +129,6 @@
 		class="w-full h-48 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
 		placeholder="Dein Feedback hier..."
 	></textarea>
-
-	<!-- device context (auto-filled) -->
-	<input type="hidden" name="device" value={device} />
-	<input type="hidden" name="viewportSize" value={viewportSize} />
-	<input type="hidden" name="inputType" value={inputType} />
-	<input type="hidden" name="browser" value={browser} />
-	<input type="hidden" name="browserVersion" value={browserVersion} />
 
 	<p class="text-sm text-gray-500">
 		Das Formular erkennt automatisch die Seite und deinen Gerätekontext. <strong

@@ -63,18 +63,8 @@
 		{/if}
 		{#if loggedIn}
 			<NavLi href={resolve('/conversations')}>{texts.nav.requests}</NavLi>
-			<NavLi class="cursor-pointer"
-				>Soziales<ChevronDownOutline
-					class="text-primary-800 inline h-6 w-6 dark:text-white"
-				/></NavLi
-			>
-			<Dropdown class="w-44 ">
-				<DropdownItem href={resolve('/social')} class="hover:text-accent hover:bg-transparent"
-					>{texts.nav.social}</DropdownItem
-				>
-				<!-- <DropdownItem href={resolve('/groups')}>Gruppen</DropdownItem> -->
-				<!-- <DropdownItem href={resolve('/users')}>Personen</DropdownItem> -->
-			</Dropdown>
+			<NavLi href={resolve('/social')}>{texts.nav.social}</NavLi>
+			
 			<NavLi href={resolve('/notifications')} class="relative">
 				<span class="relative inline-flex items-center gap-1">
 					<BellOutline class="h-5 w-5" />

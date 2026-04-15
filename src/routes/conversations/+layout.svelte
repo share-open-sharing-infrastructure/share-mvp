@@ -3,6 +3,7 @@
 	import ConversationList from './ConversationList.svelte';
 	import PocketBase from 'pocketbase';
 	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 
 	let { data, children } = $props();
@@ -26,6 +27,15 @@
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		conversations.filter((c: any) => c.requester === data.currentUser.id)
 	);
+
+	$effect(() => {
+		const id = page.params.conversationId;
+		if (!id) return;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const match = conversations.find((c: any) => c.id === id);
+		if (!match) return;
+		activeTab = match.itemOwner === data.currentUser.id ? 'lending' : 'borrowing';
+	});
 
 	onMount(() => {
 		const pb = new PocketBase(PUBLIC_PB_URL);

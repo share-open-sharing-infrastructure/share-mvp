@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let { conversation, currentUser, PB_IMG_URL } = $props();
 
-	const isActive = $derived($page.params.conversationId === conversation.id);
+	const isActive = $derived(page.params.conversationId === conversation.id);
 
 	const otherUser = $derived(
 		conversation.requester === currentUser.id
