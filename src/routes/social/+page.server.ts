@@ -25,7 +25,11 @@ export async function load({ locals }) {
 				...trustee,
 				profilePic: `https://ui-avatars.com/api/?name=${trustee.username}&background=random`,
 			})) ?? [],
-		trustedBy: trustedBy.map((user) => ({ id: user.id, username: user.username })),
+		trustedBy: trustedBy.map((user) => ({
+			id: user.id,
+			username: user.username,
+			profilePic: `https://ui-avatars.com/api/?name=${user.username}&background=random`,
+		})),
 	};
 }
 

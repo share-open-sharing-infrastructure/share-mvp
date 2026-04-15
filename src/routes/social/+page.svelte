@@ -143,6 +143,11 @@
 			href={resolve(`/users/[id]`, { id: user.id })}
 			class="flex items-center gap-4 border-b border-gray-200 p-4 dark:border-primary-700 hover:bg-primary-50 rounded-lg text-gray-900 dark:text-white"
 		>
+			<img
+				src={user.profilePic}
+				alt="Profile picture of {user.username}"
+				class="primary-bg h-10 w-10 rounded-full object-cover"
+			/>
 			<span class="text-lg font-medium">@{user.username}</span>
 		</a>
 	{/each}
