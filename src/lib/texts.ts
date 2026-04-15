@@ -64,6 +64,7 @@ export const texts = {
 		passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
+		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 	},
 
 	// Success messages
@@ -74,6 +75,7 @@ export const texts = {
 		passwordResetSent:
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
+		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
 	},
 
 	// Messenger contact
