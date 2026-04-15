@@ -22,14 +22,25 @@
 	let travelTimes = $state<Record<string, number>>({});
 	let maxMinutes = $state(60);
 	let filterActive = $derived(maxMinutes < 60 && Object.keys(travelTimes).length > 0);
-	let filteredItems = $derived(
-		filterActive
+	let filteredItems = $derived.by(() => {
+		const items = filterActive
 			? data.items.filter((item) => {
 					const minutes = travelTimes[item.expand?.owner?.id ?? ''];
 					return minutes === undefined || minutes <= maxMinutes;
 				})
-			: data.items
-	);
+			: [...data.items];
+
+		if (Object.keys(travelTimes).length === 0) return items;
+
+		return items.sort((a, b) => {
+			const aMin = travelTimes[a.expand?.owner?.id ?? ''];
+			const bMin = travelTimes[b.expand?.owner?.id ?? ''];
+			if (aMin === undefined && bMin === undefined) return 0;
+			if (aMin === undefined) return 1;
+			if (bMin === undefined) return -1;
+			return aMin - bMin;
+		});
+	});
 	let showNoLocationPrompt = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 
