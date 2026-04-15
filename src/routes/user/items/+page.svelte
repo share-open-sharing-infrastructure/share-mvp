@@ -24,8 +24,8 @@
 			{texts.pages.items.title}
 		</h2>
 		<div>
-			{#if data?.user?.expand?.items_via_owner?.length}
-				<span class="text-accent">{texts.pages.items.countSome(data.user.expand.items_via_owner.length)}</span>
+			{#if data?.items?.length}
+				<span class="text-accent">{texts.pages.items.countSome(data.items.length)}</span>
 			{:else}
 				{texts.pages.items.countNone}
 			{/if}
@@ -55,8 +55,8 @@
 		</div>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-			{#if data?.user?.expand?.items_via_owner?.length}
-				{#each data.user.expand.items_via_owner as item (item.id)}
+			{#if data?.items?.length}
+				{#each data.items as item (item.id)}
 					<UserItemCard
 						{item}
 						{data}
