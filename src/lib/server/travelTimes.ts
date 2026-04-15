@@ -67,12 +67,27 @@ async function fetchDurationsFromOrs(
 	return data.durations?.[0] ?? [];
 }
 
-/** Maps raw ORS durations (seconds) to an owner ID → travel minutes record. */
+/**
+ * Rounds minutes to a 5-minute bucket to prevent triangulation of user locations.
+ * Returns the upper bound of each bucket, with 35 as the sentinel for >30 min.
+ *   <5 min → 5 | 5-10 → 10 | 10-15 → 15 | 15-20 → 20 | 20-25 → 25 | 25-30 → 30 | >30 → 35
+ */
+function bucketize(minutes: number): number {
+	if (minutes < 5) return 5;
+	if (minutes < 10) return 10;
+	if (minutes < 15) return 15;
+	if (minutes < 20) return 20;
+	if (minutes < 25) return 25;
+	if (minutes < 30) return 30;
+	return 35;
+}
+
+/** Maps raw ORS durations (seconds) to an owner ID → bucketed travel minutes record. */
 function mapDurationsToOwners(owners: OwnerLocation[], durations: number[]): Record<string, number> {
 	const result: Record<string, number> = {};
 	owners.forEach((owner, i) => {
 		const seconds = durations[i];
-		if (seconds != null) result[owner.id] = Math.round(seconds / 60);
+		if (seconds != null) result[owner.id] = bucketize(Math.round(seconds / 60));
 	});
 	return result;
 }

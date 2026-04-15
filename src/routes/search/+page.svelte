@@ -20,8 +20,8 @@
 	const initialMode = untrack(() => (data.currentUser?.preferredTransportMode as TransportMode) ?? 'bicycle');
 	let transportMode: TransportMode = $state(initialMode);
 	let travelTimes = $state<Record<string, number>>({});
-	let maxMinutes = $state(60);
-	let filterActive = $derived(maxMinutes < 60 && Object.keys(travelTimes).length > 0);
+	let maxMinutes = $state(30);
+	let filterActive = $derived(maxMinutes < 30 && Object.keys(travelTimes).length > 0);
 	let filteredItems = $derived.by(() => {
 		const items = filterActive
 			? data.items.filter((item) => {
@@ -146,13 +146,13 @@
 				<input
 					type="range"
 					min="5"
-					max="60"
+					max="30"
 					step="5"
 					bind:value={maxMinutes}
 					class="w-32 h-2 accent-primary cursor-pointer"
 				/>
 				<span class="text-sm text-gray-600 dark:text-gray-300 w-28">
-					{maxMinutes >= 60
+					{maxMinutes >= 30
 						? texts.pages.search.durationFilter.noLimit
 						: texts.pages.search.durationFilter.maxMinutes(maxMinutes)}
 				</span>
