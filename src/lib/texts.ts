@@ -297,7 +297,7 @@ export const texts = {
 		},
 		invite: {
 			sectionTitle: 'Freunde einladen',
-			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir und du ihnen automatisch vertrauen.',
+			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir automatisch vertrauen. Du wirst benachrichtigt, wenn jemand sich mit deiner Einladung registriert hat.',
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
