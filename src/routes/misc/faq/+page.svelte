@@ -7,22 +7,22 @@
 
 <Accordion>
 	<AccordionItem>
-		{#snippet header()}Was passiert, wenn etwas kaputt geht?{/snippet}
-		<p class="text-gray-500 dark:text-gray-400">
-			Wir bekommen die Frage häufiger und haben eine vielleicht etwas unbefriedigende Antwort: das, was sonst auch passieren würde.
-			Wenn euer Gegenüber eine Haftpflicht hat, greift die. Oder ihr regelt das zwischen euch.
-			Wir wollen bewusst keine Sozialtechnik wie Versicherungen oder Ähnliches anbieten, weil wir Vertrauen nicht outsourcen wollen. 
-			Über die Vertrauensfunktion habt ihr die volle Kontrolle darüber, an wen ihr verleiht. Alles Weitere liegt bei euch!
-		</p>
-	</AccordionItem>
-
-	<AccordionItem>
 		{#snippet header()}Wer seid ihr?{/snippet}
 		<p class="text-gray-500 dark:text-gray-400">
 			Derzeit sind wir ein Duo: Timo und Matteo! Wir haben beide in Lüneburg studiert und wollen mit AllerLeih einen Beitrag zum Gemeinwohl leisten.
 			Wir sind der Auffassung, dass das Teilen und Leihen in vielerlei Hinsicht eine bessere Alternative zum Kaufen ist.
 			Und wir wollen, dass die Infrastruktur dafür nicht nur einfach und zugänglich ist, sondern auch nachhaltig für alle funktioniert.
 			Deswegen entwickeln wir AllerLeih als gemeinnützige Organisation und Open-Source-Software. So verhindern wir die Kommerzialisierung und manipulative Algorithmen.
+		</p>
+	</AccordionItem>
+
+	<AccordionItem>
+		{#snippet header()}Was passiert, wenn etwas kaputt geht?{/snippet}
+		<p class="text-gray-500 dark:text-gray-400">
+			Wir bekommen die Frage häufiger und haben eine vielleicht etwas unbefriedigende Antwort: das, was sonst auch passieren würde.
+			Wenn euer Gegenüber eine Haftpflicht hat, greift die. Oder ihr regelt das zwischen euch.
+			Wir wollen bewusst keine Sozialtechnik wie Versicherungen oder Ähnliches anbieten, weil wir Vertrauen nicht outsourcen wollen. 
+			Über die Vertrauensfunktion habt ihr die volle Kontrolle darüber, an wen ihr verleiht. Wenn es doch einmal zu größeren Problemen kommt, meldet euch gerne und wir versuchen zu helfen!
 		</p>
 	</AccordionItem>
 
