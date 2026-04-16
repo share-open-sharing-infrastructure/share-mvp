@@ -41,3 +41,45 @@ export async function setupPushSubscription(): Promise<void> {
 		console.error('Push subscription failed:', err);
 	}
 }
+
+/** Unsubscribes this device from the browser's push manager and removes ALL
+ *  push subscription records for the user from the server (every device).
+ *  Safe to call even when no subscription exists on this device. */
+export async function teardownAllPushSubscriptions(): Promise<void> {
+	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+	try {
+		const registration = await navigator.serviceWorker.ready;
+		const subscription = await registration.pushManager.getSubscription();
+		if (subscription) {
+			await subscription.unsubscribe();
+		}
+		await fetch('/api/push-subscribe', {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ all: true }),
+		});
+	} catch (err) {
+		console.error('Push unsubscription (all devices) failed:', err);
+	}
+}
+
+/** Unsubscribes from the browser's push manager and removes the record from
+ *  the server. Safe to call even when no subscription exists. */
+export async function teardownPushSubscription(): Promise<void> {
+	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+	try {
+		const registration = await navigator.serviceWorker.ready;
+		const subscription = await registration.pushManager.getSubscription();
+		if (!subscription) return;
+
+		await subscription.unsubscribe();
+
+		await fetch('/api/push-subscribe', {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ endpoint: subscription.endpoint }),
+		});
+	} catch (err) {
+		console.error('Push unsubscription failed:', err);
+	}
+}

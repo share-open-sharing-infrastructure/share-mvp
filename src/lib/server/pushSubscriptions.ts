@@ -49,6 +49,24 @@ export async function upsertPushSubscription(
 }
 
 /**
+ * Delete all push subscriptions for a user across every device.
+ *
+ * Used when the user chooses to deactivate notifications on all devices.
+ * Deletions run in parallel; individual failures are swallowed so a single
+ * stale record does not block the rest.
+ */
+export async function deleteAllPushSubscriptions(pb: PocketBase, userId: string): Promise<void> {
+	const allSubscriptions = await pb
+		.collection(PUSH_SUBSCRIPTIONS)
+		.getFullList({ filter: `user="${userId}"` })
+		.catch(() => []);
+
+	await Promise.allSettled(
+		allSubscriptions.map((sub) => pb.collection(PUSH_SUBSCRIPTIONS).delete(sub.id))
+	);
+}
+
+/**
  * Delete a push subscription belonging to a specific user.
  *
  * The user filter prevents users from removing each other's subscriptions.

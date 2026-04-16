@@ -9,14 +9,29 @@
 	import AddressInput from '$lib/components/AddressInput.svelte';
 	import { enhance } from '$app/forms';
 	import { onMount } from 'svelte';
-	import { setupPushSubscription } from '$lib/utils/pushSubscription';
+	import { setupPushSubscription, teardownPushSubscription, teardownAllPushSubscriptions } from '$lib/utils/pushSubscription';
 
 	let { data, form } = $props();
 
 	let notifPermission = $state<NotificationPermission | 'unsupported' | null>(null);
+	// Tracks whether an active push subscription exists in the browser's push manager.
+	// A granted permission does not imply an active subscription (the user may have
+	// deactivated or browser data may have been cleared).
+	let isPushSubscribed = $state(false);
 
-	onMount(() => {
-		notifPermission = 'Notification' in window ? Notification.permission : 'unsupported';
+	onMount(async () => {
+		if (!('Notification' in window)) {
+			notifPermission = 'unsupported';
+			return;
+		}
+		const permission = Notification.permission;
+		if (permission === 'granted' && 'serviceWorker' in navigator && 'PushManager' in window) {
+			const registration = await navigator.serviceWorker.ready;
+			const subscription = await registration.pushManager.getSubscription();
+			isPushSubscribed = subscription !== null;
+		}
+		// Set last so the section renders with isPushSubscribed already resolved
+		notifPermission = permission;
 	});
 
 	async function enableNotifications() {
@@ -24,7 +39,18 @@
 		notifPermission = permission;
 		if (permission === 'granted') {
 			await setupPushSubscription();
+			isPushSubscribed = true;
 		}
+	}
+
+	async function deactivateNotifications() {
+		await teardownPushSubscription();
+		isPushSubscribed = false;
+	}
+
+	async function deactivateAllNotifications() {
+		await teardownAllPushSubscriptions();
+		isPushSubscribed = false;
 	}
 
 	let inviteCopied = $state(false);
@@ -209,10 +235,18 @@
 			<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
 				{texts.pages.profile.notifications.sectionTitle}
 			</h2>
-			{#if notifPermission === 'granted'}
-				<p class="text-sm text-green-600 dark:text-green-400">
+			{#if notifPermission === 'granted' && isPushSubscribed}
+				<p class="text-sm text-green-600 dark:text-green-400 mb-4">
 					{texts.pages.profile.notifications.enabled}
 				</p>
+				<div class="flex gap-2">
+					<Button class="min-button bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white" onclick={deactivateNotifications}>
+						{texts.pages.profile.notifications.deactivateThisDevice}
+					</Button>
+					<Button class="min-button bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white" onclick={deactivateAllNotifications}>
+						{texts.pages.profile.notifications.deactivateAllDevices}
+					</Button>
+				</div>
 			{:else if notifPermission === 'denied'}
 				<p class="text-sm text-gray-600 dark:text-gray-400">
 					{texts.pages.profile.notifications.denied}

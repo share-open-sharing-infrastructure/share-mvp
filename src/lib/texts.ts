@@ -290,6 +290,8 @@ export const texts = {
 				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
 				enable: 'Benachrichtigungen aktivieren',
 				enabled: 'Benachrichtigungen sind aktiviert.',
+				deactivateThisDevice: 'Für dieses Gerät deaktivieren',
+				deactivateAllDevices: 'Für alle meine Geräte deaktivieren',
 				denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
 			},
 		},
