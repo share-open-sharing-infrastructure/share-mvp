@@ -8,8 +8,24 @@
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AddressInput from '$lib/components/AddressInput.svelte';
 	import { enhance } from '$app/forms';
+	import { onMount } from 'svelte';
+	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 
 	let { data, form } = $props();
+
+	let notifPermission = $state<NotificationPermission | 'unsupported' | null>(null);
+
+	onMount(() => {
+		notifPermission = 'Notification' in window ? Notification.permission : 'unsupported';
+	});
+
+	async function enableNotifications() {
+		const permission = await Notification.requestPermission();
+		notifPermission = permission;
+		if (permission === 'granted') {
+			await setupPushSubscription();
+		}
+	}
 
 	let inviteCopied = $state(false);
 
@@ -185,6 +201,33 @@
 		</div>
 	</div>
 </main>
+
+<!-- Notifications Section -->
+{#if notifPermission !== null && notifPermission !== 'unsupported'}
+	<div class="max-w-2xl mx-auto px-4 pb-8">
+		<div class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8">
+			<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+				{texts.pages.profile.notifications.sectionTitle}
+			</h2>
+			{#if notifPermission === 'granted'}
+				<p class="text-sm text-green-600 dark:text-green-400">
+					{texts.pages.profile.notifications.enabled}
+				</p>
+			{:else if notifPermission === 'denied'}
+				<p class="text-sm text-gray-600 dark:text-gray-400">
+					{texts.pages.profile.notifications.denied}
+				</p>
+			{:else}
+				<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+					{texts.pages.profile.notifications.description}
+				</p>
+				<Button class="min-button bg-primary" onclick={enableNotifications}>
+					{texts.pages.profile.notifications.enable}
+				</Button>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 <!-- Invite Link Section -->
 <div class="max-w-2xl mx-auto px-4 pb-8">

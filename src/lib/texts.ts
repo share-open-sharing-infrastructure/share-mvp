@@ -285,6 +285,13 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			notifications: {
+				sectionTitle: 'Benachrichtigungen',
+				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
+				enable: 'Benachrichtigungen aktivieren',
+				enabled: 'Benachrichtigungen sind aktiviert.',
+				denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
+			},
 		},
 		invite: {
 			sectionTitle: 'Freunde einladen',
