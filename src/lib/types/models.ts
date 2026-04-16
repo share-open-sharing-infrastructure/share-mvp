@@ -1,3 +1,7 @@
+// --- Geo types ---
+
+export type OwnerLocation = { id: string; lon: number; lat: number };
+
 // --- ID aliases (for clarity, still plain strings) ---
 
 export type UserId = string;

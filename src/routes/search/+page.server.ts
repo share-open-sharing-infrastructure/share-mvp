@@ -5,7 +5,7 @@ import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
 export async function load({ locals, url }) {
 	const q = url.searchParams.get('q')?.trim() ?? '';
 	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
-	const perPage = Math.min(50, Math.max(1, parseInt(url.searchParams.get('perPage') ?? '10', 10) || 10));
+	const perPage = Math.min(50, Math.max(1, parseInt(url.searchParams.get('perPage') ?? '20', 10) || 20));
 
 	const catsParam = url.searchParams.get('cats') ?? '';
 	const selectedCategories = catsParam
@@ -75,7 +75,7 @@ export const actions = {
 		const formData = await request.formData();
 		const mode = formData.get('mode')?.toString();
 		if (mode === 'foot' || mode === 'bicycle' || mode === 'car') {
-			await locals.pb
+			locals.pb
 				.collection('users')
 				.update(locals.user.id, { preferredTransportMode: mode });
 		}

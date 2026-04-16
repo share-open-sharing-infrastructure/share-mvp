@@ -230,10 +230,20 @@ export const texts = {
 			},
 			noLocation:
 				'Setze deinen Standort in deinem Profil, um Reisezeiten zu sehen.',
-			minutesAway: (n: number) => `${n} min`,
+			minutesAway: (n: number) => {
+				if (n <= 5) return '<5 min';
+				if (n <= 10) return '5–10 min';
+				if (n <= 15) return '10–15 min';
+				if (n <= 20) return '15–20 min';
+				if (n <= 25) return '20–25 min';
+				if (n <= 30) return '25–30 min';
+				return '>30 min';
+			},
 			durationFilter: {
 				noLimit: 'Beliebig',
 				maxMinutes: (n: number) => `max. ${n} Min.`,
+				paginationHidden:
+					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf „Beliebig", um alle Seiten zu sehen.',
 			},
 			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
