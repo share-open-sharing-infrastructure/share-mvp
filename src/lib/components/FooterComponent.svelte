@@ -41,6 +41,10 @@
 				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/newsletter')}>{texts.nav.newsletter}</FooterLink
 			>
+			<FooterLink
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
+				href={resolve('/misc/faq')}>{texts.nav.faq}</FooterLink
+			>
 		</FooterLinkGroup>
 		<span class="text-sm text-accent sm:text-center">
 			© 2026 <a href={resolve('/')} class="hover:underline">{texts.names.app}</a
