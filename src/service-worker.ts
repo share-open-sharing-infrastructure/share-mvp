@@ -11,7 +11,22 @@ import { build, files, version } from '$service-worker';
 const CACHE = `allerleih-${version}`;
 const ASSETS = [...build, ...files];
 
+// In dev mode Vite compiles entry files with versioned import URLs
+// (?v=<hash>) that change whenever Vite re-optimises its deps.  If the
+// service worker caches those entry files and Vite later regenerates a
+// new hash, the cached files reference modules that no longer exist →
+// cascading "failed to load module" errors.  Skipping all caching and
+// fetch interception in dev avoids this completely while still keeping
+// the push-notification handlers active.
+const isDev = version === 'dev';
+
 self.addEventListener('install', (event) => {
+	if (isDev) {
+		// Activate immediately so stale caches from previous sessions are
+		// purged as quickly as possible (see activate handler below).
+		self.skipWaiting();
+		return;
+	}
 	async function addFilesToCache() {
 		const cache = await caches.open(CACHE);
 		await cache.addAll(ASSETS);
@@ -20,27 +35,44 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-	async function deleteOldCaches() {
-		for (const key of await caches.keys()) {
-			if (key !== CACHE) await caches.delete(key);
-		}
+	async function setup() {
+		const keys = await caches.keys();
+		await Promise.all(
+			keys.map((key) =>
+				// In dev, purge ALL caches — including the current "allerleih-dev"
+				// key — so stale Vite/SvelteKit generated files from the previous
+				// SW don't survive activation.
+				// In production, only remove keys from older deployments.
+				isDev || key !== CACHE ? caches.delete(key) : Promise.resolve()
+			)
+		);
+		// In dev, immediately claim all open tabs so this SW (which does
+		// nothing in its fetch handler) displaces the old one mid-session —
+		// no tab-close/reopen required.
+		if (isDev) await self.clients.claim();
 	}
-	event.waitUntil(deleteOldCaches());
+	event.waitUntil(setup());
 });
 
 self.addEventListener('fetch', (event) => {
+	// In dev mode let the browser handle everything natively.
+	if (isDev) return;
 	if (event.request.method !== 'GET') return;
-	async function respond() {
-		const url = new URL(event.request.url);
-		const cache = await caches.open(CACHE);
-		// Serve build assets directly from cache
-		if (ASSETS.includes(url.pathname)) {
-			const cachedResponse = await cache.match(event.request);
-			if (cachedResponse) return cachedResponse;
-		}
-		return fetch(event.request);
-	}
-	event.respondWith(respond());
+
+	const url = new URL(event.request.url);
+
+	// Only intercept same-origin requests for explicitly cached assets.
+	// Cross-origin requests (PocketBase API/SSE) and anything not in the
+	// pre-cached ASSETS list are left to the browser.
+	if (url.origin !== self.location.origin) return;
+	if (!ASSETS.includes(url.pathname)) return;
+
+	event.respondWith(
+		caches.open(CACHE).then(async (cache) => {
+			const cached = await cache.match(event.request);
+			return cached ?? fetch(event.request);
+		})
+	);
 });
 
 // ─── Push notifications ───────────────────────────────────────────────────────
