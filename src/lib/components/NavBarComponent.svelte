@@ -39,6 +39,7 @@
 <Navbar>
 	<NavBrand href={resolve('/')}>
 		<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
+		<div class="pr-2"><AllerLoader size={32} speed={10} variant="rotate" label="AllerLeih Logo" /></div>
 		<div id="beta" class="relative flex flex-col items-center">
 			<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-accent text-accent rounded px-1 opacity-80 leading-tight pointer-events-none">
 				Beta
