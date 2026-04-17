@@ -285,10 +285,19 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			notifications: {
+				sectionTitle: 'Benachrichtigungen',
+				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
+				enable: 'Benachrichtigungen aktivieren',
+				enabled: 'Benachrichtigungen sind aktiviert.',
+				deactivateThisDevice: 'Für dieses Gerät deaktivieren',
+				deactivateAllDevices: 'Für alle meine Geräte deaktivieren',
+				denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
+			},
 		},
 		invite: {
 			sectionTitle: 'Freunde einladen',
-			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir und du ihnen automatisch vertrauen.',
+			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir automatisch vertrauen. Du wirst benachrichtigt, wenn jemand sich mit deiner Einladung registriert hat.',
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
