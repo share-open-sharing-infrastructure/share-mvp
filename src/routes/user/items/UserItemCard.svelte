@@ -28,7 +28,7 @@
 </script>
 
 <div
-	class="items-center border border-gray-200 rounded-lg shadow flex sm:flex-row overflow-hidden"
+	class="items-center border border-tinte-200 rounded-lg shadow flex sm:flex-row overflow-hidden"
 >
 	<img
 		class="m-5 w-30 h-30 object-cover aspect-square rounded-lg"
@@ -39,7 +39,7 @@
 	<div class="p-5 w-full min-w-0 h-full flex flex-col justify-between">
 		<div>
 			<h3
-				class="text-l font-bold tracking-tight text-gray-900 dark:text-white overflow-break-words"
+				class="text-l font-bold tracking-tight text-tinte-900 dark:text-white overflow-break-words"
 			>
 				{item.name}
 			</h3>
@@ -66,7 +66,7 @@
 					class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors cursor-pointer
 						{item.status === 'available'
 							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-							: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
+							: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
 					title={item.status === 'available'
 						? texts.itemStatus.markUnavailable
 						: texts.itemStatus.markAvailable}

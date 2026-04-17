@@ -114,7 +114,7 @@
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<h2 class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+		<h2 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.pages.search.title}
 		</h2>
 	</div>
@@ -151,7 +151,7 @@
 					bind:value={maxMinutes}
 					class="w-32 h-2 accent-primary cursor-pointer"
 				/>
-				<span class="text-sm text-gray-600 dark:text-gray-300 w-28">
+				<span class="text-sm text-tinte-600 dark:text-tinte-300 w-28">
 					{maxMinutes >= 30
 						? texts.pages.search.durationFilter.noLimit
 						: texts.pages.search.durationFilter.maxMinutes(maxMinutes)}
@@ -159,7 +159,7 @@
 			</div>
 		</div>
 		{#if showNoLocationPrompt}
-			<p class="text-center text-sm text-gray-500 mt-2">
+			<p class="text-center text-sm text-tinte-500 mt-2">
 				{texts.pages.search.noLocation}
 			</p>
 		{/if}
@@ -176,7 +176,7 @@
 			currentUserId={data.currentUser?.id}
 		/>
 		{#if filterActive}
-			<p class="text-center text-sm text-gray-500 mt-2">
+			<p class="text-center text-sm text-tinte-500 mt-2">
 				{texts.pages.search.durationFilter.paginationHidden}
 			</p>
 		{/if}

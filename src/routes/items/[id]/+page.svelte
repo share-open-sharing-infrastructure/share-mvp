@@ -30,10 +30,10 @@
 		<img
 			src={imageUrl}
 			alt={item.name}
-			class="w-full max-h-96 object-contain rounded-lg bg-gray-50"
+			class="w-full max-h-96 object-contain rounded-lg bg-papier"
 		/>
 	{:else}
-		<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-gray-100 text-gray-400 gap-2">
+		<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-tinte-100 text-tinte-400 gap-2">
 			<ImageOutline class="h-16 w-16" />
 			<span class="text-sm">{texts.pages.itemDetail.noImage}</span>
 		</div>
@@ -56,7 +56,7 @@
 	</div>
 
 	<!-- Item name -->
-	<h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+	<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">
 		{item.name}
 	</h1>
 
@@ -71,7 +71,7 @@
 
 	<!-- Description -->
 	{#if item.description}
-		<p class="leading-relaxed text-gray-700 dark:text-gray-300">
+		<p class="leading-relaxed text-tinte-700 dark:text-tinte-300">
 			{item.description}
 		</p>
 	{/if}
@@ -85,7 +85,7 @@
 					class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold border transition-colors cursor-pointer
 						{data.item.status === 'available'
 							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-							: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
+							: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
 				>
 					{data.item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
 					<span class="ml-2 text-xs opacity-60">

@@ -206,7 +206,7 @@
 				>{texts.ui.trustedOnly}</Toggle
 			>
 			<div
-				class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400"
+				class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400"
 			>
 				<button id="b4">
 					<QuestionCircleSolid class="ml-1 h-full" />
@@ -223,7 +223,7 @@
 					>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle
 				>
 				<div
-					class="flex items-center text-sm font-light text-gray-500 dark:text-gray-400"
+					class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400"
 				>
 					<button id="b4">
 						<QuestionCircleSolid class="ml-1 h-full" />
@@ -263,11 +263,11 @@
 	{/if}
 	<Popover
 		triggeredBy="#b4"
-		class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+		class="w-72 bg-sand text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
 		placement="top-start"
 	>
 		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-gray-900 dark:text-white">
+			<h3 class="font-semibold text-tinte-900 dark:text-white">
 				Vertrauensfunktion
 			</h3>
 			Wenn du diese Option aktivierst, ist der Gegenstand nur für deine vertrauten

@@ -66,17 +66,17 @@
 
 <div class="text-center space-y-4">
 	<div class="text-5xl mb-2">🔔</div>
-	<h2 class="text-xl font-bold text-gray-900 dark:text-white">
+	<h2 class="text-xl font-bold text-tinte-900 dark:text-white">
 		{texts.onboarding.pushNotifications.title}
 	</h2>
-	<p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+	<p class="text-sm text-tinte-600 dark:text-tinte-400 leading-relaxed">
 		{texts.onboarding.pushNotifications.explanation}
 	</p>
 
 	{#if status === 'granted'}
 		<p class="text-sm text-green-600 dark:text-green-400 font-medium">✓ Benachrichtigungen aktiviert</p>
 	{:else if status === 'denied'}
-		<p class="text-sm text-gray-500 dark:text-gray-400">Benachrichtigungen nicht aktiviert.</p>
+		<p class="text-sm text-tinte-500 dark:text-tinte-400">Benachrichtigungen nicht aktiviert.</p>
 	{/if}
 </div>
 

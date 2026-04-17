@@ -68,7 +68,7 @@
 				<!-- Travel time badge — ml-auto pushes it right and makes it wrap first -->
 				{#if travelMinutes !== undefined}
 					<span
-						class="ml-auto flex items-center gap-1 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-full px-2 py-0.5"
+						class="ml-auto flex items-center gap-1 text-sm font-medium text-tinte-600 dark:text-tinte-300 bg-tinte-100 dark:bg-tinte-700 rounded-full px-2 py-0.5"
 					>
 							{#if transportMode === 'foot'}
 								<!-- Walking icon -->
@@ -118,7 +118,7 @@
 		{/if}
 
 		<h5
-			class="mb-2 text-xl font-bold tracking-tight wrap-break-word text-gray-900 dark:text-white"
+			class="mb-2 text-xl font-bold tracking-tight wrap-break-word text-tinte-900 dark:text-white"
 		>
 			{item.name}
 		</h5>
@@ -136,11 +136,11 @@
 {#if !profileView}
 	<Popover
 		triggeredBy="#b3"
-		class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+		class="w-72 bg-sand text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
 		placement="bottom-start"
 	>
 		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-gray-900 dark:text-white">
+			<h3 class="font-semibold text-tinte-900 dark:text-white">
 				{texts.ui.trustFunction}
 			</h3>
 			{texts.ui.trustDescription}

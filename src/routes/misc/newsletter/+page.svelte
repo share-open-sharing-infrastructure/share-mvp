@@ -6,11 +6,11 @@
 
 <div class="mx-auto text-center">
 	<h2
-		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+		class="mb-4 text-4xl tracking-tight font-extrabold text-tinte-900 dark:text-white"
 	>
 		AllerLeih News
 	</h2>
-	<p class="font-light text-gray-500 lg:mb-2 sm:text-xl dark:text-gray-400">
+	<p class="font-light text-tinte-500 lg:mb-2 sm:text-xl dark:text-tinte-400">
 		Vielen Dank für dein Interesse an AllerLeih! Trage unten deine E-Mail ein,
 		um regelmäßige Infos und Neuigkeiten von uns zu bekommen.
 	</p>
@@ -57,12 +57,12 @@
 				Deine Daten liegen sicher auf europäischen Servern bei unserem
 				open-source Newsletter-Anbieter <a
 					href="https://www.keila.io/de"
-					class="text-blue-500 underline">keila.io</a
+					class="text-primary-500 underline">keila.io</a
 				>. Wenn du dich abmelden willst, schicke uns einfach eine Mail an
 				<a
 					href="mailto:{texts.names
 						.mainContactMail}?subject=Newsletter%20Abmeldung&body=Bitte%20nehmt%20mich%20aus%20dem%20Newsletter!"
-					class="text-blue-500 underline">{texts.names.mainContactMail}</a
+					class="text-primary-500 underline">{texts.names.mainContactMail}</a
 				>.
 			</div>
 		</div>

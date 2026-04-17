@@ -62,8 +62,8 @@
 
 {#if notifPermission !== null && notifPermission !== 'unsupported'}
 	<div class="max-w-2xl mx-auto px-4 pb-8">
-		<div class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8">
-			<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+		<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8">
+			<h2 class="text-lg font-semibold text-tinte-900 dark:text-white mb-2">
 				{texts.pages.profile.notifications.sectionTitle}
 			</h2>
 			{#if notifPermission === 'granted' && isPushSubscribed}
@@ -71,15 +71,15 @@
 					{texts.pages.profile.notifications.enabled}
 				</p>
 				<div class="flex gap-2">
-					<Button class="min-button bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white" onclick={deactivateNotifications}>
+					<Button class="min-button bg-tinte-200 text-tinte-800 dark:bg-tinte-600 dark:text-white" onclick={deactivateNotifications}>
 						{texts.pages.profile.notifications.deactivateThisDevice}
 					</Button>
-					<Button class="min-button bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white" onclick={deactivateAllNotifications}>
+					<Button class="min-button bg-tinte-200 text-tinte-800 dark:bg-tinte-600 dark:text-white" onclick={deactivateAllNotifications}>
 						{texts.pages.profile.notifications.deactivateAllDevices}
 					</Button>
 				</div>
 			{:else if notifPermission === 'denied'}
-				<p class="text-sm text-gray-600 dark:text-gray-400">
+				<p class="text-sm text-tinte-600 dark:text-tinte-400">
 					{texts.pages.profile.notifications.denied}
 				</p>
 			{:else}
@@ -87,7 +87,7 @@
 				     • permission === 'default': user has not been asked yet
 				     • permission === 'granted' but no active subscription: user previously
 				       deactivated, or the browser subscription was lost (data cleared, etc.) -->
-				<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+				<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-4">
 					{texts.pages.profile.notifications.description}
 				</p>
 				<Button class="min-button bg-primary" onclick={enableNotifications}>

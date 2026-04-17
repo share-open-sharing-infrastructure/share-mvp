@@ -53,12 +53,12 @@
 	}
 </script>
 
-<p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+<p class="mb-4 text-sm text-tinte-500 dark:text-tinte-400">
 	{texts.bulkUpload.reviewTitle}
 </p>
 
 {#if !allAnalyzed}
-	<div class="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+	<div class="mb-4 flex items-center gap-2 rounded-lg bg-primary-50 px-3 py-2 text-sm text-primary-700 dark:bg-primary-900/30 dark:text-primary-300">
 		<Spinner size="4" />
 		{texts.bulkUpload.analyzing}
 	</div>
@@ -87,7 +87,7 @@
 >
 	<div class="flex flex-col gap-6">
 		{#each drafts as draft, i (draft.previewUrl)}
-			<div class="flex gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+			<div class="flex gap-4 rounded-xl border border-tinte-200 bg-sand p-4 shadow-sm dark:border-tinte-700 dark:bg-tinte-800">
 				<img
 					src={draft.previewUrl}
 					alt="Vorschau"
@@ -96,13 +96,13 @@
 
 				<div class="flex flex-1 flex-col gap-3">
 					{#if draft.status === 'analyzing'}
-						<div class="flex items-center gap-2 text-sm text-gray-500">
+						<div class="flex items-center gap-2 text-sm text-tinte-500">
 							<Spinner size="4" />
 							{texts.bulkUpload.analyzing}
 						</div>
 					{:else}
 						{#if draft.status === 'error'}
-							<p class="text-xs text-red-500">{texts.bulkUpload.analysisError}</p>
+							<p class="text-xs text-accent-500">{texts.bulkUpload.analysisError}</p>
 						{/if}
 
 						<Label class="space-y-1">
@@ -122,7 +122,7 @@
 								rows={1}
 								placeholder={texts.forms.itemDescription}
 								bind:value={draft.description}
-								class="block w-full resize-none overflow-hidden rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+								class="block w-full resize-none overflow-hidden rounded-lg border border-tinte-300 bg-papier p-2.5 text-sm text-tinte-900 focus:border-primary-500 focus:ring-primary-500 dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
 							></textarea>
 						</Label>
 
@@ -147,7 +147,7 @@
 				<button
 					type="button"
 					onclick={() => removeDraft(i)}
-					class="self-start text-gray-400 hover:text-red-500"
+					class="self-start text-tinte-400 hover:text-accent-500"
 					aria-label={texts.bulkUpload.removeItem}
 				>
 					<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

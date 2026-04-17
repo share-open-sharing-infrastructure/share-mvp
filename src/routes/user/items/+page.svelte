@@ -19,7 +19,7 @@
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
 		<h2
-			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+			class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white"
 		>
 			{texts.pages.items.title}
 		</h2>
@@ -33,7 +33,7 @@
 	</div>
 </div>
 
-<section class="bg-white dark:bg-gray-900 min-h-screen">
+<section class="bg-secondary-100 dark:bg-tinte-900 min-h-screen">
 	<div class="max-w-7xl mx-auto px-4 pt-6">
 
 		<!-- Action buttons -->

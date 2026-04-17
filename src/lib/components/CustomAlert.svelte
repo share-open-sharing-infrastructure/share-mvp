@@ -39,8 +39,8 @@
 		<div
 			class="progress-bar"
 			class:bg-green-500={color === 'green'}
-			class:bg-yellow-500={color === 'yellow'}
-			class:bg-red-500={color === 'red'}
+			class:bg-secondary={color === 'yellow'}
+			class:bg-accent={color === 'red'}
 			style="--duration: {duration}ms"
 		></div>
 	</div>

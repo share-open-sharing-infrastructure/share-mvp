@@ -54,10 +54,10 @@
 		{/snippet}
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
 			{#if !data.inviteCode}
-				<p class="text-gray-700 dark:text-gray-300">{texts.pages.invite.noInvite}</p>
+				<p class="text-tinte-700 dark:text-tinte-300">{texts.pages.invite.noInvite}</p>
 			{:else}
 				<form class="flex flex-col space-y-5" action="?/register" method="post" use:enhance>
-					<h3 class="p-0 text-xl font-medium text-gray-900 dark:text-white">
+					<h3 class="p-0 text-xl font-medium text-tinte-900 dark:text-white">
 						{texts.ui.welcome}
 					</h3>
 					{#if data.inviter}
@@ -78,13 +78,13 @@
 							autocomplete="username"
 						/>
 						{#if usernameStatus === 'checking'}
-							<p class="text-sm text-gray-500">...</p>
+							<p class="text-sm text-tinte-500">...</p>
 						{:else if usernameStatus === 'available'}
 							<p class="text-sm text-green-600 dark:text-green-400">{texts.success.usernameAvailable}</p>
 						{:else if usernameStatus === 'taken'}
-							<p class="text-sm text-red-600 dark:text-red-400">{texts.errors.usernameTaken}</p>
+							<p class="text-sm text-accent-600 dark:text-accent-400">{texts.errors.usernameTaken}</p>
 						{:else if usernameStatus === 'invalid'}
-							<p class="text-sm text-red-600 dark:text-red-400">{texts.errors.usernameNoSpaces}</p>
+							<p class="text-sm text-accent-600 dark:text-accent-400">{texts.errors.usernameNoSpaces}</p>
 						{/if}
 					</Label>
 					<Label class="space-y-2">

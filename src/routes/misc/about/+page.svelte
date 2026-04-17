@@ -46,7 +46,7 @@
 
 <Section name="team">
 	<h1 class="mb-4 text-2xl font-bold">{texts.pages.about.title}</h1>
-	<div class="font-light text-gray-500 sm:text-xl lg:mb-16 dark:text-gray-400">
+	<div class="font-light text-tinte-500 sm:text-xl lg:mb-16 dark:text-tinte-400">
 		<p>
 			{texts.names.app} ist eine gemeinnützige Plattform, die
 			es Menschen ermöglicht, Gegenstände in ihrer Gemeinschaft zu teilen und zu verleihen.
@@ -75,7 +75,7 @@
 					jobTitle={member.jobTitle}
 					imgClass="rounded-lg aspect-square object-cover h-32"
 				>
-					<p class="mt-3 mb-4 font-light text-gray-500 dark:text-gray-400">
+					<p class="mt-3 mb-4 font-light text-tinte-500 dark:text-tinte-400">
 						{member.description}
 					</p>
 					<!-- eslint-disable-next-line svelte/no-unused-svelte-ignore -->
@@ -86,7 +86,7 @@
 		</TeamBody>
 	</TeamWrapper>
 	<h1 class="mb-4 text-2xl font-bold">Open-Source</h1>
-	<div class="font-light text-gray-500 sm:text-xl lg:mb-16 dark:text-gray-400">
+	<div class="font-light text-tinte-500 sm:text-xl lg:mb-16 dark:text-tinte-400">
 		<p>
 			{texts.names.app} ist quelloffen und lebt von der Gemeinschaft. Den Quellcode
 			findest du auf

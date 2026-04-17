@@ -31,10 +31,10 @@
 		class="flex items-center gap-2.5 rounded-xl p-2 transition-colors
 			{isActive
 			? 'border border-accent dark:bg-amber-900/20'
-			: 'hover:bg-gray-50 dark:hover:bg-gray-800'}"
+			: 'hover:bg-papier dark:hover:bg-tinte-800'}"
 	>
 		<!-- Item thumbnail -->
-		<div class="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700">
+		<div class="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-tinte-100 dark:bg-tinte-700">
 			{#if itemImage}
 				<img
 					src={itemImage}
@@ -42,23 +42,23 @@
 					class="w-full h-full object-cover"
 				/>
 			{:else}
-				<div class="w-full h-full flex items-center justify-center text-gray-400 text-lg">□</div>
+				<div class="w-full h-full flex items-center justify-center text-tinte-400 text-lg">□</div>
 			{/if}
 		</div>
 
 		<!-- Text -->
 		<div class="flex-1 min-w-0">
-			<p class="text-sm font-medium truncate text-gray-900 dark:text-white leading-tight">
+			<p class="text-sm font-medium truncate text-tinte-900 dark:text-white leading-tight">
 				{conversation.expand.requestedItem.name}
 			</p>
-			<p class="text-xs text-gray-500 dark:text-gray-400 truncate leading-tight">
+			<p class="text-xs text-tinte-500 dark:text-tinte-400 truncate leading-tight">
 				@{otherUser.username}
 			</p>
 		</div>
 
 		<!-- Unread dot -->
 		{#if isUnread}
-			<div class="shrink-0 w-2 h-2 rounded-full bg-blue-500"></div>
+			<div class="shrink-0 w-2 h-2 rounded-full bg-primary"></div>
 		{/if}
 	</a>
 </li>

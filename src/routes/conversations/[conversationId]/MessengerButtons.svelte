@@ -64,7 +64,7 @@
 		{:else if telegramHidden}
 			<button
 				disabled
-				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed"
+				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-tinte-400 bg-tinte-100 dark:bg-tinte-800 opacity-50 cursor-not-allowed"
 			>
 				<img src={telegramLogo} class="w-4 h-4 opacity-50" alt="Telegram" />
 				{texts.messenger.contactViaTelegram}
@@ -84,7 +84,7 @@
 		{:else if signalHidden}
 			<button
 				disabled
-				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed"
+				class="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-tinte-400 bg-tinte-100 dark:bg-tinte-800 opacity-50 cursor-not-allowed"
 			>
 				<img src={signalLogo} class="w-4 h-4 opacity-50" alt="Signal" />
 				{texts.messenger.contactViaSignal}

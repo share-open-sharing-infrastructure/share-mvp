@@ -55,7 +55,7 @@
 <Accordion flush class="mb-4">
 	<AccordionItem>
 		{#snippet header()}{texts.bulkUpload.howItWorksHeader}{/snippet}
-		<p class="text-sm text-gray-600 dark:text-gray-400">
+		<p class="text-sm text-tinte-600 dark:text-tinte-400">
 			{texts.bulkUpload.howItWorksBody}
 		</p>
 	</AccordionItem>
@@ -65,7 +65,7 @@
 <div
 	role="region"
 	aria-label="Foto-Upload-Bereich"
-	class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-10 dark:border-gray-600 dark:bg-gray-800"
+	class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-tinte-300 bg-papier p-10 dark:border-tinte-600 dark:bg-tinte-800"
 	ondragover={(e) => e.preventDefault()}
 	ondrop={(e) => {
 		e.preventDefault();
@@ -77,7 +77,7 @@
 >
 	<!-- Dropzone border -->
 	<svg
-		class="h-12 w-12 text-gray-400"
+		class="h-12 w-12 text-tinte-400"
 		fill="none"
 		stroke="currentColor"
 		viewBox="0 0 24 24"
@@ -99,7 +99,7 @@
 		{texts.bulkUpload.mobileTip}
 	</p>
 
-	<p class="text-sm text-gray-500 dark:text-gray-400">{texts.bulkUpload.dropzoneLabel}</p>
+	<p class="text-sm text-tinte-500 dark:text-tinte-400">{texts.bulkUpload.dropzoneLabel}</p>
 
 	<label
 		class="cursor-pointer rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700"
@@ -116,7 +116,7 @@
 	</label>
 
 	{#if drafts.length > 0}
-		<p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+		<p class="text-sm font-medium text-tinte-700 dark:text-tinte-300">
 			{texts.bulkUpload.filesSelected(drafts.length)}
 		</p>
 		<div class="flex flex-wrap justify-center gap-2">
@@ -125,7 +125,7 @@
 					<img
 						src={draft.previewUrl}
 						alt="Vorschau"
-						class="h-16 w-16 rounded-md object-cover ring-1 ring-gray-200"
+						class="h-16 w-16 rounded-md object-cover ring-1 ring-tinte-200"
 					/>
 					<button
 						type="button"
@@ -143,7 +143,7 @@
 	{/if}
 
 	{#if noPhotosError}
-		<p class="text-sm text-red-600">{texts.bulkUpload.noPhotosSelected}</p>
+		<p class="text-sm text-accent-600">{texts.bulkUpload.noPhotosSelected}</p>
 	{/if}
 </div>
 

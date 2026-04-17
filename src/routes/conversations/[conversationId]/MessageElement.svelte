@@ -9,7 +9,7 @@
 	class="mt-1 max-w-4/5 px-3 py-2 text-sm wrap-break-word
 		{isSent
 		? 'self-end bg-primary-100 text-gray rounded-2xl rounded-br-sm'
-		: 'self-start bg-gray-200 dark:bg-gray-700 text-gray-900  rounded-2xl rounded-bl-sm'}"
+		: 'self-start bg-sand dark:bg-tinte-700 text-tinte-900  rounded-2xl rounded-bl-sm'}"
 >
 	{message.messageContent}
 	<div class="text-[10px] opacity-60 mt-0.5 text-right">

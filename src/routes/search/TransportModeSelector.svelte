@@ -24,7 +24,7 @@
 			class="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium border transition-colors hover:cursor-pointer
 				{mode === m.value
 				? 'bg-primary text-white border-primary'
-				: 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'}"
+				: 'bg-sand text-tinte-600 border-tinte-300 hover:bg-papier dark:bg-tinte-800 dark:text-tinte-300 dark:border-tinte-600'}"
 			onclick={() => onchange(m.value)}
 			aria-pressed={mode === m.value}
 		>

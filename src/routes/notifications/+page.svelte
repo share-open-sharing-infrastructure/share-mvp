@@ -26,17 +26,17 @@
 	<h1 class="text-2xl font-semibold mb-6">{texts.notifications.title}</h1>
 
 	{#if data.notifications.length === 0}
-		<div class="flex flex-col items-center gap-3 py-16 text-gray-400">
+		<div class="flex flex-col items-center gap-3 py-16 text-tinte-400">
 			<BellOutline class="h-12 w-12" />
 			<p>{texts.notifications.empty}</p>
 		</div>
 	{:else}
-		<ul class="divide-y divide-gray-100">
+		<ul class="divide-y divide-tinte-100">
 			{#each data.notifications as notification (notification.id)}
 				<li>
 					<a
 						href={notificationHref(notification)}
-						class="flex items-start gap-4 py-4 hover:bg-gray-50 rounded-lg px-2 transition-colors"
+						class="flex items-start gap-4 py-4 hover:bg-papier rounded-lg px-2 transition-colors"
 					>
 						<div class="mt-0.5 shrink-0 text-accent">
 							{#if notification.type === 'new_message'}
@@ -48,13 +48,13 @@
 							{/if}
 						</div>
 						<div class="flex-1 min-w-0">
-							<p class="text-sm text-gray-800 {notification.read ? '' : 'font-semibold'}">
+							<p class="text-sm text-tinte-800 {notification.read ? '' : 'font-semibold'}">
 								{notification.body}
 							</p>
-							<p class="text-xs text-gray-400 mt-0.5">{formatTimestamp(notification.created)}</p>
+							<p class="text-xs text-tinte-400 mt-0.5">{formatTimestamp(notification.created)}</p>
 						</div>
 						{#if !notification.read}
-							<div class="mt-1.5 h-2 w-2 rounded-full bg-blue-500 shrink-0"></div>
+							<div class="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0"></div>
 						{/if}
 					</a>
 				</li>

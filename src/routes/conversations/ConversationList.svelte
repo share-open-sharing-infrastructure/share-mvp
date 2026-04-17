@@ -13,7 +13,7 @@
 <div class="flex w-1/4 flex-col border rounded-2xl overflow-hidden">
 	<ul class="flex-1 overflow-auto p-2 flex flex-col gap-1 {activeTab === 'borrowing' ? 'bg-primary-50' : 'bg-accent-100'}">
 		{#if visibleConversations.length === 0}
-			<li class="p-3 text-xs text-gray-400 text-center ">
+			<li class="p-3 text-xs text-tinte-400 text-center ">
 				{activeTab === 'lending'
 					? texts.pages.conversations.noLendingConversations
 					: texts.pages.conversations.noBorrowingConversations}

@@ -9,7 +9,7 @@
 	<div class="relative flex-1">
 		<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
 			<svg
-				class="h-4 w-4 text-gray-500 dark:text-gray-400"
+				class="h-4 w-4 text-tinte-500 dark:text-tinte-400"
 				aria-hidden="true"
 				xmlns="http://www.w3.org/2000/svg"
 				fill="none"
@@ -29,7 +29,7 @@
 			name="q"
 			value={q}
 			placeholder={texts.forms.searchPlaceholder}
-			class="search-bar pulse-shadow block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pl-10 text-sm text-gray-900 focus:border-primary focus:ring-primary dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+			class="search-bar pulse-shadow block w-full rounded-lg border border-tinte-300 bg-papier p-2.5 pl-10 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400"
 		/>
 	</div>
 	<Button type="submit" class="min-button bg-primary shrink-0">

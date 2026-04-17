@@ -3,7 +3,7 @@
 </script>
 
 <div
-	class="overflow-hidden rounded-2xl border border-accent bg-white shadow-sm"
+	class="overflow-hidden rounded-2xl border border-accent bg-sand shadow-sm"
 >
 	<div class="grid gap-0 md:grid-cols-5">
 		<!-- Image -->
@@ -17,14 +17,14 @@
 		<div class="p-6 md:col-span-3">
 			<div class="flex items-start gap-3">
 				<span
-					class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-900 text-sm font-semibold text-white"
+					class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-tinte-900 text-sm font-semibold text-white"
 					>{number}</span
 				>
 				<div>
 					<h3 class="text-lg font-semibold leading-snug">
 						{headline}
 					</h3>
-					<div class="mt-3 space-y-2 text-sm leading-relaxed text-gray-600">
+					<div class="mt-3 space-y-2 text-sm leading-relaxed text-tinte-600">
 						{text}
 					</div>
 				</div>

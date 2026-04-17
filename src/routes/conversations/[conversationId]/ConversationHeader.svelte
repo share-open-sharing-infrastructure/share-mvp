@@ -21,7 +21,7 @@
 		/>
 		<div class="flex flex-col min-w-0">
 			<span class="text-sm font-semibold truncate">{conversation.requestedItem.name}</span>
-			<span class="flex items-center gap-0.5 text-xs text-gray-500 dark:text-gray-400 truncate">
+			<span class="flex items-center gap-0.5 text-xs text-tinte-500 dark:text-tinte-400 truncate">
 				<MapPinOutline class="w-3 h-3 shrink-0" />{conversation.requestedItem.place}
 			</span>
 			{#if loggedInUserIsItemOwner}
@@ -32,7 +32,7 @@
 						class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border transition-colors cursor-pointer
 							{conversation.requestedItem.status === 'available'
 								? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-								: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
+								: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
 					>
 						{conversation.requestedItem.status === 'available'
 							? texts.itemStatus.available
@@ -44,7 +44,7 @@
 					class="mt-0.5 self-start inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border
 						{conversation.requestedItem.status === 'available'
 							? 'bg-green-100 text-green-800 border-green-300'
-							: 'bg-red-100 text-red-800 border-red-300'}"
+							: 'bg-accent-100 text-accent-800 border-accent-300'}"
 				>
 					{conversation.requestedItem.status === 'available'
 						? texts.itemStatus.available
@@ -62,7 +62,7 @@
 		>
 			<div class="flex flex-col items-end">
 				<span class="text-sm font-medium">{chatPartner.username}</span>
-				<span class="text-xs text-gray-500 dark:text-gray-400">
+				<span class="text-xs text-tinte-500 dark:text-tinte-400">
 					{texts.ui.activeSince(formatTimestamp(chatPartner.created, true))}
 				</span>
 			</div>
@@ -75,7 +75,7 @@
 		{#if onDelete}
 			<button
 				onclick={onDelete}
-				class="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+				class="p-1.5 rounded-lg text-tinte-400 hover:text-accent-500 hover:bg-accent-50 dark:hover:bg-accent-900 transition-colors"
 				aria-label="Anfrage löschen"
 			>
 				<TrashBinSolid class="w-4 h-4" />

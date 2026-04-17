@@ -126,16 +126,16 @@
 	<textarea
 		name="feedbackMessage"
 		required
-		class="w-full h-48 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+		class="w-full h-48 p-2 border border-tinte-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
 		placeholder="Dein Feedback hier..."
 	></textarea>
 
-	<p class="text-sm text-gray-500">
+	<p class="text-sm text-tinte-500">
 		Das Formular erkennt automatisch die Seite und deinen Gerätekontext. <strong
 			>Wir speichern keine personenbezogenen Daten</strong
 		>, du gibst also anonymes Feedback. Wenn du direkt mit uns sprechen willst,
 		schreibe uns an
-		<a href="mailto:allerleih@posteo.de" class="text-blue-500 hover:underline"
+		<a href="mailto:allerleih@posteo.de" class="text-primary-500 hover:underline"
 			>allerleih@posteo.de</a
 		>
 	</p>

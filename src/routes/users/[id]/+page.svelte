@@ -28,12 +28,12 @@
 	<div class="flex items-center gap-6">
 		<!-- TODO: replace with actual profile image once implemented -->
 		<div
-			class="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center shrink-0"
+			class="h-20 w-20 rounded-full bg-tinte-100 flex items-center justify-center shrink-0"
 		>
-			<UserCircleOutline class="h-14 w-14 text-gray-400" />
+			<UserCircleOutline class="h-14 w-14 text-tinte-400" />
 		</div>
 		<div class="space-y-1">
-			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+			<h1 class="text-2xl font-bold text-tinte-900 dark:text-white">
 				@{profileUser.username}
 			</h1>
 			{#if profileUser.city}
@@ -42,7 +42,7 @@
 					{profileUser.city}
 				</p>
 			{/if}
-			<p class="text-sm text-gray-500 dark:text-gray-400">
+			<p class="text-sm text-tinte-500 dark:text-tinte-400">
 				{texts.pages.userProfile.activeSince(activeSinceDate)}
 			</p>
 		</div>
@@ -51,10 +51,10 @@
 	<!-- Trust Section (hidden on own profile) -->
 	{#if !isOwnProfile}
 		<div
-			class="rounded-lg border border-gray-200 dark:border-primary-700 p-4 space-y-3"
+			class="rounded-lg border border-tinte-200 dark:border-primary-700 p-4 space-y-3"
 		>
 			<!-- Does the profile owner trust the viewer? -->
-			<p class="text-sm text-gray-600 dark:text-gray-400">
+			<p class="text-sm text-tinte-600 dark:text-tinte-400">
 				{#if profileTrustsViewer}
 					✓ {texts.pages.userProfile.trustsYou}
 				{:else}
@@ -87,7 +87,7 @@
 			<!-- Public Items Section -->
 			<section>
 				{#if publicItems.length === 0}
-					<p class="text-gray-500 dark:text-gray-400">
+					<p class="text-tinte-500 dark:text-tinte-400">
 						{texts.pages.userProfile.noPublicItems}
 					</p>
 				{:else}
@@ -119,7 +119,7 @@
 					</div>
 			{:else if trustedItems === null}
 				<section class="space-y-2">
-					<p class="text-gray-500 dark:text-gray-400">
+					<p class="text-tinte-500 dark:text-tinte-400">
 						{texts.pages.userProfile.notTrustedNote}
 					</p>
 				</section>

@@ -59,7 +59,7 @@
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<h2 class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+		<h2 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.pages.conversations.title}
 		</h2>
 	</div>
@@ -72,16 +72,16 @@
 			onclick={() => (activeTab = 'borrowing')}
 			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-primary hover:cursor-pointer
 				{activeTab === 'borrowing'
-				? 'bg-blue-500 text-white shadow-sm'
-				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300 hover:bg-primary-50'}"
+				? 'bg-primary text-white shadow-sm'
+				: 'bg-tinte-100 text-tinte-500 hover:text-tinte-700 dark:bg-tinte-800 dark:hover:text-tinte-300 hover:bg-primary-50'}"
 		>
 			{texts.pages.conversations.borrowing}
 			{#if borrowingConversations.length > 0}
 				<span
 					class="rounded-full px-2 py-0.5 text-xs leading-none
 						{activeTab === 'borrowing'
-						? 'bg-blue-700 text-white'
-						: 'bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}"
+						? 'bg-primary-700 text-white'
+						: 'bg-tinte-300 text-tinte-600 dark:bg-tinte-700 dark:text-tinte-300'}"
 				>
 					{borrowingConversations.length}
 				</span>
@@ -92,7 +92,7 @@
 			class="flex-1 flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-sm font-semibold transition-colors border border-accent hover:cursor-pointer
 				{activeTab === 'lending'
 				? 'bg-accent-100 text-amber-900 shadow-sm'
-				: 'bg-gray-100 text-gray-500 hover:text-gray-700 dark:bg-gray-800 dark:hover:text-gray-300 '}"
+				: 'bg-tinte-100 text-tinte-500 hover:text-tinte-700 dark:bg-tinte-800 dark:hover:text-tinte-300 '}"
 		>
 			{texts.pages.conversations.lending}
 			{#if lendingConversations.length > 0}
@@ -100,7 +100,7 @@
 					class="rounded-full px-2 py-0.5 text-xs leading-none
 						{activeTab === 'lending'
 						? 'bg-accent text-white'
-						: 'bg-gray-300 text-gray-600 dark:bg-gray-700 dark:text-gray-300 '}"
+						: 'bg-tinte-300 text-tinte-600 dark:bg-tinte-700 dark:text-tinte-300 '}"
 				>
 					{lendingConversations.length}
 				</span>

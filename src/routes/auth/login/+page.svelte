@@ -56,7 +56,7 @@
 
 						">{texts.auth.loginButton}</Button
 				>
-				<p class="mt-2 text-sm font-light text-gray-500 dark:text-gray-400">
+				<p class="mt-2 text-sm font-light text-tinte-500 dark:text-tinte-400">
 					<a
 						href={resolve('/auth/reset')}
 						class="font-medium text-primary-800 hover:underline dark:text-primary-300"
@@ -64,7 +64,7 @@
 					>
 				</p>
 
-				<p class="mt-4 text-sm font-light text-gray-500 dark:text-gray-400">
+				<p class="mt-4 text-sm font-light text-tinte-500 dark:text-tinte-400">
 					Du hast noch keinen Account?
 					<a
 						href={resolve('/auth/register')}

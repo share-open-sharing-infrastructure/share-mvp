@@ -16,6 +16,7 @@
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
 	import { BellOutline, ChevronDownOutline, ChevronRightOutline, UserCircleOutline } from 'flowbite-svelte-icons';
+	import AllerLoader from './AllerLoader.svelte';
 
 	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
 		loggedIn: boolean;
@@ -39,7 +40,7 @@
 	<NavBrand href={resolve('/')}>
 		<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
 		<div id="beta" class="relative flex flex-col items-center">
-			<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none">
+			<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-accent text-accent rounded px-1 opacity-80 leading-tight pointer-events-none">
 				Beta
 			</span>
 			<div
@@ -105,11 +106,11 @@
 	
 	<Popover
 		triggeredBy="#beta"
-		class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+		class="w-72 bg-sand text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
 		placement="bottom-start"
 	>
 		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-gray-900 dark:text-white">
+			<h3 class="font-semibold text-tinte-900 dark:text-white">
 				Beta-Zugang
 			</h3>
 			Wir testen AllerLeih gerade in Lüneburg! Die Plattform kann noch Fehler haben und wird beständig verbessert. 
