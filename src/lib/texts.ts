@@ -198,9 +198,18 @@ export const texts = {
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',
+			welcome: 'Willkommen bei',
 			how: 'Wie funktioniert das?',
+			howLinkText: 'Hier',
+			howBodyPart1: 'geben wir dir eine kurze Einführung, wie du',
+			howBodyPart2: 'nutzen kannst, um Dinge in deiner Umgebung zu leihen oder zu verleihen.',
 			who: 'Wer sind wir?',
-			support: 'Was passiert gerade?'
+			whoBodyPart1: 'Wir sind noch im Aufbau, aber du kannst uns gerne jederzeit',
+			whoLinkText: 'kontaktieren',
+			whoBodyPart2: ', wenn du Fragen hast oder uns unterstützen willst!',
+			support: 'Was passiert gerade?',
+			supportBodyPart1: 'Wir befinden uns derzeit in einer Testphase mit einer kleinen Gruppe von Nutzer:innen. Wenn du Interesse hast, an diesem Test teilzunehmen,',
+			supportLinkText: 'melde dich gerne bei uns'
 		},
 		about: {
 			title: 'Über AllerLeih',
