@@ -5,8 +5,7 @@
 	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
-	import PocketBase from 'pocketbase';
-	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { getClientPB } from '$lib/client-pb';
 	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
@@ -39,8 +38,7 @@
 		if (!data.currentUser) return;
 
 		// ── Realtime notification badge ──────────────────────────────────────
-		const pb = new PocketBase(PUBLIC_PB_URL);
-		pb.authStore.loadFromCookie(document.cookie || '');
+		const pb = getClientPB();
 
 		// Track IDs we silently absorbed so we don't double-decrement
 		const suppressedIds = new SvelteSet<string>();
@@ -91,6 +89,15 @@
 	{/if}
 
 	<main class="flex-1">
+		<!--
+			Workaround: in dev mode, SvelteKit 2 + Svelte 5 intermittently fails to
+			remove the previous route's DOM from this {@render children()} when the
+			child route tree structure changes (e.g. flat route <-> nested-layout
+			route), producing a "page stacking" bug where the old page remains in
+			the DOM as a sibling of the snippet's block markers. Forcing a keyed
+			remount on route.id bypasses the broken snippet-diff path. Production
+			is unaffected; remove this once the upstream bug is resolved.
+		-->
 		{#key page.route.id}
 			{@render children()}
 		{/key}

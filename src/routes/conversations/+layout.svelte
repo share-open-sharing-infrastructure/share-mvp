@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import ConversationList from './ConversationList.svelte';
-	import PocketBase from 'pocketbase';
-	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { getClientPB } from '$lib/client-pb';
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 
@@ -38,8 +37,7 @@
 	});
 
 	onMount(() => {
-		const pb = new PocketBase(PUBLIC_PB_URL);
-		pb.authStore.loadFromCookie(document.cookie || '');
+		const pb = getClientPB();
 
 		pb.collection('conversations').subscribe('*', (e) => {
 			if (e.action !== 'update') return;
