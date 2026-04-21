@@ -18,7 +18,7 @@ const ASSETS = [...build, ...files];
 // cascading "failed to load module" errors.  Skipping all caching and
 // fetch interception in dev avoids this completely while still keeping
 // the push-notification handlers active.
-const isDev = version === 'dev';
+const isDev = !build.length;
 
 self.addEventListener('install', (event) => {
 	if (isDev) {

@@ -91,7 +91,9 @@
 	{/if}
 
 	<main class="flex-1">
-		{@render children()}
+		{#key page.route.id}
+			{@render children()}
+		{/key}
 	</main>
 
 	<PwaPrompts
