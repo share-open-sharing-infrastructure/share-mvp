@@ -36,16 +36,30 @@
 			installPromptEvent = e as BeforeInstallPromptEvent;
 		});
 
-		if (!data.currentUser) return;
+		// If push permission was already granted on a previous session, re-register
+		// the subscription silently (covers cleared browser data / new device scenarios)
+		if (data.currentUser && 'Notification' in window && Notification.permission === 'granted') {
+			setupPushSubscription();
+		}
+	});
 
-		// ── Realtime notification badge ──────────────────────────────────────
+	// Realtime notification badge — re-subscribes when the authenticated user
+	// changes (login / logout / user switch) by depending on `data.currentUser?.id`.
+	// Keeping this in an $effect (rather than onMount) ensures the handler's
+	// closure always reflects the currently-authenticated user, and that a
+	// logout-then-login within the same session re-establishes the subscription
+	// under the new session rather than leaving a stale one behind.
+	$effect(() => {
+		const userId = data.currentUser?.id;
+		if (!userId) return;
+
 		const pb = getClientPB();
 
 		// Track IDs we silently absorbed so we don't double-decrement
 		const suppressedIds = new SvelteSet<string>();
 
 		pb.collection('notifications').subscribe('*', (e) => {
-			if (e.record.recipient !== data.currentUser?.id) return;
+			if (e.record.recipient !== userId) return;
 			if (e.action === 'create' && !e.record.read) {
 				// If the user is already viewing this conversation, mark it as read
 				// immediately and don't bump the badge
@@ -65,12 +79,6 @@
 				unreadCount = Math.max(0, unreadCount - 1);
 			}
 		});
-
-		// If push permission was already granted on a previous session, re-register
-		// the subscription silently (covers cleared browser data / new device scenarios)
-		if ('Notification' in window && Notification.permission === 'granted') {
-			setupPushSubscription();
-		}
 
 		return () => {
 			pb.collection('notifications').unsubscribe('*');
