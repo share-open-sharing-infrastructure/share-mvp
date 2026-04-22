@@ -8,3 +8,4 @@ dist
 !.env.example
 .vscode
 .claude/settings.json
+.claude/worktrees
