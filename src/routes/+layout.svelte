@@ -99,7 +99,7 @@
 			route.id bypasses the broken snippet-diff path. Confirmed not needed in
 			production builds (preview and deployed both behave correctly without
 			it), so the `dev` gate avoids wasting SvelteKit's default layout reuse
-			for real users. Remove entirely once the upstream bug is resolved.
+			for real users. Check if this can be removed in future versions.
 		-->
 		{#if dev}
 			{#key page.route.id}
