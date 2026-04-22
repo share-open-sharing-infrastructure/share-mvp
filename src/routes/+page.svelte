@@ -52,7 +52,7 @@
 				</span>
 
 				<p class="text-lg font-normal text-gray-500 dark:text-gray-400">
-					<a href={resolve('/misc/howto')} class="text-accent">Hier</a> geben
+					<a href={resolve('/misc/guide')} class="text-accent">Hier</a> geben
 					wir dir eine kurze Einführung, wie du {texts.names.app} nutzen kannst, um
 					Dinge in deiner Umgebung zu leihen oder zu verleihen.
 				</p>

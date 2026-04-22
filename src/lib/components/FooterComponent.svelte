@@ -19,7 +19,7 @@
 		>
 			{texts.names.app}
 		</FooterBrand>
-		<p class="my-6 text-light">
+		<p class="mb-6 text-light">
 			Ein gemeinnütziger open-source Verleih-Marktplatz. Für alle.
 		</p>
 		<FooterLinkGroup
@@ -28,6 +28,10 @@
 			<FooterLink
 				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/about')}>{texts.nav.about}</FooterLink
+			>
+			<FooterLink
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
+				href={resolve('/misc/guide')}>{texts.nav.guide}</FooterLink
 			>
 			<FooterLink
 				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
@@ -41,10 +45,7 @@
 				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/newsletter')}>{texts.nav.newsletter}</FooterLink
 			>
-			<FooterLink
-				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
-				href={resolve('/misc/faq')}>{texts.nav.faq}</FooterLink
-			>
+			
 		</FooterLinkGroup>
 		<span class="text-sm text-accent sm:text-center">
 			© 2026 <a href={resolve('/')} class="hover:underline">{texts.names.app}</a
