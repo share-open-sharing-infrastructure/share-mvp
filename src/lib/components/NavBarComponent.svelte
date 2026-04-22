@@ -59,8 +59,9 @@
 			class="
 					min-button
 					ml-10
-					text-accent
+					text-accent!
 					cursor-pointer
+					hover:bg-accent-100
 				"
 		>
 			Feedback geben

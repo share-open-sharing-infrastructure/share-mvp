@@ -66,6 +66,7 @@
 }
 
 .min-button {
+	color: black;
 	border-color: black;
 	border: 1px solid;
 	border-radius: 20px;
