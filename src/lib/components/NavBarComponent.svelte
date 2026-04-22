@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { goto, invalidateAll } from '$app/navigation';
 	import {
 		Navbar,
@@ -15,7 +16,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
-	import { BellOutline, ChevronDownOutline, ChevronRightOutline, UserCircleOutline } from 'flowbite-svelte-icons';
+	import { BellOutline, ChevronDownOutline, ChevronRightOutline, GlobeOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 
 	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
 		loggedIn: boolean;
@@ -24,6 +25,10 @@
 	}>();
 
 	let activeUrl = $derived(page.url.pathname);
+	let showTranslate = $derived(browser && !navigator.language.startsWith('de'));
+	let deeplUrl = $derived(
+		`https://www.deepl.com/translator#de/${browser ? navigator.language.split('-')[0] : 'en'}/`
+	);
 
 	async function logout(): Promise<void> {
 		await fetch('/auth/logout', {
@@ -48,6 +53,15 @@
 			<div class="text-xs leading-none">Lüneburg</div>
 		</div>
 	</NavBrand>
+	{#if showTranslate}
+		<button
+			id="translate-btn"
+			class="ml-auto mr-2 flex items-center gap-1 text-sm text-gray-500 hover:text-accent cursor-pointer"
+		>
+			<GlobeOutline class="h-4 w-4" />
+			{texts.nav.translate}
+		</button>
+	{/if}
 	<NavHamburger />
 	<NavUl
 		{activeUrl}
@@ -103,6 +117,30 @@
 		{/if}
 	</NavUl>
 	
+	{#if showTranslate}
+		<Popover
+			triggeredBy="#translate-btn"
+			class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+			placement="bottom-end"
+		>
+			<div class="space-y-2 p-3">
+				<h3 class="font-semibold text-gray-900 dark:text-white">
+					{texts.nav.translateTitle}
+				</h3>
+				{texts.nav.translateBrowser}
+				<a
+					href={deeplUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-accent hover:underline flex items-center font-medium mt-1"
+				>
+					{texts.nav.translateDeepL}
+					<ChevronRightOutline class="text-accent h-4 w-4" />
+				</a>
+			</div>
+		</Popover>
+	{/if}
+
 	<Popover
 		triggeredBy="#beta"
 		class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"

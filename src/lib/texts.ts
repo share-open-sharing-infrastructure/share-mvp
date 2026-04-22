@@ -47,6 +47,10 @@ export const texts = {
 		contact: 'Kontakt',
 		newsletter: 'Newsletter',
 		faq: 'FAQ',
+		translate: 'Translate',
+		translateTitle: 'Translate this page',
+		translateBrowser: "Your browser can translate this page automatically — look for the translate icon in your address bar, or right-click and select 'Translate'. Or:",
+		translateDeepL: 'Translate text with DeepL',
 	},
 
 	// Error messages
