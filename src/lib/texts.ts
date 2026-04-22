@@ -285,6 +285,10 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			emailVerified: 'E-Mail-Adresse bestätigt',
+			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
+			resendVerification: 'Bestätigungs-E-Mail erneut senden',
+			verificationSent: 'Bestätigungs-E-Mail wurde gesendet.',
 		},
 		invite: {
 			sectionTitle: 'Freunde einladen',
@@ -304,6 +308,7 @@ export const texts = {
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
+			emailVerified: 'E-Mail-Adresse bestätigt',
 			trustsYou: 'Diese Person vertraut dir.',
 			doesNotTrustYou: 'Diese Person vertraut dir (noch) nicht.',
 			trustsThisUser: 'Du vertraust diesem Account',

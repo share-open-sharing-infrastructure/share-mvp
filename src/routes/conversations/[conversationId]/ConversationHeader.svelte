@@ -4,6 +4,7 @@
 	import { MapPinOutline, TrashBinSolid } from 'flowbite-svelte-icons';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 
 	let { chatPartner, conversation, PB_URL, onDelete, loggedInUserIsItemOwner = false } = $props();
 </script>
@@ -66,11 +67,16 @@
 					{texts.ui.activeSince(formatTimestamp(chatPartner.created, true))}
 				</span>
 			</div>
-			<img
-				src={`https://ui-avatars.com/api/?name=${chatPartner.username}&background=random`}
-				class="w-9 h-9 rounded-xl object-cover shrink-0"
-				alt="Avatar"
-			/>
+			<div class="relative shrink-0">
+				<img
+					src={`https://ui-avatars.com/api/?name=${chatPartner.username}&background=random`}
+					class="w-9 h-9 rounded-xl object-cover"
+					alt="Avatar"
+				/>
+				{#if chatPartner.verified}
+					<VerifiedIcon class="absolute -top-1 -right-1 h-3.5 w-3.5" />
+				{/if}
+			</div>
 		</a>
 		{#if onDelete}
 			<button
