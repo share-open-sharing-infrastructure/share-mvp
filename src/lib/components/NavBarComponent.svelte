@@ -10,12 +10,15 @@
 		DropdownItem,
 		DropdownDivider,
 		Popover,
+		Modal,
+		Button,
 	} from 'flowbite-svelte';
 
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
 	import { BellOutline, ChevronDownOutline, ChevronRightOutline, UserCircleOutline } from 'flowbite-svelte-icons';
+	import FeedbackForm from './FeedbackForm.svelte';
 
 	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
 		loggedIn: boolean;
@@ -24,6 +27,7 @@
 	}>();
 
 	let activeUrl = $derived(page.url.pathname);
+	let isFeedbackModalOpen = $state(false);
 
 	async function logout(): Promise<void> {
 		await fetch('/auth/logout', {
@@ -47,6 +51,21 @@
 				>{texts.names.app}</div>
 			<div class="text-xs leading-none">Lüneburg</div>
 		</div>
+		<Button
+			pill
+			onclick={(): void => {
+				isFeedbackModalOpen = true;
+			}}
+			class="
+					min-button
+					ml-10
+					text-accent!
+					cursor-pointer
+					hover:bg-accent-100
+				"
+		>
+			Feedback geben
+		</Button>
 	</NavBrand>
 	<NavHamburger />
 	<NavUl
@@ -124,3 +143,9 @@
 		</div>
 	</Popover>
 </Navbar>
+
+
+
+<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
+	<FeedbackForm onsuccess={() => { isFeedbackModalOpen = false; }} />
+</Modal>

@@ -28,7 +28,7 @@
 <li class="w-full">
 	<a
 		href={resolve(`/conversations/${conversation.id}`)}
-		class="flex items-center gap-2.5 rounded-xl p-2 transition-colors
+		class="flex items-center gap-2.5 rounded-xl p-2 transition-colors min-h-11
 			{isActive
 			? 'border border-accent dark:bg-amber-900/20'
 			: 'hover:bg-gray-50 dark:hover:bg-gray-800'}"
