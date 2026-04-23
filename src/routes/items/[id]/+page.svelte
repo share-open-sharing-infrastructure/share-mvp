@@ -4,7 +4,7 @@
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
-	import { onMount, untrack } from 'svelte';
+	import { untrack } from 'svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -23,12 +23,14 @@
 	let transportMode = $state<TransportMode>(initialMode);
 	let travelMinutes = $state<number | null | undefined>(undefined);
 	let dropdownOpen = $state(false);
+	let calculating = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 
 	async function fetchTravelTime(mode: TransportMode, userLocation: { lon: number; lat: number }) {
 		const ownerGeo = item.expand?.owner?.geolocation as { lon: number; lat: number } | undefined;
 		if (!ownerGeo || (ownerGeo.lon === 0 && ownerGeo.lat === 0)) {
 			travelMinutes = null;
+			calculating = false;
 			return;
 		}
 		try {
@@ -47,10 +49,13 @@
 			}
 		} catch {
 			// silently skip
+		} finally {
+			calculating = false;
 		}
 	}
 
 	function requestAndFetch(mode: TransportMode) {
+		calculating = true;
 		if (cachedUserLocation) {
 			fetchTravelTime(mode, cachedUserLocation);
 			return;
@@ -61,7 +66,7 @@
 				fetchTravelTime(mode, cachedUserLocation);
 			},
 			() => {
-				// silently skip
+				calculating = false;
 			}
 		);
 	}
@@ -72,10 +77,6 @@
 		travelMinutes = undefined;
 		requestAndFetch(mode);
 	}
-
-	onMount(() => {
-		if (data.isAuthenticated && !data.isOwnItem) requestAndFetch(transportMode);
-	});
 </script>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
@@ -101,7 +102,20 @@
 				<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
 			</a>
 		</div>
-		{#if data.isAuthenticated && !isOwnItem && travelMinutes !== undefined && travelMinutes !== null}
+		{#if data.isAuthenticated && !isOwnItem}
+			{#if calculating}
+				<span class="text-sm text-gray-400 dark:text-gray-500 animate-pulse px-2 py-0.5">
+					{texts.pages.itemDetail.calculateTravelTime}…
+				</span>
+			{:else if travelMinutes === undefined}
+				<button
+					type="button"
+					onclick={() => requestAndFetch(transportMode)}
+					class="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 underline underline-offset-2 cursor-pointer"
+				>
+					{texts.pages.itemDetail.calculateTravelTime}
+				</button>
+			{:else if travelMinutes !== null}
 			<div class="relative">
 				<button
 					id="item-transport-btn"
@@ -124,7 +138,7 @@
 					{texts.pages.search.minutesAway(travelMinutes)}
 					<ChevronDownOutline class="h-3 w-3 ml-0.5" />
 				</button>
-				<Dropdown bind:open={dropdownOpen} triggeredBy="#item-transport-btn" placement="bottom-end">
+				<Dropdown bind:isOpen={dropdownOpen} triggeredBy="#item-transport-btn" placement="bottom-end">
 					{#each (['foot', 'bicycle', 'car'] as const) as m (m)}
 						<DropdownItem onclick={() => handleModeChange(m)} class={transportMode === m ? 'font-semibold text-primary' : ''}>
 							<span class="flex items-center gap-2">
@@ -147,6 +161,7 @@
 					{/each}
 				</Dropdown>
 			</div>
+		{/if}
 		{/if}
 	</div>
 
