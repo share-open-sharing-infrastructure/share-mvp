@@ -140,7 +140,7 @@
 				</button>
 				<Dropdown bind:isOpen={dropdownOpen} triggeredBy="#item-transport-btn" placement="bottom-end">
 					{#each (['foot', 'bicycle', 'car'] as const) as m (m)}
-						<DropdownItem onclick={() => handleModeChange(m)} class={transportMode === m ? 'font-semibold text-primary' : ''}>
+						<DropdownItem onclick={() => handleModeChange(m)} classes={{ li: 'list-none' }} class={transportMode === m ? 'font-semibold text-primary' : ''}>
 							<span class="flex items-center gap-2">
 								{#if m === 'foot'}
 									<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
