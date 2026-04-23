@@ -184,7 +184,7 @@
 		<div class="space-y-2">
 			<span class="text-sm font-medium">{texts.forms.itemCategories}</span>
 			<div class="flex flex-wrap gap-x-4 gap-y-2">
-				{#each ITEM_CATEGORIES as cat}
+				{#each ITEM_CATEGORIES as cat(cat)}
 					<Label class="flex items-center gap-1.5 cursor-pointer font-normal">
 						<Checkbox
 							name="categories"

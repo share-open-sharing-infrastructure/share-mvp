@@ -9,19 +9,11 @@
 	interface Props {
 		item: Item;
 		imgUrl: string;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		data: any;
+		PB_URL: string;
 	}
-	let { item, imgUrl, data }: Props = $props();
+	let { item, imgUrl, PB_URL }: Props = $props();
 	let showEditModal = $state(false);
-	let editingItemId = $state('');
-	let editingItem = $derived(
-		data?.user?.expand?.items_via_owner
-			? data.user.expand.items_via_owner.find(
-					(item: Item) => item.id === editingItemId
-				)
-			: null
-	);
+
 	function getItemImageUrl(item: Item, baseUrl: string): string {
 		return `${baseUrl}api/files/${item?.collectionId}/${item?.id}/${item?.image}`;
 	}
@@ -76,7 +68,6 @@
 			</form>
 			<EditButton
 				onclick={() => {
-					editingItemId = item.id;
 					showEditModal = true;
 				}}
 			/>
@@ -88,6 +79,6 @@
 <ItemModal
 	bind:isVisible={showEditModal}
 	type="edit"
-	{editingItem}
-	imgUrl={getItemImageUrl(editingItem, data.PB_URL)}
+	editingItem={item}
+	imgUrl={getItemImageUrl(item, PB_URL)}
 />
