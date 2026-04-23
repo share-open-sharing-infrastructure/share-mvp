@@ -1,10 +1,8 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { Badge } from 'flowbite-svelte';
-	import EditButton from './EditButton.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import { texts } from '$lib/texts';
-	import { enhance } from '$app/forms';
 
 	interface Props {
 		item: Item;
@@ -19,8 +17,10 @@
 	}
 </script>
 
-<div
-	class="items-center border border-gray-200 rounded-lg shadow flex sm:flex-row overflow-hidden"
+<button
+	type="button"
+	onclick={() => (showEditModal = true)}
+	class="items-center border border-gray-200 rounded-lg shadow flex sm:flex-row overflow-hidden w-full text-left cursor-pointer hover:bg-gray-50 transition-colors"
 >
 	<img
 		class="m-5 w-30 h-30 object-cover aspect-square rounded-lg"
@@ -35,10 +35,6 @@
 			>
 				{item.name}
 			</h3>
-			<!-- <span class="flex items-center gap-1 text-sm">
-				<MapPinOutline class="h-4 w-4" />
-				{item.place}
-			</span> -->
 			{#if item.trusteesOnly}
 				<div class="flex items-center truncate">
 					<Badge rounded border color="green" class="my-2">
@@ -51,29 +47,17 @@
 		</div>
 
 		<div class="flex items-center gap-2 justify-end pt-4">
-			<form method="POST" action="?/toggleStatus" use:enhance>
-				<input type="hidden" name="itemId" value={item.id} />
-				<button
-					type="submit"
-					class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border transition-colors cursor-pointer
-						{item.status === 'available'
-							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-							: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
-					title={item.status === 'available'
-						? texts.itemStatus.markUnavailable
-						: texts.itemStatus.markAvailable}
-				>
-					{item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
-				</button>
-			</form>
-			<EditButton
-				onclick={() => {
-					showEditModal = true;
-				}}
-			/>
+			<span
+				class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold border
+					{item.status === 'available'
+						? 'bg-green-100 text-green-800 border-green-300'
+						: 'bg-red-100 text-red-800 border-red-300'}"
+			>
+				{item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
+			</span>
 		</div>
 	</div>
-</div>
+</button>
 
 <!-- Edit Modal -->
 <ItemModal
