@@ -1,7 +1,5 @@
 <script lang="ts">
 	import '../app.css';
-	import { Button, Modal } from 'flowbite-svelte';
-	import FeedbackForm from '$lib/components/FeedbackForm.svelte';
 	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';

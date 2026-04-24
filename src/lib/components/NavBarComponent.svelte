@@ -40,17 +40,19 @@
 </script>
 
 <Navbar>
-	<NavBrand href={resolve('/')}>
-		<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
-		<div id="beta" class="relative flex flex-col items-center">
-			<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none">
-				Beta
-			</span>
-			<div
-				class="text-accent self-center text-xl font-semibold whitespace-nowrap logo leading-none"
-				>{texts.names.app}</div>
-			<div class="text-xs leading-none">Lüneburg</div>
-		</div>
+	<div class="flex items-center">
+		<NavBrand href={resolve('/')}>
+			<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
+			<div id="beta" class="relative flex flex-col items-center">
+				<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none">
+					Beta
+				</span>
+				<div
+					class="text-accent self-center text-xl font-semibold whitespace-nowrap logo leading-none"
+					>{texts.names.app}</div>
+				<div class="text-xs leading-none">Lüneburg</div>
+			</div>
+		</NavBrand>
 		<Button
 			pill
 			onclick={(): void => {
@@ -64,9 +66,9 @@
 					hover:bg-accent-100
 				"
 		>
-			Feedback geben
+			Hierfür Feedback geben
 		</Button>
-	</NavBrand>
+	</div>
 	<NavHamburger />
 	<NavUl
 		{activeUrl}
