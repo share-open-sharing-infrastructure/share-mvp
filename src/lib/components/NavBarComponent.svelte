@@ -76,7 +76,7 @@
 					hover:bg-accent-100
 				"
 		>
-			Hierfür Feedback geben
+			Feedback
 		</Button>
 	</div>
 	{#if showTranslate}
