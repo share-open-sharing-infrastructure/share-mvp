@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
-	import { Button } from 'flowbite-svelte';
+
+	import { Button, Label, Toggle, Popover } from 'flowbite-svelte';
+	import { QuestionCircleSolid } from 'flowbite-svelte-icons';
+	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+
 	import { enhance } from '$app/forms';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AddressInput from '$lib/components/AddressInput.svelte';
@@ -99,20 +103,8 @@
 						tooltipText={texts.messenger.signalTooltipText}
 					/>
 				</div>
-
-				<!-- Email Field (read-only, links to separate change-email page) -->
-				<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-					<span class="sm:w-36 sm:shrink-0 text-sm font-medium text-gray-900 dark:text-white">
-						{texts.ui.emailAddress}
-					</span>
-					<span class="text-sm text-gray-700 dark:text-gray-300">
-						{data.currentUser.email}
-						<span class="text-gray-500 dark:text-gray-400">
-							(<a href={resolve('/user/profile/updatemail')} class="font-medium text-primary hover:underline">ändern</a>)
-						</span>
-					</span>
-				</div>
-
+				<legend class="sr-only">Profilinformationen (schreibgeschützt)</legend>
+				
 				<!-- Submit Button -->
 				<div class="pt-4 justify-end flex">
 					<Button class="min-button bg-primary" type="submit">
@@ -120,6 +112,49 @@
 					</Button>
 				</div>
 			</form>
+			<!-- Email Field -->
+			<div class="pt-2 mt-2 border-t">
+				<label
+					for="email"
+					class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
+				>
+					{texts.ui.emailAddress}
+					<span
+						class="rounded-lg text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+					>
+						{data.currentUser.email}
+					</span>
+					<span class="text-sm text-gray-600 dark:text-gray-400">
+						(<a
+							href={resolve('/user/profile/updatemail')}
+							class="font-medium text-primary hover:underline">ändern</a
+						>)
+					</span>
+				</label>
+			</div>
+			<!-- Email Verification Status -->
+			{#if data.currentUser.verified}
+				<p class="flex items-center gap-2 text-sm text-green-600 font-medium mt-2">
+					<VerifiedIcon class="h-4 w-4" />
+					{texts.pages.profile.emailVerified}
+				</p>
+			{:else}
+				<div class="mt-2 space-y-2">
+					<p class="text-sm text-amber-600 dark:text-amber-400">
+						{texts.pages.profile.emailNotVerified}
+					</p>
+					<form method="POST" action="?/resendVerification" use:enhance>
+						<button
+							type="submit"
+							class="text-sm font-medium text-primary hover:text-primary-800 hover:underline cursor-pointer dark:text-primary-400 dark:hover:text-primary-300"
+						>
+							{texts.pages.profile.resendVerification}
+						</button>
+					</form>
+				</div>
+			{/if}
+
+		
 		</div>
 	</div>
 	
