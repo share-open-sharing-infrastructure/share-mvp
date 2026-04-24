@@ -24,11 +24,11 @@
 	let filterActive = $derived(maxMinutes < 30 && Object.keys(travelTimes).length > 0);
 	let filteredItems = $derived.by(() => {
 		const items = filterActive
-			? data.items.filter((item) => {
+			? (data.items ?? []).filter((item) => {
 					const minutes = travelTimes[item.expand?.owner?.id ?? ''];
 					return minutes === undefined || minutes <= maxMinutes;
 				})
-			: [...data.items];
+			: [...(data.items ?? [])];
 
 		if (Object.keys(travelTimes).length === 0) return items;
 
@@ -43,11 +43,12 @@
 	});
 	let showNoLocationPrompt = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
+	let mounted = false;
 
 	function extractOwnerLocations(): OwnerLocation[] {
 		const seen: Record<string, true> = {};
 		const result: OwnerLocation[] = [];
-		for (const item of data.items) {
+		for (const item of (data.items ?? [])) {
 			const owner = item.expand?.owner;
 			if (!owner?.id || seen[owner.id]) continue;
 			const geo = owner.geolocation as { lon: number; lat: number } | undefined;
@@ -77,10 +78,12 @@
 	function requestLocationAndFetch(mode: TransportMode) {
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
+				if (!mounted) return;
 				cachedUserLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
 				fetchTravelTimes(mode, cachedUserLocation);
 			},
 			() => {
+				if (!mounted) return;
 				showNoLocationPrompt = true;
 			}
 		);
@@ -107,7 +110,9 @@
 	}
 
 	onMount(() => {
+		mounted = true;
 		if (data.currentUser) requestLocationAndFetch(transportMode);
+		return () => { mounted = false; };
 	});
 </script>
 

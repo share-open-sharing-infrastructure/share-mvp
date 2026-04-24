@@ -10,12 +10,15 @@
 		DropdownItem,
 		DropdownDivider,
 		Popover,
+		Modal,
+		Button,
 	} from 'flowbite-svelte';
 
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
 	import { BellOutline, ChevronDownOutline, ChevronRightOutline, UserCircleOutline } from 'flowbite-svelte-icons';
+	import FeedbackForm from './FeedbackForm.svelte';
 
 	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
 		loggedIn: boolean;
@@ -24,6 +27,7 @@
 	}>();
 
 	let activeUrl = $derived(page.url.pathname);
+	let isFeedbackModalOpen = $state(false);
 
 	async function logout(): Promise<void> {
 		await fetch('/auth/logout', {
@@ -36,18 +40,35 @@
 </script>
 
 <Navbar>
-	<NavBrand href={resolve('/')}>
-		<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
-		<div id="beta" class="relative flex flex-col items-center">
-			<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none">
-				Beta
-			</span>
-			<div
-				class="text-accent self-center text-xl font-semibold whitespace-nowrap logo leading-none"
-				>{texts.names.app}</div>
-			<div class="text-xs leading-none">Lüneburg</div>
-		</div>
-	</NavBrand>
+	<div class="flex items-center">
+		<NavBrand href={resolve('/')}>
+			<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
+			<div id="beta" class="relative flex flex-col items-center">
+				<span class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none">
+					Beta
+				</span>
+				<div
+					class="text-accent self-center text-xl font-semibold whitespace-nowrap logo leading-none"
+					>{texts.names.app}</div>
+				<div class="text-xs leading-none">Lüneburg</div>
+			</div>
+		</NavBrand>
+		<Button
+			pill
+			onclick={(): void => {
+				isFeedbackModalOpen = true;
+			}}
+			class="
+					min-button
+					ml-10
+					text-accent!
+					cursor-pointer
+					hover:bg-accent-100
+				"
+		>
+			Hierfür Feedback geben
+		</Button>
+	</div>
 	<NavHamburger />
 	<NavUl
 		{activeUrl}
@@ -124,3 +145,9 @@
 		</div>
 	</Popover>
 </Navbar>
+
+
+
+<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
+	<FeedbackForm onsuccess={() => { isFeedbackModalOpen = false; }} />
+</Modal>
