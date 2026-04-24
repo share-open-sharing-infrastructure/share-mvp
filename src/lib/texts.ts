@@ -54,6 +54,13 @@ export const texts = {
 		guide: "Wie funktioniert's?",
 	},
 
+	// Footer
+	footer: {
+		instagram: 'AllerLeih auf Instagram',
+		mastodon: 'AllerLeih auf Mastodon',
+		pixelfed: 'AllerLeih auf PixelFed',
+	},
+
 	// Error messages
 	errors: {
 		changesNotSaved: 'Die Änderungen konnten nicht gespeichert werden!',
