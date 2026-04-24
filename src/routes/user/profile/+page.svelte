@@ -1,32 +1,21 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
-
-	import { Button, Label, Toggle, Popover } from 'flowbite-svelte';
-	import { QuestionCircleSolid } from 'flowbite-svelte-icons';
-
+	import { Button } from 'flowbite-svelte';
+	import { enhance } from '$app/forms';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AddressInput from '$lib/components/AddressInput.svelte';
-	import { enhance } from '$app/forms';
+	import MessengerField from './MessengerField.svelte';
+	import NotificationSettings from './NotificationSettings.svelte';
+	import InviteLink from './InviteLink.svelte';
 
 	let { data, form } = $props();
-
-	let inviteCopied = $state(false);
-
-	function copyInviteLink() {
-		navigator.clipboard.writeText(data.inviteUrl).then(() => {
-			inviteCopied = true;
-			setTimeout(() => (inviteCopied = false), 2000);
-		});
-	}
 </script>
 
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<h2
-			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
-		>
+		<h2 class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white">
 			{texts.pages.profile.title}
 		</h2>
 	</div>
@@ -35,9 +24,7 @@
 <main class="bg-white dark:bg-gray-900 min-h-screen">
 	<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
 		<!-- Profile Form Section -->
-		<div
-			class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8"
-		>
+		<div class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8">
 			{#if form}
 				<div class="mb-6">
 					<CustomAlert
@@ -47,16 +34,13 @@
 				</div>
 			{/if}
 
-			<form method="POST" action="?/saveProfile" class="space-y-6" use:enhance={() => ({ update }) => update({ reset: false })}>
-				<!-- Editable Fields Section -->
+			<!-- reset: false preserves typed field values after use:enhance processes the submission -->
+			<form method="POST" action="?/saveProfile" class="space-y-4" use:enhance={() => ({ update }) => update({ reset: false })}>
 				<legend class="sr-only">Bearbeitbare Profilinformationen</legend>
 
 				<!-- Username Field -->
-				<div>
-					<label
-						for="username"
-						class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
-					>
+				<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+					<label for="username" class="sm:w-36 sm:shrink-0 text-sm font-medium text-gray-900 dark:text-white">
 						{texts.ui.username}
 					</label>
 					<input
@@ -64,115 +48,69 @@
 						name="username"
 						id="username"
 						value={data.currentUser.username}
-						class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+						class="w-full sm:flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 						required
 					/>
 				</div>
 
-				<!-- Location Field -->
-				<div>
-					<label
-						for="city"
-						class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
-					>
+				<!-- Location Field — side-by-side on desktop, stacked on mobile -->
+				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+					<label for="city" class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-gray-900 dark:text-white">
 						{texts.ui.location}
 					</label>
-					<p class="text-sm text-gray-600 dark:text-gray-400 my-2">
-						{texts.pages.userProfile.addressNote}
-					</p>
-
-					<AddressInput initialValue={data.currentUser.city ?? ''} />
+					<div class="sm:flex-1">
+						<AddressInput initialValue={data.currentUser.city ?? ''} />
+						<p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+							{texts.pages.userProfile.addressNote}
+						</p>
+					</div>
 				</div>
 
 				<!-- Messenger Contact Section -->
-				<div class="border-t pt-6 mt-6">
-					<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+				<div class="border-t pt-6 space-y-4">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-white">
 						{texts.ui.contact}
 					</h2>
-					<p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+					<p class="text-sm text-gray-600 dark:text-gray-400">
 						{texts.messenger.introText}
 					</p>
 
-					<!-- Telegram Field -->
-					<div>
-						<Label class="flex mb-2">
-							<span class="block text-sm font-medium text-gray-900 dark:text-white">
-								{texts.messenger.telegramUsername}
-							</span>
-							<button id="telegram-tooltip">
-								<QuestionCircleSolid class="ml-1 h-5 w-5" />
-								<span class="sr-only">{texts.ui.explainThis}</span>
-							</button>
-						</Label>
-						<input
-							type="text"
-							name="telegramUsername"
-							id="telegramUsername"
-							placeholder={texts.messenger.telegramUsernamePlaceholder}
-							value={data.currentUser.telegramUsername ?? ''}
-							class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-							autocomplete="off"
-						/>
-						<Label class="flex mt-2">
-							<Toggle
-								name="telegramVisibleToTrustedOnly"
-								checked={data.currentUser.telegramVisibleToTrustedOnly ?? true}
-							>
-								{texts.messenger.visibleToTrustedOnly}
-							</Toggle>
-						</Label>
-					</div>
+					<MessengerField
+						fieldName="telegramUsername"
+						label={texts.messenger.telegramUsername}
+						placeholder={texts.messenger.telegramUsernamePlaceholder}
+						value={data.currentUser.telegramUsername ?? ''}
+						visibilityToggleName="telegramVisibleToTrustedOnly"
+						visibilityToggleChecked={data.currentUser.telegramVisibleToTrustedOnly ?? true}
+						tooltipId="telegram-tooltip"
+						tooltipTitle={texts.messenger.telegramTooltipTitle}
+						tooltipText={texts.messenger.telegramTooltipText}
+					/>
 
-					<!-- Signal Field -->
-					<div>
-						<Label class="flex mb-2">
-							<span class="block text-sm font-medium text-gray-900 dark:text-white">
-								{texts.messenger.signalLink}
-							</span>
-							<button id="signal-tooltip">
-								<QuestionCircleSolid class="ml-1 h-5 w-5" />
-								<span class="sr-only">{texts.ui.explainThis}</span>
-							</button>
-						</Label>
-						<input
-							type="text"
-							name="signalLink"
-							id="signalLink"
-							placeholder={texts.messenger.signalLinkPlaceholder}
-							value={data.currentUser.signalLink ?? ''}
-							class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-							autocomplete="off"
-						/>
-						<Label class="flex mt-2">
-							<Toggle
-								name="signalVisibleToTrustedOnly"
-								checked={data.currentUser.signalVisibleToTrustedOnly ?? true}
-							>
-								{texts.messenger.visibleToTrustedOnly}
-							</Toggle>
-						</Label>
-					</div>
+					<MessengerField
+						fieldName="signalLink"
+						label={texts.messenger.signalLink}
+						placeholder={texts.messenger.signalLinkPlaceholder}
+						value={data.currentUser.signalLink ?? ''}
+						visibilityToggleName="signalVisibleToTrustedOnly"
+						visibilityToggleChecked={data.currentUser.signalVisibleToTrustedOnly ?? true}
+						tooltipId="signal-tooltip"
+						tooltipTitle={texts.messenger.signalTooltipTitle}
+						tooltipText={texts.messenger.signalTooltipText}
+					/>
 				</div>
-				<legend class="sr-only">Profilinformationen (schreibgeschützt)</legend>
-				<!-- Email Field -->
-				<div>
-					<label
-						for="email"
-						class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
-					>
+
+				<!-- Email Field (read-only, links to separate change-email page) -->
+				<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+					<span class="sm:w-36 sm:shrink-0 text-sm font-medium text-gray-900 dark:text-white">
 						{texts.ui.emailAddress}
-						<span
-							class="rounded-lg text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
-						>
-							{data.currentUser.email}
+					</span>
+					<span class="text-sm text-gray-700 dark:text-gray-300">
+						{data.currentUser.email}
+						<span class="text-gray-500 dark:text-gray-400">
+							(<a href={resolve('/user/profile/updatemail')} class="font-medium text-primary hover:underline">ändern</a>)
 						</span>
-						<span class="text-sm text-gray-600 dark:text-gray-400">
-							(<a
-								href={resolve('/user/profile/updatemail')}
-								class="font-medium text-primary hover:underline">ändern</a
-							>)
-						</span>
-					</label>
+					</span>
 				</div>
 
 				<!-- Submit Button -->
@@ -184,55 +122,8 @@
 			</form>
 		</div>
 	</div>
+	
+	<NotificationSettings />
+	
+	<InviteLink inviteUrl={data.inviteUrl} />
 </main>
-
-<!-- Invite Link Section -->
-<div class="max-w-2xl mx-auto px-4 pb-8">
-	<div class="bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 p-6 sm:p-8">
-		<h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-			{texts.pages.invite.sectionTitle}
-		</h2>
-		<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-			{texts.pages.invite.description}
-		</p>
-		<div class="flex gap-2">
-			<input
-				type="text"
-				readonly
-				value={data.inviteUrl}
-				class="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white truncate"
-			/>
-			<Button type="button" class="min-button bg-primary shrink-0" onclick={copyInviteLink}>
-				{inviteCopied ? texts.pages.invite.copied : texts.pages.invite.copyButton}
-			</Button>
-		</div>
-	</div>
-</div>
-
-<!-- Telegram Tooltip Popover -->
-<Popover
-	triggeredBy="#telegram-tooltip"
-	class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-	placement="top-start"
->
-	<div class="space-y-2 p-3">
-		<h3 class="font-semibold text-gray-900 dark:text-white">
-			{texts.messenger.telegramTooltipTitle}
-		</h3>
-		{texts.messenger.telegramTooltipText}
-	</div>
-</Popover>
-
-<!-- Signal Tooltip Popover -->
-<Popover
-	triggeredBy="#signal-tooltip"
-	class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
-	placement="top-start"
->
-	<div class="space-y-2 p-3">
-		<h3 class="font-semibold text-gray-900 dark:text-white">
-			{texts.messenger.signalTooltipTitle}
-		</h3>
-		{texts.messenger.signalTooltipText}
-	</div>
-</Popover>
