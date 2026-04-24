@@ -1,9 +1,10 @@
 <script lang="ts">
 	// Imports for pocketbase real-time subcription
-	import PocketBase from 'pocketbase';
+	import type PocketBase from 'pocketbase';
 	import type { RecordSubscription } from 'pocketbase';
 	import { onMount } from 'svelte';
 	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { getClientPB } from '$lib/client-pb';
 
 	// Other imports
 	import { Button, Modal, Input } from 'flowbite-svelte';
@@ -54,12 +55,11 @@
 		}
 	});
 
-	// Initialize PocketBase client once on component mount
-	// Must be $state so the subscription $effect re-runs when pb is set
+	// Grab the shared client once mounted.
+	// Must be $state so the subscription $effect re-runs when pb is set.
 	let pb: PocketBase | undefined = $state();
 	onMount(() => {
-		pb = new PocketBase(PUBLIC_PB_URL);
-		pb.authStore.loadFromCookie(document.cookie || '');
+		pb = getClientPB();
 	});
 
 	// Handle incoming real-time message events

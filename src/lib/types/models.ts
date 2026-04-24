@@ -94,6 +94,11 @@ export interface User extends PocketBaseEntity {
 	 * Whether the user has completed the onboarding flow.
 	 */
 	hasOnboarded?: boolean;
+
+	/**
+	 * Whether the user has verified their email address.
+	 */
+	verified?: boolean;
 }
 
 // --- ITEM ---

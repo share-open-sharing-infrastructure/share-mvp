@@ -1,14 +1,13 @@
 <script lang="ts">
 	import '../app.css';
-	import { Button, Modal } from 'flowbite-svelte';
-	import FeedbackForm from '$lib/components/FeedbackForm.svelte';
 	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
-	import PocketBase from 'pocketbase';
-	import { PUBLIC_PB_URL, PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
+	import { getClientPB } from '$lib/client-pb';
+	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { dev } from '$app/environment';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	interface BeforeInstallPromptEvent extends Event {
@@ -18,7 +17,6 @@
 
 	let { children, data } = $props();
 
-	let isFeedbackModalOpen = $state(false);
 	// eslint-disable-next-line svelte/prefer-writable-derived
 	let unreadCount = $state(0);
 	let installPromptEvent = $state<BeforeInstallPromptEvent | null>(null);
@@ -35,17 +33,30 @@
 			installPromptEvent = e as BeforeInstallPromptEvent;
 		});
 
-		if (!data.currentUser) return;
+		// If push permission was already granted on a previous session, re-register
+		// the subscription silently (covers cleared browser data / new device scenarios)
+		if (data.currentUser && 'Notification' in window && Notification.permission === 'granted') {
+			setupPushSubscription();
+		}
+	});
 
-		// ── Realtime notification badge ──────────────────────────────────────
-		const pb = new PocketBase(PUBLIC_PB_URL);
-		pb.authStore.loadFromCookie(document.cookie || '');
+	// Realtime notification badge — re-subscribes when the authenticated user
+	// changes (login / logout / user switch) by depending on `data.currentUser?.id`.
+	// Keeping this in an $effect (rather than onMount) ensures the handler's
+	// closure always reflects the currently-authenticated user, and that a
+	// logout-then-login within the same session re-establishes the subscription
+	// under the new session rather than leaving a stale one behind.
+	$effect(() => {
+		const userId = data.currentUser?.id;
+		if (!userId) return;
+
+		const pb = getClientPB();
 
 		// Track IDs we silently absorbed so we don't double-decrement
 		const suppressedIds = new SvelteSet<string>();
 
 		pb.collection('notifications').subscribe('*', (e) => {
-			if (e.record.recipient !== data.currentUser?.id) return;
+			if (e.record.recipient !== userId) return;
 			if (e.action === 'create' && !e.record.read) {
 				// If the user is already viewing this conversation, mark it as read
 				// immediately and don't bump the badge
@@ -66,58 +77,12 @@
 			}
 		});
 
-		// If push permission was already granted on a previous session, re-register
-		// the subscription silently (covers cleared browser data / new device scenarios)
-		if ('Notification' in window && Notification.permission === 'granted') {
-			setupPushSubscription();
-		}
-
 		return () => {
 			pb.collection('notifications').unsubscribe('*');
 		};
 	});
 
-	/** Sets up the Web Push subscription and registers it with the server.
-	 *  Called either silently (permission already granted) or after the user
-	 *  taps "Aktivieren" in PwaPrompts (satisfying the user-gesture requirement). */
-	async function setupPushSubscription(): Promise<void> {
-		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-		try {
-			const registration = await navigator.serviceWorker.ready;
-			const existing = await registration.pushManager.getSubscription();
-			const subscription =
-				existing ??
-				(await registration.pushManager.subscribe({
-					userVisibleOnly: true,
-					applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_PUBLIC_KEY),
-				}));
 
-			const { endpoint, keys } = subscription.toJSON() as {
-				endpoint: string;
-				keys: { p256dh: string; auth: string };
-			};
-
-			await fetch('/api/push-subscribe', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ endpoint, keys }),
-			});
-		} catch (err) {
-			console.error('Push subscription failed:', err);
-		}
-	}
-
-	/** Convert a base64url VAPID public key to a Uint8Array for the Web Push API. */
-	function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-		const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-		const rawData = atob(base64);
-		const output = new Uint8Array(rawData.length);
-		for (let i = 0; i < rawData.length; i++) {
-			output[i] = rawData.charCodeAt(i);
-		}
-		return output;
-	}
 </script>
 
 <div class="min-h-screen flex flex-col">
@@ -130,7 +95,24 @@
 	{/if}
 
 	<main class="flex-1">
-		{@render children()}
+		<!--
+			Dev-only workaround. SvelteKit 2 + Svelte 5 in `vite dev` intermittently
+			fails to remove the previous route's DOM from {@render children()} when
+			the child route tree structure changes (e.g. flat route <-> nested-layout
+			route), producing a "page stacking" bug where the old page survives as
+			a sibling of the snippet's block markers. Forcing a keyed remount on
+			route.id bypasses the broken snippet-diff path. Confirmed not needed in
+			production builds (preview and deployed both behave correctly without
+			it), so the `dev` gate avoids wasting SvelteKit's default layout reuse
+			for real users. Check if this can be removed in future versions.
+		-->
+		{#if dev}
+			{#key page.route.id}
+				{@render children()}
+			{/key}
+		{:else}
+			{@render children()}
+		{/if}
 	</main>
 
 	<PwaPrompts
@@ -140,25 +122,6 @@
 	/>
 
 	{#if page.url.pathname !== '/onboarding'}
-		<Button
-			pill
-			onclick={(): void => {
-				isFeedbackModalOpen = true;
-			}}
-			class="
-					min-button
-					bg-accent-200
-					fixed bottom-10 left-10 z-50
-					cursor-pointer
-				"
-		>
-			Feedback
-		</Button>
-
-		<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
-			<FeedbackForm onsuccess={() => { isFeedbackModalOpen = false; }} />
-		</Modal>
-
 		<FooterComponent />
 	{/if}
 </div>

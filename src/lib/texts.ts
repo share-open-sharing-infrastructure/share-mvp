@@ -42,7 +42,7 @@ export const texts = {
 		myProfile: 'Mein Profil',
 		social: 'Vertraute',
 		logout: 'Logout',
-		about: 'Über',
+		about: 'Über uns',
 		imprint: 'Impressum',
 		contact: 'Kontakt',
 		newsletter: 'Newsletter',
@@ -51,6 +51,7 @@ export const texts = {
 		translateTitle: 'Translate this page',
 		translateBrowser: "Your browser can translate this page automatically — look for the translate icon in your address bar, or right-click and select 'Translate'. Or:",
 		translateDeepL: 'Translate text with DeepL',
+		guide: "Wie funktioniert's?",
 	},
 
 	// Error messages
@@ -222,6 +223,76 @@ export const texts = {
 		howTo: {
 			title: "Und so funktioniert's:",
 		},
+		guide: {
+			title: 'Wie funktioniert AllerLeih?',
+			intro:
+				'AllerLeih ist eine offene, gemeinwohlorientierte Plattform, auf der du Dinge aus- und verleihen kannst.',
+			borrowing: {
+				title: 'Ausleihen',
+				steps: [
+					{
+						label: 'Suchen',
+						text: 'Stöbere in der Suche nach Gegenständen aus deiner Umgebung. Wir bündeln für dich das lokale Angebot: von Freund:innen, aus der Nachbarschaft oder vom nächsten Leihladen.',
+					},
+					{
+						label: 'Anfragen',
+						text: 'Schreibe der verleihenden Person direkt. Falls sie Signal oder Telegram hinterlegt hat, kannst du sie auch darüber erreichen. Bei externen Angeboten wirst du ggf. weitergeleitet.',
+					},
+					{
+						label: 'Abstimmen',
+						text: 'Macht miteinander aus, wo, wie und wann ihr die Übergabe(n) macht.',
+					},
+					{
+						label: 'Zurückgeben',
+						text: 'Gib den Gegenstand nach der Nutzung so zurück, wie du ihn gerne ausleihen würdest – AllerLeih lebt von Vertrauen und gegenseitigem Respekt.',
+					},
+				],
+			},
+			lending: {
+				title: 'Verleihen',
+				steps: [
+					{
+						label: 'Hochladen',
+						text: 'Füge deine Gegenstände in deinem Profil hinzu – mit Foto, Kurzbeschreibung und Kategorie. Du kannst auch Fotos deiner Gegenstände hochladen und von unserer KI erkennen lassen, um Zeit zu sparen.',
+					},
+					{
+						label: 'Anfragen empfangen',
+						text: 'Interessierte melden sich direkt bei dir. Du entscheidest, ob und wann du verleihst.',
+					},
+					{
+						label: 'Vertrauen nutzen',
+						text: 'Bestimmte Dinge nur an bekannte Personen verleihen? Mit der Vertrauensfunktion hast du die volle Kontrolle.',
+					},
+					{
+						label: 'Verfügbarkeit verwalten',
+						text: 'Setze Gegenstände auf „nicht verfügbar", solange sie unterwegs sind oder wenn du mal keine Zeit für neue Anfragen hast.',
+					},
+				],
+			},
+			faqTitle: 'Häufige Fragen',
+			faqItems: [
+				{
+					q: 'Wer seid ihr?',
+					a: 'Derzeit sind wir ein Duo: Timo und Matteo! Wir haben beide in Lüneburg studiert und wollen mit AllerLeih einen Beitrag zum Gemeinwohl leisten. Wir sind der Auffassung, dass das Teilen und Leihen in vielerlei Hinsicht eine bessere Alternative zum Kaufen ist. Und wir wollen, dass die Infrastruktur dafür nicht nur einfach und zugänglich ist, sondern auch nachhaltig für alle funktioniert. Deswegen entwickeln wir AllerLeih als gemeinnützige Organisation und Open-Source-Software. So verhindern wir die Kommerzialisierung und manipulative Algorithmen.',
+				},
+				{
+					q: 'Was passiert, wenn etwas kaputt geht?',
+					a: 'Wir bekommen die Frage häufiger und haben eine vielleicht etwas unbefriedigende Antwort: das, was sonst auch passieren würde. Wenn euer Gegenüber eine Haftpflicht hat, greift die. Oder ihr regelt das zwischen euch. Wir wollen bewusst keine Sozialtechnik wie Versicherungen oder Ähnliches anbieten, weil wir Vertrauen nicht outsourcen wollen. Über die Vertrauensfunktion habt ihr die volle Kontrolle darüber, an wen ihr verleiht. Wenn es doch einmal zu größeren Problemen kommt, meldet euch gerne und wir versuchen zu helfen!',
+				},
+				{
+					q: 'Wie finanziert ihr euch?',
+					a: 'Aktuell finanzieren wir uns aus eigener Tasche und suchen sehr aktiv nach Finanzierungsmöglichkeiten. Matteo ist zudem bis 2027 durch ein Stipendium der Studienstiftung des deutschen Volkes abgesichert. Falls ihr Ideen oder Kontakte habt, meldet euch gerne bei uns! Wir sind für alles offen, solange es zu unseren Werten passt.',
+				},
+				{
+					q: 'Was habt ihr vor?',
+					a: 'AllerLeih für alle! Wir wollen AllerLeih zu DER Plattform für das Teilen und Leihen machen. Im Gegensatz zu anderen Plattformen setzen wir dafür auf open-source und versuchen, ein dezentrales Modell zu entwickeln, das nicht von uns abhängt. In Zukunft soll also jeder Mensch in seiner Stadt, seinem Quartier oder seiner Kommune die Möglichkeit haben, eine eigene AllerLeih-Instanz zu betreiben und sich vor Ort um die Community zu kümmern.',
+				},
+				{
+					q: 'Was passiert mit meinen Daten?',
+					a: 'Wir sind noch im Aufbau und es gibt noch Allerlei(h) zu tun, deswegen läuft hier vielleicht noch nicht alles 100% rund. Aber digitale Freiheitsrechte (Persönlichkeitsrecht, Datenschutz, Teilhabe) sind für uns unverhandelbare Grundwerte und wir werden AllerLeih so entwickeln, dass ihr die volle Kontrolle über eure Daten habt. Zu jeder Zeit. Für immer. Falls ihr feststellt, dass das nicht der Fall ist, meldet euch gerne sofort bei uns! Wir wollen transparent sein und Fehler schnellstmöglich beheben.',
+				},
+			],
+		},
 		search: {
 			title: 'Suche',
 			welcome: 'Nutze einfach die Suche oben oder',
@@ -289,10 +360,23 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			emailVerified: 'E-Mail-Adresse bestätigt',
+			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
+			resendVerification: 'Bestätigungs-E-Mail erneut senden',
+			verificationSent: 'Bestätigungs-E-Mail wurde gesendet.',
+			notifications: {
+				sectionTitle: 'Benachrichtigungen',
+				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
+				enable: 'Benachrichtigungen aktivieren',
+				enabled: 'Benachrichtigungen sind aktiviert.',
+				deactivateThisDevice: 'Für dieses Gerät deaktivieren',
+				deactivateAllDevices: 'Für alle meine Geräte deaktivieren',
+				denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
+			},
 		},
 		invite: {
 			sectionTitle: 'Freunde einladen',
-			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir und du ihnen automatisch vertrauen.',
+			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir automatisch vertrauen. Du wirst benachrichtigt, wenn jemand sich mit deiner Einladung registriert hat.',
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
@@ -308,6 +392,7 @@ export const texts = {
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
+			emailVerified: 'E-Mail-Adresse bestätigt',
 			trustsYou: 'Diese Person vertraut dir.',
 			doesNotTrustYou: 'Diese Person vertraut dir (noch) nicht.',
 			trustsThisUser: 'Du vertraust diesem Account',

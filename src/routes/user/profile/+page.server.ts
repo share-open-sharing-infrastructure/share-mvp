@@ -18,6 +18,15 @@ export async function load({ locals, url }) {
 }
 
 export const actions = {
+	resendVerification: async ({ locals }) => {
+		try {
+			await locals.pb.collection('users').requestVerification(locals.user.email);
+			return { success: true, message: texts.pages.profile.verificationSent };
+		} catch {
+			return { error: true, message: texts.errors.somethingWentWrong };
+		}
+	},
+
 	saveProfile: async ({ locals, request }) => {
 		const formData = await request.formData();
 
