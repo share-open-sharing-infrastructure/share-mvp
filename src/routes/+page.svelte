@@ -33,7 +33,7 @@
 				{texts.pages.landing.ctaButtonUpload}
 			</Button>
 		</div>
-		<div class="hidden xl:mt-0 xl:col-span-5 xl:flex landing-img">
+		<div class="hidden">
 			<img src={landingimg} alt="landing-png" />
 		</div>
 	</div>
