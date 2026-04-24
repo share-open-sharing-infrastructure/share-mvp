@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { Toggle } from 'flowbite-svelte';
 	import { AccordionItem, Accordion } from 'flowbite-svelte';
-	import { UserCircleOutline, MapPinOutline } from 'flowbite-svelte-icons';
+	import { UserCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import ItemCard from '../../search/ItemCard.svelte';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
@@ -37,18 +37,14 @@
 			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
 				@{profileUser.username}
 			</h1>
+
 			{#if profileUser.verified}
 				<p class="flex items-center gap-1 text-sm text-green-600 font-medium">
 					<VerifiedIcon class="h-4 w-4" />
 					{texts.pages.userProfile.emailVerified}
 				</p>
 			{/if}
-			{#if profileUser.city}
-				<p class="flex items-center gap-1 text-accent font-medium">
-					<MapPinOutline class="h-4 w-4" />
-					{profileUser.city}
-				</p>
-			{/if}
+
 			<p class="text-sm text-gray-500 dark:text-gray-400">
 				{texts.pages.userProfile.activeSince(activeSinceDate)}
 			</p>

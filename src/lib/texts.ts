@@ -389,6 +389,7 @@ export const texts = {
 			trustRestrictedTooltip: 'Dieser Gegenstand wird nur an vertraute Nutzer verliehen.',
 			locationLabel: 'Ort',
 			noImage: 'Kein Bild vorhanden',
+			calculateTravelTime: 'Wegzeit berechnen',
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
