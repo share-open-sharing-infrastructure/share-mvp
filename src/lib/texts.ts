@@ -47,6 +47,10 @@ export const texts = {
 		contact: 'Kontakt',
 		newsletter: 'Newsletter',
 		faq: 'FAQ',
+		translate: 'Translate',
+		translateTitle: 'Translate this page',
+		translateBrowser: "Your browser can translate this page automatically — look for the translate icon in your address bar, or right-click and select 'Translate'. Or:",
+		translateDeepL: 'Translate text with DeepL',
 		guide: "Wie funktioniert's?",
 	},
 
@@ -356,10 +360,23 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			emailVerified: 'E-Mail-Adresse bestätigt',
+			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
+			resendVerification: 'Bestätigungs-E-Mail erneut senden',
+			verificationSent: 'Bestätigungs-E-Mail wurde gesendet.',
+			notifications: {
+				sectionTitle: 'Benachrichtigungen',
+				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
+				enable: 'Benachrichtigungen aktivieren',
+				enabled: 'Benachrichtigungen sind aktiviert.',
+				deactivateThisDevice: 'Für dieses Gerät deaktivieren',
+				deactivateAllDevices: 'Für alle meine Geräte deaktivieren',
+				denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
+			},
 		},
 		invite: {
 			sectionTitle: 'Freunde einladen',
-			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir und du ihnen automatisch vertrauen.',
+			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir automatisch vertrauen. Du wirst benachrichtigt, wenn jemand sich mit deiner Einladung registriert hat.',
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
@@ -376,6 +393,7 @@ export const texts = {
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
+			emailVerified: 'E-Mail-Adresse bestätigt',
 			trustsYou: 'Diese Person vertraut dir.',
 			doesNotTrustYou: 'Diese Person vertraut dir (noch) nicht.',
 			trustsThisUser: 'Du vertraust diesem Account',

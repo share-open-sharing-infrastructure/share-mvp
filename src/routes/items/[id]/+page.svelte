@@ -7,6 +7,7 @@
 	import { untrack } from 'svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
+	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 
 	const { data } = $props();
 	// svelte-ignore state_referenced_locally
@@ -97,9 +98,12 @@
 	<!-- Owner + Travel Time (directly below image) -->
 	<div class="flex items-center justify-between">
 		<div class="flex items-center gap-2">
-			<a href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })} class="flex items-center gap-2 text-primary-200 border border-primary-200 rounded-full px-3 py-1 hover:bg-primary-50">
+			<a href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })} class="relative flex items-center gap-2 text-primary-200 border border-primary-200 rounded-full px-3 py-1 hover:bg-primary-50">
 				<UserCircleOutline class="h-5 w-5 shrink-0" />
 				<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
+				{#if item.expand?.owner?.verified}
+					<VerifiedIcon class="absolute -top-1.5 -right-1.5 h-3.5 w-3.5" />
+				{/if}
 			</a>
 		</div>
 		{#if data.isAuthenticated && !isOwnItem}

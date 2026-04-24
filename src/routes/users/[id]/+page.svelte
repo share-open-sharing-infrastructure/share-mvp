@@ -5,6 +5,7 @@
 	import { UserCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import ItemCard from '../../search/ItemCard.svelte';
+	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 
 	const { data } = $props();
 	const profileUser = $derived(data.profileUser);
@@ -36,6 +37,13 @@
 			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
 				@{profileUser.username}
 			</h1>
+
+			{#if profileUser.verified}
+				<p class="flex items-center gap-1 text-sm text-green-600 font-medium">
+					<VerifiedIcon class="h-4 w-4" />
+					{texts.pages.userProfile.emailVerified}
+				</p>
+			{/if}
 
 			<p class="text-sm text-gray-500 dark:text-gray-400">
 				{texts.pages.userProfile.activeSince(activeSinceDate)}
