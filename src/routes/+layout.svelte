@@ -19,7 +19,6 @@
 
 	let { children, data } = $props();
 
-	let isFeedbackModalOpen = $state(false);
 	// eslint-disable-next-line svelte/prefer-writable-derived
 	let unreadCount = $state(0);
 	let installPromptEvent = $state<BeforeInstallPromptEvent | null>(null);
@@ -125,25 +124,6 @@
 	/>
 
 	{#if page.url.pathname !== '/onboarding'}
-		<Button
-			pill
-			onclick={(): void => {
-				isFeedbackModalOpen = true;
-			}}
-			class="
-					min-button
-					bg-accent-200
-					fixed bottom-10 left-10 z-50
-					cursor-pointer
-				"
-		>
-			Feedback
-		</Button>
-
-		<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
-			<FeedbackForm onsuccess={() => { isFeedbackModalOpen = false; }} />
-		</Modal>
-
 		<FooterComponent />
 	{/if}
 </div>
