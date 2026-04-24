@@ -14,7 +14,7 @@ export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 export const texts = {
 	names: {
 		app: 'AllerLeih',
-		mainContactMail: 'allerleih@posteo.de',
+		mainContactMail: 'kontakt@allerleih.org',
 	},
 
 	// Authentication
