@@ -3,6 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
+import { generateInviteSlug } from '$lib/inviteSlug';
 
 export async function load({ locals, url }) {
 	if (locals.user) {
@@ -64,7 +65,7 @@ export const actions = {
 			return fail(400, { fail: true, message: texts.errors.usernameNoSpaces });
 		}
 
-		const newInviteCode = crypto.randomUUID();
+		const newInviteCode = await generateInviteSlug(locals.pb);
 		data.set('passwordConfirm', password.toString()); // TODO: Put into form eventually
 		data.set('inviteCode', newInviteCode);
 		data.set('invitedBy', inviter.id);

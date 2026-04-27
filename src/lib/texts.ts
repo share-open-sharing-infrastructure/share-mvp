@@ -390,6 +390,12 @@ export const texts = {
 			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
 			invalidInvite: 'Dieser Einladungslink ist ungültig.',
 		},
+		inviteLanding: {
+			title: (name: string) => `${name} lädt dich ein!`,
+			genericTitle: 'Du wurdest eingeladen!',
+			description: 'Teile, leihe und hilf in deiner Nachbarschaft – kostenlos und ohne Stress.',
+			cta: 'Jetzt registrieren',
+		},
 		itemDetail: {
 			backToSearch: '← Zurück zur Suche',
 			requestButton: 'Anfragen',
