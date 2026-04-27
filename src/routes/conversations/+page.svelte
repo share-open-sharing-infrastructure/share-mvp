@@ -3,7 +3,9 @@
 	import { texts } from '$lib/texts';
 </script>
 
-
+<svelte:head>
+	<meta name="robots" content="noindex, nofollow" />
+</svelte:head>
 
 <div class="mx-auto max-w-screen-sm p-4 text-sm">
 

@@ -521,6 +521,59 @@ export const texts = {
 		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
 	},
 
+	// SEO meta titles and descriptions
+	seo: {
+		home: {
+			title: 'AllerLeih – Dinge leihen und teilen in deiner Umgebung',
+			description:
+				'Kostenlos Gegenstände leihen und teilen mit Menschen in deiner Umgebung. Spare Geld, Platz und Ressourcen und stärke deine Gemeinschaft.',
+		},
+		search: {
+			title: 'Gegenstände suchen – AllerLeih',
+			description:
+				'Durchsuche Gegenstände in deiner Nähe. Filtere nach Kategorie und Entfernung und finde, was du brauchst.',
+		},
+		about: {
+			title: 'Über uns – AllerLeih',
+			description:
+				'AllerLeih ist eine gemeinnützige Plattform für lokales Leihen und Teilen. Lerne das Team dahinter kennen.',
+		},
+		guide: {
+			title: 'Wie funktioniert AllerLeih? – Anleitung',
+			description:
+				'Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen auf AllerLeih. Tipps, FAQs und erste Schritte.',
+		},
+		contact: {
+			title: 'Kontakt – AllerLeih',
+			description: 'Schreib uns! Fragen, Feedback oder Kooperationsanfragen sind herzlich willkommen.',
+		},
+		imprint: {
+			title: 'Impressum – AllerLeih',
+			description: 'Rechtliche Angaben und Kontaktinformationen des Betreibers von AllerLeih.',
+		},
+		newsletter: {
+			title: 'AllerLeih News – Newsletter',
+			description:
+				'Bleib auf dem Laufenden: Abonniere den AllerLeih Newsletter für Neuigkeiten und Community-Geschichten.',
+		},
+		login: {
+			title: 'Anmelden – AllerLeih',
+			description:
+				'Melde dich bei AllerLeih an, um Gegenstände zu leihen, Anfragen zu verwalten und dich mit deiner Umgebung zu verbinden.',
+		},
+		register: {
+			title: 'Registrieren – AllerLeih',
+			description:
+				'Erstelle ein kostenloses AllerLeih-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.',
+		},
+		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
+		itemDetailDescription: (name: string, owner: string, city: string) =>
+			`Leihe ${name} von ${owner} in ${city} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
+		userProfile: (username: string) => `@${username} – AllerLeih`,
+		userProfileDescription: (username: string) =>
+			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
+	},
+
 	// PWA install and notification prompts
 	pwa: {
 		notifBannerText: 'Erhalte Benachrichtigungen für neue Nachrichten und Anfragen.',

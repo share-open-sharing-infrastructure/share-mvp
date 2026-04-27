@@ -85,6 +85,11 @@
 
 </script>
 
+<svelte:head>
+	<meta property="og:site_name" content="AllerLeih" />
+	<meta property="og:locale" content="de_DE" />
+</svelte:head>
+
 <div class="min-h-screen flex flex-col">
 	{#if page.url.pathname !== '/onboarding'}
 		<NavBarComponent
