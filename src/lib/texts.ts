@@ -29,6 +29,7 @@ export const texts = {
 		secretPlaceholder: 'Geheimes Codewort für den Test-Zugang',
 		loginButton: 'Anmelden',
 		registerLink: 'Registrieren',
+		privacyConsentLabel: 'Ich habe die Datenschutzerklärung gelesen und stimme ihr zu.',
 	},
 
 	// Navigation
@@ -52,6 +53,8 @@ export const texts = {
 		translateBrowser: "Your browser can translate this page automatically — look for the translate icon in your address bar, or right-click and select 'Translate'. Or:",
 		translateDeepL: 'Translate text with DeepL',
 		guide: "Wie funktioniert's?",
+		privacy: 'Datenschutz',
+		tos: 'AGB',
 	},
 
 	// Footer
@@ -78,6 +81,7 @@ export const texts = {
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
+		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 	},
 
 	// Success messages

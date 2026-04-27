@@ -80,7 +80,14 @@
 				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
 				href={resolve('/misc/newsletter')}>{texts.nav.newsletter}</FooterLink
 			>
-			
+			<FooterLink
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
+				href={resolve('/misc/privacy')}>{texts.nav.privacy}</FooterLink
+			>
+			<FooterLink
+				classes={{ link: 'mr-4 hover:underline hover:text-accent md:mr-6' }}
+				href={resolve('/misc/tos')}>{texts.nav.tos}</FooterLink
+			>
 		</FooterLinkGroup>
 		<span class="text-sm text-accent sm:text-center">
 			© 2026 <a href={resolve('/')} class="hover:underline">{texts.names.app}</a
