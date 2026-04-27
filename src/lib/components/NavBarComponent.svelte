@@ -180,10 +180,10 @@
 			und wird beständig verbessert. Wenn du uns dabei unterstützen magst, frag uns
 			gerne nach einem Zugang, nutze die Plattform und teile uns dein Feedback mit!
 			<a
-				href="mailto:allerleih@posteo.de?subject=Beta-Zugang%20AllerLeih&body=Hallo%20AllerLeih-Team%2C%0A%0Aich%20möchte%20gerne%20einen%20Beta-Zugang%20für%20AllerLeih%20beantragen."
+				href="mailto:feedback@allerleih.org?subject=Beta-Zugang%20AllerLeih&body=Hallo%20AllerLeih-Team%2C%0A%0Aich%20möchte%20gerne%20einen%20Beta-Zugang%20für%20AllerLeih%20beantragen."
 				class="text-accent hover:underline flex items-center font-medium mt-1"
 			>
-				E-Mail an allerleih@posteo.de
+				E-Mail an feedback@allerleih.org
 				<ChevronRightOutline class="text-accent h-4 w-4" />
 			</a>
 		</div>

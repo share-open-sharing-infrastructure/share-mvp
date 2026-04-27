@@ -14,7 +14,7 @@ export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 export const texts = {
 	names: {
 		app: 'AllerLeih',
-		mainContactMail: 'allerleih@posteo.de',
+		mainContactMail: 'kontakt@allerleih.org',
 	},
 
 	// Authentication
@@ -52,6 +52,13 @@ export const texts = {
 		translateBrowser: "Your browser can translate this page automatically — look for the translate icon in your address bar, or right-click and select 'Translate'. Or:",
 		translateDeepL: 'Translate text with DeepL',
 		guide: "Wie funktioniert's?",
+	},
+
+	// Footer
+	footer: {
+		instagram: 'AllerLeih auf Instagram',
+		mastodon: 'AllerLeih auf Mastodon',
+		pixelfed: 'AllerLeih auf PixelFed',
 	},
 
 	// Error messages

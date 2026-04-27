@@ -135,8 +135,8 @@
 			>Wir speichern keine personenbezogenen Daten</strong
 		>, du gibst also anonymes Feedback. Wenn du direkt mit uns sprechen willst,
 		schreibe uns an
-		<a href="mailto:allerleih@posteo.de" class="text-blue-500 hover:underline"
-			>allerleih@posteo.de</a
+		<a href="mailto:feedback@allerleih.org" class="text-blue-500 hover:underline"
+			>feedback@allerleih.org</a
 		>
 	</p>
 
