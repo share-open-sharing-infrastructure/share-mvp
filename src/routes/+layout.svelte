@@ -7,7 +7,10 @@
 	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { beforeNavigate, afterNavigate } from '$app/navigation';
 	import { dev } from '$app/environment';
+	import { fade } from 'svelte/transition';
+	import AllerLoader from '$lib/components/AllerLoader.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	interface BeforeInstallPromptEvent extends Event {
@@ -16,6 +19,10 @@
 	}
 
 	let { children, data } = $props();
+
+	let isNavigating = $state(false);
+	beforeNavigate(() => { isNavigating = true; });
+	afterNavigate(() => { isNavigating = false; });
 
 	// eslint-disable-next-line svelte/prefer-writable-derived
 	let unreadCount = $state(0);
@@ -114,6 +121,18 @@
 			{@render children()}
 		{/if}
 	</main>
+
+	{#if isNavigating}
+		<div
+			in:fade={{ delay: 200, duration: 150 }}
+			out:fade={{ duration: 80 }}
+			class="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm"
+			aria-live="polite"
+			aria-busy="true"
+		>
+			<AllerLoader size={80} variant="rotate" />
+		</div>
+	{/if}
 
 	<PwaPrompts
 		loggedIn={!!data.currentUser}
