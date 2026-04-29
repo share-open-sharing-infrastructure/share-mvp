@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
+	import SparkleButton from './SparkleButton.svelte';
 
 	interface Props {
 		onsuccess?: () => void;
@@ -12,7 +13,7 @@
 
 	let successMessage = $state<string | undefined>(undefined);
 	let errorMessage = $state<string | undefined>(undefined);
-
+	let submitting = $state(false);
 	let device = $state('unknown');
 	let viewportSize = $state('');
 	let inputType = $state('unknown');
@@ -96,12 +97,14 @@
 	action="/?/feedback"
 	class="space-y-2"
 	use:enhance={({ formData }) => {
+		submitting = true;
 		formData.set('device', device);
 		formData.set('viewportSize', viewportSize);
 		formData.set('inputType', inputType);
 		formData.set('browser', browser);
 		formData.set('browserVersion', browserVersion);
 		return ({ result }) => {
+			submitting = false;
 			if (result.type === 'success') {
 				successMessage = texts.success.feedbackSent;
 				setTimeout(() => onsuccess?.(), 1500);
@@ -140,9 +143,7 @@
 		>
 	</p>
 
-	<div class="mt-4 flex justify-end">
-		<button type="submit" class="px-4 py-2 min-button">
-			Feedback absenden
-		</button>
+	<div class="mt-4 w-full flex justify-center">
+		<SparkleButton label="Feedback absenden" type="submit" disabled={submitting} />
 	</div>
 </form>
