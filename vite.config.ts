@@ -4,4 +4,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	server: {
+		host: true  // oder explizit: host: '0.0.0.0'
+	}
 });

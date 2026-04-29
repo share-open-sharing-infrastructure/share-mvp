@@ -26,6 +26,7 @@
 		</div>
 		<input
 			type="search"
+			autocomplete="off"
 			name="q"
 			value={q}
 			placeholder={texts.forms.searchPlaceholder}
