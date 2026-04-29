@@ -197,5 +197,3 @@
 		{/if}
 	{/if}
 </Section>
-
-<HowToButton />
