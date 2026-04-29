@@ -74,8 +74,8 @@
 	<NavUl
 		{activeUrl}
 		classes={{
-			active: 'text-accent color-accent bg-transparent',
-			nonActive: 'text-black hover:text-accent bg-transparent',
+			active: 'text-accent! color-accent bg-transparent font-bold',
+			nonActive: 'text-black hover:text-accent! bg-transparent',
 		}}
 	>
 		<NavLi href={resolve('/search')}>{texts.nav.search}</NavLi>
