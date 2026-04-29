@@ -204,8 +204,8 @@ export const texts = {
 	pages: {
 		landing: {
 			tagline: 'Leihe und teile Dinge in',
-			ctaButtonSearch: 'Suche nach Dingen',
-			ctaButtonUpload: 'Biete selbst etwas an',
+			ctaButtonSearch: 'Finden',
+			ctaButtonUpload: 'Verleihen',
 			city: 'Lüneburg.',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
@@ -221,7 +221,7 @@ export const texts = {
 			whoBodyPart2: ', wenn du Fragen hast oder uns unterstützen willst!',
 			support: 'Was passiert gerade?',
 			supportBodyPart1: 'Wir befinden uns derzeit in einer Testphase mit einer kleinen Gruppe von Nutzer:innen. Wenn du Interesse hast, an diesem Test teilzunehmen,',
-			supportLinkText: 'melde dich gerne bei uns'
+			supportLinkText: 'melde dich bei uns'
 		},
 		about: {
 			title: 'Über AllerLeih',

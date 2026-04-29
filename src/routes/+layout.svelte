@@ -85,7 +85,7 @@
 
 </script>
 
-<div class="min-h-screen flex flex-col bg-secondary-200">
+<div class="min-h-screen flex flex-col bg-secondary-100">
 	{#if page.url.pathname !== '/onboarding'}
 		<NavBarComponent
 			loggedIn={!!data.currentUser}

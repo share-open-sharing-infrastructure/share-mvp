@@ -1,72 +1,73 @@
 <script lang="ts">
 	import { Button } from 'flowbite-svelte';
+	import { SearchOutline, ShapesOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
-	import landingimg from '$lib/images/landing-img.png';
 
 	const t = texts.pages.landing;
 
-	const badgeClass =
-		'bg-primary-100 text-tinte-900 text-md font-medium inline-flex items-center px-2.5 py-0.5 rounded dark:bg-tinte-700 dark:text-tinte-300';
-	const infoParagraphClass = 'text-lg font-normal text-tinte-500 dark:text-tinte-400';
-	const ctaButtonClass = 'cta-button text-lg py-4 px-6 sm:px-10 m-3 w-full md:w-xs';
+	const cardClass =
+		'bg-white dark:bg-tinte-800 rounded-2xl shadow-sm border border-primary-200 dark:border-tinte-700 p-6 flex flex-col gap-3';
+	const titleClass = 'text-xl font-bold text-tinte-900 dark:text-white';
+	const infoParagraphClass = 'text-base text-tinte-500 dark:text-tinte-400';
 </script>
 
-<section class="dark:bg-tinte-900">
-	<div class="grid max-w-7xl px-8 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12">
-		<div class="mr-auto place-self-center mt-15 col-span-12 xl:col-span-7">
-			<h1
-				class="max-w-2xl mb-4 text-4xl font-extrabold tracking-tight leading-none md:text-5xl xl:text-6xl dark:text-white"
-			>
-				{t.welcome} {texts.names.app}
-			</h1>
-			<p
-				class="max-w-2xl mb-6 font-light text-tinte-500 lg:mb-8 md:text-lg lg:text-xl dark:text-tinte-400"
-			>
-				{t.tagline} <span class="text-accent">{t.city}</span>
-			</p>
-
-			<Button href="/search" class={`${ctaButtonClass} bg-primary hover:bg-primary-300`}>
-				{t.ctaButtonSearch}
+<section class="dark:bg-tinte-900 py-12 px-6">
+	<div class="max-w-2xl mx-auto text-center">
+		<h1
+			class="text-5xl font-bold tracking-tight leading-none dark:text-papier mb-4"
+		>
+			{t.welcome} <span class="text-accent font-extrabold">{texts.names.app}</span>
+		</h1>
+		<p class="font-light text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8">
+			{t.tagline} <span class="font-bold text-tinte-700">{t.city}</span>
+		</p>
+		<div class="flex flex-col sm:flex-row justify-center gap-3">
+			<Button href="/search" class="cta-button w-full sm:w-auto bg-primary-300 hover:bg-primary">
+				<span class="relative flex w-full items-center justify-center">
+					<SearchOutline class="absolute left-0 h-8 w-8" />
+					{t.ctaButtonSearch}
+				</span>
 			</Button>
-			<Button href="/user/items" class={`${ctaButtonClass} bg-accent hover:bg-accent-300`}>
-				{t.ctaButtonUpload}
+			<Button href="/user/items" class="cta-button w-full sm:w-auto bg-accent-300 hover:bg-accent">
+				<span class="relative flex w-full items-center justify-center">
+					<ShapesOutline class="absolute left-0 h-8 w-8" />
+					{t.ctaButtonUpload}
+				</span>
 			</Button>
-		</div>
-		<div class="hidden">
-			<img src={landingimg} alt="landing-png" />
 		</div>
 	</div>
 </section>
 
-<section class="bg-primary-100 dark:bg-tinte-900 antialiased">
-	<div class="max-w-7xl px-4 py-8 mx-auto lg:px-6 sm:py-16 lg:py-24">
-		<div
-			class="grid grid-cols-1 mt-12 text-center sm:mt-16 gap-x-20 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
-		>
-			<div class="space-y-4">
-				<span class={badgeClass}>{t.how}</span>
-				<p class={infoParagraphClass}>
-					<a href={resolve('/misc/guide')} class="text-accent">{t.howLinkText}</a>
-					{t.howBodyPart1} {texts.names.app} {t.howBodyPart2}
-				</p>
-			</div>
+<section class="bg-primary-100 dark:bg-tinte-900 py-16 px-6">
+	<div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 text-center">
 
-			<div class="space-y-4">
-				<span class={badgeClass}>{t.who}</span>
-				<p class={infoParagraphClass}>
-					{t.whoBodyPart1}
-					<a href={resolve('/misc/contact')} class="text-accent">{t.whoLinkText}</a>{t.whoBodyPart2}
-				</p>
-			</div>
-
-			<div class="space-y-4">
-				<span class={badgeClass}>{t.support}</span>
-				<p class={infoParagraphClass}>
-					{t.supportBodyPart1}
-					<a href={resolve('/misc/contact')} class="text-accent">{t.supportLinkText}</a>.
-				</p>
-			</div>
+		<!-- How it works -->
+		<div class={cardClass}>
+			<h3 class={titleClass}>{t.how}</h3>
+			<p class={infoParagraphClass}>
+				<a href={resolve('/misc/guide')} class="text-accent hover:underline font-medium">{t.howLinkText}</a>
+				{t.howBodyPart1} {texts.names.app} {t.howBodyPart2}
+			</p>
 		</div>
+
+		<!-- Who we are -->
+		<div class={cardClass}>
+			<h3 class={titleClass}>{t.who}</h3>
+			<p class={infoParagraphClass}>
+				{t.whoBodyPart1}
+				<a href={resolve('/misc/contact')} class="text-accent hover:underline font-medium">{t.whoLinkText}</a>{t.whoBodyPart2}
+			</p>
+		</div>
+
+		<!-- Current status / support -->
+		<div class={cardClass}>
+			<h3 class={titleClass}>{t.support}</h3>
+			<p class={infoParagraphClass}>
+				{t.supportBodyPart1}
+				<a href={resolve('/misc/contact')} class="text-accent hover:underline font-medium">{t.supportLinkText}</a>.
+			</p>
+		</div>
+
 	</div>
 </section>
