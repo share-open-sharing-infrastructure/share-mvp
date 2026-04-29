@@ -59,7 +59,7 @@
 				{#each data.items as item (item.id)}
 					<UserItemCard
 						{item}
-						{data}
+						PB_URL={data.PB_URL}
 						imgUrl={getItemImageUrl(item, data.PB_URL)}
 					/>
 				{/each}

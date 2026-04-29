@@ -33,7 +33,7 @@
 				{t.ctaButtonUpload}
 			</Button>
 		</div>
-		<div class="hidden xl:mt-0 xl:col-span-5 xl:flex landing-img">
+		<div class="hidden">
 			<img src={landingimg} alt="landing-png" />
 		</div>
 	</div>
@@ -47,7 +47,7 @@
 			<div class="space-y-4">
 				<span class={badgeClass}>{t.how}</span>
 				<p class={infoParagraphClass}>
-					<a href={resolve('/misc/howto')} class="text-accent">{t.howLinkText}</a>
+					<a href={resolve('/misc/guide')} class="text-accent">{t.howLinkText}</a>
 					{t.howBodyPart1} {texts.names.app} {t.howBodyPart2}
 				</p>
 			</div>

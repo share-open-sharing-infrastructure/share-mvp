@@ -3,11 +3,13 @@
 	import { texts } from '$lib/texts';
 	import { Button } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
+	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AddressInput from '$lib/components/AddressInput.svelte';
+	import InviteLink from './InviteLink.svelte';
 	import MessengerField from './MessengerField.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
-	import InviteLink from './InviteLink.svelte';
+
 
 	let { data, form } = $props();
 </script>
@@ -15,7 +17,9 @@
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<h2 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
+		<h2
+			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+		>
 			{texts.pages.profile.title}
 		</h2>
 	</div>
@@ -48,7 +52,7 @@
 						name="username"
 						id="username"
 						value={data.currentUser.username}
-						class="w-full sm:flex-1 px-3 py-2 bg-papier border border-tinte-300 rounded-lg text-tinte-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-tinte-700 dark:border-tinte-600 dark:text-white"
+						class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 						required
 					/>
 				</div>
@@ -99,20 +103,8 @@
 						tooltipText={texts.messenger.signalTooltipText}
 					/>
 				</div>
-
-				<!-- Email Field (read-only, links to separate change-email page) -->
-				<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-					<span class="sm:w-36 sm:shrink-0 text-sm font-medium text-tinte-900 dark:text-white">
-						{texts.ui.emailAddress}
-					</span>
-					<span class="text-sm text-tinte-700 dark:text-tinte-300">
-						{data.currentUser.email}
-						<span class="text-tinte-500 dark:text-tinte-400">
-							(<a href={resolve('/user/profile/updatemail')} class="font-medium text-primary hover:underline">ändern</a>)
-						</span>
-					</span>
-				</div>
-
+				<legend class="sr-only">Profilinformationen (schreibgeschützt)</legend>
+				
 				<!-- Submit Button -->
 				<div class="pt-4 justify-end flex">
 					<Button class="min-button bg-primary" type="submit">
@@ -120,6 +112,49 @@
 					</Button>
 				</div>
 			</form>
+			<!-- Email Field -->
+			<div class="pt-2 mt-2 border-t">
+				<label
+					for="email"
+					class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
+				>
+					{texts.ui.emailAddress}
+					<span
+						class="rounded-lg text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+					>
+						{data.currentUser.email}
+					</span>
+					<span class="text-sm text-gray-600 dark:text-gray-400">
+						(<a
+							href={resolve('/user/profile/updatemail')}
+							class="font-medium text-primary hover:underline">ändern</a
+						>)
+					</span>
+				</label>
+			</div>
+			<!-- Email Verification Status -->
+			{#if data.currentUser.verified}
+				<p class="flex items-center gap-2 text-sm text-green-600 font-medium mt-2">
+					<VerifiedIcon class="h-4 w-4" />
+					{texts.pages.profile.emailVerified}
+				</p>
+			{:else}
+				<div class="mt-2 space-y-2">
+					<p class="text-sm text-accent-600 dark:text-accent-400">
+						{texts.pages.profile.emailNotVerified}
+					</p>
+					<form method="POST" action="?/resendVerification" use:enhance>
+						<button
+							type="submit"
+							class="text-sm font-medium text-primary hover:text-primary-800 hover:underline cursor-pointer dark:text-primary-400 dark:hover:text-primary-300"
+						>
+							{texts.pages.profile.resendVerification}
+						</button>
+					</form>
+				</div>
+			{/if}
+
+		
 		</div>
 	</div>
 	

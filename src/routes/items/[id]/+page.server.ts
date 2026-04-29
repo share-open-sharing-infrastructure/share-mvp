@@ -32,6 +32,7 @@ export async function load({ params, locals }) {
 		isTrustRestricted,
 		isOwnItem,
 		viewerTrustsOwner,
+		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
 	};
 }
 

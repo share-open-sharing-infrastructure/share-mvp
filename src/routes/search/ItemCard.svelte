@@ -7,6 +7,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -48,12 +49,15 @@
 							resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })
 						);
 					}}
-					class="text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-1"
+					class="relative text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-1"
 				>
-					<UserCircleOutline class="h-6 w-6 inline " />
+					<UserCircleOutline class="h-6 w-6 inline" />
 					<span class="font-medium text-xs"
 						>{item.expand?.owner?.username ?? 'Unknown'}</span
 					>
+					{#if item.expand?.owner?.verified}
+						<VerifiedIcon class="absolute -top-1.5 -right-1.5 h-3.5 w-3.5" />
+					{/if}
 				</button>
 
 				<!-- Trust badge -->

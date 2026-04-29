@@ -148,3 +148,10 @@
 		display: none;
 	}
 }
+
+/* prevent zooming in on mobile devices when input fields are focused */
+@media screen and (max-width: 767px) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}

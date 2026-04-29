@@ -32,7 +32,7 @@
 		},
 		{
 			id: 3,
-			linkedIn: 'mailto:allerleih@posteo.de?subject=Interesse%20an%20Mitmachen%20Bei%20AllerLeih',
+			linkedIn: 'mailto:kontakt@allerleih.org?subject=Interesse%20an%20Mitmachen%20Bei%20AllerLeih',
 			gitHub: '',
 			src: placeholder_img,
 			alt: 'Du?',

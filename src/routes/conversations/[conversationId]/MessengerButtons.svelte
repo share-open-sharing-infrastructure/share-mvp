@@ -38,7 +38,7 @@
 	);
 
 	const telegramLink = $derived(
-		telegramAvailable ? `tg:https://t.me/${chatPartner.telegramUsername}` : null
+		telegramAvailable ? `https://t.me/${chatPartner.telegramUsername}` : null
 	);
 	const signalLink = $derived(signalAvailable ? chatPartner.signalLink : null);
 
