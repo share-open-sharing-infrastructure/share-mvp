@@ -9,7 +9,7 @@
 	} from 'flowbite-svelte';
 </script>
 
-<Footer footerType="socialmedia" class="">
+<Footer footerType="socialmedia" class="bg-secondary-100">
 	<div class="mx-auto max-w-7xl text-center">
 		<FooterBrand
 			href="#"

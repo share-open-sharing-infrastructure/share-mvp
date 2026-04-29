@@ -39,7 +39,7 @@
 	</div>
 </section>
 
-<section class="bg-primary-100 dark:bg-tinte-900 py-16 px-6">
+<section class="bg-papier dark:bg-tinte-900 py-16 px-6">
 	<div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 text-center">
 
 		<!-- How it works -->
