@@ -36,7 +36,7 @@ export const texts = {
 		login: 'Login',
 		register: 'Registrieren',
 		search: 'Suche',
-		requests: 'Anfragen',
+		requests: 'Unterhaltungen',
 		notifications: 'Benachrichtigungen',
 		myItems: 'Meine Dinge',
 		myProfile: 'Mein Profil',
@@ -361,7 +361,7 @@ export const texts = {
 			title: 'Registrieren',
 		},
 		conversations: {
-			title: 'Anfragen',
+			title: 'Unterhaltungen',
 			lending: 'Verleihen',
 			borrowing: 'Ausleihen',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',

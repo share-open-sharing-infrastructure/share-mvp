@@ -1,21 +1,22 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { texts } from '$lib/texts';
+	import { MessageDotsOutline } from 'flowbite-svelte-icons';
 </script>
 
-
-
-<div class="mx-auto max-w-screen-sm p-4 text-sm">
-
-	<p>
-		{texts.ui.chooseFromList}
-	</p>
-	<br />
-	<p>
-		{texts.ui.noRequestsYet}
-		<a href={resolve('/search')} class="text-primary-700 hover:underline"
-			>Suche</a
-		>, um Gegenstände in deiner Umgebung zu finden und eine neue Unterhaltung zu
-		starten.
-	</p>
+<div class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+	<div class="w-14 h-14 rounded-2xl bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center">
+		<MessageDotsOutline class="w-7 h-7 text-tinte-400 dark:text-tinte-500" />
+	</div>
+	<div class="flex flex-col gap-1">
+		<p class="text-sm font-semibold text-tinte-700 dark:text-tinte-200">Kein Gespräch ausgewählt</p>
+		<p class="text-xs text-tinte-400 dark:text-tinte-500 max-w-48">
+			Wähle eine Unterhaltung aus der Liste oder starte eine neue über die Suche.
+		</p>
+	</div>
+	<a
+		href={resolve('/search')}
+		class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary-600 transition-colors"
+	>
+		Zur Suche
+	</a>
 </div>

@@ -13,7 +13,6 @@
 	import type { Message } from '$lib/types/models';
 	import ConversationHeader from './ConversationHeader.svelte';
 	import MessageForm from './MessageForm.svelte';
-	import MessengerButtons from './MessengerButtons.svelte';
 
 	// Props and state variables
 	let { data } = $props();
@@ -107,20 +106,18 @@
 	PB_URL={PUBLIC_PB_URL}
 	onDelete={() => (deleteConversationModal = true)}
 	{loggedInUserIsItemOwner}
+	currentUser={data.currentUser}
 />
 
-<!-- Messenger Contact Buttons -->
-<MessengerButtons {chatPartner} currentUser={data.currentUser} />
-
 <!-- Messages list -->
-<div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto p-3 gap-0.5">
+<div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900">
 	{#each messages as message (message.id)}
 		<MessageElement {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}
 </div>
 
 <!-- Input bar -->
-<div class="border-t p-3">
+<div class="border-t border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 px-4 py-3">
 	<MessageForm {chatPartner} bind:isSubmitting bind:messageText />
 </div>
 
