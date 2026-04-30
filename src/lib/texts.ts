@@ -492,13 +492,14 @@ export const texts = {
 			explanation:
 				'AllerLeih kann deinen aktuellen GPS-Standort nutzen, um dir Dinge in deiner unmittelbaren Nähe anzuzeigen. Dein Standort wird dabei nicht gespeichert.',
 			allow: 'Standort freigeben',
-			denied: 'Standort konnte nicht abgerufen werden.',
+			denied: 'Standort konnte nicht abgerufen werden. Bitte stelle sicher dass du die Standortfreigabe in deinem Browser oder Betriebssytem aktiviert hast, um diese Funktion zu nutzen.',
 		},
 		pushNotifications: {
 			title: 'Benachrichtigungen aktivieren?',
 			explanation:
 				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
 			allow: 'Benachrichtigungen aktivieren',
+			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Bitte stelle sicher, dass du Benachrichtigungen in deinem Browser oder Betriebssystem aktiviert hast, um diese Funktion zu nutzen.',
 		},
 		done: {
 			title: 'Alles bereit! 🎉',
