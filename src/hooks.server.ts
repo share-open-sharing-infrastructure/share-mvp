@@ -13,6 +13,7 @@ const unprotectedPrefix = [
 	'/search',
 	'/items',
 	'/users',
+	'/misc',
 	'/invite',
 	'/sitemap.xml',
 ];

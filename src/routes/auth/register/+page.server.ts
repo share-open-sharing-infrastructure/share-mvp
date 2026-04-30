@@ -57,6 +57,11 @@ export const actions = {
 			return fail(400, { fail: true, message: texts.errors.passwordTooShort });
 		}
 
+		const userConsent = data.get('userConsent');
+		if (userConsent !== 'on') {
+			return fail(400, { fail: true, message: texts.errors.userConsentRequired });
+		}
+
 		const username = data.get('username')?.toString().trim();
 		if (!username) {
 			return fail(400, { fail: true, message: texts.errors.usernameRequired });
