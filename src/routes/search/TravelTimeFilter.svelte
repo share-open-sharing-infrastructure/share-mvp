@@ -124,7 +124,7 @@
 
 {#if isLoggedIn && hasQuery}
 	<div
-		class="flex flex-wrap justify-center items-center gap-3 bg-primary-50 dark:bg-tinte-800 border border-primary-100 dark:border-tinte-700 rounded-xl px-4 py-3 mt-3"
+		class="flex flex-wrap justify-center items-center gap-3 border border-primary-100 dark:border-tinte-700 rounded-xl px-4 py-3 mt-3"
 	>
 		<!-- Transport mode selector -->
 		<div class="relative">

@@ -77,8 +77,6 @@
 		perPage={data.perPage}
 	/>
 
-	{@render paginationControls()}
-
 	<TravelTimeFilter
 		{preferredMode}
 		isLoggedIn={!!data.currentUser}
@@ -89,9 +87,12 @@
 		bind:maxMinutes
 	/>
 
+
 	<div class="w-full items-center justify-center text-center">
 		<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
 	</div>
+	
+	{@render paginationControls()}
 
 	{#if data.q || data.selectedCategories.length > 0}
 		<ResultsList

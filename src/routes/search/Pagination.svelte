@@ -42,8 +42,8 @@
 </script>
 
 {#if totalPages > 0}
-	<div class="mt-6 flex flex-col sm:flex-row flex-nowrap items-center justify-between gap-3">
-		<div class="flex flex-1 invisible"></div>
+	<div class="mt-6 flex flex-row sm:flex-row flex-nowrap items-center justify-between gap-3">
+		<div class="flex flex-1 hidden sm:block"></div>
 
 		<!-- Page controls -->
 		<div class="flex items-center gap-1">
