@@ -17,10 +17,10 @@
 			name=""
 			aClass="flex justify-center items-center text-md logo text-accent font-semibold "
 		>
-			{texts.names.app}
+			<img src="/AllerLeih.svg" alt={texts.names.app} class="h-12 mx-auto" />
 		</FooterBrand>
 		<p class="mb-4 text-light">
-			Ein gemeinnütziger open-source Verleih-Marktplatz. Für alle.
+			Ein gemeinnütziger Verleih-Marktplatz für alle.
 		</p>
 		<div class="mb-6 flex justify-center gap-6">
 			<a

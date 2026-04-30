@@ -41,25 +41,21 @@
 	}
 </script>
 
-<Navbar>
+<Navbar class="bg-secondary-200 shadow-sm">
 	<div class="flex items-center">
 		<NavBrand href={resolve('/')}>
-			<div id="beta" class="relative flex flex-col items-center">
+			<div class="relative flex flex-col items-center">
+				<img src="/AllerLeih_logo.svg" alt={texts.names.app} class="h-16" />
 				<span
-					class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
-				>
-					Beta
-				</span>
-				<div
-					class="text-accent self-center text-xl font-semibold whitespace-nowrap logo leading-none"
-				>
-					{texts.names.app}
-				</div>
-				<div class="text-xs leading-none">Lüneburg</div>
+						class="absolute top-5 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
+					>
+						Beta
+					</span>
+
 			</div>
 		</NavBrand>
 
-		<FeedbackButton class="ml-10" />
+		<FeedbackButton class="ml-5" />
 	</div>
 	{#if showTranslate}
 		<button
@@ -150,25 +146,4 @@
 			</div>
 		</Popover>
 	{/if}
-
-	<Popover
-		triggeredBy="#beta"
-		class="w-72 bg-sand text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
-		placement="bottom-start"
-	>
-		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-tinte-900 dark:text-white">
-				Beta-Zugang
-			</h3>
-			Wir testen AllerLeih gerade in Lüneburg! Die Plattform kann noch Fehler haben und wird beständig verbessert. 
-			Wenn du uns dabei unterstützen magst, frag uns gerne nach einem Zugang, nutze die Plattform und teile uns dein Feedback mit!
-			<a
-				href="mailto:feedback@allerleih.org?subject=Beta-Zugang%20AllerLeih&body=Hallo%20AllerLeih-Team%2C%0A%0Aich%20möchte%20gerne%20einen%20Beta-Zugang%20für%20AllerLeih%20beantragen."
-				class="text-accent hover:underline flex items-center font-medium mt-1"
-			>
-				E-Mail an feedback@allerleih.org
-				<ChevronRightOutline class="text-accent h-4 w-4" />
-			</a>
-		</div>
-	</Popover>
 </Navbar>
