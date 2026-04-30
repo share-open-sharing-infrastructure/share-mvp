@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { Button, Popover } from 'flowbite-svelte';
-	import { ChevronRightOutline, ShapesOutline } from 'flowbite-svelte-icons';
+	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 
@@ -11,6 +10,29 @@
 	const titleClass = 'text-xl font-bold text-tinte-900 dark:text-white';
 	const infoParagraphClass = 'text-base text-tinte-500 dark:text-tinte-400';
 </script>
+
+<svelte:head>
+	<title>{texts.seo.home.title}</title>
+	<meta name="description" content={texts.seo.home.description} />
+	<meta property="og:title" content={texts.seo.home.title} />
+	<meta property="og:description" content={texts.seo.home.description} />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://allerleih.org/" />
+	<meta property="og:image" content="https://allerleih.org/og-invite.png" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={texts.seo.home.title} />
+	<meta name="twitter:description" content={texts.seo.home.description} />
+	<link rel="canonical" href="https://allerleih.org/" />
+	{@html `<script type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'AllerLeih',
+		url: 'https://allerleih.org',
+		logo: 'https://allerleih.org/android-chrome-512x512.png',
+		description: texts.seo.home.description,
+		contactPoint: { '@type': 'ContactPoint', email: texts.names.mainContactMail },
+	})}</script>`}
+</svelte:head>
 
 <section class="dark:bg-tinte-900 py-12 px-6">
 	<div class="max-w-2xl mx-auto text-center items-center">

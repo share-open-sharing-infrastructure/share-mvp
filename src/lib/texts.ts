@@ -29,6 +29,7 @@ export const texts = {
 		secretPlaceholder: 'Geheimes Codewort für den Test-Zugang',
 		loginButton: 'Anmelden',
 		registerLink: 'Registrieren',
+		privacyConsentLabel: 'Ich habe die Datenschutzerklärung gelesen und stimme ihr zu.',
 	},
 
 	// Navigation
@@ -52,6 +53,8 @@ export const texts = {
 		translateBrowser: "Your browser can translate this page automatically — look for the translate icon in your address bar, or right-click and select 'Translate'. Or:",
 		translateDeepL: 'Translate text with DeepL',
 		guide: "Wie funktioniert's?",
+		privacy: 'Datenschutz',
+		tos: 'AGB',
 	},
 
 	// Footer
@@ -78,6 +81,7 @@ export const texts = {
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
+		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 	},
 
 	// Success messages
@@ -400,6 +404,12 @@ export const texts = {
 			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
 			invalidInvite: 'Dieser Einladungslink ist ungültig.',
 		},
+		inviteLanding: {
+			title: (name: string) => `${name} lädt dich ein!`,
+			genericTitle: 'Du wurdest eingeladen!',
+			description: 'Teile, leihe und hilf in deiner Nachbarschaft – kostenlos und ohne Stress.',
+			cta: 'Jetzt registrieren',
+		},
 		itemDetail: {
 			backToSearch: '← Zurück zur Suche',
 			requestButton: 'Anfragen',
@@ -492,13 +502,14 @@ export const texts = {
 			explanation:
 				'AllerLeih kann deinen aktuellen GPS-Standort nutzen, um dir Dinge in deiner unmittelbaren Nähe anzuzeigen. Dein Standort wird dabei nicht gespeichert.',
 			allow: 'Standort freigeben',
-			denied: 'Standort konnte nicht abgerufen werden.',
+			denied: 'Standort konnte nicht abgerufen werden. Bitte stelle sicher dass du die Standortfreigabe in deinem Browser oder Betriebssytem aktiviert hast, um diese Funktion zu nutzen.',
 		},
 		pushNotifications: {
 			title: 'Benachrichtigungen aktivieren?',
 			explanation:
 				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
 			allow: 'Benachrichtigungen aktivieren',
+			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Bitte stelle sicher, dass du Benachrichtigungen in deinem Browser oder Betriebssystem aktiviert hast, um diese Funktion zu nutzen.',
 		},
 		done: {
 			title: 'Alles bereit! 🎉',
@@ -523,6 +534,59 @@ export const texts = {
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
 		pushTitle: 'AllerLeih',
 		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
+	},
+
+	// SEO meta titles and descriptions
+	seo: {
+		home: {
+			title: 'AllerLeih – Dinge leihen und teilen in deiner Umgebung',
+			description:
+				'Kostenlos Gegenstände leihen und teilen mit Menschen in deiner Umgebung. Spare Geld, Platz und Ressourcen und stärke deine Gemeinschaft.',
+		},
+		search: {
+			title: 'Gegenstände suchen – AllerLeih',
+			description:
+				'Durchsuche Gegenstände in deiner Nähe. Filtere nach Kategorie und Entfernung und finde, was du brauchst.',
+		},
+		about: {
+			title: 'Über uns – AllerLeih',
+			description:
+				'AllerLeih ist eine gemeinnützige Plattform für lokales Leihen und Teilen. Lerne das Team dahinter kennen.',
+		},
+		guide: {
+			title: 'Wie funktioniert AllerLeih? – Anleitung',
+			description:
+				'Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen auf AllerLeih. Tipps, FAQs und erste Schritte.',
+		},
+		contact: {
+			title: 'Kontakt – AllerLeih',
+			description: 'Schreib uns! Fragen, Feedback oder Kooperationsanfragen sind herzlich willkommen.',
+		},
+		imprint: {
+			title: 'Impressum – AllerLeih',
+			description: 'Rechtliche Angaben und Kontaktinformationen des Betreibers von AllerLeih.',
+		},
+		newsletter: {
+			title: 'AllerLeih News – Newsletter',
+			description:
+				'Bleib auf dem Laufenden: Abonniere den AllerLeih Newsletter für Neuigkeiten und Community-Geschichten.',
+		},
+		login: {
+			title: 'Anmelden – AllerLeih',
+			description:
+				'Melde dich bei AllerLeih an, um Gegenstände zu leihen, Anfragen zu verwalten und dich mit deiner Umgebung zu verbinden.',
+		},
+		register: {
+			title: 'Registrieren – AllerLeih',
+			description:
+				'Erstelle ein kostenloses AllerLeih-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.',
+		},
+		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
+		itemDetailDescription: (name: string, owner: string, city: string) =>
+			`Leihe ${name} von ${owner} in ${city} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
+		userProfile: (username: string) => `@${username} – AllerLeih`,
+		userProfileDescription: (username: string) =>
+			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
 	},
 
 	// PWA install and notification prompts

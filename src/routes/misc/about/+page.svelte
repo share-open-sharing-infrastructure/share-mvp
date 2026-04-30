@@ -44,6 +44,15 @@
 	];
 </script>
 
+<svelte:head>
+	<title>{texts.seo.about.title}</title>
+	<meta name="description" content={texts.seo.about.description} />
+	<meta property="og:title" content={texts.seo.about.title} />
+	<meta property="og:description" content={texts.seo.about.description} />
+	<meta property="og:type" content="website" />
+	<link rel="canonical" href="https://allerleih.org/misc/about" />
+</svelte:head>
+
 <Section name="team">
 	<h1 class="mb-4 text-2xl font-bold">{texts.pages.about.title}</h1>
 	<div class="font-light text-tinte-500 sm:text-xl lg:mb-16 dark:text-tinte-400">

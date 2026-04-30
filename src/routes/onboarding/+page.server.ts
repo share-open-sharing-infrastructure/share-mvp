@@ -4,11 +4,12 @@ import { texts } from '$lib/texts';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
+import { generateInviteSlug } from '$lib/inviteSlug';
 
 export async function load({ locals, url }) {
 	let inviteCode = locals.user.inviteCode as string | undefined;
 	if (!inviteCode) {
-		inviteCode = crypto.randomUUID();
+		inviteCode = await generateInviteSlug(locals.pb);
 		await locals.pb.collection('users').update(locals.user.id, { inviteCode });
 	}
 
@@ -16,7 +17,7 @@ export async function load({ locals, url }) {
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
-		inviteUrl: `${url.origin}/auth/register?invite=${inviteCode}`,
+		inviteUrl: `${url.origin}/invite/${inviteCode}`,
 		users,
 		trustIds: (locals.user.trusts as string[]) ?? [],
 	};

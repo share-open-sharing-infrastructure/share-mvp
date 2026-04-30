@@ -41,6 +41,14 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{texts.seo.search.title}</title>
+	<meta name="description" content={texts.seo.search.description} />
+	<meta property="og:title" content={texts.seo.search.title} />
+	<meta property="og:description" content={texts.seo.search.description} />
+	<meta property="og:type" content="website" />
+</svelte:head>
+
 {#snippet paginationControls()}
 	{#if filterActive}
 		<p class="text-center text-sm text-tinte-500 mt-2">

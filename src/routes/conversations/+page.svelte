@@ -3,6 +3,10 @@
 	import { MessageDotsOutline } from 'flowbite-svelte-icons';
 </script>
 
+<svelte:head>
+	<meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
 <div class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
 	<div class="w-14 h-14 rounded-2xl bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center">
 		<MessageDotsOutline class="w-7 h-7 text-tinte-400 dark:text-tinte-500" />
