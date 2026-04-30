@@ -445,7 +445,7 @@ export const texts = {
 			Das spart dir Zeit — kostet aber pro Bild etwas Strom (ca. 1–3 Wattstunden), Wasser (ca. 5–30 Milliliter), CO₂ (ca. 0,1–0,3 Gramm) und basiert auf einer Industrie mit ethischen Problemen.\
 			Wir bieten diese Option an, weil sie das Hochladen von Gegenständen stark vereinfacht und somit den Verleih fördert.\
 			Mistral nutzt diese Bilder unter Umständen zur Verbesserung ihrer KI, also lade keine Fotos hoch, die du nicht teilen möchtest. \
-			Alle Analysen finden auf den Servern von Mistral in Frankreich nach europäischem und französischem Recht statt, wir haben keinen Einfluss darauf.',
+			Alle Analysen finden auf den Servern von Mistral in Frankreich nach europäischem und französischem Recht statt.',
 	},
 	
 	// Onboarding

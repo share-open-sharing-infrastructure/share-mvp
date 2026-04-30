@@ -52,14 +52,6 @@
 	}
 </script>
 
-<Accordion flush class="mb-4">
-	<AccordionItem>
-		{#snippet header()}{texts.bulkUpload.howItWorksHeader}{/snippet}
-		<p class="text-sm text-tinte-600 dark:text-tinte-400">
-			{texts.bulkUpload.howItWorksBody}
-		</p>
-	</AccordionItem>
-</Accordion>
 
 <!-- DROP ZONE / FILE PICKER -->
 <div
@@ -146,6 +138,15 @@
 		<p class="text-sm text-accent-600">{texts.bulkUpload.noPhotosSelected}</p>
 	{/if}
 </div>
+
+<Accordion flush class="mb-4">
+	<AccordionItem>
+		{#snippet header()}{texts.bulkUpload.howItWorksHeader}{/snippet}
+		<p class="text-sm text-tinte-600 dark:text-tinte-400">
+			{texts.bulkUpload.howItWorksBody}
+		</p>
+	</AccordionItem>
+</Accordion>
 
 <div class="mt-6 flex justify-end gap-3">
 	<Button href="/user/items" color="alternative">Zurück</Button>
