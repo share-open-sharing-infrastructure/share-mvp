@@ -42,28 +42,8 @@
 </script>
 
 {#if totalPages > 0}
-	<div class="mt-6 flex flex-col sm:flex-row flex-nowrap items-center gap-3">
-		<!-- Per-page selector: GET form so no goto() needed -->
-		<form method="GET" action={resolve('/search')} class="flex flex-1 items-center gap-2 text-sm text-tinte-600 dark:text-tinte-400">
-			<input type="hidden" name="q" value={q} />
-			<input type="hidden" name="page" value="1" />
-			{#if selectedCategories.length > 0}
-				<input type="hidden" name="cats" value={selectedCategories.join(',')} />
-			{/if}
-			{#if op === 'and'}
-				<input type="hidden" name="op" value="and" />
-			{/if}
-			<span>{texts.pages.search.perPage}</span>
-			<select
-				name="perPage"
-				onchange={(e) => (e.currentTarget as HTMLSelectElement).form?.submit()}
-				class="w-14 rounded-lg border border-tinte-300 bg-papier px-2 py-1 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
-			>
-				{#each perPageOptions as opt (opt)}
-					<option value={opt} selected={opt === perPage}>{opt}</option>
-				{/each}
-			</select>
-		</form>
+	<div class="mt-6 flex flex-col sm:flex-row flex-nowrap items-center justify-between gap-3">
+		<div class="flex flex-1 invisible"></div>
 
 		<!-- Page controls -->
 		<div class="flex items-center gap-1">
@@ -106,5 +86,26 @@
 			{/if}
 		</div>
 
+		<!-- Per-page selector: GET form so no goto() needed -->
+		<form method="GET" action={resolve('/search')} class="flex flex-1 justify-end items-center gap-2 text-sm text-tinte-600 dark:text-tinte-400">
+			<input type="hidden" name="q" value={q} />
+			<input type="hidden" name="page" value="1" />
+			{#if selectedCategories.length > 0}
+				<input type="hidden" name="cats" value={selectedCategories.join(',')} />
+			{/if}
+			{#if op === 'and'}
+				<input type="hidden" name="op" value="and" />
+			{/if}
+			<span>{texts.pages.search.perPage}</span>
+			<select
+				name="perPage"
+				onchange={(e) => (e.currentTarget as HTMLSelectElement).form?.submit()}
+				class="w-14 rounded-lg border border-tinte-300 bg-papier px-2 py-1 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
+			>
+				{#each perPageOptions as opt (opt)}
+					<option value={opt} selected={opt === perPage}>{opt}</option>
+				{/each}
+			</select>
+		</form>
 	</div>
 {/if}
