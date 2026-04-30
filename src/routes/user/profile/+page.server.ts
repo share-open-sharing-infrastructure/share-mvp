@@ -1,15 +1,16 @@
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { texts } from '$lib/texts';
+import { generateInviteSlug } from '$lib/inviteSlug';
 
 export async function load({ locals, url }) {
 	let inviteCode = locals.user.inviteCode as string | undefined;
 
 	if (!inviteCode) {
-		inviteCode = crypto.randomUUID();
+		inviteCode = await generateInviteSlug(locals.pb);
 		await locals.pb.collection('users').update(locals.user.id, { inviteCode });
 	}
 
-	const inviteUrl = `${url.origin}/auth/register?invite=${inviteCode}`;
+	const inviteUrl = `${url.origin}/invite/${inviteCode}`;
 
 	return {
 		PB_URL: PUBLIC_PB_URL,

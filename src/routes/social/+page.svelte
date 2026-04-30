@@ -25,6 +25,10 @@
 	);
 </script>
 
+<svelte:head>
+	<meta name="robots" content="noindex, nofollow" />
+</svelte:head>
+
 <!-- HEADER -->
 <div class="pb-4 px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">

@@ -9,6 +9,14 @@
 	let { form, data } = $props();
 </script>
 
+<svelte:head>
+	<title>{texts.seo.login.title}</title>
+	<meta name="description" content={texts.seo.login.description} />
+	<meta property="og:title" content={texts.seo.login.title} />
+	<meta property="og:description" content={texts.seo.login.description} />
+	<link rel="canonical" href="https://allerleih.org/auth/login" />
+</svelte:head>
+
 <Section name="login">
 	<Register class="w-full sm:max-w-md">
 		{#snippet top()}

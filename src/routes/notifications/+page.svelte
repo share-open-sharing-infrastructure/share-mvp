@@ -20,6 +20,7 @@
 
 <svelte:head>
 	<title>{texts.notifications.title} – {texts.names.app}</title>
+	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
 
 <div class="max-w-2xl mx-auto px-4 py-8">
