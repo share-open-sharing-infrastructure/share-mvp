@@ -44,7 +44,7 @@
 <Navbar class="bg-secondary-200 shadow-sm">
 	<div class="flex items-center">
 		<NavBrand href={resolve('/')}>
-			<div class="relative flex flex-col items-center">
+			<div id="beta" class="relative flex flex-col items-center">
 				<img src="/AllerLeih_logo.svg" alt={texts.names.app} class="h-16" />
 				<span
 						class="absolute top-5 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
@@ -146,4 +146,18 @@
 			</div>
 		</Popover>
 	{/if}
+		<Popover
+		triggeredBy="#beta"
+		class="w-72 bg-papier text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
+		placement="bottom-start"
+	>
+		<div class="space-y-2 p-3">
+			<h3 class="font-semibold text-tinte-900 dark:text-white">
+				Beta-Zugang
+			</h3>
+			Wir testen AllerLeih gerade in Lüneburg! Die Plattform kann noch Fehler haben und wird beständig verbessert. 
+			Wenn du uns dabei unterstützen magst, <a href={resolve('/misc/contact')} class="text-accent hover:underline font-medium">frag uns gerne nach einem Zugang</a>, nutze die Plattform und teile uns dein Feedback über den Feedback-Button mit!
+
+		</div>
+	</Popover>
 </Navbar>

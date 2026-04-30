@@ -20,15 +20,7 @@
 			{t.welcome} 
 			<!-- <span class="text-accent font-extrabold">{texts.names.app}</span> -->
 		</h1>
-		<div id="beta" class="relative flex flex-col items-center">
-				<img src="/AllerLeih.svg" alt={texts.names.app} class="h-32 mx-auto mb-4" />
-				<span 
-						class="absolute top-9 right-25 text-[40px] rotate-90 font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
-					>
-						Beta
-					</span>
-			</div>
-		
+		<img src="/AllerLeih.svg" alt={texts.names.app} class="h-32 mx-auto mb-4" />
 		<p class="font-light text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8">
 			{t.tagline} <span class="font-bold text-tinte-700">{t.city}</span>
 		</p>
@@ -83,23 +75,3 @@
 </section>
 
 
-	<Popover
-		triggeredBy="#beta"
-		class="w-72 bg-sand text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
-		placement="bottom-start"
-	>
-		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-tinte-900 dark:text-white">
-				Beta-Zugang
-			</h3>
-			Wir testen AllerLeih gerade in Lüneburg! Die Plattform kann noch Fehler haben und wird beständig verbessert. 
-			Wenn du uns dabei unterstützen magst, frag uns gerne nach einem Zugang, nutze die Plattform und teile uns dein Feedback mit!
-			<a
-				href="mailto:feedback@allerleih.org?subject=Beta-Zugang%20AllerLeih&body=Hallo%20AllerLeih-Team%2C%0A%0Aich%20möchte%20gerne%20einen%20Beta-Zugang%20für%20AllerLeih%20beantragen."
-				class="text-accent hover:underline flex items-center font-medium mt-1"
-			>
-				E-Mail an feedback@allerleih.org
-				<ChevronRightOutline class="text-accent h-4 w-4" />
-			</a>
-		</div>
-	</Popover>
