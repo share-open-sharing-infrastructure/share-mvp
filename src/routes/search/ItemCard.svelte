@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
-	import { Badge, Card } from 'flowbite-svelte';
-	import { UserCircleOutline } from 'flowbite-svelte-icons';
+	import { Card } from 'flowbite-svelte';
+	import { UserCircleOutline, ChevronRightOutline, HeartSolid } from 'flowbite-svelte-icons';
 	import { Popover } from 'flowbite-svelte';
-	import { ChevronRightOutline } from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -28,118 +28,73 @@
 		transportMode = 'bicycle',
 		currentUserId,
 	}: Props = $props();
+
+	const isTrusted = $derived(
+		!!currentUserId && !!item.expand?.owner?.trusts?.includes(currentUserId)
+	);
 </script>
 
 <Card
 	href="/items/{item.id}"
 	img={imgUrl}
-	classes={{ image: 'h-48 w-48 object-cover shrink-0 md:h-48 mx-auto my-auto md:mx-0' }}
+	class="flex-row relative"
+	classes={{ image: 'h-24 w-24 max-h-36 max-w-36 object-cover shrink-0 rounded-s-lg rounded-tr-none rounded-br-none' }}
 	horizontal
 	size="xl"
 >
-	<div class="m-6 grow min-w-0">
-		{#if !profileView}
-			<div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-3">
-				<!-- Owner button -->
-				<button
-					type="button"
-					onclick={(e) => {
-						e.preventDefault(); // Prevent the default anchor behavior
-						goto(
-							resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })
-						);
-					}}
-					class="relative text-primary-200 border-primary-200 rounded-full border hover:bg-primary-50 hover:cursor-pointer px-1"
-				>
-					<UserCircleOutline class="h-6 w-6 inline" />
-					<span class="font-medium text-xs"
-						>{item.expand?.owner?.username ?? 'Unknown'}</span
-					>
-					{#if item.expand?.owner?.verified}
-						<VerifiedIcon class="absolute -top-1.5 -right-1.5 h-3.5 w-3.5" />
-					{/if}
-				</button>
-
-				<!-- Trust badge -->
-				{#if currentUserId && item.expand?.owner?.trusts?.includes(currentUserId)}
-					<Badge id="b3" rounded border color="green">
-						<span class="text-green-900 bg-green-100 truncate"
-							>vertraut dir</span
-						>
-					</Badge>
+	{#if !profileView}
+		<!-- Owner pill: overlaid on image top-left -->
+		<button
+			id="owner-{item.id}"
+			type="button"
+			onclick={(e) => {
+				e.preventDefault();
+				goto(resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' }));
+			}}
+			class="absolute top-2 left-3 z-10 rounded-full border hover:cursor-pointer pl-1 pr-2 py-0.5 {isTrusted
+				? 'bg-green-50/90 text-green-800 border-green-300 hover:bg-green-100/90'
+				: 'bg-white/90 text-tinte-700 border-tinte-300 hover:bg-tinte-50/90'}"
+		>
+			<UserCircleOutline class="h-6 w-6 inline" />
+			<span class="font-medium text-xs">{item.expand?.owner?.username ?? 'Unknown'}</span>
+			<div class="absolute top-0 -left-2.5 flex flex-col gap-0.1 items-center">
+				{#if item.expand?.owner?.verified}
+					<VerifiedIcon class="h-3.5 w-3.5" />
 				{/if}
-
-				<!-- Travel time badge — ml-auto pushes it right and makes it wrap first -->
-				{#if travelMinutes !== undefined}
-					<span
-						class="ml-auto flex items-center gap-1 text-sm font-medium text-tinte-600 dark:text-tinte-300 bg-tinte-100 dark:bg-tinte-700 rounded-full px-2 py-0.5"
-					>
-							{#if transportMode === 'foot'}
-								<!-- Walking icon -->
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-3.5 w-3.5"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-								>
-									<path
-										d="M13.5 5.5a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"
-									/>
-								</svg>
-							{:else if transportMode === 'bicycle'}
-								<!-- Bicycle icon -->
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-3.5 w-3.5"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-								>
-									<path
-										d="M15.5 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 12.5a4.5 4.5 0 1 0 9 0 4.5 4.5 0 0 0-9 0zm2 0a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0zm8-4.5-3.5-4H8v2h2.8l2.1 2.5-4.4 3.5H4v2h5l3.6-2.9 1.8 2.1-.5 3.3H16v-4.2l-1-1.3zM19 8a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zm0 2a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5z"
-									/>
-								</svg>
-							{:else}
-								<!-- Car icon -->
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									class="h-3.5 w-3.5"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-								>
-									<path
-										d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"
-									/>
-								</svg>
-							{/if}
-							{#if travelMinutes === null}
-								?
-							{:else}
-								{texts.pages.search.minutesAway(travelMinutes)}
-							{/if}
-						</span>
-					{/if}
+				{#if isTrusted}
+					<HeartSolid class="h-3.5 w-3.5 text-green-500 bg-white rounded-full" />
+				{/if}
 			</div>
-		{/if}
+		</button>
+	{/if}
+
+	<div class="m-6 grow min-w-0">
+		
 
 		<h5
-			class="mb-2 text-xl font-bold tracking-tight wrap-break-word text-tinte-900 dark:text-white"
+			class="mb-2 text-lg md:text-xl font-bold tracking-tight line-clamp-2 text-tinte-900 dark:text-white"
 		>
 			{item.name}
 		</h5>
-
-		{#if item.categories && item.categories.length > 0}
-			<div class="flex flex-wrap gap-1">
-				{#each item.categories as cat(cat)}
-					<Badge color="indigo" class="text-xs">{cat}</Badge>
-				{/each}
-			</div>
+		{#if !profileView && travelMinutes !== undefined}
+			<span
+				class="absolute bottom-2 right-2 inline-flex items-center gap-1 text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-primary-100 dark:bg-tinte-700 border border-tinte-200 dark:border-tinte-600 rounded-full px-2.5 py-0.5"
+			>
+				<TransportModeIcon mode={transportMode} class="h-3.5 w-3.5" />
+				{#if travelMinutes === null}
+					?
+				{:else}
+					{texts.pages.search.minutesAway(travelMinutes)}
+				{/if}
+			</span>
 		{/if}
 	</div>
 </Card>
 
-{#if !profileView}
+{#if !profileView && isTrusted}
 	<Popover
-		triggeredBy="#b3"
+		triggeredBy="#owner-{item.id}"
+		trigger="hover"
 		class="w-72 bg-sand text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
 		placement="bottom-start"
 	>
@@ -153,7 +108,7 @@
 				class="text-accent hover:underline flex items-center font-medium mt-1"
 			>
 				{texts.ui.trustFunction}
-				<ChevronRightOutline class="text-accent  ms-1.5 h-4 w-4" />
+				<ChevronRightOutline class="text-accent ms-1.5 h-4 w-4" />
 			</a>
 		</div>
 	</Popover>

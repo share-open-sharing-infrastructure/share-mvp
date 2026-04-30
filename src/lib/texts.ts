@@ -314,32 +314,33 @@ export const texts = {
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
 				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
+			transportModePrompt: 'Wie transportierst du das Ding?',
 			transportModes: {
 				foot: 'Zu Fuß',
 				bicycle: 'Fahrrad',
 				car: 'Auto',
 			},
 			noLocation:
-				'Setze deinen Standort in deinem Profil, um Reisezeiten zu sehen.',
+				'Aktiviere deinen Standort, um Reisezeiten zu sehen.',
 			minutesAway: (n: number) => {
 				if (n <= 5) return '<5 min';
-				if (n <= 10) return '5–10 min';
-				if (n <= 15) return '10–15 min';
-				if (n <= 20) return '15–20 min';
-				if (n <= 25) return '20–25 min';
-				if (n <= 30) return '25–30 min';
+				if (n <= 10) return '<10 min';
+				if (n <= 15) return '<15 min';
+				if (n <= 20) return '<20 min';
+				if (n <= 25) return '<25 min';
+				if (n <= 30) return '<30 min';
 				return '>30 min';
 			},
 			durationFilter: {
-				noLimit: 'Beliebig',
-				maxMinutes: (n: number) => `max. ${n} Min.`,
+				noLimit: '>30 min',
+				maxMinutes: (n: number) => `<${n} min`,
 				paginationHidden:
-					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf „Beliebig", um alle Seiten zu sehen.',
+					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf >30 min", um alle Seiten zu sehen.',
 			},
 			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
-			pageInfo: (current: number, total: number) => `Seite ${current} von ${total}`,
-			browseAll: 'Alle Gegenstände anzeigen',
+			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
+			browseAll: 'Alle Dinge zeigen',
 		},
 		logout: {
 			message: 'Ausloggen...',

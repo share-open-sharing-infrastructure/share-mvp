@@ -25,9 +25,7 @@
 	}
 
 	function toggleCat(cat: string) {
-		const next = selectedCategories.includes(cat)
-			? selectedCategories.filter((c) => c !== cat)
-			: [...selectedCategories, cat];
+		const next = selectedCategories.includes(cat) ? [] : [cat];
 		goto(buildUrl(next, op));
 	}
 

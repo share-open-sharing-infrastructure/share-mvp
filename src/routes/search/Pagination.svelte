@@ -42,9 +42,9 @@
 </script>
 
 {#if totalPages > 0}
-	<div class="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+	<div class="mt-6 flex flex-col sm:flex-row flex-nowrap items-center gap-3">
 		<!-- Per-page selector: GET form so no goto() needed -->
-		<form method="GET" action={resolve('/search')} class="flex items-center gap-2 text-sm text-tinte-600 dark:text-tinte-400">
+		<form method="GET" action={resolve('/search')} class="flex flex-1 items-center gap-2 text-sm text-tinte-600 dark:text-tinte-400">
 			<input type="hidden" name="q" value={q} />
 			<input type="hidden" name="page" value="1" />
 			{#if selectedCategories.length > 0}
@@ -106,9 +106,5 @@
 			{/if}
 		</div>
 
-		<!-- Page info -->
-		<span class="text-sm text-tinte-500 dark:text-tinte-400">
-			{texts.pages.search.pageInfo(page, totalPages)}
-		</span>
 	</div>
 {/if}
