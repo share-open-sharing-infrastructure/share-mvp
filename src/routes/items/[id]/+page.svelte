@@ -20,6 +20,18 @@
 			? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
 			: null;
 
+	const seoTitle = texts.seo.itemDetail(item.name, item.expand?.owner?.username ?? '');
+	const seoDesc = item.description
+		? item.description.slice(0, 155)
+		: texts.seo.itemDetailDescription(
+				item.name,
+				item.expand?.owner?.username ?? '',
+				item.expand?.owner?.city ?? '',
+			);
+	const seoImage = item.image
+		? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
+		: 'https://allerleih.org/og-invite.png';
+
 	const initialMode = untrack(() => (data.preferredTransportMode as TransportMode) ?? 'bicycle');
 	let transportMode = $state<TransportMode>(initialMode);
 	let travelMinutes = $state<number | null | undefined>(undefined);
@@ -79,6 +91,19 @@
 		requestAndFetch(mode);
 	}
 </script>
+
+<svelte:head>
+	<title>{seoTitle}</title>
+	<meta name="description" content={seoDesc} />
+	<meta property="og:title" content={seoTitle} />
+	<meta property="og:description" content={seoDesc} />
+	<meta property="og:type" content="website" />
+	<meta property="og:image" content={seoImage} />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={seoTitle} />
+	<meta name="twitter:description" content={seoDesc} />
+	<meta name="twitter:image" content={seoImage} />
+</svelte:head>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<!-- Image -->

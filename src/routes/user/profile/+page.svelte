@@ -2,8 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 
-	import { Button, Label, Toggle, Popover } from 'flowbite-svelte';
-	import { QuestionCircleSolid } from 'flowbite-svelte-icons';
+	import { Button } from 'flowbite-svelte';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 
 	import { enhance } from '$app/forms';
@@ -15,6 +14,10 @@
 
 	let { data, form } = $props();
 </script>
+
+<svelte:head>
+	<meta name="robots" content="noindex, nofollow" />
+</svelte:head>
 
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">

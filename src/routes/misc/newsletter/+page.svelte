@@ -4,6 +4,15 @@
 	import { texts } from '$lib/texts';
 </script>
 
+<svelte:head>
+	<title>{texts.seo.newsletter.title}</title>
+	<meta name="description" content={texts.seo.newsletter.description} />
+	<meta property="og:title" content={texts.seo.newsletter.title} />
+	<meta property="og:description" content={texts.seo.newsletter.description} />
+	<meta property="og:type" content="website" />
+	<link rel="canonical" href="https://allerleih.org/misc/newsletter" />
+</svelte:head>
+
 <div class="mx-auto text-center">
 	<h2
 		class="mb-4 text-4xl tracking-tight font-extrabold text-gray-900 dark:text-white"

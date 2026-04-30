@@ -42,6 +42,14 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{texts.seo.register.title}</title>
+	<meta name="description" content={texts.seo.register.description} />
+	<meta property="og:title" content={texts.seo.register.title} />
+	<meta property="og:description" content={texts.seo.register.description} />
+	<meta name="robots" content="noindex" />
+</svelte:head>
+
 <Section name="register">
 	{#if form?.fail}
 		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">

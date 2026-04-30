@@ -24,6 +24,14 @@
 	let trustForm: HTMLFormElement = $state()!;
 </script>
 
+<svelte:head>
+	<title>{texts.seo.userProfile(profileUser.username)}</title>
+	<meta name="description" content={texts.seo.userProfileDescription(profileUser.username)} />
+	<meta property="og:title" content={texts.seo.userProfile(profileUser.username)} />
+	<meta property="og:description" content={texts.seo.userProfileDescription(profileUser.username)} />
+	<meta property="og:type" content="website" />
+</svelte:head>
+
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">
 	<!-- Profile Header -->
 	<div class="flex items-center gap-6">

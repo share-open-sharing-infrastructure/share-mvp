@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /conversations/
+Disallow: /notifications
+Disallow: /social
+Disallow: /user/
+Disallow: /onboarding
+Disallow: /auth/logout
+Disallow: /api/
+
+Sitemap: https://allerleih.org/sitemap.xml

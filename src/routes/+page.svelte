@@ -6,6 +6,29 @@
 	import landingimg from '$lib/images/landing-img.png';
 </script>
 
+<svelte:head>
+	<title>{texts.seo.home.title}</title>
+	<meta name="description" content={texts.seo.home.description} />
+	<meta property="og:title" content={texts.seo.home.title} />
+	<meta property="og:description" content={texts.seo.home.description} />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://allerleih.org/" />
+	<meta property="og:image" content="https://allerleih.org/og-invite.png" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={texts.seo.home.title} />
+	<meta name="twitter:description" content={texts.seo.home.description} />
+	<link rel="canonical" href="https://allerleih.org/" />
+	{@html `<script type="application/ld+json">${JSON.stringify({
+		'@context': 'https://schema.org',
+		'@type': 'Organization',
+		name: 'AllerLeih',
+		url: 'https://allerleih.org',
+		logo: 'https://allerleih.org/android-chrome-512x512.png',
+		description: texts.seo.home.description,
+		contactPoint: { '@type': 'ContactPoint', email: texts.names.mainContactMail },
+	})}</script>`}
+</svelte:head>
+
 <section class="bg-white dark:bg-gray-900">
 	<div
 		class="grid max-w-7xl px-8 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12"

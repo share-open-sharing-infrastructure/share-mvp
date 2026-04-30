@@ -18,6 +18,15 @@
 	const lendingIcons = [UploadOutline, InboxOutline, ShieldCheckOutline, CheckCircleOutline];
 </script>
 
+<svelte:head>
+	<title>{texts.seo.guide.title}</title>
+	<meta name="description" content={texts.seo.guide.description} />
+	<meta property="og:title" content={texts.seo.guide.title} />
+	<meta property="og:description" content={texts.seo.guide.description} />
+	<meta property="og:type" content="website" />
+	<link rel="canonical" href="https://allerleih.org/misc/guide" />
+</svelte:head>
+
 <h1 class="mb-3 text-2xl font-bold">{guide.title}</h1>
 <p class="mb-8 text-gray-600">{guide.intro}</p>
 

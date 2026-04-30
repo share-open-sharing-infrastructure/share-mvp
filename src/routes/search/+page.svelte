@@ -116,6 +116,14 @@
 	});
 </script>
 
+<svelte:head>
+	<title>{texts.seo.search.title}</title>
+	<meta name="description" content={texts.seo.search.description} />
+	<meta property="og:title" content={texts.seo.search.title} />
+	<meta property="og:description" content={texts.seo.search.description} />
+	<meta property="og:type" content="website" />
+</svelte:head>
+
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
