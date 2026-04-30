@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Button, Popover } from 'flowbite-svelte';
-	import { ChevronRightOutline, SearchOutline, ShapesOutline } from 'flowbite-svelte-icons';
+	import { ChevronRightOutline, ShapesOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 
@@ -35,13 +35,13 @@
 		<div class="flex flex-col sm:flex-row justify-center gap-3">
 			<Button href="/search" class="cta-button w-full sm:w-auto bg-primary-300 hover:bg-primary">
 				<span class="relative flex w-full items-center justify-center">
-					<SearchOutline class="absolute left-0 h-8 w-8" />
+					<img src="/icons/search_icon.svg" alt="" class="absolute left-0 h-8 w-8" />
 					{t.ctaButtonSearch}
 				</span>
 			</Button>
 			<Button href="/user/items" class="cta-button w-full sm:w-auto bg-accent-300 hover:bg-accent">
 				<span class="relative flex w-full items-center justify-center">
-					<ShapesOutline class="absolute left-0 h-8 w-8" />
+					<img src="/icons/offer_icon.svg" alt="" class="absolute left-0 h-12 w-12" />
 					{t.ctaButtonUpload}
 				</span>
 			</Button>

@@ -204,8 +204,8 @@ export const texts = {
 	pages: {
 		landing: {
 			tagline: 'Leihe und teile Dinge in',
-			ctaButtonSearch: 'Finden',
-			ctaButtonUpload: 'Verleihen',
+			ctaButtonSearch: 'Dinge Finden',
+			ctaButtonUpload: 'Dinge Verleihen',
 			city: 'Lüneburg.',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
