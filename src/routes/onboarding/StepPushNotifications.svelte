@@ -74,9 +74,9 @@
 	</p>
 
 	{#if status === 'granted'}
-		<p class="text-sm text-green-600 dark:text-green-400 font-medium">✓ Benachrichtigungen aktiviert</p>
+		<p class="text-sm text-green-600 dark:text-green-400 font-medium">✓ {texts.onboarding.pushNotifications.allow}</p>
 	{:else if status === 'denied'}
-		<p class="text-sm text-gray-500 dark:text-gray-400">Benachrichtigungen nicht aktiviert.</p>
+		<p class="text-sm text-gray-500 dark:text-gray-400">{texts.onboarding.pushNotifications.denied}</p>
 	{/if}
 </div>
 
