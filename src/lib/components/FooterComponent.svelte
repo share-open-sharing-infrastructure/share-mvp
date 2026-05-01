@@ -32,13 +32,13 @@
 					<h2
 						class="mb-4 text-sm font-semibold uppercase text-gray-900 dark:text-white"
 					>
-						Plattform
+						AllerLeih
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink class="mb-2" href={resolve('/misc/guide')}
+						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/guide')}
 							>{texts.nav.guide}</FooterLink
 						>
-						<FooterLink class="mb-2" href={resolve('/misc/newsletter')}
+						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
 							>{texts.nav.newsletter}</FooterLink
 						>
 					</FooterLinkGroup>
@@ -50,10 +50,10 @@
 						Über
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink class="mb-2" href={resolve('/misc/about')}
+						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/about')}
 							>{texts.nav.about}</FooterLink
 						>
-						<FooterLink class="mb-2" href={resolve('/misc/contact')}
+						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
 							>{texts.nav.contact}</FooterLink
 						>
 					</FooterLinkGroup>
@@ -66,7 +66,7 @@
 					</h2>
 					<FooterLinkGroup>
 						<FooterLink
-							class="mb-2 hover:text-accent hover:no-underline! transition-colors"
+							class="mb-2 hover:text-accent"
 							href="https://pixelfed.de/AllerLeih"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -88,7 +88,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
-							class="mb-2 hover:text-accent hover:no-underline! transition-colors"
+							class="mb-2 hover:text-accent"
 							href="https://norden.social/@AllerLeih"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -110,7 +110,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
-							class="mb-2 hover:text-accent hover:no-underline! transition-colors"
+							class="mb-2 hover:text-accent"
 							href="https://www.instagram.com/aller.leih/"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -140,13 +140,13 @@
 						Rechtliches
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink class="mb-2" href={resolve('/misc/imprint')}
+						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/imprint')}
 							>{texts.nav.imprint}</FooterLink
 						>
-						<FooterLink class="mb-2" href={resolve('/misc/privacy')}
+						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/privacy')}
 							>{texts.nav.privacy}</FooterLink
 						>
-						<FooterLink class="mb-2" href={resolve('/misc/tos')}
+						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/tos')}
 							>{texts.nav.tos}</FooterLink
 						>
 					</FooterLinkGroup>
