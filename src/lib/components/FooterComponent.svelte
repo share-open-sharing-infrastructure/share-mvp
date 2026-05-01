@@ -156,10 +156,5 @@
 				</div>
 			</div>
 		</div>
-		<hr class="my-6 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
-		<div class="sm:flex sm:items-center sm:justify-between">
-			<FooterCopyright href={resolve('/')} by={texts.names.app} year={2026} />
-			<div class="mt-4 flex gap-6 sm:mt-0 sm:justify-center"></div>
-		</div>
 	</div>
 </Footer>
