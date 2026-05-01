@@ -183,7 +183,7 @@ export const texts = {
 		trustDescription:
 			'Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.',
 		trustLink: 'Vertrauensfunktion',
-		trustedPeople: 'Vertraute Personen',
+		trustedPeople: 'Vertrauensnetzwerk',
 		trustedByPeople: 'Personen, die dir vertrauen',
 		noOneTrustsYet: 'Noch vertraut dir niemand.',
 		trustDescriptionSocial:
