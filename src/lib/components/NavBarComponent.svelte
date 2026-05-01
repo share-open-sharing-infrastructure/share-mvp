@@ -47,7 +47,7 @@
 			<div id="beta" class="relative flex flex-col items-center">
 				<img src="/AllerLeih_logo.svg" alt={texts.names.app} class="h-16" />
 				<span
-						class="absolute top-5 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
+						class="absolute top-15 text-[10px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
 					>
 						Beta
 					</span>
@@ -55,7 +55,7 @@
 			</div>
 		</NavBrand>
 
-		<FeedbackButton class="ml-5" />
+		<FeedbackButton class="ml-5 h-9" />
 	</div>
 	{#if showTranslate}
 		<button
