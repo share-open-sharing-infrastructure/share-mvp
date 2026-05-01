@@ -18,13 +18,14 @@
 					href={resolve('/')}
 					alt="AllerLeih Logo"
 					name=""
-					aClass="flex items-center text-md logo text-accent font-semibold"
+					aClass="flex items-center"
 				>
-					{texts.names.app}
+					<img src="/AllerLeih.svg" class="mr-3 h-8" alt={texts.names.app} />
+					<p class="mt-2 max-w-xs text-sm text-light">
+						Ein gemeinnütziger Verleih-Marktplatz.<br/>
+						Open-Source. Für Alle.
+					</p>
 				</FooterBrand>
-				<p class="mt-2 max-w-xs text-sm text-light">
-					Ein gemeinnütziger Verleih-Marktplatz. Open-Source. Für alle.
-				</p>
 			</div>
 			<div class="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-6">
 				<div>

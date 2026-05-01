@@ -36,12 +36,12 @@
 
 <section class="dark:bg-tinte-900 py-12 px-6 antialiased">
 	<div class="max-w-2xl mx-auto text-center items-center">
-		<h1
+		<!-- <h1
 			class="text-5xl font-bold tracking-tight leading-none dark:text-papier mb-4"
 		>
 			{t.welcome} 
-			<!-- <span class="text-accent font-extrabold">{texts.names.app}</span> -->
-		</h1>
+			
+		</h1> -->
 		<img src="/AllerLeih.svg" alt={texts.names.app} class="h-32 mx-auto mb-4" />
 		<p class="font-light text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8">
 			{t.tagline} <span class="font-bold text-tinte-700">{t.city}</span>
@@ -63,7 +63,7 @@
 	</div>
 </section>
 
-<section class="bg-papier dark:bg-tinte-900 py-16 px-6">
+<section class="py-16 px-6">
 	<div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 text-center">
 
 		<!-- How it works -->
