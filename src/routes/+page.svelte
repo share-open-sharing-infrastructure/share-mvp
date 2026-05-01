@@ -34,7 +34,7 @@
 	})}</script>`}
 </svelte:head>
 
-<section class="dark:bg-tinte-900 py-12 px-6">
+<section class="dark:bg-tinte-900 py-12 px-6 antialiased">
 	<div class="max-w-2xl mx-auto text-center items-center">
 		<h1
 			class="text-5xl font-bold tracking-tight leading-none dark:text-papier mb-4"

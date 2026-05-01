@@ -93,6 +93,7 @@ export const texts = {
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
 		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
+		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
 	},
 
 	// Messenger contact
@@ -189,6 +190,11 @@ export const texts = {
 			'Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen',
 		yourItemsLink: 'deine Dinge',
 		revokeTrust: 'das Vertrauen entziehen',
+		trustNetworkEmpty: 'Noch keine Verbindungen. Füge Kontakte hinzu!',
+		trustMutual: 'Gegenseitig',
+		youTrustThem: 'Du vertraust',
+		theyTrustYou: 'Vertraut dir',
+		trustBack: 'Auch vertrauen',
 		allRequests: 'Alle Anfragen',
 		noRequestsYet:
 			'Falls du noch keine Anfragen gestellt oder bekommen hast, nutze die',

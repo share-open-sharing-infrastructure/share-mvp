@@ -1,28 +1,75 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button, Tooltip } from 'flowbite-svelte';
-	import { UserRemoveOutline } from 'flowbite-svelte-icons';
+	import {
+		Table,
+		TableHead,
+		TableHeadCell,
+		TableBody,
+		TableBodyRow,
+		TableBodyCell,
+		Button,
+		Tooltip
+	} from 'flowbite-svelte';
+	import { UserAddOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
 	const { data } = $props();
 
-	let usernameToBeAdded: string = $state('');
-	let showDropdown: boolean = $state(false);
+	// ── Add new trustee ──────────────────────────────────────────────────────────
+	let usernameToBeAdded = $state('');
+	let showDropdown = $state(false);
+	let addFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
-	// Filter users based on input and exclude already added trustees
 	let filteredUsers = $derived(
-		usernameToBeAdded.length > 1 // only start filtering after 2 characters typed
-			? data?.users?.filter(
+		usernameToBeAdded.length > 1
+			? data.users.filter(
 					(user) =>
-						user.username
-							.toLowerCase()
-							.includes(usernameToBeAdded.toLowerCase()) && // Match names
-						!data.trustees.some((trustee) => trustee.id === user.id) && // Filter out existing trustees
-						user.id !== data.currentUser.id // Exclude self
+						user.username.toLowerCase().includes(usernameToBeAdded.toLowerCase()) &&
+						!data.trustNetwork.some((n: { id: string }) => n.id === user.id) &&
+						user.id !== data.currentUser.id
 				)
 			: []
 	);
+
+	// ── Table: search / sort / paginate ──────────────────────────────────────────
+	let tableSearch = $state('');
+	type SortCol = 'username' | 'theyTrustMe' | 'iTrustThem';
+	let sortCol = $state<SortCol>('username');
+	let sortDir = $state<'asc' | 'desc'>('asc');
+	let currentPage = $state(0);
+	const perPage = 10;
+
+	let filtered = $derived(
+		[...data.trustNetwork]
+			.filter((e) => e.username.toLowerCase().includes(tableSearch.toLowerCase()))
+			.sort((a, b) => {
+				const mul = sortDir === 'asc' ? 1 : -1;
+				if (sortCol === 'username') return mul * a.username.localeCompare(b.username);
+				// boolean sort: true=1, false=0; desc puts true first
+				return mul * (Number(a[sortCol]) - Number(b[sortCol]));
+			})
+	);
+
+	let totalPages = $derived(Math.ceil(filtered.length / perPage));
+	let paginated = $derived(filtered.slice(currentPage * perPage, (currentPage + 1) * perPage));
+
+	function toggleSort(col: SortCol) {
+		if (sortCol === col) {
+			sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+		} else {
+			sortCol = col;
+			// Boolean columns: start desc so "true" rows appear first
+			sortDir = col === 'username' ? 'asc' : 'desc';
+		}
+		currentPage = 0;
+	}
+
+	function sortIcon(col: SortCol) {
+		if (sortCol !== col) return '↕';
+		return sortDir === 'asc' ? '↑' : '↓';
+	}
 </script>
 
 <svelte:head>
@@ -32,9 +79,7 @@
 <!-- HEADER -->
 <div class="pb-4 px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">
-		<h2
-			class="mb-4 text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white"
-		>
+		<h2 class="mb-4 text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.ui.trustedPeople}
 		</h2>
 		<p class="font-light text-tinte-500 dark:text-tinte-400">
@@ -47,112 +92,197 @@
 		</p>
 	</div>
 </div>
-<!-- SEARCH BAR -->
-<div id="searchbar" class="mb-4 p-2 flex items-center justify-center">
-	<div class="relative w-full max-w-md">
-		<div class="flex">
-			<input
-				type="text"
-				placeholder="Ich vertraue..."
-				class="search-bar flex-1"
-				bind:value={usernameToBeAdded}
-				onfocus={() => (showDropdown = true)}
-				oninput={() => (showDropdown = true)}
-				onfocusoutcapture={() => setTimeout(() => (showDropdown = false), 200)}
-			/>
-		</div>
 
-		{#if showDropdown && filteredUsers && filteredUsers.length > 0}
+<!-- ADD TRUSTEE SEARCH -->
+ 
+<div id="searchbar" class="mb-6 p-2 flex items-center justify-center">
+	<div class="relative w-full max-w-md">
+		<input
+			type="text"
+			placeholder="Suche nach Namen zum Hinzufügen..."
+			class="search-bar w-full"
+			bind:value={usernameToBeAdded}
+			onfocus={() => (showDropdown = true)}
+			oninput={() => (showDropdown = true)}
+			onfocusoutcapture={() => setTimeout(() => (showDropdown = false), 200)}
+		/>
+
+		{#if showDropdown && filteredUsers.length > 0}
 			<div
 				class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-tinte-300 bg-sand shadow-lg dark:border-primary-700 dark:bg-primary-900"
 			>
 				{#each filteredUsers as potentialFriend (potentialFriend.id)}
-					<form
-						method="POST"
-						action="?/addTrustee"
-						use:enhance={() => {
-							return async ({ update }) => {
-								await update();
-								usernameToBeAdded = '';
-								showDropdown = false;
-							};
-						}}
-					>
-						<input type="hidden" name="trusteeId" value={potentialFriend.id} />
-						<button
-							class="flex w-full cursor-pointer items-center p-3 text-left hover:bg-primary-50 dark:hover:bg-primary-900"
-							type="submit"
+					<div class="flex items-center hover:bg-primary-50 dark:hover:bg-primary-900">
+						<a
+							href={resolve(`/users/[id]`, { id: potentialFriend.id })}
+							class="flex-1 p-3 text-tinte-900 dark:text-white"
 						>
-							<span class="text-tinte-900 dark:text-white"
-								>@{potentialFriend.username}</span
+							@{potentialFriend.username}
+						</a>
+						<form
+							method="POST"
+							action="?/addTrustee"
+							use:enhance={() => {
+								return async ({ result, update }) => {
+									await update();
+									usernameToBeAdded = '';
+									showDropdown = false;
+									if (result.type === 'success' && result.data) {
+										addFeedback = { type: 'success', message: result.data.message as string };
+									} else if (result.type === 'failure') {
+										addFeedback = { type: 'error', message: (result.data?.message as string) ?? texts.errors.somethingWentWrong };
+									}
+								};
+							}}
+						>
+							<input type="hidden" name="trusteeId" value={potentialFriend.id} />
+							<input type="hidden" name="trusteeUsername" value={potentialFriend.username} />
+							<button
+								type="submit"
+								id="add-btn-{potentialFriend.id}"
+								class="mx-2 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-white cursor-pointer hover:bg-primary-700 transition-colors"
 							>
-						</button>
-					</form>
+								<UserAddOutline class="h-6 w-6" />
+							</button>
+							<Tooltip triggeredBy="#add-btn-{potentialFriend.id}" type="light" placement="left">
+								als Vertraute(n) hinzufügen
+							</Tooltip>
+						</form>
+					</div>
 				{/each}
+			</div>
+		{/if}
+		{#if addFeedback}
+			<div class="mt-3">
+				<CustomAlert type={addFeedback.type} message={addFeedback.message} />
 			</div>
 		{/if}
 	</div>
 </div>
 
-<!-- FRIEND LIST -->
-<div class="mx-auto max-w-sm items-center">
-	{#if data.trustees.length === 0}
-		<p class="text-center text-tinte-500 dark:text-tinte-400">
-			Du hast noch keine vertrauten Personen hinzugefügt. Na los ;)
-		</p>
-	{/if}
-	{#each data.trustees as trustee (trustee.id)}
-		<div
-			class="flex items-center space-x-4 border-b border-tinte-200 p-4 dark:border-primary-700 hover:bg-primary-50 rounded-lg"
-		>
-			<a href={resolve(`/users/[id]`, { id: trustee.id })}
-			class="flex items-center gap-4 text-tinte-900 dark:text-white w-full ">
-				<img
-				src={trustee.profilePic}
-				alt="Profile picture of {trustee.username}"
-				class="primary-bg h-10 w-10 rounded-full object-cover"
-				/>
-				<div class="text-left">
-					<span class="text-lg font-medium text-tinte-900 dark:text-white">
-						@{trustee.username}
-					</span>
-				</div>
-			</a>
-			<form class="ml-auto" method="POST" action="?/removeTrustee" use:enhance>
-				<input type="hidden" name="trusteeId" value={trustee.id} />
-				<Button
-					class="min-button ml-auto cursor-pointer bg-primary"
-					type="submit"
+<!-- TRUST NETWORK TABLE -->
+<div class="mx-auto max-w-2xl px-2">
+	<Table hoverable divClass="relative overflow-x-auto bg-transparent" class="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-transparent">
+		<TableHead defaultRow={false} class="bg-transparent!">
+			<!-- Sort header row -->
+			<tr>
+				<TableHeadCell class="w-16 px-3 bg-transparent!"></TableHeadCell>
+				<TableHeadCell
+					class="cursor-pointer select-none bg-transparent!"
+					onclick={() => toggleSort('username')}
 				>
-					<UserRemoveOutline class="shrink-0 h-5 w-5" />
-				</Button>
-				<Tooltip type="light" placement="top"
-					>{trustee.username} {texts.ui.revokeTrust}</Tooltip
+					Nutzer:in {sortIcon('username')}
+				</TableHeadCell>
+				<TableHeadCell
+					class="cursor-pointer select-none text-center bg-transparent!"
+					onclick={() => toggleSort('theyTrustMe')}
 				>
-			</form>
-		</div>
-	{/each}
-</div>
+					{texts.ui.theyTrustYou} {sortIcon('theyTrustMe')}
+				</TableHeadCell>
+				<TableHeadCell
+					class="cursor-pointer select-none text-center bg-transparent!"
+					onclick={() => toggleSort('iTrustThem')}
+				>
+					{texts.ui.youTrustThem} {sortIcon('iTrustThem')}
+				</TableHeadCell>
+			</tr>
+			<!-- Filter row -->
+			<tr>
+				<th class="bg-transparent! px-3 py-2" colspan={4}>
+					<input
+						type="search"
+						placeholder="Netzwerk durchsuchen..."
+						class="search-bar w-full text-sm font-normal"
+						bind:value={tableSearch}
+						oninput={() => (currentPage = 0)}
+					/>
+				</th>
+			</tr>
+		</TableHead>
+		<TableBody>
+			{#if paginated.length === 0}
+				<TableBodyRow class="bg-transparent!">
+					<TableBodyCell colspan={4} class="text-center text-tinte-500 dark:text-tinte-400 bg-transparent!">
+						{tableSearch ? 'Keine Treffer.' : texts.ui.trustNetworkEmpty}
+					</TableBodyCell>
+				</TableBodyRow>
+			{/if}
+			{#each paginated as entry (entry.id)}
+				<TableBodyRow class="bg-transparent!">
+					<!-- Avatar -->
+					<TableBodyCell class="px-3 py-2">
+						<a href={resolve(`/users/[id]`, { id: entry.id })}>
+							<img
+								src={entry.profilePic}
+								alt="@{entry.username}"
+								class="block h-9 w-9 shrink-0 rounded-full object-cover"
+							/>
+						</a>
+					</TableBodyCell>
 
-<!-- TRUSTED BY LIST -->
-<div class="mx-auto max-w-sm items-center mt-10">
-	<h3 class="mb-4 text-xl font-bold text-center text-tinte-900 dark:text-white">
-		{texts.ui.trustedByPeople}
-	</h3>
-	{#if data.trustedBy.length === 0}
-		<p class="text-center text-tinte-500 dark:text-tinte-400">{texts.ui.noOneTrustsYet}</p>
+					<!-- Username -->
+					<TableBodyCell class="max-w-30 whitespace-nowrap overflow-hidden text-ellipsis">
+						<a
+							href={resolve(`/users/[id]`, { id: entry.id })}
+							class="font-medium text-tinte-900 dark:text-white hover:underline"
+						>
+							@{entry.username}
+						</a>
+					</TableBodyCell>
+
+					<!-- Vertraut dir (read-only) -->
+					<TableBodyCell class="text-center">
+						<input
+							type="checkbox"
+							checked={entry.theyTrustMe}
+							disabled
+							class="w-4 h-4 rounded border-gray-300 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600"
+						/>
+					</TableBodyCell>
+
+					<!-- Du vertraust (interactive) -->
+					<TableBodyCell class="text-center">
+						<form
+							method="POST"
+							action={entry.iTrustThem ? '?/removeTrustee' : '?/addTrustee'}
+							use:enhance
+						>
+							<input type="hidden" name="trusteeId" value={entry.id} />
+							<input
+								type="checkbox"
+								checked={entry.iTrustThem}
+								class="w-4 h-4 rounded border-gray-300 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer focus:ring-primary-500"
+								onchange={(e) => (e.target as HTMLInputElement).form?.requestSubmit()}
+							/>
+						</form>
+					</TableBodyCell>
+				</TableBodyRow>
+			{/each}
+		</TableBody>
+	</Table>
+
+	<!-- PAGINATION -->
+	{#if totalPages > 1}
+		<div class="flex items-center justify-between mt-4 px-1">
+			<Button
+				size="sm"
+				color="alternative"
+				disabled={currentPage === 0}
+				onclick={() => (currentPage -= 1)}
+			>
+				← Zurück
+			</Button>
+			<span class="text-sm text-tinte-500 dark:text-tinte-400">
+				{currentPage + 1} / {totalPages}
+			</span>
+			<Button
+				size="sm"
+				color="alternative"
+				disabled={currentPage >= totalPages - 1}
+				onclick={() => (currentPage += 1)}
+			>
+				Weiter →
+			</Button>
+		</div>
 	{/if}
-	{#each data.trustedBy as user (user.id)}
-		<a
-			href={resolve(`/users/[id]`, { id: user.id })}
-			class="flex items-center gap-4 border-b border-tinte-200 p-4 dark:border-primary-700 hover:bg-primary-50 rounded-lg text-tinte-900 dark:text-white"
-		>
-			<img
-				src={user.profilePic}
-				alt="Profile picture of {user.username}"
-				class="primary-bg h-10 w-10 rounded-full object-cover"
-			/>
-			<span class="text-lg font-medium">@{user.username}</span>
-		</a>
-	{/each}
 </div>
