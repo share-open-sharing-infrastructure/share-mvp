@@ -26,7 +26,7 @@
 					Ein gemeinnütziger Verleih-Marktplatz. Open-Source. Für alle.
 				</p>
 			</div>
-			<div class="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-6">
+			<div class="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-6">
 				<div>
 					<h2
 						class="mb-4 text-sm font-semibold uppercase text-gray-900 dark:text-white"
