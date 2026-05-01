@@ -6,7 +6,6 @@
 		FooterBrand,
 		FooterLink,
 		FooterLinkGroup,
-		FooterCopyright,
 	} from 'flowbite-svelte';
 </script>
 
@@ -38,10 +37,10 @@
 						AllerLeih
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/guide')}
+						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/guide')}
 							>{texts.nav.guide}</FooterLink
 						>
-						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
+						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
 							>{texts.nav.newsletter}</FooterLink
 						>
 					</FooterLinkGroup>
@@ -53,10 +52,10 @@
 						Über
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/about')}
+						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/about')}
 							>{texts.nav.about}</FooterLink
 						>
-						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
+						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
 							>{texts.nav.contact}</FooterLink
 						>
 					</FooterLinkGroup>
@@ -69,6 +68,7 @@
 					</h2>
 					<FooterLinkGroup>
 						<FooterLink
+							aClass="hover:no-underline"
 							class="mb-2 hover:text-accent"
 							href="https://pixelfed.de/AllerLeih"
 							target="_blank"
@@ -91,6 +91,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
+						aClass="hover:no-underline"
 							class="mb-2 hover:text-accent"
 							href="https://norden.social/@AllerLeih"
 							target="_blank"
@@ -113,6 +114,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
+							aClass="hover:no-underline"
 							class="mb-2 hover:text-accent"
 							href="https://www.instagram.com/aller.leih/"
 							target="_blank"
@@ -143,13 +145,13 @@
 						Rechtliches
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/imprint')}
+						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/imprint')}
 							>{texts.nav.imprint}</FooterLink
 						>
-						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/privacy')}
+						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/privacy')}
 							>{texts.nav.privacy}</FooterLink
 						>
-						<FooterLink class="mb-2 hover:text-accent" href={resolve('/misc/tos')}
+						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/tos')}
 							>{texts.nav.tos}</FooterLink
 						>
 					</FooterLinkGroup>
