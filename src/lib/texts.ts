@@ -166,7 +166,7 @@ export const texts = {
 		noItemsYet: 'Bisher verleihst du noch keine Gegenstände.',
 		noChatsYet: 'Du hast noch keine Chats.',
 		startConversation: 'Starte ein Gespräch, indem du jemanden anschreibst!',
-		trustedOnly: 'Nur an Vertraute',
+		trustedOnly: 'Nur Vertraute',
 		explainThis: 'Erkläre mir das',
 		chooseFromList: 'Wähle eine Anfrage aus der Liste links.',
 		registeredSince: 'Registriert seit:',
@@ -383,7 +383,7 @@ export const texts = {
 			countSome: (n: number) => `Du verleihst ${n} Ding(e)...`,
 			countNone: 'Du verleihst noch keine Ding(e)...',
 			addSingle: 'Dinge einzeln hochladen',
-			addBulk: 'KI-gestützt mehrere Dinge gleichzeitig hochladen',
+			addBulk: 'Mit KI-Bilderkennung hochladen',
 		},
 		profile: {
 			title: 'Mein Profil',

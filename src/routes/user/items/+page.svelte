@@ -51,14 +51,14 @@
 			</Button>
 			<Button
 				href="/user/items/bulk-add"
-				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-secondary-200 bg-secondary-50 hover:bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-100 dark:border-secondary-700"
+				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-secondary-200 bg-accent-100 hover:bg-accent-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
 			>
 				<span class="text-xl">✨</span>
 				{texts.pages.items.addBulk}
 			</Button>
 		</div>
 
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 			{#if data?.items?.length}
 				{#each data.items as item (item.id)}
 					<UserItemCard
