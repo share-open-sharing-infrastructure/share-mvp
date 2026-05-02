@@ -41,7 +41,7 @@
 	}
 </script>
 
-<Navbar class="bg-secondary-200 shadow-sm">
+<Navbar class="bg-sand shadow-sm">
 	<div class="flex items-center">
 		<NavBrand href={resolve('/')}>
 			<div id="beta" class="relative flex flex-col items-center">
