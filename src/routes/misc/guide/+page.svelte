@@ -30,10 +30,10 @@
 <h1 class="mb-3 text-2xl font-bold">{guide.title}</h1>
 <p class="mb-8 text-gray-600">{guide.intro}</p>
 
-<div class="grid gap-6 md:grid-cols-2">
+<div class="grid gap-6 md:grid-cols-2 text-center">
 	<!-- Borrow -->
-	<section class="overflow-hidden rounded-2xl border border-gray-200">
-		<div class="bg-primary-50 px-8 py-4">
+	<section class="overflow-hidden bg-primary-50 rounded-2xl border border-gray-200">
+		<div class="bg-primary-200 px-8 py-4">
 			<h2 class="text-xl font-semibold">{guide.borrowing.title}</h2>
 		</div>
 		<ol class="space-y-6 p-8">
@@ -50,8 +50,8 @@
 	</section>
 
 	<!-- Lend -->
-	<section class="overflow-hidden rounded-2xl border border-gray-200">
-		<div class="bg-accent-100 px-8 py-4">
+	<section class="overflow-hidden bg-accent-50 rounded-2xl border border-gray-200">
+		<div class="bg-accent-200 px-8 py-4">
 			<h2 class="text-xl font-semibold">{guide.lending.title}</h2>
 		</div>
 		<ol class="space-y-6 p-8">
@@ -70,8 +70,8 @@
 
 <hr class="my-10 border-gray-200" />
 
-<h2 class="mb-6 text-xl font-semibold">{guide.faqTitle}</h2>
-<Accordion>
+<h2 class="mb-6 text-2xl font-semibold ">{guide.faqTitle}</h2>
+<Accordion class="bg-white" activeClass="bg-secondary-100">
 	{#each guide.faqItems as item (item.q)}
 		<AccordionItem>
 			{#snippet header()}{item.q}{/snippet}
