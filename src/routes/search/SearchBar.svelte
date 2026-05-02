@@ -52,6 +52,17 @@
 		await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl);
 		inputEl?.focus();
 	}
+
+	async function clearSearch() {
+		inputValue = '';
+		if (debounceTimer) {
+			clearTimeout(debounceTimer);
+			debounceTimer = null;
+		}
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		await goto(resolve('/search'));
+		inputEl?.focus();
+	}
 </script>
 
 <form method="GET" action="/search" class="flex gap-2" onsubmit={handleSubmit}>
@@ -81,8 +92,20 @@
 			autocomplete="off"
 			name="q"
 			placeholder={texts.forms.searchPlaceholder}
-			class="search-bar pulse-shadow block w-full rounded-lg border border-tinte-300 bg-papier p-2.5 pl-10 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400"
+			class="search-bar pulse-shadow block w-full rounded-lg border border-tinte-300 bg-papier p-2.5 pl-10 pr-8 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400 [&::-webkit-search-cancel-button]:hidden"
 		/>
+		{#if inputValue}
+			<button
+				type="button"
+				onclick={clearSearch}
+				aria-label="Suche zurücksetzen"
+				class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-tinte-400 hover:text-tinte-600 dark:hover:text-tinte-200"
+			>
+				<svg class="h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+				</svg>
+			</button>
+		{/if}
 	</div>
 	<Button type="submit" aria-label={texts.buttons.search} class="min-button bg-primary-200 hover:bg-primary shrink-0">
 		<SearchOutline class="h-5 w-5" /> {texts.buttons.search}
