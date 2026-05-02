@@ -19,7 +19,7 @@
 	} = $props();
 </script>
 
-<Gallery class="gap-2 mt-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+<Gallery class="gap-2 mt-4 grid-cols-1 sm:grid-cols-2">
 	{#each filteredItemList as item (item.id)}
 		<ItemCard
 			{item}

@@ -72,10 +72,13 @@
 		
 
 		<h5
-			class="mb-2 text-lg md:text-xl font-bold tracking-tight line-clamp-2 text-tinte-900 dark:text-white"
+			class="mb-2 text-lg font-bold tracking-tight line-clamp-1 text-tinte-900 dark:text-white"
 		>
 			{item.name}
 		</h5>
+		<div class="text-sm line-clamp-2 text-tinte-500 dark:text-tinte-400 mt-2">
+			{item.description}
+		</div>
 		{#if !profileView && travelMinutes !== undefined}
 			<span
 				class="absolute bottom-2 right-2 inline-flex items-center gap-1 text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-primary-100 dark:bg-tinte-700 border border-tinte-200 dark:border-tinte-600 rounded-full px-2.5 py-0.5"
