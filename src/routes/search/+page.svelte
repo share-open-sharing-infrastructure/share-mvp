@@ -6,6 +6,7 @@
 	import CategoryFilter from './CategoryFilter.svelte';
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
+	import { page } from '$app/state';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -95,11 +96,12 @@
 		bind:maxMinutes
 	/>
 
-
-	<div class="w-full items-center justify-center text-center">
-		<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
-	</div>
-	
+	{#if data.q || data.selectedCategories.length > 0}
+		<div class="w-full items-center justify-center text-center mt-2">
+			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
+		</div>
+	{/if}
+			
 	{@render paginationControls()}
 
 	{#if data.q || data.selectedCategories.length > 0}
