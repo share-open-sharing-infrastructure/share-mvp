@@ -211,7 +211,7 @@
 	{#if item.categories && item.categories.length > 0}
 		<div class="flex flex-wrap gap-2">
 			{#each item.categories as cat(cat)}
-				<Badge color="indigo">{cat}</Badge>
+				<Badge color="indigo" class="rounded-lg text-md shadow">{cat}</Badge>
 			{/each}
 		</div>
 	{/if}
@@ -241,7 +241,7 @@
 				</button>
 			</form>
 		{:else if isTrustRestricted}
-			<Button pill disabled class="min-button bg-primary opacity-50 cursor-not-allowed">
+			<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 cursor-not-allowed">
 				<MessagesOutline class="h-4 w-4 mr-2" />
 				{texts.pages.itemDetail.requestButton}
 			</Button>
@@ -252,7 +252,7 @@
 			<form method="POST" action="?/startConversation">
 				<Input name="itemId" value={item.id} hidden />
 				<Input name="ownerId" value={item.expand?.owner?.id} hidden />
-				<Button pill type="submit" class="cursor-pointer min-button bg-primary">
+				<Button pill type="submit" class="cursor-pointer min-button bg-primary-200 hover:bg-primary">
 					<MessagesOutline class="h-4 w-4 mr-2" />
 					{texts.pages.itemDetail.requestButton}
 				</Button>
