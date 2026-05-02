@@ -37,10 +37,10 @@
 						AllerLeih
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/guide')}
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/guide')}
 							>{texts.nav.guide}</FooterLink
 						>
-						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
 							>{texts.nav.newsletter}</FooterLink
 						>
 					</FooterLinkGroup>
@@ -52,10 +52,10 @@
 						Über
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/about')}
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/about')}
 							>{texts.nav.about}</FooterLink
 						>
-						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
 							>{texts.nav.contact}</FooterLink
 						>
 					</FooterLinkGroup>
@@ -68,7 +68,7 @@
 					</h2>
 					<FooterLinkGroup>
 						<FooterLink
-							aClass="hover:no-underline"
+							classes={{ link: "hover:no-underline" }}
 							class="mb-2 hover:text-accent"
 							href="https://pixelfed.de/AllerLeih"
 							target="_blank"
@@ -91,7 +91,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
-						aClass="hover:no-underline"
+							classes={{ link: "hover:no-underline" }}
 							class="mb-2 hover:text-accent"
 							href="https://norden.social/@AllerLeih"
 							target="_blank"
@@ -114,7 +114,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
-							aClass="hover:no-underline"
+							classes={{ link: "hover:no-underline" }}
 							class="mb-2 hover:text-accent"
 							href="https://www.instagram.com/aller.leih/"
 							target="_blank"
@@ -145,13 +145,13 @@
 						Rechtliches
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/imprint')}
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/imprint')}
 							>{texts.nav.imprint}</FooterLink
 						>
-						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/privacy')}
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/privacy')}
 							>{texts.nav.privacy}</FooterLink
 						>
-						<FooterLink aClass="hover:no-underline" class="mb-2 hover:text-accent" href={resolve('/misc/tos')}
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/tos')}
 							>{texts.nav.tos}</FooterLink
 						>
 					</FooterLinkGroup>
