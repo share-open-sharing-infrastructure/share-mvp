@@ -46,7 +46,7 @@
 				class="rounded-full border px-3 py-1 text-sm font-medium transition-colors cursor-pointer
 					{active
 					? 'bg-primary border-primary text-white'
-					: 'border-tinte-300 bg-sand text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary'}"
+					: 'border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary'}"
 			>
 				{cat}
 			</button>
