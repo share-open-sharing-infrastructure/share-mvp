@@ -30,18 +30,17 @@
 <h1 class="mb-3 text-2xl font-bold">{guide.title}</h1>
 <p class="mb-8 text-gray-600">{guide.intro}</p>
 
-<div class="grid gap-6 md:grid-cols-2 text-center">
+<div class="grid gap-6 md:grid-cols-2 ">
 	<!-- Borrow -->
 	<section class="overflow-hidden bg-primary-50 rounded-2xl border border-gray-200">
 		<div class="bg-primary-200 px-8 py-4">
-			<h2 class="text-xl font-semibold">{guide.borrowing.title}</h2>
+			<h2 class="text-xl font-semibold text-center">{guide.borrowing.title}</h2>
 		</div>
 		<ol class="space-y-6 p-8">
 			{#each guide.borrowing.steps as step, i (i)}
-				{@const Icon = borrowingIcons[i]}
 				<li>
-					<p class="flex items-center justify-center gap-2 font-semibold leading-snug">
-						<Icon class="h-5 w-5 shrink-0 text-accent" />{step.label}
+					<p class="flex items-center gap-2 font-semibold leading-snug">
+						<span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-400 text-xs font-bold text-white">{i + 1}</span>{step.label}
 					</p>
 					<p class="mt-1 text-sm leading-relaxed text-gray-600">{step.text}</p>
 				</li>
@@ -52,14 +51,15 @@
 	<!-- Lend -->
 	<section class="overflow-hidden bg-accent-50 rounded-2xl border border-gray-200">
 		<div class="bg-accent-200 px-8 py-4">
-			<h2 class="text-xl font-semibold">{guide.lending.title}</h2>
+			<h2 class="text-xl font-semibold text-center">{guide.lending.title}</h2>
 		</div>
 		<ol class="space-y-6 p-8">
 			{#each guide.lending.steps as step, i (i)}
-				{@const Icon = lendingIcons[i]}
+				<!-- {@const Icon = lendingIcons[i]} -->
 				<li>
-					<p class="flex items-center justify-center gap-2 font-semibold leading-snug">
-						<Icon class="h-5 w-5 shrink-0 text-accent" />{step.label}
+					<p class="flex items-center gap-2 font-semibold leading-snug">
+						<span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-400 text-xs font-bold text-white">{i + 1}</span>{step.label}
+						<!-- <Icon class="h-5 w-5 shrink-0 text-accent" /> -->
 					</p>
 					<p class="mt-1 text-sm leading-relaxed text-gray-600">{step.text}</p>
 				</li>

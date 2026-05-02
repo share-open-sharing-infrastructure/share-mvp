@@ -262,10 +262,10 @@ export const texts = {
 					},
 					{
 						label: 'Anfragen',
-						text: 'Schreibe der verleihenden Person direkt. Falls sie Signal oder Telegram hinterlegt hat, kannst du sie auch darüber erreichen. Bei externen Angeboten wirst du ggf. weitergeleitet.',
+						text: 'Schreibe der verleihenden Person direkt. Falls sie Signal oder Telegram hinterlegt hat, auch darüber. Bei externen Angeboten wirst du unter Umständen weitergeleitet.',
 					},
 					{
-						label: 'Abstimmen',
+						label: 'Austauschen',
 						text: 'Macht miteinander aus, wo, wie und wann ihr die Übergabe(n) macht.',
 					},
 					{
@@ -279,19 +279,20 @@ export const texts = {
 				steps: [
 					{
 						label: 'Hochladen',
-						text: 'Füge deine Gegenstände in deinem Profil hinzu – mit Foto, Kurzbeschreibung und Kategorie. Du kannst auch Fotos deiner Gegenstände hochladen und von unserer KI erkennen lassen, um Zeit zu sparen.',
+						text: 'Füge Dinge in deinem Profil hinzu. \
+						Du kannst Dinge auch von unserer KI erkennen lassen, um Zeit zu sparen.',
+					},
+					{
+						label: 'Vertrauen nutzen',
+						text: 'Füge Vertraute hinzu oder schick ihnen eine Einladung. Stelle je Gegenstand ein, ob du ihn nur an Vertraute verleihen willst.',
 					},
 					{
 						label: 'Anfragen empfangen',
 						text: 'Interessierte melden sich direkt bei dir. Du entscheidest, ob und wann du verleihst.',
 					},
 					{
-						label: 'Vertrauen nutzen',
-						text: 'Bestimmte Dinge nur an bekannte Personen verleihen? Mit der Vertrauensfunktion hast du die volle Kontrolle.',
-					},
-					{
 						label: 'Verfügbarkeit verwalten',
-						text: 'Setze Gegenstände auf „nicht verfügbar", solange sie unterwegs sind oder wenn du mal keine Zeit für neue Anfragen hast.',
+						text: 'Setze Gegenstände auf „nicht verfügbar", solange sie unterwegs sind oder du mal keine Zeit oder Lust auf neue Anfragen hast.',
 					},
 				],
 			},
