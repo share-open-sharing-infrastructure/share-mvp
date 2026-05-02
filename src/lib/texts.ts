@@ -352,6 +352,7 @@ export const texts = {
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
+			randomItemsHeading: 'Entdecke Gegenstände',
 		},
 		logout: {
 			message: 'Ausloggen...',

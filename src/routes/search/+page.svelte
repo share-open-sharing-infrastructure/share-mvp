@@ -96,15 +96,21 @@
 		bind:maxMinutes
 	/>
 
+	{#if data.isRandom}
+		<div class="w-full text-center mt-4 mb-2">
+			<h5 class="text-tinte-500">{texts.pages.search.randomItemsHeading}</h5>
+		</div>
+	{/if}
+
 	{#if data.q || data.selectedCategories.length > 0}
 		<div class="w-full items-center justify-center text-center mt-2">
 			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
 		</div>
 	{/if}
-			
+
 	{@render paginationControls()}
 
-	{#if data.q || data.selectedCategories.length > 0}
+	{#if data.q || data.selectedCategories.length > 0 || data.isRandom}
 		<ResultsList
 			filteredItemList={filteredItems}
 			PB_IMG_URL={data.PB_IMG_URL}
