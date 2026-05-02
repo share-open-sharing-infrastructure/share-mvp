@@ -57,7 +57,7 @@
   <li>dass die Inhalte keine kommerzielle Werbung darstellen, soweit sie nicht der eigentlichen Funktion (Verleih eines Gegenstands an andere Nutzende) dienen.</li>
 </ul>
 
-<p>Mit dem Einstellen räumst du AllerLeih ein einfaches, räumlich auf den notwendigen Bereich beschränktes, zeitlich auf die Dauer deines Account-Bestands befristetes Nutzungsrecht ein, das ausschließlich der Anzeige der Inhalte innerhalb der Plattform sowie deren technischer Verarbeitung (z. B. Speicherung, Skalierung von Bildern) dient. Eine darüber hinausgehende Nutzung — insbesondere zu Werbe- oder Trainingszwecken — findet nicht statt; siehe auch <a href={resolve('/misc/datenschutz')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a>.</p>
+<p>Mit dem Einstellen räumst du AllerLeih ein einfaches, räumlich auf den notwendigen Bereich beschränktes, zeitlich auf die Dauer deines Account-Bestands befristetes Nutzungsrecht ein, das ausschließlich der Anzeige der Inhalte innerhalb der Plattform sowie deren technischer Verarbeitung (z. B. Speicherung, Skalierung von Bildern) dient. Eine darüber hinausgehende Nutzung — insbesondere zu Werbe- oder Trainingszwecken — findet nicht statt; siehe auch <a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a>.</p>
 
 <p>Wir behalten uns vor, Inhalte zu entfernen, die gegen diese AGB, gegen geltendes Recht oder gegen den Charakter einer respektvollen, nicht-kommerziellen Sharing-Plattform verstoßen. Bei wiederholten oder schwerwiegenden Verstößen können wir den Account vorübergehend oder dauerhaft sperren.</p>
 
@@ -106,7 +106,7 @@
 
 <p>AllerLeih wird als nicht-kommerzielles, im Aufbau befindliches Projekt betrieben. Eine bestimmte Verfügbarkeit, Funktionalität oder Datenverfügbarkeit der Plattform wird nicht zugesichert. Wartungsarbeiten, Ausfälle, technische Fehler oder vorübergehende Funktionseinschränkungen sind möglich.</p>
 
-<p>Die Plattform befindet sich derzeit in einer öffentlichen Beta-Phase. In dieser Phase werden regelmäßig neue Funktionen eingeführt, getestet, geändert oder zurückgenommen. Wir bemühen uns, dich über wesentliche Änderungen zu informieren — eine Verpflichtung dazu besteht jedoch nur im Rahmen dieser AGB und der <a href={resolve('/misc/datenschutz')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a>.</p>
+<p>Die Plattform befindet sich derzeit in einer öffentlichen Beta-Phase. In dieser Phase werden regelmäßig neue Funktionen eingeführt, getestet, geändert oder zurückgenommen. Wir bemühen uns, dich über wesentliche Änderungen zu informieren — eine Verpflichtung dazu besteht jedoch nur im Rahmen dieser AGB und der <a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a>.</p>
 
 <p>Wir können den Dienst — auch ohne Angabe von Gründen — zeitweise oder dauerhaft einstellen. In diesem Fall werden wir dich mit angemessener Frist informieren und dir, soweit technisch möglich, einen Datenexport ermöglichen.</p>
 
@@ -114,7 +114,7 @@
 
 <h2 class="text-xl font-semibold">9. Sperrung und Kündigung</h2>
 
-<p>Du kannst deinen Account jederzeit ohne Angabe von Gründen löschen. Die Löschung erfolgt auf Anfrage über <a href="mailto:kontakt@allerleih.org" class="text-primary-600 hover:underline">kontakt@allerleih.org</a> oder, soweit eine entsprechende Selbstbedienungsfunktion verfügbar ist, direkt in deinem Profil. Mit der Account-Löschung werden deine personenbezogenen Daten gemäß <a href={resolve('/misc/datenschutz')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> gelöscht.</p>
+<p>Du kannst deinen Account jederzeit ohne Angabe von Gründen löschen. Die Löschung erfolgt auf Anfrage über <a href="mailto:kontakt@allerleih.org" class="text-primary-600 hover:underline">kontakt@allerleih.org</a> oder, soweit eine entsprechende Selbstbedienungsfunktion verfügbar ist, direkt in deinem Profil. Mit der Account-Löschung werden deine personenbezogenen Daten gemäß <a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> gelöscht.</p>
 
 <p>Wir können deinen Account vorübergehend sperren oder dauerhaft kündigen, wenn:</p>
 
@@ -153,7 +153,7 @@
 
 <h2 class="text-xl font-semibold">11. Externe Dienste und Datenschutz</h2>
 
-<p>Welche personenbezogenen Daten wir verarbeiten, an welche Auftragsverarbeiter wir sie weitergeben und auf welcher Rechtsgrundlage dies geschieht, ist abschließend in unserer <a href={resolve('/misc/datenschutz')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> geregelt. Diese ist Bestandteil der vorvertraglichen Information und unter <code>allerleih.org/misc/datenschutz</code> jederzeit abrufbar.</p>
+<p>Welche personenbezogenen Daten wir verarbeiten, an welche Auftragsverarbeiter wir sie weitergeben und auf welcher Rechtsgrundlage dies geschieht, ist abschließend in unserer <a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> geregelt. Diese ist Bestandteil der vorvertraglichen Information und unter <code>allerleih.org/misc/privacy</code> jederzeit abrufbar.</p>
 
 <hr />
 
@@ -173,7 +173,7 @@
 
 <p>Mit Annahme dieser AGB stimmst du dem Übergang deines Vertragsverhältnisses auf die AllerLeih gUG zum Zeitpunkt von deren Gründung und Eintragung im Handelsregister zu, sofern wir dich rechtzeitig vorher in der Anwendung über den Übergang informieren. Du erhältst die Möglichkeit, deinen Account vor dem Übergang zu löschen, wenn du dem Übergang nicht zustimmen möchtest.</p>
 
-<p>Eine erneute Einwilligung in die <a href={resolve('/misc/datenschutz')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> und in diese AGB werden wir, soweit rechtlich erforderlich, beim Trägerwechsel einholen.</p>
+<p>Eine erneute Einwilligung in die <a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> und in diese AGB werden wir, soweit rechtlich erforderlich, beim Trägerwechsel einholen.</p>
 
 <hr />
 
