@@ -49,7 +49,7 @@
 	<!-- On desktop, indent to align with the input column (sm:w-36 + sm:gap-4 = sm:pl-40) -->
 	<div class="sm:pl-40 mt-2">
 		<Label class="flex">
-			<Toggle name={visibilityToggleName} checked={visibilityToggleChecked}>
+			<Toggle spanClass="bg-primary-300 peer-checked:bg-safety" name={visibilityToggleName} checked={visibilityToggleChecked}>
 				{texts.messenger.visibleToTrustedOnly}
 			</Toggle>
 		</Label>

@@ -51,7 +51,7 @@
 			</Button>
 			<Button
 				href="/user/items/bulk-add"
-				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-secondary-200 bg-accent-100 hover:bg-accent-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
+				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-primary-400 bg-primary-100 hover:bg-primary-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
 			>
 				<span class="text-xl">✨</span>
 				{texts.pages.items.addBulk}

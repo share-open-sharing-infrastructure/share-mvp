@@ -111,7 +111,7 @@
 				
 				<!-- Submit Button -->
 				<div class="pt-4 justify-end flex">
-					<Button class="min-button bg-primary" type="submit">
+					<Button class="min-button bg-primary-200 hover:bg-primary" type="submit">
 						{texts.buttons.save}
 					</Button>
 				</div>

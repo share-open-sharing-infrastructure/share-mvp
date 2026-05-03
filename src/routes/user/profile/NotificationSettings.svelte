@@ -71,10 +71,10 @@
 					{texts.pages.profile.notifications.enabled}
 				</p>
 				<div class="flex gap-2">
-					<Button class="min-button bg-tinte-200 text-tinte-800 dark:bg-tinte-600 dark:text-white" onclick={deactivateNotifications}>
+					<Button class="min-button bg-tinte-200 hover:bg-accent-300 text-tinte-800 dark:bg-tinte-600 dark:text-white" onclick={deactivateNotifications}>
 						{texts.pages.profile.notifications.deactivateThisDevice}
 					</Button>
-					<Button class="min-button bg-tinte-200 text-tinte-800 dark:bg-tinte-600 dark:text-white" onclick={deactivateAllNotifications}>
+					<Button class="min-button bg-tinte-200 hover:bg-accent-300 text-tinte-800 dark:bg-tinte-600 dark:text-white" onclick={deactivateAllNotifications}>
 						{texts.pages.profile.notifications.deactivateAllDevices}
 					</Button>
 				</div>
@@ -90,7 +90,7 @@
 				<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-4">
 					{texts.pages.profile.notifications.description}
 				</p>
-				<Button class="min-button bg-primary" onclick={enableNotifications}>
+				<Button class="min-button bg-primary-200 hover:bg-primary" onclick={enableNotifications}>
 					{texts.pages.profile.notifications.enable}
 				</Button>
 			{/if}

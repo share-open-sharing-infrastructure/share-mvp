@@ -148,7 +148,7 @@
 				type="file"
 				id="with_helper"
 				name="itemImage"
-				class="mb-2 min-button bg-primary"
+				class="mb-2 min-button bg-primary-200"
 				accept="image/*"
 				onchange={handleFileChange}
 			/>
@@ -202,6 +202,7 @@
 		<Label class="flex">
 			<Toggle
 				name="trusteesOnly"
+				spanClass="bg-primary-300 peer-checked:bg-safety" 
 				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
 				>{texts.ui.trustedOnly}</Toggle
 			>
@@ -218,6 +219,7 @@
 		{#if type === 'edit'}
 			<Label class="flex">
 				<Toggle
+					spanClass="bg-primary-300 peer-checked:bg-safety" 
 					name="isAvailable"
 					bind:checked={isAvailable}
 					>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle
@@ -234,7 +236,7 @@
 		{/if}
 
 		<!-- SUBMIT BUTTON -->
-		<Button class="min-button bg-primary" type="submit">
+		<Button class="min-button bg-primary-200 hover:bg-primary" type="submit">
 			{type === 'edit' ? texts.buttons.save : texts.buttons.add}
 		</Button>
 	</form>
@@ -256,7 +258,7 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button class="min-button bg-danger" type="submit"
+			<Button class="min-button bg-accent-200 hover:bg-danger" type="submit"
 				>{texts.buttons.delete}</Button
 			>
 		</form>
