@@ -10,7 +10,7 @@
 		Button,
 		Tooltip
 	} from 'flowbite-svelte';
-	import { UserAddOutline } from 'flowbite-svelte-icons';
+	import { UserAddOutline, ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -66,10 +66,7 @@
 		currentPage = 0;
 	}
 
-	function sortIcon(col: SortCol) {
-		if (sortCol !== col) return '↕';
-		return sortDir === 'asc' ? '↑' : '↓';
-	}
+
 </script>
 
 <svelte:head>
@@ -160,6 +157,16 @@
 	</div>
 </div>
 
+{#snippet sortIcon(col: SortCol)}
+	{#if sortCol !== col}
+		<ArrowUpDownOutline class="shrink-0 h-3 w-3" />
+	{:else if sortDir === 'asc'}
+		<ArrowUpOutline class="shrink-0 h-3 w-3" />
+	{:else}
+		<ArrowDownOutline class="shrink-0 h-3 w-3" />
+	{/if}
+{/snippet}
+
 <!-- TRUST NETWORK TABLE -->
 <div class="mx-auto max-w-2xl px-2">
 	<Table hoverable divClass="relative overflow-x-auto bg-transparent" class="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-transparent">
@@ -171,19 +178,19 @@
 					class="cursor-pointer select-none bg-transparent!"
 					onclick={() => toggleSort('username')}
 				>
-					Nutzer:in {sortIcon('username')}
+					<span class="flex items-center gap-1 whitespace-nowrap">Nutzer:in {@render sortIcon('username')}</span>
 				</TableHeadCell>
 				<TableHeadCell
 					class="cursor-pointer select-none text-center bg-transparent!"
 					onclick={() => toggleSort('theyTrustMe')}
 				>
-					{texts.ui.theyTrustYou} {sortIcon('theyTrustMe')}
+					<span class="flex items-center gap-1 whitespace-nowrap">{texts.ui.theyTrustYou} {@render sortIcon('theyTrustMe')}</span>
 				</TableHeadCell>
 				<TableHeadCell
 					class="cursor-pointer select-none text-center bg-transparent!"
 					onclick={() => toggleSort('iTrustThem')}
 				>
-					{texts.ui.youTrustThem} {sortIcon('iTrustThem')}
+					<span class="flex items-center gap-1 whitespace-nowrap">{texts.ui.youTrustThem} {@render sortIcon('iTrustThem')}</span>
 				</TableHeadCell>
 			</tr>
 			<!-- Filter row -->
