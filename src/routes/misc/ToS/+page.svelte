@@ -153,7 +153,7 @@
 
 <h2 class="text-xl font-semibold">11. Externe Dienste und Datenschutz</h2>
 
-<p>Welche personenbezogenen Daten wir verarbeiten, an welche Auftragsverarbeiter wir sie weitergeben und auf welcher Rechtsgrundlage dies geschieht, ist abschließend in unserer <a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> geregelt. Diese ist Bestandteil der vorvertraglichen Information und unter <code>allerleih.org/misc/privacy</code> jederzeit abrufbar.</p>
+<p>Welche personenbezogenen Daten wir verarbeiten, an welche Auftragsverarbeiter wir sie weitergeben und auf welcher Rechtsgrundlage dies geschieht, ist abschließend in unserer <a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">Datenschutzerklärung allerleih.org</a> geregelt. Diese ist Bestandteil der vorvertraglichen Information und unter <code><a href={resolve('/misc/privacy')} class="text-primary-600 hover:underline">allerleih.org/misc/privacy</a></code> jederzeit abrufbar.</p>
 
 <hr />
 
