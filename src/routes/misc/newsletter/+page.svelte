@@ -58,10 +58,10 @@
 				<Button
 					type="submit"
 					class="
-						me-2 mt-3 w-full min-button bg-primary cursor-pointer">{texts.buttons.newsletter}</Button
+						me-2 mt-3 w-full min-button bg-primary-200 hover:bg-primary cursor-pointer">{texts.buttons.newsletter}</Button
 				>
 			</form>
-			<div class="text-xs">
+			<div class="text-sm">
 				Wir senden keinen Spam und schicken maximal 1x pro Monat eine Mail.
 				Deine Daten liegen sicher auf europäischen Servern bei unserem
 				open-source Newsletter-Anbieter <a
