@@ -243,7 +243,7 @@
 							type="checkbox"
 							checked={entry.theyTrustMe}
 							disabled
-							class="w-4 h-4 rounded border-gray-300 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600"
+							class="w-4 h-4 rounded border-tinte-600 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600"
 						/>
 					</TableBodyCell>
 
@@ -258,7 +258,7 @@
 							<input
 								type="checkbox"
 								checked={entry.iTrustThem}
-								class="w-4 h-4 rounded border-gray-300 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer focus:ring-primary-500"
+								class="w-4 h-4 rounded border-tinte-600 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer focus:ring-primary-500"
 								onchange={(e) => (e.target as HTMLInputElement).form?.requestSubmit()}
 							/>
 						</form>
