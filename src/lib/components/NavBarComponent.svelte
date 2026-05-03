@@ -45,9 +45,9 @@
 	<div class="flex items-center">
 		<NavBrand href={resolve('/')}>
 			<div id="beta" class="relative flex flex-col items-center">
-				<img src="/AllerLeih_logo.svg" alt={texts.names.app} class="h-16" />
+				<img src="/AllerLeih.png" alt={texts.names.app} class="h-10" />
 				<span
-						class="absolute top-15 text-[10px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
+						class="absolute top-7 bg-accent-100 -right-3 -rotate-25 text-[12px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
 					>
 						Beta
 					</span>

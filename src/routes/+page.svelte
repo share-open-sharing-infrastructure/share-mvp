@@ -42,7 +42,7 @@
 			{t.welcome} 
 			
 		</h1> -->
-		<img src="/AllerLeih.svg" alt={texts.names.app} class="h-32 mx-auto mb-4" />
+		<img src="/AllerLeih.png" alt={texts.names.app} class="h-32 mx-auto mb-4" />
 		<p class="font-light text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8">
 			{t.tagline} <span class="font-bold text-tinte-700">{t.city}</span>
 		</p>

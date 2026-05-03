@@ -19,7 +19,7 @@
 					name=""
 					aClass="flex items-center"
 				>
-					<img src="/AllerLeih.svg" class="mr-3 h-12" alt={texts.names.app} />
+					<img src="/AllerLeih.png" class="mr-3 h-12" alt={texts.names.app} />
 					<p class="max-w-xs text-sm text-light">
 						Ein gemeinnütziger Verleih-Marktplatz.<br/>
 						<a href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="external noopener noreferrer" class="text-accent hover:underline">

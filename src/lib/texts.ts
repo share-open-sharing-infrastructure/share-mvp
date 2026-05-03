@@ -216,7 +216,7 @@ export const texts = {
 			tagline: 'Leihe und teile Dinge in',
 			ctaButtonSearch: 'Dinge Finden',
 			ctaButtonUpload: 'Dinge Verleihen',
-			city: 'Lüneburg.',
+			city: 'Lüneburg',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',
