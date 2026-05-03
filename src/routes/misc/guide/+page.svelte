@@ -71,7 +71,7 @@
 <hr class="my-10 border-gray-200" />
 
 <h2 class="mb-6 text-2xl font-semibold ">{guide.faqTitle}</h2>
-<Accordion class="bg-white" activeClass="bg-secondary-100">
+<Accordion class="bg-white" activeClass="bg-primary-100 font-semibold">
 	{#each guide.faqItems as item (item.q)}
 		<AccordionItem>
 			{#snippet header()}{item.q}{/snippet}
