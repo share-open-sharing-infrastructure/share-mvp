@@ -23,7 +23,7 @@
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
 		<h2
-			class="text-2xl tracking-tight font-extrabold text-gray-900 dark:text-white"
+			class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white"
 		>
 			{texts.pages.items.title}
 		</h2>
@@ -37,7 +37,7 @@
 	</div>
 </div>
 
-<section class="bg-white dark:bg-gray-900 min-h-screen">
+<section class="bg-secondary-100 dark:bg-tinte-900 min-h-screen">
 	<div class="max-w-7xl mx-auto px-4 pt-6">
 
 		<!-- Action buttons -->
@@ -51,14 +51,14 @@
 			</Button>
 			<Button
 				href="/user/items/bulk-add"
-				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-secondary-200 bg-secondary-50 hover:bg-secondary-100 text-secondary-800 dark:bg-secondary-900 dark:text-secondary-100 dark:border-secondary-700"
+				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-primary-400 bg-primary-100 hover:bg-primary-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
 			>
 				<span class="text-xl">✨</span>
 				{texts.pages.items.addBulk}
 			</Button>
 		</div>
 
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 			{#if data?.items?.length}
 				{#each data.items as item (item.id)}
 					<UserItemCard

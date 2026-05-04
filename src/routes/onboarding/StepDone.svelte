@@ -19,10 +19,10 @@
 </script>
 
 <div class="text-center space-y-2 mb-8">
-	<h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+	<h2 class="text-2xl font-bold text-tinte-900 dark:text-white">
 		{texts.onboarding.done.title}
 	</h2>
-	<p class="text-sm text-gray-600 dark:text-gray-400">
+	<p class="text-sm text-tinte-600 dark:text-tinte-400">
 		{texts.onboarding.done.subtitle}
 	</p>
 </div>
@@ -47,7 +47,7 @@
 	<button
 		type="button"
 		onclick={copyInviteLink}
-		class="flex items-center gap-3 w-full py-4 px-5 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 font-semibold rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+		class="flex items-center gap-3 w-full py-4 px-5 bg-sand dark:bg-tinte-700 border border-tinte-200 dark:border-tinte-600 text-tinte-800 dark:text-tinte-200 font-semibold rounded-xl hover:bg-papier dark:hover:bg-tinte-600 transition-colors cursor-pointer"
 	>
 		<span class="text-xl">🤝</span>
 		<span>{inviteCopied ? 'Link kopiert!' : texts.onboarding.done.inviteCta}</span>

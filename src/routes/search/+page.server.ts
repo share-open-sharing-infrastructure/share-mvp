@@ -15,8 +15,20 @@ export async function load({ locals, url }) {
 	const op: 'or' | 'and' = url.searchParams.get('op') === 'and' ? 'and' : 'or';
 
 	if (!q && selectedCategories.length === 0) {
+		const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
+		const trustFilter = locals.user
+			? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
+			: `trusteesOnly = false`;
+		const filter = [ownerFilter, trustFilter].filter(Boolean).join(' && ') || undefined;
+
+		const result = await locals.pb.collection('items').getList<Item>(1, 8, {
+			expand: 'owner',
+			sort: '@random',
+			filter,
+		});
+
 		return {
-			items: [] as Item[],
+			items: result.items,
 			PB_IMG_URL: PUBLIC_PB_URL,
 			q: '',
 			selectedCategories,
@@ -24,8 +36,9 @@ export async function load({ locals, url }) {
 			currentUser: locals.user ?? null,
 			page: 1,
 			perPage,
-			totalItems: 0,
+			totalItems: result.totalItems,
 			totalPages: 0,
+			isRandom: true,
 		};
 	}
 

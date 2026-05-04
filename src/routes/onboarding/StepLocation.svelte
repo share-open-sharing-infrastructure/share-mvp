@@ -15,10 +15,10 @@
 </script>
 
 <div class="space-y-4">
-	<h2 class="text-xl font-bold text-gray-900 dark:text-white text-center">
+	<h2 class="text-xl font-bold text-tinte-900 dark:text-white text-center">
 		{texts.onboarding.location.title}
 	</h2>
-	<p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+	<p class="text-sm text-tinte-600 dark:text-tinte-400 leading-relaxed">
 		{texts.onboarding.location.explanation}
 	</p>
 

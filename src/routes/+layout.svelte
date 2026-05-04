@@ -7,7 +7,10 @@
 	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
+	import { beforeNavigate, afterNavigate } from '$app/navigation';
 	import { dev } from '$app/environment';
+	import { fade } from 'svelte/transition';
+	import AllerLoader from '$lib/components/AllerLoader.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	interface BeforeInstallPromptEvent extends Event {
@@ -16,6 +19,10 @@
 	}
 
 	let { children, data } = $props();
+
+	let isNavigating = $state(false);
+	beforeNavigate(() => { isNavigating = true; });
+	afterNavigate(() => { isNavigating = false; });
 
 	// eslint-disable-next-line svelte/prefer-writable-derived
 	let unreadCount = $state(0);
@@ -90,7 +97,7 @@
 	<meta property="og:locale" content="de_DE" />
 </svelte:head>
 
-<div class="min-h-screen flex flex-col">
+<div class="min-h-screen flex flex-col bg-secondary-100">
 	{#if page.url.pathname !== '/onboarding'}
 		<NavBarComponent
 			loggedIn={!!data.currentUser}
@@ -99,7 +106,7 @@
 		/>
 	{/if}
 
-	<main class="flex-1">
+	<main class="flex-1 py-8">
 		<!--
 			Dev-only workaround. SvelteKit 2 + Svelte 5 in `vite dev` intermittently
 			fails to remove the previous route's DOM from {@render children()} when
@@ -119,6 +126,18 @@
 			{@render children()}
 		{/if}
 	</main>
+
+	{#if isNavigating}
+		<div
+			in:fade={{ delay: 200, duration: 150 }}
+			out:fade={{ duration: 80 }}
+			class="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm"
+			aria-live="polite"
+			aria-busy="true"
+		>
+			<AllerLoader size={80} variant="rotate" />
+		</div>
+	{/if}
 
 	<PwaPrompts
 		loggedIn={!!data.currentUser}

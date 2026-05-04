@@ -37,7 +37,7 @@ export const texts = {
 		login: 'Login',
 		register: 'Registrieren',
 		search: 'Suche',
-		requests: 'Anfragen',
+		requests: 'Unterhaltungen',
 		notifications: 'Benachrichtigungen',
 		myItems: 'Meine Dinge',
 		myProfile: 'Mein Profil',
@@ -93,6 +93,7 @@ export const texts = {
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
 		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
+		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
 	},
 
 	// Messenger contact
@@ -165,7 +166,7 @@ export const texts = {
 		noItemsYet: 'Bisher verleihst du noch keine Gegenstände.',
 		noChatsYet: 'Du hast noch keine Chats.',
 		startConversation: 'Starte ein Gespräch, indem du jemanden anschreibst!',
-		trustedOnly: 'Nur an Vertraute',
+		trustedOnly: 'Nur Vertraute',
 		explainThis: 'Erkläre mir das',
 		chooseFromList: 'Wähle eine Anfrage aus der Liste links.',
 		registeredSince: 'Registriert seit:',
@@ -182,13 +183,18 @@ export const texts = {
 		trustDescription:
 			'Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.',
 		trustLink: 'Vertrauensfunktion',
-		trustedPeople: 'Vertraute Personen',
+		trustedPeople: 'Vertrauensnetzwerk',
 		trustedByPeople: 'Personen, die dir vertrauen',
 		noOneTrustsYet: 'Noch vertraut dir niemand.',
 		trustDescriptionSocial:
 			'Füge Menschen hinzu, denen du einen guten Umgang mit deinen Dingen',
 		yourItemsLink: 'deine Dinge',
 		revokeTrust: 'das Vertrauen entziehen',
+		trustNetworkEmpty: 'Noch keine Verbindungen. Füge Kontakte hinzu!',
+		trustMutual: 'Gegenseitig',
+		youTrustThem: 'Du vertraust',
+		theyTrustYou: 'Vertraut dir',
+		trustBack: 'Auch vertrauen',
 		allRequests: 'Alle Anfragen',
 		noRequestsYet:
 			'Falls du noch keine Anfragen gestellt oder bekommen hast, nutze die',
@@ -208,15 +214,24 @@ export const texts = {
 	pages: {
 		landing: {
 			tagline: 'Leihe und teile Dinge in',
-			ctaButtonSearch: 'Suche nach Dingen',
-			ctaButtonUpload: 'Biete selbst etwas an',
-			city: 'Lüneburg.',
+			ctaButtonSearch: 'Dinge Finden',
+			ctaButtonUpload: 'Dinge Verleihen',
+			city: 'Lüneburg',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',
+			welcome: 'Willkommen bei',
 			how: 'Wie funktioniert das?',
+			howLinkText: 'Hier',
+			howBodyPart1: 'geben wir dir eine kurze Einführung, wie du',
+			howBodyPart2: 'nutzen kannst, um Dinge in deiner Umgebung zu leihen oder zu verleihen.',
 			who: 'Wer sind wir?',
-			support: 'Was passiert gerade?'
+			whoBodyPart1: 'Wir sind noch im Aufbau, aber du kannst uns gerne jederzeit',
+			whoLinkText: 'kontaktieren',
+			whoBodyPart2: ', wenn du Fragen hast oder uns unterstützen willst!',
+			support: 'Was passiert gerade?',
+			supportBodyPart1: 'Wir befinden uns derzeit in einer Testphase mit einer kleinen Gruppe von Nutzer:innen. Wenn du Interesse hast, an diesem Test teilzunehmen,',
+			supportLinkText: 'melde dich bei uns'
 		},
 		about: {
 			title: 'Über AllerLeih',
@@ -247,10 +262,10 @@ export const texts = {
 					},
 					{
 						label: 'Anfragen',
-						text: 'Schreibe der verleihenden Person direkt. Falls sie Signal oder Telegram hinterlegt hat, kannst du sie auch darüber erreichen. Bei externen Angeboten wirst du ggf. weitergeleitet.',
+						text: 'Schreibe der verleihenden Person direkt. Falls sie Signal oder Telegram hinterlegt hat, auch darüber. Bei externen Angeboten wirst du unter Umständen weitergeleitet.',
 					},
 					{
-						label: 'Abstimmen',
+						label: 'Austauschen',
 						text: 'Macht miteinander aus, wo, wie und wann ihr die Übergabe(n) macht.',
 					},
 					{
@@ -264,19 +279,20 @@ export const texts = {
 				steps: [
 					{
 						label: 'Hochladen',
-						text: 'Füge deine Gegenstände in deinem Profil hinzu – mit Foto, Kurzbeschreibung und Kategorie. Du kannst auch Fotos deiner Gegenstände hochladen und von unserer KI erkennen lassen, um Zeit zu sparen.',
+						text: 'Füge Dinge in deinem Profil hinzu. \
+						Du kannst Dinge auch von unserer KI erkennen lassen, um Zeit zu sparen.',
+					},
+					{
+						label: 'Vertrauen nutzen',
+						text: 'Füge Vertraute hinzu oder schick ihnen eine Einladung. Stelle je Gegenstand ein, ob du ihn nur an Vertraute verleihen willst.',
 					},
 					{
 						label: 'Anfragen empfangen',
 						text: 'Interessierte melden sich direkt bei dir. Du entscheidest, ob und wann du verleihst.',
 					},
 					{
-						label: 'Vertrauen nutzen',
-						text: 'Bestimmte Dinge nur an bekannte Personen verleihen? Mit der Vertrauensfunktion hast du die volle Kontrolle.',
-					},
-					{
 						label: 'Verfügbarkeit verwalten',
-						text: 'Setze Gegenstände auf „nicht verfügbar", solange sie unterwegs sind oder wenn du mal keine Zeit für neue Anfragen hast.',
+						text: 'Setze Gegenstände auf „nicht verfügbar", solange sie unterwegs sind oder du mal keine Zeit oder Lust auf neue Anfragen hast.',
 					},
 				],
 			},
@@ -300,7 +316,7 @@ export const texts = {
 				},
 				{
 					q: 'Was passiert mit meinen Daten?',
-					a: 'Wir sind noch im Aufbau und es gibt noch Allerlei(h) zu tun, deswegen läuft hier vielleicht noch nicht alles 100% rund. Aber digitale Freiheitsrechte (Persönlichkeitsrecht, Datenschutz, Teilhabe) sind für uns unverhandelbare Grundwerte und wir werden AllerLeih so entwickeln, dass ihr die volle Kontrolle über eure Daten habt. Zu jeder Zeit. Für immer. Falls ihr feststellt, dass das nicht der Fall ist, meldet euch gerne sofort bei uns! Wir wollen transparent sein und Fehler schnellstmöglich beheben.',
+					a: 'Wir sind noch im Aufbau und es gibt noch Allerlei(h) zu tun, deswegen läuft hier vielleicht noch nicht alles 100% rund. Aber digitale Freiheitsrechte (Persönlichkeitsrecht, Datenschutz, Teilhabe) sind für uns unverhandelbare Grundwerte und wir werden AllerLeih so entwickeln, dass ihr die volle Kontrolle über eure Daten habt. Zu jeder Zeit. Für immer. Das heißt: wir verkaufen keine Daten, Daten liegen auf Servern in Deutschland oder maximal der EU, und wir schützen eure Daten bestmöglich. Falls ihr feststellt, dass das nicht der Fall ist, meldet euch gerne sofort bei uns! Wir wollen transparent sein und Fehler schnellstmöglich beheben.',
 				},
 			],
 		},
@@ -309,32 +325,34 @@ export const texts = {
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
 				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
+			transportModePrompt: 'Wie transportierst du das Ding?',
 			transportModes: {
 				foot: 'Zu Fuß',
 				bicycle: 'Fahrrad',
 				car: 'Auto',
 			},
 			noLocation:
-				'Setze deinen Standort in deinem Profil, um Reisezeiten zu sehen.',
+				'Aktiviere deinen Standort, um Reisezeiten zu sehen.',
 			minutesAway: (n: number) => {
 				if (n <= 5) return '<5 min';
-				if (n <= 10) return '5–10 min';
-				if (n <= 15) return '10–15 min';
-				if (n <= 20) return '15–20 min';
-				if (n <= 25) return '20–25 min';
-				if (n <= 30) return '25–30 min';
+				if (n <= 10) return '<10 min';
+				if (n <= 15) return '<15 min';
+				if (n <= 20) return '<20 min';
+				if (n <= 25) return '<25 min';
+				if (n <= 30) return '<30 min';
 				return '>30 min';
 			},
 			durationFilter: {
-				noLimit: 'Beliebig',
-				maxMinutes: (n: number) => `max. ${n} Min.`,
+				noLimit: '>30 min',
+				maxMinutes: (n: number) => `<${n} min`,
 				paginationHidden:
-					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf „Beliebig", um alle Seiten zu sehen.',
+					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf >30 min", um alle Seiten zu sehen.',
 			},
 			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
-			pageInfo: (current: number, total: number) => `Seite ${current} von ${total}`,
-			browseAll: 'Alle Gegenstände anzeigen',
+			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
+			browseAll: 'Alle Dinge zeigen',
+			randomItemsHeading: 'Entdecke Gegenstände',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -356,7 +374,7 @@ export const texts = {
 			title: 'Registrieren',
 		},
 		conversations: {
-			title: 'Anfragen',
+			title: 'Unterhaltungen',
 			lending: 'Verleihen',
 			borrowing: 'Ausleihen',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
@@ -367,7 +385,7 @@ export const texts = {
 			countSome: (n: number) => `Du verleihst ${n} Ding(e)...`,
 			countNone: 'Du verleihst noch keine Ding(e)...',
 			addSingle: 'Dinge einzeln hochladen',
-			addBulk: 'KI-gestützt mehrere Dinge gleichzeitig hochladen',
+			addBulk: 'Mit KI-Bilderkennung hochladen',
 		},
 		profile: {
 			title: 'Mein Profil',
@@ -445,7 +463,7 @@ export const texts = {
 			Das spart dir Zeit — kostet aber pro Bild etwas Strom (ca. 1–3 Wattstunden), Wasser (ca. 5–30 Milliliter), CO₂ (ca. 0,1–0,3 Gramm) und basiert auf einer Industrie mit ethischen Problemen.\
 			Wir bieten diese Option an, weil sie das Hochladen von Gegenständen stark vereinfacht und somit den Verleih fördert.\
 			Mistral nutzt diese Bilder unter Umständen zur Verbesserung ihrer KI, also lade keine Fotos hoch, die du nicht teilen möchtest. \
-			Alle Analysen finden auf den Servern von Mistral in Frankreich nach europäischem und französischem Recht statt, wir haben keinen Einfluss darauf.',
+			Alle Analysen finden auf den Servern von Mistral in Frankreich nach europäischem und französischem Recht statt.',
 	},
 	
 	// Onboarding

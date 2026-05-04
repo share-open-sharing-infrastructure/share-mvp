@@ -71,7 +71,7 @@
 </script>
 
 <div class="mx-auto max-w-2xl px-4 py-8">
-	<h2 class="mb-6 text-center text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+	<h2 class="mb-6 text-center text-2xl font-extrabold tracking-tight text-tinte-900 dark:text-white">
 		{texts.bulkUpload.pageTitle}
 	</h2>
 

@@ -111,10 +111,10 @@
 		<img
 			src={imageUrl}
 			alt={item.name}
-			class="w-full max-h-96 object-contain rounded-lg bg-gray-50"
+			class="w-full max-h-96 object-contain rounded-lg bg-papier"
 		/>
 	{:else}
-		<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-gray-100 text-gray-400 gap-2">
+		<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-tinte-100 text-tinte-400 gap-2">
 			<ImageOutline class="h-16 w-16" />
 			<span class="text-sm">{texts.pages.itemDetail.noImage}</span>
 		</div>
@@ -122,15 +122,23 @@
 
 	<!-- Owner + Travel Time (directly below image) -->
 	<div class="flex items-center justify-between">
-		<div class="flex items-center gap-2">
-			<a href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })} class="relative flex items-center gap-2 text-primary-200 border border-primary-200 rounded-full px-3 py-1 hover:bg-primary-50">
-				<UserCircleOutline class="h-5 w-5 shrink-0" />
-				<span class="font-medium">{item.expand?.owner?.username ?? 'Unknown'}</span>
+		<!-- Owner -->
+		<div class="gap-2">
+			<a href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })} 
+				class="rounded-full border w-40 hover:cursor-pointer pl-2 pr-4 py-1 bg-white text-tinte-700 border-tinte-300 hover:bg-tinte-50'}">
+				<UserCircleOutline class="h-6 w-6 inline" />
+			<span class="font-medium text-md">{item.expand?.owner?.username ?? 'Unknown'}</span>
+			<div class="absolute top-0 -left-2.5 flex flex-col gap-0.1 items-center">
 				{#if item.expand?.owner?.verified}
-					<VerifiedIcon class="absolute -top-1.5 -right-1.5 h-3.5 w-3.5" />
+					<VerifiedIcon class="h-3.5 w-3.5" />
 				{/if}
+				<!-- {#if isTrusted}
+					<HeartSolid class="h-3.5 w-3.5 text-green-500 bg-white rounded-full" />
+				{/if} -->
+			</div>
 			</a>
 		</div>
+		<!-- Travel Time -->
 		{#if data.isAuthenticated && !isOwnItem}
 			{#if calculating}
 				<span class="text-sm text-gray-400 dark:text-gray-500 animate-pulse px-2 py-0.5">
@@ -195,7 +203,7 @@
 	</div>
 
 	<!-- Item name -->
-	<h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+	<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">
 		{item.name}
 	</h1>
 
@@ -203,14 +211,14 @@
 	{#if item.categories && item.categories.length > 0}
 		<div class="flex flex-wrap gap-2">
 			{#each item.categories as cat(cat)}
-				<Badge color="indigo">{cat}</Badge>
+				<Badge color="indigo" class="rounded-lg text-md shadow">{cat}</Badge>
 			{/each}
 		</div>
 	{/if}
 
 	<!-- Description -->
 	{#if item.description}
-		<p class="leading-relaxed text-gray-700 dark:text-gray-300">
+		<p class="leading-relaxed text-tinte-700 dark:text-tinte-300">
 			{item.description}
 		</p>
 	{/if}
@@ -224,7 +232,7 @@
 					class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold border transition-colors cursor-pointer
 						{data.item.status === 'available'
 							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-							: 'bg-red-100 text-red-800 border-red-300 hover:bg-red-200'}"
+							: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
 				>
 					{data.item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
 					<span class="ml-2 text-xs opacity-60">
@@ -233,7 +241,7 @@
 				</button>
 			</form>
 		{:else if isTrustRestricted}
-			<Button pill disabled class="min-button bg-primary opacity-50 cursor-not-allowed">
+			<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 cursor-not-allowed">
 				<MessagesOutline class="h-4 w-4 mr-2" />
 				{texts.pages.itemDetail.requestButton}
 			</Button>
@@ -244,7 +252,7 @@
 			<form method="POST" action="?/startConversation">
 				<Input name="itemId" value={item.id} hidden />
 				<Input name="ownerId" value={item.expand?.owner?.id} hidden />
-				<Button pill type="submit" class="cursor-pointer min-button bg-primary">
+				<Button pill type="submit" class="cursor-pointer min-button bg-primary-200 hover:bg-primary">
 					<MessagesOutline class="h-4 w-4 mr-2" />
 					{texts.pages.itemDetail.requestButton}
 				</Button>

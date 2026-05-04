@@ -12,7 +12,7 @@
 </svelte:head>
 
 <h1 class="mb-4 text-2xl font-bold">{texts.pages.imprint.title}</h1>
-<ul class="mx-auto max-w-md list-inside space-y-2">
+<ul class="max-w-md list-inside space-y-2">
 	<li>Matteo Ramin</li>
 	<li>Lüner Weg 17</li>
 	<li>21337 Lüneburg, Deutschland</li>
