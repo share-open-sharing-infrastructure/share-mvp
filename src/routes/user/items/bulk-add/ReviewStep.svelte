@@ -3,6 +3,7 @@
 	import { Button, Checkbox, Input, Label, Spinner } from 'flowbite-svelte';
 	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import { compressImage } from '$lib/utils/imageUtils';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
 	type DraftStatus = 'pending' | 'analyzing' | 'done' | 'error';
 
@@ -23,6 +24,8 @@
 	}
 
 	let { drafts = $bindable(), submitting = $bindable(), allAnalyzed, onBack }: Props = $props();
+
+	let uploadError = $state<string | null>(null);
 
 	function removeDraft(i: number) {
 		URL.revokeObjectURL(drafts[i].previewUrl);
@@ -71,6 +74,7 @@
 	use:enhance={async ({ formData, cancel }) => {
 		if (submitting) { cancel(); return; }
 		submitting = true;
+		uploadError = null;
 		for (let i = 0; i < drafts.length; i++) {
 			const compressed = await compressImage(drafts[i].file);
 			formData.set(`image_${i}`, compressed, drafts[i].file.name);
@@ -79,9 +83,15 @@
 			formData.set(`categories_${i}`, JSON.stringify(drafts[i].categories));
 		}
 		formData.set('count', String(drafts.length));
-		return async ({ update }) => {
+		return async ({ result, update }) => {
 			submitting = false;
-			await update();
+			if (result.type === 'failure') {
+				uploadError = (result.data?.message as string | undefined) ?? texts.bulkUpload.uploadFailed;
+			} else if (result.type === 'error') {
+				uploadError = texts.bulkUpload.uploadError;
+			} else {
+				await update();
+			}
 		};
 	}}
 >
@@ -157,6 +167,12 @@
 			</div>
 		{/each}
 	</div>
+
+	{#if uploadError}
+		<div class="mt-6">
+			<CustomAlert type="error" message={uploadError} />
+		</div>
+	{/if}
 
 	<div class="mt-6 flex justify-end gap-3">
 		<Button type="button" color="alternative" onclick={onBack}>Zurück</Button>
