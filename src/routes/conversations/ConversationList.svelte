@@ -10,17 +10,17 @@
 	);
 </script>
 
-<div class="flex flex-col h-full border rounded-2xl overflow-hidden">
-	<ul class="flex-1 overflow-auto p-2 flex flex-col gap-1 {activeTab === 'borrowing' ? 'bg-primary-50' : 'bg-accent-100'}">
+<div class="flex-1 min-h-0 overflow-hidden flex flex-col">
+	<ul class="flex-1 overflow-auto px-2 pb-2 flex flex-col gap-0.5">
 		{#if visibleConversations.length === 0}
-			<li class="p-3 text-xs text-gray-400 text-center ">
+			<li class="px-3 py-8 text-xs text-tinte-400 dark:text-tinte-500 text-center">
 				{activeTab === 'lending'
 					? texts.pages.conversations.noLendingConversations
 					: texts.pages.conversations.noBorrowingConversations}
 			</li>
 		{:else}
 			{#each visibleConversations as conversation (conversation.id)}
-				<ConversationListItem {conversation} {currentUser} {PB_IMG_URL} />
+				<ConversationListItem {conversation} {currentUser} {PB_IMG_URL} {activeTab} />
 			{/each}
 		{/if}
 	</ul>

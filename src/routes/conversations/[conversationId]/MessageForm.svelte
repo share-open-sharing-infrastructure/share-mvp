@@ -29,7 +29,7 @@
 		name="messageContent"
 		type="text"
 		placeholder={texts.forms.messagePlaceholder}
-		class="flex-1 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-300 dark:focus:ring-primary-700 transition"
+		class="flex-1 rounded-full border border-tinte-200 dark:border-tinte-700 bg-papier dark:bg-tinte-800 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-300 dark:focus:ring-primary-700 transition"
 		required
 		autocomplete="off"
 		autofocus={true}

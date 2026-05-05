@@ -113,16 +113,16 @@
 <!-- Notification permission banner — shown first -->
 {#if showNotifBanner}
 	<div
-		class="fixed bottom-10 right-4 z-40 w-72 rounded-xl shadow-lg bg-white border border-gray-200 p-4 flex flex-col gap-3"
+		class="fixed bottom-10 right-4 z-40 w-72 rounded-xl shadow-lg bg-sand border border-tinte-200 p-4 flex flex-col gap-3"
 	>
 		<div class="flex items-start gap-2">
 			<BellOutline class="h-5 w-5 text-accent shrink-0 mt-0.5" />
-			<p class="text-sm text-gray-700 leading-snug">{texts.pwa.notifBannerText}</p>
+			<p class="text-sm text-tinte-700 leading-snug">{texts.pwa.notifBannerText}</p>
 		</div>
 		<div class="flex gap-2 justify-end">
 			<button
 				onclick={dismissNotifBanner}
-				class="text-xs text-gray-400 hover:text-gray-600 px-2 py-1"
+				class="text-xs text-tinte-400 hover:text-tinte-600 px-2 py-1"
 			>
 				{texts.pwa.notifDismiss}
 			</button>
@@ -138,25 +138,25 @@
 <!-- Install banner — shown only when notification banner is gone -->
 {:else if showInstallBanner}
 	<div
-		class="fixed bottom-10 right-4 z-40 w-72 rounded-xl shadow-lg bg-white border border-gray-200 p-4 flex flex-col gap-3"
+		class="fixed bottom-10 right-4 z-40 w-72 rounded-xl shadow-lg bg-sand border border-tinte-200 p-4 flex flex-col gap-3"
 	>
 		<div class="flex items-start justify-between gap-2">
 			<div class="flex items-start gap-2">
 				<MobilePhoneOutline class="h-5 w-5 text-accent shrink-0 mt-0.5" />
-				<p class="text-sm text-gray-700 leading-snug">{texts.pwa.installBannerText}</p>
+				<p class="text-sm text-tinte-700 leading-snug">{texts.pwa.installBannerText}</p>
 			</div>
-			<button onclick={dismissInstallBanner} class="text-gray-300 hover:text-gray-500 shrink-0">
+			<button onclick={dismissInstallBanner} class="text-tinte-300 hover:text-tinte-500 shrink-0">
 				<CloseOutline class="h-4 w-4" />
 			</button>
 		</div>
 		{#if installManualHint}
-			<p class="text-xs text-gray-500 bg-gray-50 rounded px-2 py-1">{installManualHint}</p>
+			<p class="text-xs text-tinte-500 bg-papier rounded px-2 py-1">{installManualHint}</p>
 		{/if}
 		<div class="flex gap-2 justify-end">
 			{#if !installManualHint}
 				<button
 					onclick={dismissInstallBanner}
-					class="text-xs text-gray-400 hover:text-gray-600 px-2 py-1"
+					class="text-xs text-tinte-400 hover:text-tinte-600 px-2 py-1"
 				>
 					{texts.pwa.installDismiss}
 				</button>

@@ -11,15 +11,13 @@
 		DropdownItem,
 		DropdownDivider,
 		Popover,
-		Modal,
-		Button,
 	} from 'flowbite-svelte';
 
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { page } from '$app/state';
 	import { BellOutline, ChevronDownOutline, ChevronRightOutline, GlobeOutline, UserCircleOutline } from 'flowbite-svelte-icons';
-	import FeedbackForm from './FeedbackForm.svelte';
+	import FeedbackButton from './FeedbackButton.svelte';
 
 	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
 		loggedIn: boolean;
@@ -32,7 +30,6 @@
 	let deeplUrl = $derived(
 		`https://www.deepl.com/translator#de/${browser ? navigator.language.split('-')[0] : 'en'}/`
 	);
-	let isFeedbackModalOpen = $state(false);
 
 	async function logout(): Promise<void> {
 		await fetch('/auth/logout', {
@@ -44,40 +41,21 @@
 	}
 </script>
 
-<Navbar>
+<Navbar class="bg-sand shadow-sm">
 	<div class="flex items-center">
 		<NavBrand href={resolve('/')}>
-			<!-- <img src="/images/flowbite-svelte-icon-logo.svg" class="me-3 h-6 sm:h-9" alt="Flowbite Logo" /> -->
 			<div id="beta" class="relative flex flex-col items-center">
+				<img src="/AllerLeih.png" alt={texts.names.app} class="h-10" />
 				<span
-					class="absolute -top-2 -right-5 rotate-35 text-[9px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
-				>
-					Beta
-				</span>
-				<div
-					class="text-accent self-center text-xl font-semibold whitespace-nowrap logo leading-none"
-				>
-					{texts.names.app}
-				</div>
-				<div class="text-xs leading-none">Lüneburg</div>
+						class="absolute top-7 bg-accent-100 -right-3 -rotate-25 text-[12px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
+					>
+						Beta
+					</span>
+
 			</div>
 		</NavBrand>
 
-		<Button
-			pill
-			onclick={(): void => {
-				isFeedbackModalOpen = true;
-			}}
-			class="
-					min-button
-					ml-10
-					text-accent!
-					cursor-pointer
-					hover:bg-accent-100
-				"
-		>
-			Feedback
-		</Button>
+		<FeedbackButton class="ml-5 h-9" />
 	</div>
 	{#if showTranslate}
 		<button
@@ -92,8 +70,8 @@
 	<NavUl
 		{activeUrl}
 		classes={{
-			active: 'text-accent color-accent bg-transparent',
-			nonActive: 'text-black hover:text-accent bg-transparent',
+			active: 'text-accent! color-accent bg-transparent font-bold',
+			nonActive: 'text-black hover:text-accent! bg-transparent',
 		}}
 	>
 		<NavLi href={resolve('/search')}>{texts.nav.search}</NavLi>
@@ -159,7 +137,7 @@
 				<a
 					href={deeplUrl}
 					target="_blank"
-					rel="noopener noreferrer"
+					rel="external noopener"
 					class="text-accent hover:underline flex items-center font-medium mt-1"
 				>
 					{texts.nav.translateDeepL}
@@ -168,32 +146,18 @@
 			</div>
 		</Popover>
 	{/if}
-
-	<Popover
+		<Popover
 		triggeredBy="#beta"
-		class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+		class="w-72 bg-papier text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
 		placement="bottom-start"
 	>
 		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-gray-900 dark:text-white">Beta-Zugang</h3>
-			Wir testen AllerLeih gerade in Lüneburg! Die Plattform kann noch Fehler haben
-			und wird beständig verbessert. Wenn du uns dabei unterstützen magst, frag uns
-			gerne nach einem Zugang, nutze die Plattform und teile uns dein Feedback mit!
-			<a
-				href="mailto:feedback@allerleih.org?subject=Beta-Zugang%20AllerLeih&body=Hallo%20AllerLeih-Team%2C%0A%0Aich%20möchte%20gerne%20einen%20Beta-Zugang%20für%20AllerLeih%20beantragen."
-				class="text-accent hover:underline flex items-center font-medium mt-1"
-			>
-				E-Mail an feedback@allerleih.org
-				<ChevronRightOutline class="text-accent h-4 w-4" />
-			</a>
+			<h3 class="font-semibold text-tinte-900 dark:text-white">
+				Beta-Zugang
+			</h3>
+			Wir testen AllerLeih gerade in Lüneburg! Die Plattform kann noch Fehler haben und wird beständig verbessert. 
+			Wenn du uns dabei unterstützen magst, <a href={resolve('/misc/contact')} class="text-accent hover:underline font-medium">frag uns gerne nach einem Zugang</a>, nutze die Plattform und teile uns dein Feedback über den Feedback-Button mit!
+
 		</div>
 	</Popover>
 </Navbar>
-
-<Modal bind:open={isFeedbackModalOpen} size="sm" title="Feedback geben">
-	<FeedbackForm
-		onsuccess={() => {
-			isFeedbackModalOpen = false;
-		}}
-	/>
-</Modal>
