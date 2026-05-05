@@ -226,7 +226,7 @@ export const texts = {
 			howBodyPart1: 'geben wir dir eine kurze Einführung, wie du',
 			howBodyPart2: 'nutzen kannst, um Dinge in deiner Umgebung zu leihen oder zu verleihen.',
 			who: 'Wer sind wir?',
-			whoBodyPart1: 'Wir sind noch im Aufbau, aber du kannst uns gerne jederzeit',
+			whoBodyPart1: 'Wir sind eine gemeinnützige Initiative aus Lüneburg. Du kannst uns jederzeit',
 			whoLinkText: 'kontaktieren',
 			whoBodyPart2: ', wenn du Fragen hast oder uns unterstützen willst!',
 			support: 'Was passiert gerade?',
