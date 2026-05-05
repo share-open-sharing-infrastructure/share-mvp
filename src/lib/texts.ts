@@ -397,7 +397,7 @@ export const texts = {
 		inviteLanding: {
 			title: (name: string) => `${name} lädt dich ein!`,
 			genericTitle: 'Du wurdest eingeladen!',
-			description: 'Teile, leihe und hilf in deiner Nachbarschaft – kostenlos und ohne Stress.',
+			description: 'Teile, leihe und hilf in deiner Umgebung – kostenlos und ohne Stress.',
 			cta: 'Jetzt registrieren',
 		},
 		itemDetail: {
