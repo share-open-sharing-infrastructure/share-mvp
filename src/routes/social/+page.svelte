@@ -173,7 +173,6 @@
 		<TableHead defaultRow={false} class="bg-transparent!">
 			<!-- Sort header row -->
 			<tr>
-				<TableHeadCell class="w-16 px-3 bg-transparent!"></TableHeadCell>
 				<TableHeadCell
 					class="cursor-pointer select-none bg-transparent!"
 					onclick={() => toggleSort('username')}
@@ -181,16 +180,16 @@
 					<span class="flex items-center gap-1 whitespace-nowrap">Nutzer:in {@render sortIcon('username')}</span>
 				</TableHeadCell>
 				<TableHeadCell
-					class="cursor-pointer select-none text-center bg-transparent!"
+					class="w-15 sm:w-40 cursor-pointer select-none text-center bg-transparent!"
 					onclick={() => toggleSort('theyTrustMe')}
 				>
-					<span class="flex items-center gap-1 whitespace-nowrap">{texts.ui.theyTrustYou} {@render sortIcon('theyTrustMe')}</span>
+					<span class="flex flex-wrap items-center justify-center gap-1">{texts.ui.theyTrustYou} {@render sortIcon('theyTrustMe')}</span>
 				</TableHeadCell>
 				<TableHeadCell
-					class="cursor-pointer select-none text-center bg-transparent!"
+					class="w-15 sm:w-40 cursor-pointer select-none text-center bg-transparent!"
 					onclick={() => toggleSort('iTrustThem')}
 				>
-					<span class="flex items-center gap-1 whitespace-nowrap">{texts.ui.youTrustThem} {@render sortIcon('iTrustThem')}</span>
+					<span class="flex flex-wrap items-center justify-center gap-1">{texts.ui.youTrustThem} {@render sortIcon('iTrustThem')}</span>
 				</TableHeadCell>
 			</tr>
 			<!-- Filter row -->
@@ -216,24 +215,19 @@
 			{/if}
 			{#each paginated as entry (entry.id)}
 				<TableBodyRow class="bg-transparent!">
-					<!-- Avatar -->
-					<TableBodyCell class="px-3 py-2">
-						<a href={resolve(`/users/[id]`, { id: entry.id })}>
-							<img
-								src={entry.profilePic}
-								alt="@{entry.username}"
-								class="block h-9 w-9 shrink-0 rounded-full object-cover"
-							/>
-						</a>
-					</TableBodyCell>
 
 					<!-- Username -->
 					<TableBodyCell class="max-w-30 whitespace-nowrap overflow-hidden text-ellipsis">
 						<a
 							href={resolve(`/users/[id]`, { id: entry.id })}
-							class="font-medium text-tinte-900 dark:text-white hover:underline"
+							class="flex flex-row items-center font-medium text-tinte-900 dark:text-white hover:underline"
 						>
-							@{entry.username}
+							<img
+								src={entry.profilePic}
+								alt="@{entry.username}"
+								class="h-9 w-9 mr-4 shrink-0 rounded-full object-cover hidden sm:block"
+							/>
+							{entry.username}
 						</a>
 					</TableBodyCell>
 
