@@ -4,6 +4,7 @@
 	import {
 		Footer,
 		FooterBrand,
+		FooterCopyright,
 		FooterLink,
 		FooterLinkGroup,
 	} from 'flowbite-svelte';
@@ -12,7 +13,7 @@
 <Footer footerType="socialmedia" class="mt-5">
 	<div class="mx-auto max-w-7xl">
 		<div class="md:flex md:justify-between">
-			<div class="mb-6 md:mb-0">
+			<div class="mb-6 mr-4 md:mb-0">
 				<FooterBrand
 					href={resolve('/')}
 					alt="AllerLeih Logo"
@@ -159,4 +160,9 @@
 			</div>
 		</div>
 	</div>
+	 <hr class="my-6 border-gray-200 sm:mx-auto lg:my-8 dark:border-gray-700" />
+	 <div class="flex justify-center space-x-4">
+		<FooterCopyright href="/" by="AllerLeih" copyrightMessage=""/>
+		<FooterCopyright href="/" by="openrouteservice by HeiGIT" copyrightMessage=" | Data from OpenStreetMap"/>
+	 </div>
 </Footer>

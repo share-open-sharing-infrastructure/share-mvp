@@ -38,7 +38,7 @@
 	href="/items/{item.id}"
 	img={imgUrl}
 	class="flex-row relative"
-	classes={{ image: 'h-24 w-24 max-h-36 max-w-36 object-cover shrink-0 rounded-s-lg rounded-tr-none rounded-br-none' }}
+	classes={{ image: 'w-24 max-h-36 max-w-36 object-cover shrink-0 rounded-s-lg rounded-tr-none rounded-br-none' }}
 	horizontal
 	size="xl"
 >
