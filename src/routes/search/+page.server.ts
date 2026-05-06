@@ -68,6 +68,11 @@ export async function load({ locals, url }) {
 		filter,
 	});
 
+	void locals.pb.collection('searches').create({
+		query: q,
+		categories: selectedCategories.join(','),
+	});
+
 	return {
 		items: result.items,
 		PB_IMG_URL: PUBLIC_PB_URL,
