@@ -549,7 +549,7 @@ export const texts = {
 	// SEO meta titles and descriptions
 	seo: {
 		home: {
-			title: 'AllerLeih – Dinge leihen und teilen in deiner Umgebung',
+			title: 'AllerLeih',
 			description:
 				'Kostenlos Gegenstände leihen und teilen mit Menschen in deiner Umgebung. Spare Geld, Platz und Ressourcen und stärke deine Gemeinschaft.',
 		},

@@ -82,7 +82,6 @@
 			debounceTimer = null;
 		}
 		isDebouncing = false;
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		await goto(resolve('/search'));
 		inputEl?.focus();
 	}
