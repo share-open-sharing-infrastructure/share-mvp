@@ -354,6 +354,7 @@ export const texts = {
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
 			randomItemsHeading: 'Entdecke Gegenstände',
+			onlyAvailable: 'Nur verfügbare Dinge zeigen',
 		},
 		logout: {
 			message: 'Ausloggen...',

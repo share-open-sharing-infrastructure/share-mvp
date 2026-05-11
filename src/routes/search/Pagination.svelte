@@ -10,9 +10,10 @@
 		q: string;
 		selectedCategories: string[];
 		op: 'or' | 'and';
+		onlyAvailable: boolean;
 	}
 
-	let { page, totalPages, perPage, q, selectedCategories, op }: Props = $props();
+	let { page, totalPages, perPage, q, selectedCategories, op, onlyAvailable }: Props = $props();
 
 	const perPageOptions = [10, 20, 50];
 
@@ -23,6 +24,7 @@
 		params.set('perPage', String(perPage));
 		if (selectedCategories.length > 0) params.set('cats', selectedCategories.join(','));
 		if (op === 'and') params.set('op', 'and');
+		if (!onlyAvailable) params.set('onlyAvailable', 'false');
 		return resolve('/search') + '?' + params.toString();
 	}
 
@@ -95,6 +97,9 @@
 			{/if}
 			{#if op === 'and'}
 				<input type="hidden" name="op" value="and" />
+			{/if}
+			{#if !onlyAvailable}
+				<input type="hidden" name="onlyAvailable" value="false" />
 			{/if}
 			<span>{texts.pages.search.perPage}</span>
 			<select

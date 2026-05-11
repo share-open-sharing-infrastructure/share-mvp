@@ -1,4 +1,5 @@
 <script lang="ts">
+	/* eslint-disable svelte/no-navigation-without-resolve */
 	import { Section } from 'flowbite-svelte-blocks';
 	import SearchBar from './SearchBar.svelte';
 	import ResultsList from './ResultsList.svelte';
@@ -6,7 +7,8 @@
 	import CategoryFilter from './CategoryFilter.svelte';
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
-	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -95,6 +97,24 @@
 		bind:travelTimes
 		bind:maxMinutes
 	/>
+
+	<div class="flex items-center gap-2 mt-3 text-sm text-tinte-600 dark:text-tinte-400">
+		<input
+			type="checkbox"
+			id="onlyAvailable"
+			checked={data.onlyAvailable}
+			onchange={() => {
+				const parts: string[] = [];
+				if (data.q) parts.push(`q=${encodeURIComponent(data.q)}`);
+				if (data.selectedCategories.length > 0) parts.push(`cats=${encodeURIComponent(data.selectedCategories.join(','))}`);
+				if (data.op === 'and') parts.push('op=and');
+				if (data.onlyAvailable) parts.push('onlyAvailable=false');
+				goto(resolve('/search') + (parts.length ? '?' + parts.join('&') : ''));
+			}}
+			class="w-4 h-4 rounded accent-primary cursor-pointer"
+		/>
+		<label for="onlyAvailable" class="cursor-pointer">{texts.pages.search.onlyAvailable}</label>
+	</div>
 
 	{#if data.isRandom}
 		<div class="w-full text-center mt-4 mb-2">
