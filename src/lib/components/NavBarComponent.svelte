@@ -41,7 +41,7 @@
 	}
 </script>
 
-<Navbar class="bg-sand shadow-sm">
+<Navbar class="bg-sand shadow-sm" breakpoint="xl">
 	<div class="flex items-center">
 		<NavBrand href={resolve('/')}>
 			<div id="beta" class="relative flex flex-col items-center">
@@ -97,7 +97,7 @@
 			</NavLi>
 			<NavLi class="cursor-pointer">
 				<UserCircleOutline class="h-6 w-6 inline mr-1" />
-				{currentUser?.username}
+				<span class="md:max-w-28 truncate lg:max-w-none lg:overflow-visible lg:whitespace-normal inline-block align-middle">{currentUser?.username}</span>
 				<ChevronDownOutline
 					class="text-primary-800 inline h-6 w-6 dark:text-white"
 				/>
