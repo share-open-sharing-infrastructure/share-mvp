@@ -1,5 +1,5 @@
 <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="400" fill="#111111"/>
+  <rect width="400" height="400" fill="#FDFBF6"/>
   <!-- Dreieck groß aufwärts: Lautsprecher / Schallwelle -->
   <polygon points="200,40 370,340 30,340" fill="#4a6fe3"/>
   <!-- Kreis oben-rechts: Licht -->

@@ -1,5 +1,5 @@
 <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-  <rect width="400" height="400" fill="#111111"/>
+  <rect width="400" height="400" fill="#FDFBF6"/>
   <!-- Ausgewogen, alle drei gleichwertig -->
   <!-- Dreieck oben-mitte -->
   <polygon points="200,30 330,200 70,200" fill="#f5d33a"/>
