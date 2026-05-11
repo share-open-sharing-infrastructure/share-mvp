@@ -65,6 +65,7 @@
 			q={data.q}
 			selectedCategories={data.selectedCategories}
 			op={data.op}
+			onlyAvailable={data.onlyAvailable}
 		/>
 	{/if}
 {/snippet}

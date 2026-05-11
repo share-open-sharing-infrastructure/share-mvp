@@ -61,7 +61,7 @@
 			{/if}
 
 			<!-- Page numbers -->
-			{#each getPages() as p (p === '...' ? `ellipsis-${Math.random()}` : p)}
+			{#each getPages() as p, i (p === '...' ? `ellipsis-${i}` : p)}
 				{#if p === '...'}
 					<span class="flex h-8 w-8 items-center justify-center text-sm text-tinte-400">…</span>
 				{:else if p === page}
