@@ -1,11 +1,13 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
 
 export const actions = {
 	bulkCreate: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const itemCount = parseInt(formData.get('count') as string);
 		if (!itemCount || itemCount < 1) return fail(400, { message: 'Keine Gegenstände.' });
+
+		let successCount = 0;
 
 		for (let i = 0; i < itemCount; i++) {
 			const name = formData.get(`name_${i}`) as string;
@@ -34,10 +36,15 @@ export const actions = {
 					status: 'available',
 					trusteesOnly: false,
 				});
+				successCount++;
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error('bulkCreate item error:', err?.message ?? err);
 			}
+		}
+
+		if (successCount === 0) {
+			return fail(500, { message: texts.bulkUpload.uploadFailed });
 		}
 
 		redirect(303, '/user/items');

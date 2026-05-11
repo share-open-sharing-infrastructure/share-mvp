@@ -458,6 +458,8 @@ export const texts = {
 		createAll: (n: number) => `Alle erstellen (${n})`,
 		creating: 'Wird erstellt…',
 		noPhotosSelected: 'Bitte wähle mindestens ein Foto aus.',
+		uploadFailed: 'Keiner der Gegenstände konnte erstellt werden. Bitte versuche es erneut.',
+		uploadError: 'Fehler beim Hochladen. Bitte prüfe deine Verbindung und versuche es erneut.',
 		howItWorksHeader: 'Wie funktioniert das?',
 		howItWorksBody: 'Die KI erkennt deine Gegenstände und schlägt dir Titel, Kategorie(n) und Beschreibung vor. \
 			Das spart dir Zeit — kostet aber pro Bild etwas Strom (ca. 1–3 Wattstunden), Wasser (ca. 5–30 Milliliter), CO₂ (ca. 0,1–0,3 Gramm) und basiert auf einer Industrie mit ethischen Problemen.\
