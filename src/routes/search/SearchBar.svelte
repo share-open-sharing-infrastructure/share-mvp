@@ -5,7 +5,7 @@
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { texts } from '$lib/texts';
 
-	const SEARCH_DELAY_MS = 1000;
+	const SEARCH_DELAY_MS = 1500;
 
 	let { q = '' }: { q: string } = $props();
 
@@ -14,6 +14,7 @@
 	let inputValue = $state(q);
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+	let isDebouncing = $state(false);
 
 	// Cancel any pending debounce when the user navigates via something other than typing.
 	beforeNavigate(() => {
@@ -21,6 +22,12 @@
 			clearTimeout(debounceTimer);
 			debounceTimer = null;
 		}
+		isDebouncing = false;
+	});
+
+	$effect(() => {
+		// Focus on mount.
+		inputEl?.focus();
 	});
 
 	$effect(() => {
@@ -31,12 +38,26 @@
 		}
 	});
 
-	function handleInput() {
+	async function handleInput() {
 		if (debounceTimer) clearTimeout(debounceTimer);
+		debounceTimer = null;
+
+		const value = inputValue.trim();
+
+		if (value.length < 4) {
+			isDebouncing = false;
+			if (q) {
+				await goto(resolve('/search'));
+				inputEl?.focus();
+			}
+			return;
+		}
+
+		isDebouncing = true;
 		debounceTimer = setTimeout(async () => {
-			const value = inputValue.trim();
+			isDebouncing = false;
 			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl);
+			await goto(`/search?q=${encodeURIComponent(value)}`);
 			inputEl?.focus();
 		}, SEARCH_DELAY_MS);
 	}
@@ -47,6 +68,7 @@
 			clearTimeout(debounceTimer);
 			debounceTimer = null;
 		}
+		isDebouncing = false;
 		const value = inputValue.trim();
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl);
@@ -59,6 +81,7 @@
 			clearTimeout(debounceTimer);
 			debounceTimer = null;
 		}
+		isDebouncing = false;
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		await goto(resolve('/search'));
 		inputEl?.focus();
@@ -94,7 +117,14 @@
 			placeholder={texts.forms.searchPlaceholder}
 			class="search-bar pulse-shadow block w-full rounded-lg border border-tinte-300 bg-papier p-2.5 pl-10 pr-8 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400 [&::-webkit-search-cancel-button]:hidden"
 		/>
-		{#if inputValue}
+		{#if inputValue && isDebouncing}
+			<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-tinte-400">
+				<svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+					<circle class="opacity-75" cx="12" cy="12" r="10" stroke="green" stroke-width="4"></circle>
+				<path class="opacity-100" fill="green" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+				</svg>
+			</div>
+		{:else if inputValue}
 			<button
 				type="button"
 				onclick={clearSearch}
