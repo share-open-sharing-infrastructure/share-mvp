@@ -33,14 +33,17 @@ export async function load({ params, locals }) {
 
 	const publicItems = allItems.filter((item) => !item.trusteesOnly);
 	const trustedItemsAll = allItems.filter((item) => item.trusteesOnly);
-	// Only reveal trusted items if the viewer is in the owner's trust circle
-	const trustedItems = profileTrustsViewer ? trustedItemsAll : null;
+	// Owner is never in their own trusts array, so isOwnProfile must be checked separately
+	const trustedItems = (profileTrustsViewer || isOwnProfile) ? trustedItemsAll : null;
 
 	return {
 		profileUser,
 		publicItems,
 		trustedItems,
+		hiddenItemsCount: trustedItems === null ? trustedItemsAll.length : 0,
+		hiddenCategories: trustedItems === null ? trustedItemsAll.flatMap((i) => i.categories ?? []) : [],
 		isOwnProfile,
+		loggedIn: !!currentUser,
 		viewerTrustsProfile,
 		profileTrustsViewer,
 		PB_IMG_URL: PUBLIC_PB_URL,
