@@ -49,7 +49,10 @@
 
 	<!-- Name + badges -->
 	<div class="flex-1 flex items-center gap-2 min-w-0">
-		<a href="/items/{item.id}" class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline">{item.name}</a>
+		<a href="/items/{item.id}" class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline sm:max-w-[40%] sm:min-w-32">{item.name}</a>
+		{#if item.description}
+			<span class="hidden sm:block text-xs text-tinte-400 dark:text-tinte-500 truncate min-w-0">{item.description}</span>
+		{/if}
 		{#if item.trusteesOnly}
 			<Badge rounded border color="green" class="shrink-0">
 				<span class="text-green-900 bg-green-100 text-xs">{texts.ui.trustedOnly}</span>
