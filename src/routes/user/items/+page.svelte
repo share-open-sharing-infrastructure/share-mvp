@@ -11,7 +11,8 @@
 	let showAddModal = $state(false);
 
 	function getItemImageUrl(item: Item, baseUrl: string): string {
-		return `${baseUrl}api/files/${item?.collectionId}/${item?.id}/${item?.image}`;
+		if (item?.image) return `${baseUrl}api/files/${item.collectionId}/${item.id}/${item.image}`;
+		return item?.externalImgUrl ?? '';
 	}
 </script>
 

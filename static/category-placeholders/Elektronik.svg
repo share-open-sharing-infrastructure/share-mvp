@@ -1,0 +1,9 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#111111"/>
+  <!-- Viereck groß leicht gedreht: Bildschirm / Platine -->
+  <rect x="70" y="90" width="230" height="170" rx="4" fill="#4a6fe3" transform="rotate(6 185 175)"/>
+  <!-- Dreieck überlappend unten-rechts -->
+  <polygon points="230,220 390,220 390,380" fill="#f5d33a"/>
+  <!-- Kreis klein oben-links -->
+  <circle cx="85" cy="95" r="50" fill="#e8553f"/>
+</svg>

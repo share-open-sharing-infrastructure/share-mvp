@@ -1,0 +1,9 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#111111"/>
+  <!-- Großer Kreis zentral: Teller / Topf -->
+  <circle cx="200" cy="210" r="130" fill="#f5d33a"/>
+  <!-- Viereck dahinter gedreht -->
+  <rect x="60" y="60" width="160" height="160" rx="4" fill="#e8553f" transform="rotate(30 140 140)"/>
+  <!-- Dreieck unten-rechts -->
+  <polygon points="290,290 390,390 190,390" fill="#4a6fe3"/>
+</svg>

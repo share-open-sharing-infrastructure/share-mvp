@@ -1,0 +1,9 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#111111"/>
+  <!-- Kreis groß links-mitte: Bewegungsenergie -->
+  <circle cx="155" cy="230" r="105" fill="#e8553f"/>
+  <!-- Viereck gedreht oben-rechts -->
+  <rect x="210" y="60" width="130" height="130" rx="4" fill="#f5d33a" transform="rotate(22 275 125)"/>
+  <!-- Dreieck klein unten-rechts -->
+  <polygon points="320,340 390,340 355,275" fill="#4a6fe3"/>
+</svg>

@@ -113,6 +113,13 @@
 					class="hover:text-accent hover:bg-transparent"
 					>{texts.nav.myProfile}</DropdownItem
 				>
+				{#if currentUser?.isInstitution}
+					<DropdownItem
+						href={resolve('/user/import')}
+						class="hover:text-accent hover:bg-transparent"
+						>{texts.institutional.importNavLabel}</DropdownItem
+					>
+				{/if}
 				<DropdownDivider />
 				<DropdownItem
 					onclick={logout}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Toggle } from 'flowbite-svelte';
+	import { Toggle, Badge } from 'flowbite-svelte';
 	import { AccordionItem, Accordion } from 'flowbite-svelte';
 	import { UserCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
@@ -21,6 +21,12 @@
 		year: 'numeric',
 	}).format(new Date(profileUser.created));
 
+	const profileImageUrl = $derived(
+		profileUser.profileImage
+			? `${data.PB_IMG_URL}api/files/users/${profileUser.id}/${profileUser.profileImage}`
+			: null
+	);
+
 	let trustForm: HTMLFormElement = $state()!;
 </script>
 
@@ -35,16 +41,22 @@
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">
 	<!-- Profile Header -->
 	<div class="flex items-center gap-6">
-		<!-- TODO: replace with actual profile image once implemented -->
-		<div
-			class="h-20 w-20 rounded-full bg-tinte-100 flex items-center justify-center shrink-0"
-		>
-			<UserCircleOutline class="h-14 w-14 text-tinte-400" />
+		<div class="h-20 w-20 rounded-full bg-tinte-100 flex items-center justify-center shrink-0 overflow-hidden">
+			{#if profileImageUrl}
+				<img src={profileImageUrl} alt={profileUser.username} class="h-full w-full object-cover" />
+			{:else}
+				<UserCircleOutline class="h-14 w-14 text-tinte-400" />
+			{/if}
 		</div>
 		<div class="space-y-1">
-			<h1 class="text-2xl font-bold text-tinte-900 dark:text-white">
-				@{profileUser.username}
-			</h1>
+			<div class="flex items-center gap-2 flex-wrap">
+				<h1 class="text-2xl font-bold text-tinte-900 dark:text-white">
+					@{profileUser.username}
+				</h1>
+				{#if profileUser.isInstitution}
+					<Badge color="purple">{texts.institutional.badge}</Badge>
+				{/if}
+			</div>
 
 			{#if profileUser.verified}
 				<p class="flex items-center gap-1 text-sm text-green-600 font-medium">
@@ -57,6 +69,18 @@
 			</p>
 		</div>
 	</div>
+
+	<!-- Bio section -->
+	{#if profileUser.bio}
+		<div class="space-y-1">
+			<h2 class="text-sm font-semibold text-tinte-500 dark:text-tinte-400 uppercase tracking-wide">
+				{profileUser.isInstitution ? texts.pages.profile.bioLabelInstitution : texts.pages.profile.bioLabel}
+			</h2>
+			<p class="text-tinte-700 dark:text-tinte-300 whitespace-pre-wrap">
+				{profileUser.bio}
+			</p>
+		</div>
+	{/if}
 
 	<!-- Trust Section (hidden on own profile) -->
 	{#if !isOwnProfile}
@@ -105,7 +129,8 @@
 						{#each publicItems as item (item.id)}
 							<ItemCard
 								{item}
-								imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
+								imgUrl={item.image ? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}` : (item.externalImgUrl ?? '')}
+								ownerImgUrl={profileImageUrl ?? undefined}
 								profileView={true}
 							/>
 						{/each}
@@ -122,7 +147,8 @@
 						{#each trustedItems as item (item.id)}
 							<ItemCard
 								{item}
-								imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
+								imgUrl={item.image ? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}` : (item.externalImgUrl ?? '')}
+								ownerImgUrl={profileImageUrl ?? undefined}
 								profileView={true}
 							/>
 						{/each}

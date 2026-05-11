@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button, Tooltip, Input, Badge, Dropdown, DropdownItem } from 'flowbite-svelte';
+	import { Button, Tooltip, Input, Badge, Dropdown, DropdownItem, Alert } from 'flowbite-svelte';
 	import { UserCircleOutline, ImageOutline, MessagesOutline, ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
@@ -8,6 +8,7 @@
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 
 	const { data } = $props();
 	// svelte-ignore state_referenced_locally
@@ -18,7 +19,18 @@
 	const imageUrl =
 		item.image
 			? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
-			: null;
+			: (item.externalImgUrl ?? null);
+
+	const ownerImageUrl = $derived(
+		item.expand?.owner?.profileImage
+			? `${PB_IMG_URL}api/files/users/${item.expand.owner.id}/${item.expand.owner.profileImage}`
+			: null
+	);
+
+	const isExternal = $derived(!!item.externalUrl);
+	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
+	const isArchived = $derived(item.description?.startsWith('[Nicht mehr im Bestand]') ?? false);
+	const isInstitution = $derived(!!item.expand?.owner?.isInstitution);
 
 	const seoTitle = texts.seo.itemDetail(item.name, item.expand?.owner?.username ?? '');
 	const seoDesc = item.description
@@ -106,6 +118,13 @@
 </svelte:head>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
+	<!-- Archived banner -->
+	{#if isArchived}
+		<Alert color="yellow">
+			{texts.institutional.archivedBanner}
+		</Alert>
+	{/if}
+
 	<!-- Image -->
 	{#if imageUrl}
 		<img
@@ -113,6 +132,15 @@
 			alt={item.name}
 			class="w-full max-h-96 object-contain rounded-lg bg-papier"
 		/>
+	{:else if ownerImageUrl}
+		<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-tinte-100 relative overflow-hidden">
+			<img src={ownerImageUrl} alt="" class="absolute inset-0 w-full h-full object-cover opacity-30" />
+			<span class="relative text-sm text-tinte-400">{texts.institutional.imagePlaceholder}</span>
+		</div>
+	{:else if categoryPlaceholder}
+		<div class="w-full h-64 flex items-center justify-center rounded-lg bg-tinte-100">
+			<img src={categoryPlaceholder} alt="" class="h-40 w-40 object-contain opacity-25" />
+		</div>
 	{:else}
 		<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-tinte-100 text-tinte-400 gap-2">
 			<ImageOutline class="h-16 w-16" />
@@ -124,7 +152,7 @@
 	<div class="flex items-center justify-between">
 		<!-- Owner -->
 		<div class="gap-2">
-			<a href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })} 
+			<a href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })}
 				class="rounded-full border w-40 hover:cursor-pointer pl-2 pr-4 py-1 bg-white text-tinte-700 border-tinte-300 hover:bg-tinte-50'}">
 				<UserCircleOutline class="h-6 w-6 inline" />
 			<span class="font-medium text-md">{item.expand?.owner?.username ?? 'Unknown'}</span>
@@ -132,9 +160,6 @@
 				{#if item.expand?.owner?.verified}
 					<VerifiedIcon class="h-3.5 w-3.5" />
 				{/if}
-				<!-- {#if isTrusted}
-					<HeartSolid class="h-3.5 w-3.5 text-green-500 bg-white rounded-full" />
-				{/if} -->
 			</div>
 			</a>
 		</div>
@@ -223,23 +248,60 @@
 		</p>
 	{/if}
 
-	<!-- Anfragen CTA / Status Toggle -->
-	<div class="flex justify-end">
-		{#if isOwnItem}
+	<!-- Availability / CTA -->
+	<div class="flex justify-end items-center gap-3">
+		{#if isExternal}
+			<!-- External item: deep-link CTA -->
+			{#if item.status === 'unknown'}
+				<span class="text-sm text-tinte-500 dark:text-tinte-400">
+					{texts.institutional.availabilityHintExternal}
+				</span>
+			{:else}
+				<span class="text-sm font-semibold rounded-full px-3 py-1 {item.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-accent-100 text-accent-800'}">
+					{item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
+				</span>
+			{/if}
+			{#if !isArchived}
+				<!-- eslint-disable svelte/no-navigation-without-resolve -->
+				<a
+					href={item.externalUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
+				>
+					{texts.institutional.externalLendCta(item.expand?.owner?.username ?? '')}
+				</a>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			{/if}
+		{:else if isOwnItem}
+			<!-- Own item: status toggle -->
 			<form method="POST" action="?/toggleStatus" use:enhance>
 				<button
 					type="submit"
 					class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold border transition-colors cursor-pointer
 						{data.item.status === 'available'
 							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-							: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
+							: data.item.status === 'unavailable'
+							? 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'
+							: 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'}"
 				>
-					{data.item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
-					<span class="ml-2 text-xs opacity-60">
-						{'→ ' + (data.item.status === 'available' ? texts.itemStatus.markUnavailable : texts.itemStatus.markAvailable)}
-					</span>
+					{data.item.status === 'available'
+						? texts.itemStatus.available
+						: data.item.status === 'unavailable'
+						? texts.itemStatus.unavailable
+						: texts.itemStatus.unknown}
+					{#if data.item.status !== 'unknown'}
+						<span class="ml-2 text-xs opacity-60">
+							{'→ ' + (data.item.status === 'available' ? texts.itemStatus.markUnavailable : texts.itemStatus.markAvailable)}
+						</span>
+					{/if}
 				</button>
 			</form>
+		{:else if item.status === 'unknown'}
+			<!-- Non-owner, internal, unknown status -->
+			<span class="text-sm rounded-full px-3 py-1 bg-gray-100 text-gray-500 border border-gray-200">
+				{texts.institutional.availabilityHintUnknown}
+			</span>
 		{:else if isTrustRestricted}
 			<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 cursor-not-allowed">
 				<MessagesOutline class="h-4 w-4 mr-2" />
@@ -259,4 +321,37 @@
 			</form>
 		{/if}
 	</div>
+
+	<!-- "Über die Institution" card — shown when owner is institutional -->
+	{#if isInstitution}
+		<div class="rounded-lg border border-tinte-200 dark:border-tinte-700 p-4 space-y-3 bg-sand dark:bg-tinte-800">
+			<h2 class="text-sm font-semibold text-tinte-500 dark:text-tinte-400 uppercase tracking-wide">
+				{texts.institutional.institutionCardTitle}
+			</h2>
+			<div class="flex items-center gap-3">
+				{#if ownerImageUrl}
+					<img
+						src={ownerImageUrl}
+						alt={item.expand?.owner?.username ?? ''}
+						class="h-12 w-12 rounded-full object-cover shrink-0"
+					/>
+				{:else}
+					<UserCircleOutline class="h-12 w-12 text-tinte-400 shrink-0" />
+				{/if}
+				<div class="min-w-0">
+					<a
+						href={resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' })}
+						class="font-semibold text-tinte-900 dark:text-white hover:text-primary hover:underline"
+					>
+						{item.expand?.owner?.username ?? ''}
+					</a>
+					{#if item.expand?.owner?.bio}
+						<p class="text-sm text-tinte-500 dark:text-tinte-400 line-clamp-3 mt-1 whitespace-pre-wrap">
+							{item.expand.owner.bio}
+						</p>
+					{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>

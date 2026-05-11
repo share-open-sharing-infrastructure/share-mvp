@@ -206,6 +206,7 @@ export const texts = {
 	itemStatus: {
 		available: 'Verfügbar',
 		unavailable: 'Nicht verfügbar',
+		unknown: 'Verfügbarkeit unbekannt',
 		markAvailable: 'auf "Verfügbar" setzen',
 		markUnavailable: 'auf "Nicht verfügbar" setzen',
 	},
@@ -393,6 +394,9 @@ export const texts = {
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
 			resendVerification: 'Bestätigungs-E-Mail erneut senden',
 			verificationSent: 'Bestätigungs-E-Mail wurde gesendet.',
+			bioLabel: 'Über mich',
+			bioLabelInstitution: 'Über uns',
+			profileImageLabel: 'Profilbild',
 			notifications: {
 				sectionTitle: 'Benachrichtigungen',
 				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
@@ -614,6 +618,40 @@ export const texts = {
 	alerts: {
 		errorPrefix: 'Error:',
 		successPrefix: 'Success:',
+	},
+
+	// Institutional partner integration
+	institutional: {
+		badge: 'Institution',
+		externalLendCta: (name: string) => `Bei ${name} ausleihen →`,
+		availabilityHintExternal: 'Aktuelle Verfügbarkeit beim Anbieter prüfen.',
+		availabilityHintUnknown: 'Verfügbarkeit unbekannt',
+		archivedBanner: 'Dieses Angebot ist nicht mehr Teil des Bestandes.',
+		imagePlaceholder: 'Foto folgt',
+		importNavLabel: 'Bestand importieren',
+		importTitle: 'Bestand als CSV importieren',
+		importTemplateLink: 'Vorlage herunterladen',
+		importUploadLabel: 'CSV-Datei auswählen',
+		importUploadHint: 'Nur .csv-Dateien, max. 1 MB, max. 5.000 Zeilen.',
+		importXlsxError: 'Bitte als CSV speichern und erneut hochladen.',
+		importFileTooLarge: 'Die Datei ist zu groß (max. 1 MB).',
+		importTooManyRows: 'Zu viele Zeilen (max. 5.000).',
+		importPreviewButton: 'Vorschau laden',
+		importApplyButton: 'Importieren',
+		importBackButton: 'Zurück',
+		importPreviewSummary: (c: { create: number; update: number; archive: number; skip: number }) =>
+			`${c.create} neu · ${c.update} aktualisiert · ${c.archive} archiviert · ${c.skip} übersprungen`,
+		importApplySummary: (c: {
+			created: number;
+			updated: number;
+			archived: number;
+			errors: number;
+		}) =>
+			`${c.created} erstellt · ${c.updated} aktualisiert · ${c.archived} archiviert · ${c.errors} Fehler`,
+		importDoneTitle: 'Import abgeschlossen',
+		importAnotherButton: 'Weiteren Import starten',
+		institutionCardTitle: 'Über die Institution',
+		aboutOwnerTitle: (name: string) => `Über ${name}`,
 	},
 };
 

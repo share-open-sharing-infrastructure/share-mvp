@@ -26,6 +26,7 @@
 		"@sveltejs/vite-plugin-svelte": "^6.0.0",
 		"@tailwindcss/vite": "^4.0.0",
 		"@types/node": "^24",
+		"@types/papaparse": "^5.5.2",
 		"@types/web-push": "^3.6.4",
 		"@vitest/coverage-v8": "^4.0.16",
 		"eslint": "^9.39.2",
@@ -56,6 +57,7 @@
 		"debounce": "^3.0.0",
 		"dotenv": "^17.2.3",
 		"flowbite-svelte-blocks": "^2.1.0",
+		"papaparse": "^5.5.3",
 		"pocketbase": "^0.26.2",
 		"web-push": "^3.6.7"
 	}

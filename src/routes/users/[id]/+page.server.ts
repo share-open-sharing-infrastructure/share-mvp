@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
@@ -6,9 +6,6 @@ import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
 
 export async function load({ params, locals }) {
-	if (!locals.pb.authStore.isValid) {
-		redirect(307, `/auth/login?redirectTo=/users/${params.id}`);
-	}
 
 	let profileUser: User;
 	try {
@@ -30,9 +27,9 @@ export async function load({ params, locals }) {
 	}
 
 	const currentUser = locals.user;
-	const isOwnProfile = currentUser.id === profileUser.id;
-	const viewerTrustsProfile = currentUser.trusts?.includes(profileUser.id) ?? false;
-	const profileTrustsViewer = profileUser.trusts?.includes(currentUser.id) ?? false;
+	const isOwnProfile = currentUser?.id === profileUser.id;
+	const viewerTrustsProfile = currentUser?.trusts?.includes(profileUser.id) ?? false;
+	const profileTrustsViewer = currentUser ? (profileUser.trusts?.includes(currentUser.id) ?? false) : false;
 
 	const publicItems = allItems.filter((item) => !item.trusteesOnly);
 	const trustedItemsAll = allItems.filter((item) => item.trusteesOnly);
