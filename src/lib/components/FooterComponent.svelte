@@ -23,10 +23,7 @@
 					<img src="/AllerLeih.png" class="mr-3 h-12" alt={texts.names.app} />
 					<p class="max-w-xs text-sm text-light">
 						Ein gemeinnütziger Verleih-Marktplatz.<br/>
-						<a href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="external noopener noreferrer" class="text-accent hover:underline">
-							Open-Source.
-						</a>
-						Für Alle.
+						Open-Source. Für Alle.
 					</p>
 				</FooterBrand>
 			</div>
