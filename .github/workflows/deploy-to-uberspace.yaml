@@ -45,4 +45,5 @@ jobs:
           script: |
             cd share-mvp
             npm ci
+            echo "BODY_SIZE_LIMIT=10485760" > .env
             supervisorctl restart svelte
