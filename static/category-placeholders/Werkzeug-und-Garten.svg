@@ -1,0 +1,9 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#FDFBF6"/>
+  <!-- Großes Viereck leicht gedreht: stabil, geerdet -->
+  <rect x="80" y="100" width="200" height="200" rx="4" fill="#4a6fe3" transform="rotate(-10 180 200)"/>
+  <!-- Dreieck oben-rechts -->
+  <polygon points="270,60 370,60 370,160" fill="#f5d33a"/>
+  <!-- Kreis unten-links -->
+  <circle cx="105" cy="320" r="62" fill="#e8553f"/>
+</svg>

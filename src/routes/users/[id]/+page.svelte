@@ -1,139 +1,66 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { Toggle } from 'flowbite-svelte';
-	import { AccordionItem, Accordion } from 'flowbite-svelte';
-	import { UserCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
-	import ItemCard from '../../search/ItemCard.svelte';
-	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+	import ProfileHeader from './ProfileHeader.svelte';
+	import TrustSection from './TrustSection.svelte';
+	import ItemsSection from './ItemsSection.svelte';
 
 	const { data } = $props();
-	const profileUser = $derived(data.profileUser);
-	const publicItems = $derived(data.publicItems);
-	const trustedItems = $derived(data.trustedItems);
+
 	const isOwnProfile = $derived(data.isOwnProfile);
 	const viewerTrustsProfile = $derived(data.viewerTrustsProfile);
 	const profileTrustsViewer = $derived(data.profileTrustsViewer);
 
-	// svelte-ignore state_referenced_locally
-	const activeSinceDate = new Intl.DateTimeFormat('de-DE', {
-		month: 'long',
-		year: 'numeric',
-	}).format(new Date(profileUser.created));
+	const profileImageUrl = $derived(
+		data.profileUser.profileImage
+			? `${data.PB_IMG_URL}api/files/users/${data.profileUser.id}/${data.profileUser.profileImage}`
+			: null
+	);
 
-	let trustForm: HTMLFormElement = $state()!;
+	const activeSinceDate = $derived(
+		new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' })
+			.format(new Date(data.profileUser.created))
+	);
 </script>
 
 <svelte:head>
-	<title>{texts.seo.userProfile(profileUser.username)}</title>
-	<meta name="description" content={texts.seo.userProfileDescription(profileUser.username)} />
-	<meta property="og:title" content={texts.seo.userProfile(profileUser.username)} />
-	<meta property="og:description" content={texts.seo.userProfileDescription(profileUser.username)} />
+	<title>{texts.seo.userProfile(data.profileUser.username)}</title>
+	<meta name="description" content={texts.seo.userProfileDescription(data.profileUser.username)} />
+	<meta property="og:title" content={texts.seo.userProfile(data.profileUser.username)} />
+	<meta property="og:description" content={texts.seo.userProfileDescription(data.profileUser.username)} />
 	<meta property="og:type" content="website" />
 </svelte:head>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">
-	<!-- Profile Header -->
-	<div class="flex items-center gap-6">
-		<!-- TODO: replace with actual profile image once implemented -->
-		<div
-			class="h-20 w-20 rounded-full bg-tinte-100 flex items-center justify-center shrink-0"
-		>
-			<UserCircleOutline class="h-14 w-14 text-tinte-400" />
-		</div>
+	<ProfileHeader
+		username={data.profileUser.username}
+		{profileImageUrl}
+		verified={data.profileUser.verified}
+		isInstitution={data.profileUser.isInstitution}
+		{activeSinceDate}
+	/>
+
+	{#if data.profileUser.bio}
 		<div class="space-y-1">
-			<h1 class="text-2xl font-bold text-tinte-900 dark:text-white">
-				@{profileUser.username}
-			</h1>
-
-			{#if profileUser.verified}
-				<p class="flex items-center gap-1 text-sm text-green-600 font-medium">
-					<VerifiedIcon class="h-4 w-4" />
-					{texts.pages.userProfile.emailVerified}
-				</p>
-			{/if}
-			<p class="text-sm text-tinte-500 dark:text-tinte-400">
-				{texts.pages.userProfile.activeSince(activeSinceDate)}
+			<h2 class="text-sm font-semibold text-tinte-500 dark:text-tinte-400 uppercase tracking-wide">
+				{data.profileUser.isInstitution ? texts.pages.profile.bioLabelInstitution : texts.pages.profile.bioLabel}
+			</h2>
+			<p class="text-tinte-700 dark:text-tinte-300 whitespace-pre-wrap">
+				{data.profileUser.bio}
 			</p>
-		</div>
-	</div>
-
-	<!-- Trust Section (hidden on own profile) -->
-	{#if !isOwnProfile}
-		<div
-			class="rounded-lg border border-tinte-200 dark:border-primary-700 p-4 space-y-3"
-		>
-			<!-- Does the profile owner trust the viewer? -->
-			<p class="text-sm text-tinte-600 dark:text-tinte-400">
-				{#if profileTrustsViewer}
-					✓ {texts.pages.userProfile.trustsYou}
-				{:else}
-					{texts.pages.userProfile.doesNotTrustYou}
-				{/if}
-			</p>
-
-			<!-- Does the viewer trust the profile owner? -->
-			<form
-				method="POST"
-				action={viewerTrustsProfile ? '?/removeTrust' : '?/addTrust'}
-				use:enhance
-				bind:this={trustForm}
-			>
-				<Toggle
-					checked={viewerTrustsProfile}
-					onchange={() => trustForm?.requestSubmit()}
-				>
-					{viewerTrustsProfile
-						? texts.pages.userProfile.trustsThisUser
-						: texts.pages.userProfile.doesNotTrustThisUser}
-				</Toggle>
-			</form>
 		</div>
 	{/if}
 
-	<Accordion multiple>
-		<AccordionItem open>
-			{#snippet header()}{texts.pages.userProfile.publicItems}{/snippet}
-			<!-- Public Items Section -->
-			<section>
-				{#if publicItems.length === 0}
-					<p class="text-tinte-500 dark:text-tinte-400">
-						{texts.pages.userProfile.noPublicItems}
-					</p>
-				{:else}
-					<div class="space-y-2">
-						{#each publicItems as item (item.id)}
-							<ItemCard
-								{item}
-								imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
-								profileView={true}
-							/>
-						{/each}
-					</div>
-				{/if}
-			</section>
-		</AccordionItem>
-		<AccordionItem>
-			{#snippet header()}
-						{texts.pages.userProfile.trustedItems}{/snippet}
-			<!-- Trusted-Only Items Section -->
-			{#if trustedItems !== null && trustedItems.length > 0}
-					<div class="space-y-3">
-						{#each trustedItems as item (item.id)}
-							<ItemCard
-								{item}
-								imgUrl={`${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
-								profileView={true}
-							/>
-						{/each}
-					</div>
-			{:else if trustedItems === null}
-				<section class="space-y-2">
-					<p class="text-tinte-500 dark:text-tinte-400">
-						{texts.pages.userProfile.notTrustedNote}
-					</p>
-				</section>
-			{/if}
-		</AccordionItem>
-	</Accordion>
+	{#if !isOwnProfile && data.loggedIn}
+		<TrustSection {profileTrustsViewer} {viewerTrustsProfile} />
+	{/if}
+
+	<ItemsSection
+		publicItems={data.publicItems}
+		trustedItems={data.trustedItems}
+		hiddenItemsCount={data.hiddenItemsCount}
+		hiddenCategories={data.hiddenCategories}
+		{profileImageUrl}
+		pbImgUrl={data.PB_IMG_URL}
+		loggedIn={data.loggedIn}
+	/>
 </div>

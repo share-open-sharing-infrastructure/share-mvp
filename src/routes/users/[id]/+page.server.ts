@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
@@ -6,9 +6,6 @@ import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
 
 export async function load({ params, locals }) {
-	if (!locals.pb.authStore.isValid) {
-		redirect(307, `/auth/login?redirectTo=/users/${params.id}`);
-	}
 
 	let profileUser: User;
 	try {
@@ -30,20 +27,33 @@ export async function load({ params, locals }) {
 	}
 
 	const currentUser = locals.user;
-	const isOwnProfile = currentUser.id === profileUser.id;
-	const viewerTrustsProfile = currentUser.trusts?.includes(profileUser.id) ?? false;
-	const profileTrustsViewer = profileUser.trusts?.includes(currentUser.id) ?? false;
+	const isOwnProfile = currentUser?.id === profileUser.id;
+	const viewerTrustsProfile = currentUser?.trusts?.includes(profileUser.id) ?? false;
+	const profileTrustsViewer = currentUser ? (profileUser.trusts?.includes(currentUser.id) ?? false) : false;
 
 	const publicItems = allItems.filter((item) => !item.trusteesOnly);
 	const trustedItemsAll = allItems.filter((item) => item.trusteesOnly);
-	// Only reveal trusted items if the viewer is in the owner's trust circle
-	const trustedItems = profileTrustsViewer ? trustedItemsAll : null;
+	// Owner is never in their own trusts array, so isOwnProfile must be checked separately
+	const trustedItems = (profileTrustsViewer || isOwnProfile) ? trustedItemsAll : null;
+
+	// Strip fields that must not reach the client: sensitive data and fields not used by this page.
+	const fieldsToStrip = [
+		'email', 'trusts', 'geolocation', 'inviteCode', 'invitedBy',
+		'hasOnboarded', 'telegramUsername', 'signalLink',
+		'telegramVisibleToTrustedOnly', 'signalVisibleToTrustedOnly',
+	];
+	for (const field of fieldsToStrip) {
+		delete (profileUser as unknown as Record<string, unknown>)[field];
+	}
 
 	return {
 		profileUser,
 		publicItems,
 		trustedItems,
+		hiddenItemsCount: trustedItems === null ? trustedItemsAll.length : 0,
+		hiddenCategories: trustedItems === null ? trustedItemsAll.flatMap((i) => i.categories ?? []) : [],
 		isOwnProfile,
+		loggedIn: !!currentUser,
 		viewerTrustsProfile,
 		profileTrustsViewer,
 		PB_IMG_URL: PUBLIC_PB_URL,
@@ -52,6 +62,15 @@ export async function load({ params, locals }) {
 
 export const actions = {
 	addTrust: async ({ params, locals }): Promise<void> => {
+		if (!locals.user) {
+			fail(401, { message: texts.errors.noPermission });
+			return;
+		}
+		if (params.id === locals.user.id) {
+			fail(400, { message: texts.errors.noPermission });
+			return;
+		}
+
 		const profileUserId = params.id;
 		const updatedTrusts = [...(locals.user.trusts || []), profileUserId];
 		try {
@@ -60,14 +79,23 @@ export const actions = {
 			console.error('Failed to add trust', err);
 		}
 
-		// Notify the newly trusted user
-		const adderName = locals.user.username ?? locals.user.name ?? 'Jemand';
+		// Notify the newly trusted user — fire and forget.
+		const adderName = locals.user.username ?? locals.user.name ?? texts.pages.itemDetail.unknownRequester;
 		const notificationBody = texts.notifications.trustAdded(adderName);
-
-		await createNotification(locals.pb, profileUserId as string, locals.user.id, 'trust_added', locals.user.id, notificationBody);
-		await sendPushToUser(locals.pb, profileUserId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+		try {
+			await createNotification(locals.pb, profileUserId, locals.user.id, 'trust_added', locals.user.id, notificationBody);
+			await sendPushToUser(locals.pb, profileUserId, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+		} catch (err) {
+			console.error('Trust notification failed', err);
+		}
 	},
+
 	removeTrust: async ({ params, locals }): Promise<void> => {
+		if (!locals.user) {
+			fail(401, { message: texts.errors.noPermission });
+			return;
+		}
+
 		const profileUserId = params.id;
 		const updatedTrusts = (locals.user.trusts || []).filter((id: string) => id !== profileUserId);
 		try {

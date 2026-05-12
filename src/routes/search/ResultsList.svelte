@@ -23,7 +23,10 @@
 	{#each filteredItemList as item (item.id)}
 		<ItemCard
 			{item}
-			imgUrl={`${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`}
+			imgUrl={item.image ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}` : (item.externalImgUrl ?? '')}
+			ownerImgUrl={item.expand?.owner?.profileImage
+				? `${PB_IMG_URL}api/files/users/${item.expand.owner.id}/${item.expand.owner.profileImage}`
+				: undefined}
 			travelMinutes={travelTimes[item.expand?.owner?.id]}
 			{transportMode}
 			{currentUserId}

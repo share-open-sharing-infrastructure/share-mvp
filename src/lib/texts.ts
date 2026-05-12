@@ -82,6 +82,8 @@ export const texts = {
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
+		itemNotFound: 'Gegenstand nicht gefunden.',
+		noPermission: 'Keine Berechtigung.',
 	},
 
 	// Success messages
@@ -206,6 +208,7 @@ export const texts = {
 	itemStatus: {
 		available: 'Verfügbar',
 		unavailable: 'Nicht verfügbar',
+		unknown: 'Verfügbarkeit unbekannt',
 		markAvailable: 'auf "Verfügbar" setzen',
 		markUnavailable: 'auf "Nicht verfügbar" setzen',
 	},
@@ -352,7 +355,8 @@ export const texts = {
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
-			randomItemsHeading: 'Entdecke Gegenstände',
+			randomItemsHeading: 'Entdecke zufällige Gegenstände',
+			onlyAvailable: 'Nur verfügbare Dinge zeigen',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -386,6 +390,15 @@ export const texts = {
 			countNone: 'Du verleihst noch keine Ding(e)...',
 			addSingle: 'Dinge einzeln hochladen',
 			addBulk: 'Mit KI-Bilderkennung hochladen',
+			search: 'Suchen...',
+			filterAll: 'Alle',
+			filterAvailable: 'Verfügbar',
+			filterUnavailable: 'Nicht verfügbar',
+			selected: (n: number) => `${n} ausgewählt`,
+			setAvailable: 'Verfügbar setzen',
+			setUnavailable: 'Nicht verfügbar setzen',
+			deselectAll: 'Alle abwählen',
+			selectAll: 'Alle auf dieser Seite',
 		},
 		profile: {
 			title: 'Mein Profil',
@@ -393,6 +406,12 @@ export const texts = {
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
 			resendVerification: 'Bestätigungs-E-Mail erneut senden',
 			verificationSent: 'Bestätigungs-E-Mail wurde gesendet.',
+			bioLabel: 'Über mich',
+			bioLabelInstitution: 'Über uns',
+			bioPlaceholder: 'Stelle dich kurz vor...',
+			profileImageLabel: 'Profilbild',
+			deleteProfileImage: 'Foto löschen',
+			cannotUpdate: 'Daten konnten nicht aktualisiert werden. Bitte überprüfe deine Eingaben.',
 			notifications: {
 				sectionTitle: 'Benachrichtigungen',
 				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
@@ -425,6 +444,11 @@ export const texts = {
 			locationLabel: 'Ort',
 			noImage: 'Kein Bild vorhanden',
 			calculateTravelTime: 'Wegzeit berechnen',
+			unknownRequester: 'Jemand',
+			unknownItem: 'einem Gegenstand',
+			ownerCardTitle: 'Verliehen von',
+			institutionCardTitle: 'Angeboten von',
+			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
@@ -438,6 +462,15 @@ export const texts = {
 			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
 			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen. Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen. Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.',
+			itemsSectionTitle: 'Gegenstände',
+			allCategories: 'Alle',
+			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',
+			noItemsInCategory: 'Keine Gegenstände in dieser Kategorie.',
+			lockedCard: 'Nur für Vertraute',
+			moreLockedItems: (n: number) => `+${n} weitere Artikel`,
+			lockedTooltipTitle: 'Nur für Vertraute sichtbar',
+			lockedTooltipBody: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Vertraue ihr über den Schalter oben auf dieser Seite – vielleicht vertraut sie dir dann auch!',
+			lockedTooltipBodyGuest: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Melde dich an und vertraue dieser Person, um Zugang zu erhalten.',
 		},
 	},
 
@@ -616,6 +649,40 @@ export const texts = {
 	alerts: {
 		errorPrefix: 'Error:',
 		successPrefix: 'Success:',
+	},
+
+	// Institutional partner integration
+	institutional: {
+		badge: 'Institution',
+		externalLendCta: (name: string) => `Bei ${name} ausleihen →`,
+		availabilityHintExternal: 'Aktuelle Verfügbarkeit beim Anbieter prüfen.',
+		availabilityHintUnknown: 'Verfügbarkeit unbekannt',
+		archivedBanner: 'Dieses Angebot ist nicht mehr Teil des Bestandes.',
+		imagePlaceholder: 'Foto folgt',
+		importNavLabel: 'Bestand importieren',
+		importTitle: 'Bestand als CSV importieren',
+		importTemplateLink: 'Vorlage herunterladen',
+		importUploadLabel: 'CSV-Datei auswählen',
+		importUploadHint: 'Nur .csv-Dateien, max. 1 MB, max. 5.000 Zeilen.',
+		importXlsxError: 'Bitte als CSV speichern und erneut hochladen.',
+		importFileTooLarge: 'Die Datei ist zu groß (max. 1 MB).',
+		importTooManyRows: 'Zu viele Zeilen (max. 5.000).',
+		importPreviewButton: 'Vorschau laden',
+		importApplyButton: 'Importieren',
+		importBackButton: 'Zurück',
+		importPreviewSummary: (c: { create: number; update: number; archive: number; skip: number }) =>
+			`${c.create} neu · ${c.update} aktualisiert · ${c.archive} archiviert · ${c.skip} übersprungen`,
+		importApplySummary: (c: {
+			created: number;
+			updated: number;
+			archived: number;
+			errors: number;
+		}) =>
+			`${c.created} erstellt · ${c.updated} aktualisiert · ${c.archived} archiviert · ${c.errors} Fehler`,
+		importDoneTitle: 'Import abgeschlossen',
+		importAnotherButton: 'Weiteren Import starten',
+		institutionCardTitle: 'Über die Institution',
+		aboutOwnerTitle: (name: string) => `Über ${name}`,
 	},
 };
 

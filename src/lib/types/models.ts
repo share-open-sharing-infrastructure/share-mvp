@@ -99,6 +99,24 @@ export interface User extends PocketBaseEntity {
 	 * Whether the user has verified their email address.
 	 */
 	verified?: boolean;
+
+	/**
+	 * Marks the account as institutional. Admin-only toggle.
+	 * Unlocks the bulk-upload UI and the externalUrl permission on the user's items.
+	 */
+	isInstitution?: boolean;
+
+	/**
+	 * Optional profile picture (PocketBase file name).
+	 * For institutional accounts, doubles as the logo.
+	 */
+	profileImage?: string;
+
+	/**
+	 * Free-form profile text (plain text, newlines preserved).
+	 * Institutions: address, opening hours, website, lending modalities.
+	 */
+	bio?: string;
 }
 
 // --- ITEM ---
@@ -126,7 +144,7 @@ export interface Item extends PocketBaseEntity {
 	trusteesOnly: boolean;
 
 	/** Availability status set by the owner */
-	status: 'available' | 'unavailable';
+	status: 'available' | 'unavailable' | 'unknown';
 
 	/** Up to 3 categories selected from the fixed 9-option list */
 	categories?: string[];
@@ -134,6 +152,25 @@ export interface Item extends PocketBaseEntity {
 	/** PocketBase collection id to which the item belongs */
 	/** TODO: I don't know why we save this? This should always be the "items" collection, right? */
 	collectionId: string;
+
+	/**
+	 * Stable identifier in the partner's source system (e.g. WinBIAP Mediennummer).
+	 * Upsert key for re-import. Unique per (owner, externalId).
+	 */
+	externalId?: string;
+
+	/**
+	 * Deep link to the item's detail page in the partner's external system.
+	 * When set, the item detail page shows a deep-link CTA instead of the AllerLeih request flow.
+	 * Only allowed when owner.isInstitution = true.
+	 */
+	externalUrl?: string;
+
+	/**
+	 * URL of an externally-hosted cover/product image.
+	 * Displayed when no PocketBase file is uploaded for this item.
+	 */
+	externalImgUrl?: string;
 }
 
 // --- MESSAGE ---

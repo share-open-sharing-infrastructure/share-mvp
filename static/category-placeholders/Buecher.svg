@@ -1,0 +1,9 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#FDFBF6"/>
+  <!-- Drei gestapelte Rechtecke = Bücherstapel -->
+  <rect x="80" y="240" width="240" height="60" rx="4" fill="#4a6fe3" transform="rotate(-3 200 270)"/>
+  <rect x="90" y="165" width="220" height="60" rx="4" fill="#e8553f" transform="rotate(2 200 195)"/>
+  <rect x="75" y="90"  width="250" height="60" rx="4" fill="#f5d33a" transform="rotate(-5 200 120)"/>
+  <!-- Kleiner Kreis unten rechts -->
+  <circle cx="330" cy="330" r="38" fill="#f5d33a" opacity="0.85"/>
+</svg>

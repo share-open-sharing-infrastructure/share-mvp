@@ -23,10 +23,7 @@
 					<img src="/AllerLeih.png" class="mr-3 h-12" alt={texts.names.app} />
 					<p class="max-w-xs text-sm text-light">
 						Ein gemeinnütziger Verleih-Marktplatz.<br/>
-						<a href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="external noopener noreferrer" class="text-accent hover:underline">
-							Open-Source.
-						</a>
-						Für Alle.
+						Open-Source. Für Alle.
 					</p>
 				</FooterBrand>
 			</div>
@@ -71,7 +68,7 @@
 						<FooterLink
 							classes={{ link: "hover:no-underline" }}
 							class="mb-2 hover:text-accent"
-							href="https://pixelfed.de/AllerLeih"
+							href="/api/redirect?to=https%3A%2F%2Fpixelfed.de%2FAllerLeih&source=footer"
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={texts.footer.pixelfed}
@@ -94,7 +91,7 @@
 						<FooterLink
 							classes={{ link: "hover:no-underline" }}
 							class="mb-2 hover:text-accent"
-							href="https://norden.social/@AllerLeih"
+							href="/api/redirect?to=https%3A%2F%2Fnorden.social%2F%40AllerLeih&source=footer"
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label="{texts.footer.mastodon}}"
@@ -117,7 +114,7 @@
 						<FooterLink
 							classes={{ link: "hover:no-underline" }}
 							class="mb-2 hover:text-accent"
-							href="https://www.instagram.com/aller.leih/"
+							href="/api/redirect?to=https%3A%2F%2Fwww.instagram.com%2Faller.leih%2F&source=footer"
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={texts.footer.instagram}

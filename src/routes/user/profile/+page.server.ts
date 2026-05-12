@@ -19,6 +19,15 @@ export async function load({ locals, url }) {
 }
 
 export const actions = {
+	deleteProfileImage: async ({ locals }) => {
+		try {
+			await locals.pb.collection('users').update(locals.user.id, { profileImage: null });
+			return { success: true, message: texts.success.dataUpdated };
+		} catch {
+			return { error: true, message: texts.errors.somethingWentWrong };
+		}
+	},
+
 	resendVerification: async ({ locals }) => {
 		try {
 			await locals.pb.collection('users').requestVerification(locals.user.email);
@@ -30,6 +39,9 @@ export const actions = {
 
 	saveProfile: async ({ locals, request }) => {
 		const formData = await request.formData();
+
+		// Use a FormData object for the PocketBase update so file uploads are handled correctly
+		const pbFormData = new FormData();
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {};
@@ -119,9 +131,32 @@ export const actions = {
 			updateData['geolocation'] = null;
 		}
 
+		// Handle bio
+		const bio = formData?.get('bio')?.toString();
+		if (bio !== undefined) {
+			updateData['bio'] = bio.trim();
+		}
+
+		// Handle profileImage file upload
+		const profileImageFile = formData?.get('profileImage');
+		const hasProfileImage = profileImageFile instanceof File && profileImageFile.size > 0;
+
 		try {
-			if (Object.keys(updateData).length > 0) {
-				await locals.pb.collection('users').update(locals.user.id, updateData);
+			if (Object.keys(updateData).length > 0 || hasProfileImage) {
+				// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields
+				for (const [key, value] of Object.entries(updateData)) {
+					if (value === null) {
+						pbFormData.append(key, '');
+					} else if (typeof value === 'object') {
+						pbFormData.append(key, JSON.stringify(value));
+					} else {
+						pbFormData.append(key, String(value));
+					}
+				}
+				if (hasProfileImage) {
+					pbFormData.append('profileImage', profileImageFile as File);
+				}
+				await locals.pb.collection('users').update(locals.user.id, pbFormData);
 				return {
 					success: true,
 					message: texts.success.dataUpdated,
@@ -129,17 +164,14 @@ export const actions = {
 			} else {
 				return {
 					error: true,
-					message:
-						'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.',
+					message: texts.pages.profile.cannotUpdate,
 				};
 			}
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: Error | any) {
 			return {
 				error: true,
-				message:
-					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.' +
-					(err ? ` Fehler: ${err.message}` : ''),
+				message: texts.pages.profile.cannotUpdate + (err ? ` Fehler: ${err.message}` : ''),
 			};
 		}
 	},

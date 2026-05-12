@@ -13,13 +13,15 @@ export async function load({ locals, url }) {
 		.map((s) => s.trim())
 		.filter((s): s is ItemCategory => ITEM_CATEGORIES.includes(s as ItemCategory));
 	const op: 'or' | 'and' = url.searchParams.get('op') === 'and' ? 'and' : 'or';
+	const onlyAvailable = url.searchParams.get('onlyAvailable') !== 'false';
+	const availabilityFilter = onlyAvailable ? "status != 'unavailable'" : null;
 
 	if (!q && selectedCategories.length === 0) {
 		const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
 		const trustFilter = locals.user
 			? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
 			: `trusteesOnly = false`;
-		const filter = [ownerFilter, trustFilter].filter(Boolean).join(' && ') || undefined;
+		const filter = [ownerFilter, trustFilter, availabilityFilter].filter(Boolean).join(' && ') || undefined;
 
 		const result = await locals.pb.collection('items').getList<Item>(1, 8, {
 			expand: 'owner',
@@ -33,6 +35,7 @@ export async function load({ locals, url }) {
 			q: '',
 			selectedCategories,
 			op,
+			onlyAvailable,
 			currentUser: locals.user ?? null,
 			page: 1,
 			perPage,
@@ -59,8 +62,7 @@ export async function load({ locals, url }) {
 	const trustFilter = locals.user
 		? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
 		: `trusteesOnly = false`;
-	const filter = [nameFilter, ownerFilter, categoryFilter, trustFilter].filter(Boolean).join(' && ') || undefined;
-
+	const filter = [nameFilter, ownerFilter, categoryFilter, trustFilter, availabilityFilter].filter(Boolean).join(' && ') || undefined;
 
 	const result = await locals.pb.collection('items').getList<Item>(page, perPage, {
 		expand: 'owner',
@@ -79,6 +81,7 @@ export async function load({ locals, url }) {
 		q,
 		selectedCategories,
 		op,
+		onlyAvailable,
 		currentUser: locals.user ?? null,
 		page: result.page,
 		perPage: result.perPage,

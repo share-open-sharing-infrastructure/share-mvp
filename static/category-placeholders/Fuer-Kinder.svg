@@ -1,0 +1,10 @@
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="400" fill="#FDFBF6"/>
+  <!-- Alle drei gleich groß, versetzt = verspielt -->
+  <!-- Kreis oben-mitte -->
+  <circle cx="200" cy="120" r="80" fill="#f5d33a"/>
+  <!-- Dreieck unten-links -->
+  <polygon points="50,390 200,390 50,240" fill="#e8553f"/>
+  <!-- Viereck unten-rechts gedreht -->
+  <rect x="220" y="230" width="130" height="130" rx="4" fill="#4a6fe3" transform="rotate(15 285 295)"/>
+</svg>

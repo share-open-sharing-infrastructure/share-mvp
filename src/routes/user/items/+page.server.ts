@@ -3,18 +3,34 @@ import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
 import type { Item } from '$lib/types/models';
 
-export async function load({ locals }) {
-	const [user, items] = await Promise.all([
+export async function load({ locals, url }) {
+	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
+	const perPage = 25;
+	const search = url.searchParams.get('search') ?? '';
+	const statusFilter = url.searchParams.get('status') ?? 'all';
+
+	const filters: string[] = [`owner = "${locals.user.id}"`];
+	if (search) filters.push(`name ~ "${search.replace(/"/g, '')}"`);
+	if (statusFilter === 'available') filters.push(`status = "available"`);
+	else if (statusFilter === 'unavailable') filters.push(`status = "unavailable"`);
+
+	const [user, result] = await Promise.all([
 		locals.pb.collection('users').getOne(locals.user.id),
-		locals.pb.collection('items').getFullList({
-			filter: `owner = "${locals.user.id}"`,
+		locals.pb.collection('items').getList(page, perPage, {
+			filter: filters.join(' && '),
 			sort: '-updated',
-		}) as Promise<Item[]>,
+		}) as Promise<{ items: Item[]; totalItems: number; totalPages: number }>,
 	]);
 
 	return {
 		user,
-		items,
+		items: result.items,
+		totalItems: result.totalItems,
+		totalPages: result.totalPages,
+		currentPage: page,
+		perPage,
+		search,
+		statusFilter,
 		PB_URL: PUBLIC_PB_URL,
 	};
 }
@@ -146,6 +162,27 @@ export const actions = {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err ? err.message : err);
+			}
+		}
+	},
+
+	bulkSetStatus: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const itemIds = formData.getAll('itemId').map(String);
+		const newStatus = formData.get('newStatus')?.toString();
+
+		if (!itemIds.length || (newStatus !== 'available' && newStatus !== 'unavailable')) {
+			return fail(400, { fail: true, message: 'Ungültige Anfrage.' });
+		}
+
+		for (const itemId of itemIds) {
+			try {
+				const item = await locals.pb.collection('items').getOne(itemId);
+				if (item.owner !== locals.user.id) continue;
+				await locals.pb.collection('items').update(itemId, { status: newStatus });
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} catch (err: Error | any) {
+				console.error(err?.message ?? err);
 			}
 		}
 	},
