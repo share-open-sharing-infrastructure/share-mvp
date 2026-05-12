@@ -164,17 +164,14 @@ export const actions = {
 			} else {
 				return {
 					error: true,
-					message:
-						'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.',
+					message: texts.pages.profile.cannotUpdate,
 				};
 			}
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: Error | any) {
 			return {
 				error: true,
-				message:
-					'Daten konnten nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingaben.' +
-					(err ? ` Fehler: ${err.message}` : ''),
+				message: texts.pages.profile.cannotUpdate + (err ? ` Fehler: ${err.message}` : ''),
 			};
 		}
 	},

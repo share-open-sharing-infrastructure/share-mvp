@@ -355,7 +355,7 @@ export const texts = {
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
-			randomItemsHeading: 'Entdecke Gegenstände',
+			randomItemsHeading: 'Entdecke zufällige Gegenstände',
 			onlyAvailable: 'Nur verfügbare Dinge zeigen',
 		},
 		logout: {
@@ -408,7 +408,10 @@ export const texts = {
 			verificationSent: 'Bestätigungs-E-Mail wurde gesendet.',
 			bioLabel: 'Über mich',
 			bioLabelInstitution: 'Über uns',
+			bioPlaceholder: 'Stelle dich kurz vor...',
 			profileImageLabel: 'Profilbild',
+			deleteProfileImage: 'Foto löschen',
+			cannotUpdate: 'Daten konnten nicht aktualisiert werden. Bitte überprüfe deine Eingaben.',
 			notifications: {
 				sectionTitle: 'Benachrichtigungen',
 				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
