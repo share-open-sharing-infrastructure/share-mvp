@@ -25,10 +25,10 @@
 				{texts.institutional.availabilityHintExternal}
 			</span>
 		{/if}
-		{#if !isArchived}
+		{#if !isArchived && item.externalUrl}
 			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href={item.externalUrl}
+				href={`/api/redirect?to=${encodeURIComponent(item.externalUrl)}&source=item-detail&item=${item.id}`}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"

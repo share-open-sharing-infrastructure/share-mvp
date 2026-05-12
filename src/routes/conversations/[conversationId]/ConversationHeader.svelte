@@ -117,7 +117,7 @@
 				<!-- Telegram -->
 				{#if telegramAvailable}
 					<button
-						onclick={() => window.open(telegramLink!, '_blank', 'noopener,noreferrer')}
+						onclick={() => window.open(`/api/redirect?to=${encodeURIComponent(telegramLink!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer')}
 						class="w-7 h-7 rounded-full bg-[#2CA5E0] hover:bg-[#229ED9] flex items-center justify-center transition-colors shrink-0"
 						aria-label={texts.messenger.contactViaTelegram}
 					>
@@ -138,7 +138,7 @@
 				<!-- Signal -->
 				{#if signalAvailable}
 					<button
-						onclick={() => window.open(signalLink!, '_blank', 'noopener,noreferrer')}
+						onclick={() => window.open(`/api/redirect?to=${encodeURIComponent(signalLink!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer')}
 						class="w-7 h-7 rounded-full bg-[#2C6BED] hover:bg-[#2460D4] flex items-center justify-center transition-colors shrink-0"
 						aria-label={texts.messenger.contactViaSignal}
 					>
