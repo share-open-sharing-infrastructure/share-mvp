@@ -53,9 +53,7 @@
 		<!-- Placeholder sits in the same flex position as <img> would — no img prop means no Card img element.
 		     w-24 md:w-48 max-w-36 mirrors the theme's md:w-48 + our max-w-36 on the real <img>. -->
 		<div class="w-24 md:w-48 max-w-36 shrink-0 self-stretch rounded-s-lg rounded-tr-none rounded-br-none bg-gray-100 flex items-center justify-center overflow-hidden">
-			{#if ownerImgUrl}
-				<img src={ownerImgUrl} alt="" class="w-full h-full object-cover opacity-40" />
-			{:else if categoryPlaceholder}
+			{#if categoryPlaceholder}
 				<img src={categoryPlaceholder} alt="" class="w-full h-full object-contain p-3 opacity-30" />
 			{:else}
 				<span class="text-[10px] text-gray-400 text-center px-1 leading-tight">{texts.institutional.imagePlaceholder}</span>

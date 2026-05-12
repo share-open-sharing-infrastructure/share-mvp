@@ -443,7 +443,7 @@ export const texts = {
 			calculateTravelTime: 'Wegzeit berechnen',
 			unknownRequester: 'Jemand',
 			unknownItem: 'einem Gegenstand',
-			ownerCardTitle: 'Verleiht von',
+			ownerCardTitle: 'Verliehen von',
 			institutionCardTitle: 'Angeboten von',
 			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
 		},

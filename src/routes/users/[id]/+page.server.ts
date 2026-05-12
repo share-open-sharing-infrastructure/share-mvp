@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
@@ -36,6 +36,16 @@ export async function load({ params, locals }) {
 	// Owner is never in their own trusts array, so isOwnProfile must be checked separately
 	const trustedItems = (profileTrustsViewer || isOwnProfile) ? trustedItemsAll : null;
 
+	// Strip fields that must not reach the client: sensitive data and fields not used by this page.
+	const fieldsToStrip = [
+		'email', 'trusts', 'geolocation', 'inviteCode', 'invitedBy',
+		'hasOnboarded', 'telegramUsername', 'signalLink',
+		'telegramVisibleToTrustedOnly', 'signalVisibleToTrustedOnly',
+	];
+	for (const field of fieldsToStrip) {
+		delete (profileUser as unknown as Record<string, unknown>)[field];
+	}
+
 	return {
 		profileUser,
 		publicItems,
@@ -52,6 +62,15 @@ export async function load({ params, locals }) {
 
 export const actions = {
 	addTrust: async ({ params, locals }): Promise<void> => {
+		if (!locals.user) {
+			fail(401, { message: texts.errors.noPermission });
+			return;
+		}
+		if (params.id === locals.user.id) {
+			fail(400, { message: texts.errors.noPermission });
+			return;
+		}
+
 		const profileUserId = params.id;
 		const updatedTrusts = [...(locals.user.trusts || []), profileUserId];
 		try {
@@ -60,14 +79,23 @@ export const actions = {
 			console.error('Failed to add trust', err);
 		}
 
-		// Notify the newly trusted user
-		const adderName = locals.user.username ?? locals.user.name ?? 'Jemand';
+		// Notify the newly trusted user — fire and forget.
+		const adderName = locals.user.username ?? locals.user.name ?? texts.pages.itemDetail.unknownRequester;
 		const notificationBody = texts.notifications.trustAdded(adderName);
-
-		await createNotification(locals.pb, profileUserId as string, locals.user.id, 'trust_added', locals.user.id, notificationBody);
-		await sendPushToUser(locals.pb, profileUserId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+		try {
+			await createNotification(locals.pb, profileUserId, locals.user.id, 'trust_added', locals.user.id, notificationBody);
+			await sendPushToUser(locals.pb, profileUserId, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+		} catch (err) {
+			console.error('Trust notification failed', err);
+		}
 	},
+
 	removeTrust: async ({ params, locals }): Promise<void> => {
+		if (!locals.user) {
+			fail(401, { message: texts.errors.noPermission });
+			return;
+		}
+
 		const profileUserId = params.id;
 		const updatedTrusts = (locals.user.trusts || []).filter((id: string) => id !== profileUserId);
 		try {

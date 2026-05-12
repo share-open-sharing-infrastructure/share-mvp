@@ -25,7 +25,7 @@
 	);
 </script>
 
-<div class="rounded-lg border border-tinte-200 dark:border-tinte-700 p-4 space-y-3 bg-sand dark:bg-tinte-800">
+<div class="rounded-lg border border-tinte-400 dark:border-tinte-700 p-4 space-y-3 bg-sand dark:bg-tinte-800">
 	<h2 class="text-xs font-semibold text-tinte-500 dark:text-tinte-400 uppercase tracking-wide">
 		{cardTitle}
 	</h2>
@@ -33,11 +33,14 @@
 	<div class="flex items-start gap-3">
 		<!-- Avatar -->
 		{#if ownerImageUrl}
-			<img
-				src={ownerImageUrl}
-				alt={owner.username}
-				class="h-12 w-12 rounded-full object-cover shrink-0 mt-0.5"
-			/>
+			<a href={resolve('/users/[id]', { id: owner.id })}>
+				<img
+					src={ownerImageUrl}
+					alt={owner.username}
+					
+					class="h-12 w-12 rounded-full object-cover shrink-0 mt-0.5"
+				/>
+			</a>
 		{:else if isInstitution}
 			<HomeOutline class="h-12 w-12 text-tinte-400 shrink-0 mt-0.5" />
 		{:else}
