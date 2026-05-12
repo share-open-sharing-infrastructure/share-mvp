@@ -82,6 +82,8 @@ export const texts = {
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
+		itemNotFound: 'Gegenstand nicht gefunden.',
+		noPermission: 'Keine Berechtigung.',
 	},
 
 	// Success messages
@@ -439,6 +441,11 @@ export const texts = {
 			locationLabel: 'Ort',
 			noImage: 'Kein Bild vorhanden',
 			calculateTravelTime: 'Wegzeit berechnen',
+			unknownRequester: 'Jemand',
+			unknownItem: 'einem Gegenstand',
+			ownerCardTitle: 'Verleiht von',
+			institutionCardTitle: 'Angeboten von',
+			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,

@@ -2,10 +2,6 @@
 
 Short checklist for bringing a new institution onto AllerLeih.
 
-## Prerequisites
-
-The PocketBase schema migration in `docs/migrations/2026-05-institutional-partners.md` must be applied before onboarding the first institution.
-
 ## Steps
 
 1. **Create the account** — sign up at `/auth/register` using the institution's official email address. Choose a `username` matching the institution's display name (e.g. `RatsbüchereiLüneburg`).
