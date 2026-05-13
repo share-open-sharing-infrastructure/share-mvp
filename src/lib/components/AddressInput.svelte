@@ -3,18 +3,30 @@
 
 	interface Props {
 		initialValue?: string;
+		required?: boolean;
 	}
 
-	let { initialValue = '' }: Props = $props();
+	let { initialValue = '', required = true }: Props = $props();
 
 	// svelte-ignore state_referenced_locally
 	let cityText = $state(initialValue);
 	let suggestions: { label: string; lon: number; lat: number }[] = $state([]);
 	let isLoadingGeo = $state(false);
 	let selectedGeo: { lon: number; lat: number } | null = $state(null);
+	let isValidSelection = $state(true);
 	let showSuggestions = $state(false);
 	let cityInputEl: HTMLInputElement | undefined = $state(undefined);
 	let suggestionsEl: HTMLUListElement | undefined = $state(undefined);
+	let validationInputEl: HTMLInputElement | undefined = $state(undefined);
+
+	$effect(() => {
+		if (!validationInputEl || !required) return;
+		if (isValidSelection) {
+			validationInputEl.setCustomValidity('');
+		} else {
+			validationInputEl.setCustomValidity('Bitte nutze die Suche, um eine gültige Adresse auszuwählen.');
+		}
+	});
 
 	const fetchSuggestions = debounce(async (q: string) => {
 		if (q.length < 3) {
@@ -37,6 +49,11 @@
 	function handleCityInput(e: Event) {
 		cityText = (e.target as HTMLInputElement).value;
 		selectedGeo = null;
+		if (cityText.length === 0) {
+			isValidSelection = true;
+		} else {
+			isValidSelection = false;
+		}
 		if (cityText.length > 3) {
 			isLoadingGeo = true;
 			showSuggestions = false;
@@ -47,6 +64,7 @@
 	function selectSuggestion(s: { label: string; lon: number; lat: number }) {
 		cityText = s.label;
 		selectedGeo = { lon: s.lon, lat: s.lat };
+		isValidSelection = true;
 		showSuggestions = false;
 		suggestions = [];
 	}
@@ -103,5 +121,19 @@
 	{#if selectedGeo}
 		<input type="hidden" name="geolocation_lon" value={selectedGeo.lon} />
 		<input type="hidden" name="geolocation_lat" value={selectedGeo.lat} />
+	{/if}
+	{#if required}
+		<input
+			bind:this={validationInputEl}
+			type="text"
+			name="address_valid"
+			value={isValidSelection ? 'valid' : ''}
+			class="sr-only"
+			tabindex={-1}
+			aria-hidden="true"
+		/>
+	{/if}
+	{#if cityText.length > 0 && !isValidSelection && !isLoadingGeo && !showSuggestions}
+		<p class="mt-1 text-xs text-amber-600 dark:text-amber-400">Bitte nutze die Suche, um eine gültige Adresse auszuwählen.</p>
 	{/if}
 </div>

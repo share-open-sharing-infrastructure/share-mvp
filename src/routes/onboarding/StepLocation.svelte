@@ -21,7 +21,12 @@
 	<p class="text-sm text-tinte-600 dark:text-tinte-400 leading-relaxed">
 		{texts.onboarding.location.explanation}
 	</p>
+	<p class="text-xs text-tinte-500 dark:text-tinte-400 mb-5">
+		{texts.onboarding.location.hint}
+	</p>
 
+
+	
 	{#if errorMessage}
 		<CustomAlert type="error" message={errorMessage} />
 	{/if}

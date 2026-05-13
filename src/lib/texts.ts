@@ -461,7 +461,8 @@ export const texts = {
 			trustedItems: 'Nur für Vertraute',
 			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
-			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen. Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen. Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.',
+			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
+			addresshint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
 			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',
@@ -521,7 +522,9 @@ export const texts = {
 		location: {
 			title: 'Wo bist du?',
 			explanation:
-				'AllerLeih nutzt deine Adresse, um dir und anderen die Reisezeit zueinander anzuzeigen. Deine Adresse wird nicht öffentlich angezeigt. Du kannst auch nur einen ungefähren Ort angeben oder das Feld überspringen.',
+				'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
+			hint:
+				'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
 		},
 		contact: {
 			title: 'Wie kann man dich erreichen?',
