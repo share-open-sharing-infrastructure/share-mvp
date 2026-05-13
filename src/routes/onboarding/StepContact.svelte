@@ -4,12 +4,16 @@
 	import { Toggle } from 'flowbite-svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import OnboardingButton from './OnboardingButton.svelte';
+	import {
+		QuestionCircleSolid,
+	} from 'flowbite-svelte-icons';
 
 	interface Props {
 		onNext: () => void;
 	}
 
 	let { onNext }: Props = $props();
+	let showTrustInfo = $state(false);
 
 	let errorMessage = $state<string | undefined>(undefined);
 </script>
@@ -35,7 +39,8 @@
 				if (result.type === 'success') {
 					onNext();
 				} else if (result.type === 'failure') {
-					errorMessage = (result.data?.message as string) ?? texts.errors.somethingWentWrong;
+					errorMessage =
+						(result.data?.message as string) ?? texts.errors.somethingWentWrong;
 				}
 			}}
 	>
@@ -60,8 +65,32 @@
 			/>
 			<label class="flex items-center gap-2 mt-2 cursor-pointer">
 				<Toggle name="telegramVisibleToTrustedOnly" checked={true} />
-				<span class="text-sm text-tinte-600 dark:text-tinte-400">{texts.messenger.visibleToTrustedOnly}</span>
+				<span class="text-sm text-tinte-600 dark:text-tinte-400"
+					>{texts.messenger.visibleToTrustedOnly}</span
+				>
+				<div
+					class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400"
+				>
+					<button
+						type="button"
+						onclick={() => (showTrustInfo = !showTrustInfo)}
+					>
+						<QuestionCircleSolid class="ml-1 h-full" />
+						<span class="sr-only">{texts.ui.explainThis}</span>
+					</button>
+				</div>
 			</label>
+			{#if showTrustInfo}
+				<div
+					class="rounded-lg border border-tinte-400 bg-primary-100 mt-2 p-3 text-sm text-tinte-500 space-y-1"
+				>
+					<p class="font-semibold text-tinte-900">Vertrauensfunktion</p>
+					<p>
+						Wenn du diese Option aktivierst, ist der Messenger-Link nur für deine
+						vertrauten Kontakte sichtbar.
+					</p>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Signal -->
@@ -85,7 +114,9 @@
 			/>
 			<label class="flex items-center gap-2 mt-2 cursor-pointer">
 				<Toggle name="signalVisibleToTrustedOnly" checked={true} />
-				<span class="text-sm text-tinte-600 dark:text-tinte-400">{texts.messenger.visibleToTrustedOnly}</span>
+				<span class="text-sm text-tinte-600 dark:text-tinte-400"
+					>{texts.messenger.visibleToTrustedOnly}</span
+				>
 			</label>
 		</div>
 
@@ -95,17 +126,14 @@
 				<h3 class="text-sm font-medium text-tinte-400 dark:text-tinte-500">
 					{texts.onboarding.contact.notificationsTitle}
 				</h3>
-				<span class="text-xs bg-tinte-100 dark:bg-tinte-700 text-tinte-400 dark:text-tinte-500 px-2 py-0.5 rounded-full">
+				<span
+					class="text-xs bg-tinte-100 dark:bg-tinte-700 text-tinte-400 dark:text-tinte-500 px-2 py-0.5 rounded-full"
+				>
 					{texts.onboarding.contact.notificationsNote}
 				</span>
 			</div>
 			<div class="space-y-3 opacity-40 pointer-events-none">
-				<div class="flex items-center justify-between">
-					<span class="text-sm text-tinte-500 dark:text-tinte-400">
-						{texts.onboarding.contact.inApp}
-					</span>
-					<Toggle disabled checked={false} />
-				</div>
+
 				<div class="flex items-center justify-between">
 					<span class="text-sm text-tinte-500 dark:text-tinte-400">
 						{texts.onboarding.contact.email}
@@ -116,8 +144,12 @@
 		</div>
 
 		<div class="flex flex-col gap-2 pt-2">
-			<OnboardingButton type="submit">{texts.onboarding.buttons.next}</OnboardingButton>
-			<OnboardingButton type="submit" variant="ghost">{texts.onboarding.buttons.skip}</OnboardingButton>
+			<OnboardingButton type="submit"
+				>{texts.onboarding.buttons.next}</OnboardingButton
+			>
+			<OnboardingButton type="submit" variant="ghost"
+				>{texts.onboarding.buttons.skip}</OnboardingButton
+			>
 		</div>
 	</form>
 </div>

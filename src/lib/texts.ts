@@ -123,7 +123,7 @@ export const texts = {
 		username: 'Nutzername',
 		location: 'Standort/Postleitzahl',
 		itemName: 'Name des Gegenstands',
-		itemDescription: 'Beschreibe den Gegenstand, z.B. Zustand, Marke, Größe oder was sonst noch wichtig sein könnte.',
+		itemDescription: 'Beschreibe den Gegenstand, z.B. Zustand, Marke, Größe oder was dir beim Verleihen wichtig ist. ',
 		itemPlace: 'Ort des Gegenstands',
 		searchPlaceholder: 'Suche Dinge...',
 		messagePlaceholder: 'Tippe deine Nachricht...',
@@ -183,6 +183,9 @@ export const texts = {
 		trustDescription:
 			'Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.',
 		trustLink: 'Vertrauensfunktion',
+		availabilityTitle: 'Verfügbarkeitsstatus',
+		availabilityExplain:
+			'Wenn du den Gegenstand gerade nicht verleihen möchtest, setze ihn auf „Nicht verfügbar".',
 		trustedPeople: 'Vertrauensnetzwerk',
 		trustedByPeople: 'Personen, die dir vertrauen',
 		noOneTrustsYet: 'Noch vertraut dir niemand.',

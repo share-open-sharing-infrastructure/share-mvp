@@ -241,11 +241,13 @@
 				</button>
 			</form>
 		{:else if isTrustRestricted}
-			<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 cursor-not-allowed">
-				<MessagesOutline class="h-4 w-4 mr-2" />
-				{texts.pages.itemDetail.requestButton}
-			</Button>
-			<Tooltip type="light" placement="top">
+			<span id="anfragen-disabled" class="cursor-not-allowed">
+				<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 pointer-events-none">
+					<MessagesOutline class="h-4 w-4 mr-2" />
+					{texts.pages.itemDetail.requestButton}
+				</Button>
+			</span>
+			<Tooltip triggeredBy="#anfragen-disabled" type="light" placement="top" trigger="click">
 				{texts.pages.itemDetail.trustRestrictedTooltip}
 			</Tooltip>
 		{:else}
