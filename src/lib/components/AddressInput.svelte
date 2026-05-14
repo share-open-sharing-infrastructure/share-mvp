@@ -126,7 +126,6 @@
 		<input
 			bind:this={validationInputEl}
 			type="text"
-			name="address_valid"
 			value={isValidSelection ? 'valid' : ''}
 			class="sr-only"
 			tabindex={-1}

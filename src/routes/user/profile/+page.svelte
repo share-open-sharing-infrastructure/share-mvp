@@ -69,7 +69,7 @@
 							{texts.pages.userProfile.addressNote}
 						</p>
 						<p class="text-xs text-tinte-500 dark:text-tinte-400 mb-5">
-							{texts.pages.userProfile.addresshint}
+							{texts.pages.userProfile.addressHint}
 						</p>
 					</div>
 				</div>

@@ -462,7 +462,7 @@ export const texts = {
 			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
 			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
-			addresshint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
+			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
 			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',

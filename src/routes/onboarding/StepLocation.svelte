@@ -25,8 +25,6 @@
 		{texts.onboarding.location.hint}
 	</p>
 
-
-	
 	{#if errorMessage}
 		<CustomAlert type="error" message={errorMessage} />
 	{/if}
