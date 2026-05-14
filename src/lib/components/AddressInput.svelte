@@ -86,6 +86,7 @@
 		type="text"
 		name="city"
 		id="city"
+		placeholder="z.B. Kleine Bäckerstraße"
 		bind:this={cityInputEl}
 		value={cityText}
 		oninput={handleCityInput}
