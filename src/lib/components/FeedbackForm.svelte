@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
 	import SparkleButton from './SparkleButton.svelte';
 
 	interface Props {
 		onsuccess?: () => void;
+		pageName: string;
 	}
 
-	let { onsuccess }: Props = $props();
+	let { onsuccess, pageName }: Props = $props();
 
 	let successMessage = $state<string | undefined>(undefined);
 	let errorMessage = $state<string | undefined>(undefined);
@@ -22,7 +24,7 @@
 
 	let selectedSeverity = $state<string | null>(null);
 
-	const severityOptions = [
+const severityOptions = [
 		{ value: 'kleinigkeit', label: texts.feedback.severityKleinigkeit },
 		{ value: 'nervt', label: texts.feedback.severityNervt },
 		{ value: 'blocker', label: texts.feedback.severityBlocker },
@@ -141,7 +143,7 @@
 
 	<div class="space-y-1">
 		<label for="feedbackLikes" class="block text-sm font-medium text-tinte-700">
-			{texts.feedback.likesLabel}
+			{texts.feedback.likesLabel(pageName)}
 		</label>
 		<textarea
 			id="feedbackLikes"
@@ -154,7 +156,7 @@
 
 	<div class="space-y-1">
 		<label for="feedbackMessage" class="block text-sm font-medium text-tinte-700">
-			{texts.feedback.improvementsLabel}
+			{texts.feedback.improvementsLabel(pageName)}
 		</label>
 		<textarea
 			id="feedbackMessage"
@@ -196,15 +198,22 @@
 		</a>
 	</p>
 
-	<p class="text-sm text-tinte-500">
-		Das Formular erkennt automatisch die Seite und deinen Gerätekontext. <strong
-			>Wir speichern keine personenbezogenen Daten</strong
-		>, du gibst also anonymes Feedback. Wenn du direkt mit uns sprechen willst,
-		schreibe uns an
-		<a href="mailto:feedback@allerleih.org" class="text-primary-500 hover:underline"
-			>feedback@allerleih.org</a
-		>
-	</p>
+	<details class="text-xs text-tinte-400">
+		<summary class="cursor-pointer select-none hover:text-tinte-600">
+			Welche Daten werden mitgesendet?
+		</summary>
+		<ul class="mt-1 space-y-0.5 pl-2">
+			<li>Seite: <span class="font-mono">{page.url.pathname}</span></li>
+			<li>Gerät: {device}</li>
+			<li>Bildschirmgröße: {viewportSize}</li>
+			<li>Browser: {browser} {browserVersion}</li>
+			<li>Eingabe: {inputType}</li>
+		</ul>
+		<p class="mt-1">
+			Keine personenbezogenen Daten — du gibst anonymes Feedback. Für direkten Kontakt:
+			<a href="mailto:feedback@allerleih.org" class="hover:underline">feedback@allerleih.org</a>
+		</p>
+	</details>
 
 	<div class="mt-4 w-full flex justify-center">
 		<SparkleButton label="Feedback absenden" type="submit" disabled={submitting} />
