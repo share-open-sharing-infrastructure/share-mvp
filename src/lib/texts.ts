@@ -461,7 +461,8 @@ export const texts = {
 			trustedItems: 'Nur für Vertraute',
 			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
-			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen. Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen. Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.',
+			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
+			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
 			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',
@@ -512,16 +513,18 @@ export const texts = {
 		howItWorks: {
 			title: "So funktioniert's",
 			search: 'Stöbere in Gegenständen aus deiner Umgebung und frage direkt an, was du brauchst.',
-			share: 'Stelle Gegenstände ein, die du verleihen möchtest – von der Bohrmaschine bis zum Buch.',
+			share: 'Stelle Gegenstände ein, die du verleihen magst – von der Bohrmaschine bis zum Buch.',
 			trust:
 				'Baue ein Vertrauensnetzwerk auf und teile bestimmte Dinge nur mit ausgewählten Personen.',
 			contact:
-				'Kontaktiere andere direkt über Telegram oder Signal – ohne deine Telefonnummer zu teilen.',
+				'Kontaktiere andere direkt über AllerLeih, Telegram oder Signal – ohne deine Telefonnummer zu teilen.',
 		},
 		location: {
-			title: 'Wo bist du?',
+			title: 'Wo verleihst du?',
 			explanation:
-				'AllerLeih nutzt deine Adresse, um dir und anderen die Reisezeit zueinander anzuzeigen. Deine Adresse wird nicht öffentlich angezeigt. Du kannst auch nur einen ungefähren Ort angeben oder das Feld überspringen.',
+				'AllerLeih nutzt diesen Standort, um anderen Nutzer:innen die ungefähre Wegzeit zum Ausleihen anzuzeigen. Wir geben diese Adresse nicht nach außen.',
+			hint:
+				'Du kannst auch nur eine ungefähre Adresse (z.B. nur Straßennamen oder eine Straße um die Ecke) angeben oder das Feld leer lassen.',
 		},
 		contact: {
 			title: 'Wie kann man dich erreichen?',

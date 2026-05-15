@@ -65,8 +65,11 @@
 					</label>
 					<div class="sm:flex-1">
 						<AddressInput initialValue={data.currentUser.city ?? ''} />
-						<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-2">
+						<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-2 mt-2">
 							{texts.pages.userProfile.addressNote}
+						</p>
+						<p class="text-xs text-tinte-500 dark:text-tinte-400 mb-5">
+							{texts.pages.userProfile.addressHint}
 						</p>
 					</div>
 				</div>
