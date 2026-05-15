@@ -98,6 +98,22 @@ export const texts = {
 		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
 	},
 
+	// Feedback form
+	feedback: {
+		likesLabel: 'Was gefällt dir?',
+		likesPlaceholder: 'Was funktioniert gut, was magst du?',
+		improvementsLabel: 'Was könnte besser sein?',
+		improvementsPlaceholder: 'Was nervt dich, was fehlt dir?',
+		severityLabel: 'Wie schwerwiegend ist dein Feedback?',
+		severityKleinigkeit: 'Kleinigkeit',
+		severityNervt: 'Nervt schon',
+		severityBlocker: 'Blocker',
+		voiceMemoHint: 'Lieber sprechen?',
+		voiceMemoLink: 'Schick uns eine Sprachnachricht auf Telegram',
+		validationError: 'Bitte fülle mindestens eines der Textfelder aus.',
+		intro: 'Vielen Dank für dein Feedback! Alle Felder sind optional – fülle aus, was für dich passt.',
+	},
+
 	// Messenger contact
 	messenger: {
 		telegram: 'Telegram',
