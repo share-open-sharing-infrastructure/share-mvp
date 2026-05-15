@@ -429,7 +429,7 @@ export const texts = {
 			copied: 'Link kopiert!',
 			shareText: (username: string) =>
 				`${username} lädt dich ein, auf AllerLeih Dinge mit ihm/ihr zu teilen. Folge dem Einladungslink: `,
-			shareButton: 'Einladen',
+			shareButton: 'Weitere Menschen einladen!',
 			linkCopied: 'Link und Text kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
 			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
