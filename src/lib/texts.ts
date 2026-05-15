@@ -427,6 +427,10 @@ export const texts = {
 			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir automatisch vertrauen. Du wirst benachrichtigt, wenn jemand sich mit deiner Einladung registriert hat.',
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
+			shareText: (username: string) =>
+				`${username} lädt dich ein, auf AllerLeih Dinge mit ihm/ihr zu teilen. Folge dem Einladungslink: `,
+			shareButton: 'Einladen',
+			linkCopied: 'Link und Text kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
 			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
 			invalidInvite: 'Dieser Einladungslink ist ungültig.',
