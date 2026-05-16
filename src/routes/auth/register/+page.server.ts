@@ -71,6 +71,7 @@ export const actions = {
 		}
 
 		const subscribeToNewsletter = data.get('subscribeToNewsletter') === 'on';
+		// Must be removed before passing data to PocketBase — it doesn't know this field.
 		data.delete('subscribeToNewsletter');
 
 		const newInviteCode = await generateInviteSlug(locals.pb);
@@ -99,11 +100,13 @@ export const actions = {
 			});
 		}
 
+		// Non-fatal: newsletter signup should never block registration.
 		if (subscribeToNewsletter) {
 			try {
 				const keilaData = new URLSearchParams();
 				keilaData.set('contact[email]', email.toString());
 				keilaData.set('contact[first_name]', username);
+				// Keila honeypot field — must be sent empty; a non-empty value signals a bot submission.
 				keilaData.set('h[url]', '');
 				await fetch('https://app.keila.io/forms/nfrm_b94Bj5RD', {
 					method: 'POST',

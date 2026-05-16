@@ -56,6 +56,7 @@
 					required
 				/>
 			</div>
+			<!-- Keila bot-detection honeypot — must stay hidden and empty -->
 			<input aria-hidden="true" autocomplete="off" name="h[url]" style="display: none" />
 			<Button type="submit" class="mt-1 w-full min-button bg-primary-200 hover:bg-primary cursor-pointer">
 				{texts.buttons.newsletter}
