@@ -553,7 +553,7 @@ export const texts = {
 		pushNotifications: {
 			title: 'Benachrichtigungen aktivieren?',
 			explanation:
-				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
+				'Erhalte eine Benachrichtigung, wenn Menschen deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
 			allow: 'Benachrichtigungen aktivieren',
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Bitte stelle sicher, dass du Benachrichtigungen in deinem Browser oder Betriebssystem aktiviert hast, um diese Funktion zu nutzen.',
 		},
