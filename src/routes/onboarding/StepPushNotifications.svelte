@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { texts } from '$lib/texts';
 	import { PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
 	import OnboardingButton from './OnboardingButton.svelte';
@@ -10,6 +11,14 @@
 	let { onNext }: Props = $props();
 
 	let status = $state<'idle' | 'loading' | 'granted' | 'denied'>('idle');
+
+	let cancelled = false;
+	let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	onDestroy(() => {
+		cancelled = true;
+		if (advanceTimer) clearTimeout(advanceTimer);
+	});
 
 	function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -25,7 +34,10 @@
 	async function setupPushSubscription() {
 		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 		try {
-			const registration = await navigator.serviceWorker.ready;
+			const swReadyTimeout = new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error('serviceWorker.ready timeout')), 10000)
+			);
+			const registration = await Promise.race([navigator.serviceWorker.ready, swReadyTimeout]);
 			const existing = await registration.pushManager.getSubscription();
 			const subscription =
 				existing ??
@@ -53,12 +65,19 @@
 			return;
 		}
 		status = 'loading';
-		const permission = await Notification.requestPermission();
-		if (permission === 'granted') {
-			await setupPushSubscription();
-			status = 'granted';
-			setTimeout(onNext, 800);
-		} else {
+		try {
+			const permission = await Notification.requestPermission();
+			if (cancelled) return;
+			if (permission === 'granted') {
+				await setupPushSubscription();
+				if (cancelled) return;
+				status = 'granted';
+				advanceTimer = setTimeout(onNext, 800);
+			} else {
+				status = 'denied';
+			}
+		} catch {
+			if (cancelled) return;
 			status = 'denied';
 		}
 	}
