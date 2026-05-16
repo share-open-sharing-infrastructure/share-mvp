@@ -30,6 +30,8 @@ export async function load({ locals, url }) {
 			theyTrustMe: trustedByIds.has(u.id),
 		}));
 
+	// Lazily create an invite code: most users will already have one from onboarding,
+	// so we only hit the DB to generate + persist when the field is empty.
 	let inviteCode = locals.user.inviteCode as string | undefined;
 	if (!inviteCode) {
 		inviteCode = await generateInviteSlug(locals.pb);

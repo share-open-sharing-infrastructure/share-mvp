@@ -8,23 +8,27 @@
 
 	let copied = $state(false);
 
+	// Prefer the native Web Share API (available on mobile and some desktop browsers)
+	// so the user can pick any app (WhatsApp, Signal, …). Falls back to clipboard copy
+	// on browsers that don't support navigator.share (most desktop browsers).
 	async function share() {
-		const text = texts.pages.invite.shareText(username);
+		const shareText = texts.pages.invite.shareText(username);
 		if (browser && navigator.share) {
 			try {
-				await navigator.share({ title: 'AllerLeih', text, url: inviteUrl });
+				await navigator.share({ title: 'AllerLeih', text: shareText, url: inviteUrl });
 			} catch {
-				// user cancelled — do nothing
+				// user cancelled the native share sheet — do nothing
 			}
 			return;
 		}
 
+		// Clipboard fallback: prepend the invite text so the paste is ready-to-send
 		try {
-			await navigator.clipboard.writeText(text + inviteUrl);
+			await navigator.clipboard.writeText(shareText + inviteUrl);
 			copied = true;
 			setTimeout(() => (copied = false), 2000);
 		} catch {
-			// clipboard unavailable (non-HTTPS context)
+			// clipboard unavailable in non-HTTPS or sandboxed contexts
 		}
 	}
 </script>
