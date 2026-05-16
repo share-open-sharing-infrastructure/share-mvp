@@ -241,6 +241,8 @@
 				</button>
 			</form>
 		{:else if isTrustRestricted}
+			<!-- Disabled buttons suppress pointer events, so the tooltip must be anchored
+			     to the surrounding span instead of the button itself. -->
 			<span id="anfragen-disabled" class="cursor-not-allowed">
 				<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 pointer-events-none">
 					<MessagesOutline class="h-4 w-4 mr-2" />

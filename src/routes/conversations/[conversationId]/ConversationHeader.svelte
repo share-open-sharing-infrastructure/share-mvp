@@ -125,6 +125,8 @@
 					</button>
 					<Tooltip type="light" placement="bottom" trigger="click">{texts.messenger.telegram}</Tooltip>
 				{:else if telegramHidden}
+					<!-- Disabled buttons suppress pointer events, preventing tooltip attachment.
+					     The span acts as the tooltip target while the button stays non-interactive. -->
 					<span id="tg-hidden-{chatPartner.id}" class="cursor-not-allowed">
 						<button
 							disabled
@@ -148,6 +150,7 @@
 					</button>
 					<Tooltip type="light" placement="bottom" trigger="click">{texts.messenger.signal}</Tooltip>
 				{:else if signalHidden}
+					<!-- Same span-wrapper pattern as Telegram above: disabled button → pointer-events-none, span is the tooltip target. -->
 					<span id="sig-hidden-{chatPartner.id}" class="cursor-not-allowed">
 						<button
 							disabled

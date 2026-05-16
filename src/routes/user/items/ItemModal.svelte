@@ -207,6 +207,7 @@
 				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
 				>{texts.ui.trustedOnly}</Toggle
 			>
+			<!-- Click-toggled inline panel instead of a hover Popover — hover doesn't work on mobile. -->
 			<div class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400">
 				<button type="button" onclick={() => showTrustInfo = !showTrustInfo}>
 					<QuestionCircleSolid class="ml-1 h-full" />
@@ -232,6 +233,7 @@
 					bind:checked={isAvailable}
 					>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle
 				>
+				<!-- Same click-toggle pattern as trust info above. -->
 				<div class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400">
 					<button type="button" onclick={() => showAvailabilityInfo = !showAvailabilityInfo}>
 						<QuestionCircleSolid class="ml-1 h-full" />
