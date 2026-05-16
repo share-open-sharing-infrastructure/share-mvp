@@ -3,14 +3,18 @@
 	import { texts } from '$lib/texts';
 	import type { Conversation } from '$lib/types/models';
 
-	let { lendingStatus, isOwner, itemOwnerUsername }: {
+	interface Props {
 		lendingStatus: Conversation['lendingStatus'];
 		isOwner: boolean;
+		/** Username of the item owner — shown in the borrower-facing pending description. */
 		itemOwnerUsername: string;
-	} = $props();
+	}
+
+	let { lendingStatus, isOwner, itemOwnerUsername }: Props = $props();
 
 	const status = $derived(lendingStatus);
 
+	// The five forward-progress steps. `rejected` is a dead-end handled separately below.
 	const steps: Array<NonNullable<Conversation['lendingStatus']>> = [
 		'pending',
 		'accepted',
@@ -26,7 +30,9 @@
 		return idx <= currentStepIndex && status !== 'rejected';
 	}
 
-	// Description shown below the status badge — differs by role for active states
+	// Description text differs by role. `pending` is handled first because its borrower
+	// variant is dynamic (includes the owner's name). The remaining states all have a
+	// plain string per role, typed here to keep the lookup below typesafe.
 	type RoleAwareStatus = 'accepted' | 'active' | 'return_requested';
 	const descriptionText = $derived.by(() => {
 		if (!status) return '';

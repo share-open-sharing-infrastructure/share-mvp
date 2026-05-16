@@ -27,7 +27,10 @@ export async function load({ params, locals }) {
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
 	const ownerTrustsViewer = currentUserId ? ownerTrusts.includes(currentUserId) : false;
 
-	// Fetch an existing active (non-rejected, non-completed) conversation for this viewer+item.
+	// Find an in-progress conversation for this viewer + item so the CTA can link
+	// to it instead of creating a duplicate. We exclude rejected/completed states
+	// (borrower may legitimately re-request) and the empty string (conversations
+	// created before the lending feature was added have no lendingStatus value).
 	let existingConversation: { id: string; lendingStatus: string } | null = null;
 	if (currentUserId && !isOwnItem) {
 		try {

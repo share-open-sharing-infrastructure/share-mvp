@@ -5,10 +5,17 @@ import type { NotificationType } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 
+/** Convenience alias for the return type of SvelteKit's `fail()`. */
 type FailResult = ReturnType<typeof fail>;
 
-// Fetches a conversation and validates the caller's role and the current lending state.
-// Returns { conv } on success or { error } on any failure.
+/**
+ * Loads a conversation and guards against the two most common action errors:
+ * wrong caller role (403) and wrong lending state (400).
+ *
+ * Returns `{ conv }` on success or `{ error }` with a ready-to-return `fail()` value.
+ * `conv` is a raw PocketBase record — fields are accessed by string key because
+ * PocketBase's SDK returns untyped plain objects.
+ */
 async function loadAndValidateConversation(
 	pb: PocketBase,
 	conversationId: string,
@@ -30,7 +37,7 @@ async function loadAndValidateConversation(
 	return { conv: conversation };
 }
 
-// Sends both an in-app notification and a push notification to a user.
+/** Sends both an in-app notification and a push to all of a user's registered devices. */
 async function notifyUser(
 	pb: PocketBase,
 	recipientId: string,
@@ -44,6 +51,7 @@ async function notifyUser(
 	await sendPushToUser(pb, recipientId, texts.notifications.pushTitle, body, url);
 }
 
+/** Fetches an item's display name, falling back gracefully if the item can't be loaded. */
 async function getItemName(pb: PocketBase, itemId: string): Promise<string> {
 	try {
 		const item = await pb.collection('items').getOne(itemId);
@@ -69,7 +77,7 @@ export async function acceptRequest(
 		await pb.collection('items').update(conv.requestedItem as string, { status: 'unavailable' });
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.lending.errors.notFound });
+		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
 	}
 
 	await notifyUser(pb, conv.requester as string, userId, 'request_accepted', conversationId, texts.notifications.requestAccepted(itemName));
@@ -101,7 +109,7 @@ export async function rejectRequest(
 		await pb.collection('conversations').update(conversationId, { lendingStatus: 'rejected' });
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.lending.errors.notFound });
+		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
 	}
 
 	const itemName = await getItemName(pb, conv.requestedItem as string);
@@ -121,7 +129,7 @@ export async function confirmHandover(
 		await pb.collection('conversations').update(conversationId, { lendingStatus: 'active' });
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.lending.errors.notFound });
+		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
 	}
 
 	const itemName = await getItemName(pb, conv.requestedItem as string);
@@ -142,7 +150,7 @@ export async function requestReturn(
 		await pb.collection('conversations').update(conversationId, { lendingStatus: 'return_requested' });
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.lending.errors.notFound });
+		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
 	}
 
 	const itemName = await getItemName(pb, conv.requestedItem as string);
@@ -165,7 +173,7 @@ export async function confirmReturn(
 		await pb.collection('items').update(conv.requestedItem as string, { status: 'available' });
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.lending.errors.notFound });
+		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
 	}
 
 	await notifyUser(pb, conv.requester as string, userId, 'return_confirmed', conversationId, texts.notifications.returnConfirmed(itemName));

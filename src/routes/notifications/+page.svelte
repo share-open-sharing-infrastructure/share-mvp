@@ -50,9 +50,7 @@
 						class="flex items-start gap-4 py-4 hover:bg-papier rounded-lg px-2 transition-colors"
 					>
 						<div class="mt-0.5 shrink-0 text-accent">
-							{#if notification.type === 'new_message'}
-								<EnvelopeOutline class="h-5 w-5" />
-							{:else if conversationNotificationTypes.has(notification.type)}
+							{#if conversationNotificationTypes.has(notification.type)}
 								<EnvelopeOutline class="h-5 w-5" />
 							{:else if notification.type === 'trust_added' || notification.type === 'invite_accepted'}
 								<UserAddOutline class="h-5 w-5" />
