@@ -9,6 +9,10 @@ const ORS_PROFILE: Record<TransportMode, string> = {
 	car: 'driving-car',
 };
 
+const ORS_TIMEOUT_MS = 8_000;
+// Log a warning when ORS takes longer than this — indicates degraded performance before a full timeout
+const ORS_SLOW_THRESHOLD_MS = 5_000;
+
 function isNullIsland(geo: { lon: number; lat: number } | undefined | null) {
 	return !geo || (geo.lon === 0 && geo.lat === 0);
 }
@@ -27,9 +31,6 @@ export function extractOwnerLocations(items: Item[]): OwnerLocation[] {
 	return Array.from(seen.values());
 }
 
-const ORS_TIMEOUT_MS = 8_000;
-const ORS_SLOW_MS = 5_000;
-
 /** Calls the ORS matrix API and returns raw travel durations in seconds, one per owner.
  * We have 500 requests per day on our free plan, use them wisely!
 */
@@ -43,7 +44,7 @@ async function fetchDurationsFromOrs(
 		...owners.map((o) => [o.lon, o.lat]),
 	];
 
-	const t0 = Date.now();
+	const requestStart = Date.now();
 	let response: Response;
 	try {
 		response = await fetch(
@@ -65,27 +66,38 @@ async function fetchDurationsFromOrs(
 			}
 		);
 	} catch (err) {
+		// Covers both network failures and AbortSignal timeout (TimeoutError)
 		console.error('[TRAVEL_DIAG]', JSON.stringify({
-			event: 'ors_error', transport_mode: transportMode, owner_count: owners.length,
-			duration_ms: Date.now() - t0, error: err instanceof Error ? err.message : String(err)
+			event: 'ors_error',
+			transport_mode: transportMode,
+			owner_count: owners.length,
+			duration_ms: Date.now() - requestStart,
+			error: err instanceof Error ? err.message : String(err),
 		}));
 		return [];
 	}
 
-	const duration_ms = Date.now() - t0;
+	const durationMs = Date.now() - requestStart;
 
 	if (!response.ok) {
-		const body = await response.text().catch(() => '');
+		const responseBody = await response.text().catch(() => '');
 		console.error('[TRAVEL_DIAG]', JSON.stringify({
-			event: 'ors_error', transport_mode: transportMode, owner_count: owners.length,
-			duration_ms, status: response.status, body: body.slice(0, 200)
+			event: 'ors_error',
+			transport_mode: transportMode,
+			owner_count: owners.length,
+			duration_ms: durationMs,
+			status: response.status,
+			body: responseBody.slice(0, 200),
 		}));
 		return [];
 	}
 
-	if (duration_ms > ORS_SLOW_MS) {
+	if (durationMs > ORS_SLOW_THRESHOLD_MS) {
 		console.warn('[TRAVEL_DIAG]', JSON.stringify({
-			event: 'ors_slow', transport_mode: transportMode, owner_count: owners.length, duration_ms
+			event: 'ors_slow',
+			transport_mode: transportMode,
+			owner_count: owners.length,
+			duration_ms: durationMs,
 		}));
 	}
 

@@ -22,7 +22,13 @@
 	let calculating = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 
+	// Fire-and-forget: sends a diagnostic event to the server log. Never throws.
+	function sendDiag(payload: Record<string, unknown>) {
+		fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify(payload) }).catch(() => {});
+	}
+
 	async function fetchTravelTime(mode: TransportMode, userLocation: { lon: number; lat: number }) {
+		// Abort after 15s so a hanging ORS response doesn't leave `calculating` stuck as true indefinitely
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 15_000);
 		try {
@@ -36,11 +42,12 @@
 				const { minutes } = await res.json();
 				travelMinutes = minutes ?? null;
 			} else {
-				fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify({ event: 'fetch_error', page: 'item_detail', status: res.status }) }).catch(() => {});
+				sendDiag({ event: 'fetch_error', page: 'item_detail', status: res.status });
 			}
 		} catch (err) {
+			// AbortError means our 15s timeout fired; any other error is a network failure
 			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
-			fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify({ event: isTimeout ? 'fetch_timeout' : 'fetch_error', page: 'item_detail' }) }).catch(() => {});
+			sendDiag({ event: isTimeout ? 'fetch_timeout' : 'fetch_error', page: 'item_detail' });
 		} finally {
 			clearTimeout(timeoutId);
 			calculating = false;
