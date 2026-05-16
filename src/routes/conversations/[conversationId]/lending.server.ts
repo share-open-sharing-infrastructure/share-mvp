@@ -14,7 +14,7 @@ async function loadAndValidateConversation(
 	conversationId: string,
 	userId: string,
 	requiredRole: 'owner' | 'requester',
-	requiredStatus: string
+	requiredStatus: string | string[]
 ): Promise<{ conv: Record<string, unknown> } | { error: FailResult }> {
 	let conversation: Record<string, unknown>;
 	try {
@@ -25,7 +25,8 @@ async function loadAndValidateConversation(
 	}
 	const roleField = requiredRole === 'owner' ? 'itemOwner' : 'requester';
 	if (conversation[roleField] !== userId) return { error: fail(403, { fail: true, message: texts.lending.errors.noPermission }) };
-	if (conversation.lendingStatus !== requiredStatus) return { error: fail(400, { fail: true, message: texts.lending.errors.invalidState }) };
+	const validStatuses = Array.isArray(requiredStatus) ? requiredStatus : [requiredStatus];
+	if (!validStatuses.includes(conversation.lendingStatus as string)) return { error: fail(400, { fail: true, message: texts.lending.errors.invalidState }) };
 	return { conv: conversation };
 }
 
@@ -153,7 +154,7 @@ export async function confirmReturn(
 	conversationId: string,
 	userId: string
 ): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'owner', 'return_requested');
+	const result = await loadAndValidateConversation(pb, conversationId, userId, 'owner', ['active', 'return_requested']);
 	if ('error' in result) return result.error;
 	const { conv } = result;
 

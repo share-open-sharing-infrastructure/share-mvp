@@ -10,7 +10,7 @@
 	import { Button, Modal, Input } from 'flowbite-svelte';
 	import MessageElement from './MessageElement.svelte';
 	import { setupPocketBaseSubscription } from '$lib/utils/utils';
-	import type { Message } from '$lib/types/models';
+	import type { Conversation, Message } from '$lib/types/models';
 	import ConversationHeader from './ConversationHeader.svelte';
 	import MessageForm from './MessageForm.svelte';
 	import LendingStatusBar from './LendingStatusBar.svelte';
@@ -27,6 +27,16 @@
 	// Sync messages when server data refreshes (e.g. after use:enhance reloads load())
 	$effect(() => {
 		messages = data.conversation.messages ? [...data.conversation.messages] : [];
+	});
+
+	// eslint-disable-next-line svelte/prefer-writable-derived -- same pattern as messages: written by the real-time event handler
+	let lendingStatus: Conversation['lendingStatus'] = $state(
+		// eslint-disable-next-line svelte/no-unused-svelte-ignore
+		// svelte-ignore state_referenced_locally
+		data.conversation.lendingStatus
+	);
+	$effect(() => {
+		lendingStatus = data.conversation.lendingStatus;
 	});
 	let loggedInUserIsItemOwner = $derived(
 		data.currentUser.id === data.conversation.itemOwner.id
@@ -67,6 +77,11 @@
 	async function handleConversationEvent(event: RecordSubscription<any>) {
 		if (!pb) return;
 		if (event.action === 'update') {
+			// Update lending status if it changed
+			if (event.record.lendingStatus !== undefined) {
+				lendingStatus = event.record.lendingStatus || undefined;
+			}
+
 			// Extract the last message id from the updated conversation record
 			const lastMessageId =
 				event.record.messages?.[event.record.messages.length - 1];
@@ -114,7 +129,11 @@
 	currentUser={data.currentUser}
 />
 
-<LendingStatusBar conversation={data.conversation} isOwner={loggedInUserIsItemOwner} />
+<LendingStatusBar
+	{lendingStatus}
+	isOwner={loggedInUserIsItemOwner}
+	itemOwnerUsername={data.conversation.itemOwner.username}
+/>
 
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900">

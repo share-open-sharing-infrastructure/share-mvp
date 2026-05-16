@@ -615,7 +615,7 @@ export const texts = {
 				requester: 'Deine Anfrage wurde angenommen. Macht die Details in der Unterhaltung aus.',
 			},
 			active: {
-				owner: 'Der Gegenstand ist unterwegs. Warte auf die Rückgabe.',
+				owner: 'Der Gegenstand ist unterwegs. Du kannst die Rückgabe direkt bestätigen oder warten, bis der Ausleiher sie meldet.',
 				requester: 'Du hast den Gegenstand. Melde die Rückgabe, wenn du ihn zurückgegeben hast.',
 			},
 			return_requested: {

@@ -3,9 +3,13 @@
 	import { texts } from '$lib/texts';
 	import type { Conversation } from '$lib/types/models';
 
-	let { conversation, isOwner }: { conversation: Conversation; isOwner: boolean } = $props();
+	let { lendingStatus, isOwner, itemOwnerUsername }: {
+		lendingStatus: Conversation['lendingStatus'];
+		isOwner: boolean;
+		itemOwnerUsername: string;
+	} = $props();
 
-	const status = $derived(conversation.lendingStatus);
+	const status = $derived(lendingStatus);
 
 	const steps: Array<NonNullable<Conversation['lendingStatus']>> = [
 		'pending',
@@ -30,7 +34,7 @@
 		if (status === 'rejected') return texts.lending.statusDescription.rejected;
 		if (status === 'pending') {
 			const d = texts.lending.statusDescription.pending;
-			return isOwner ? d.owner : d.requester(conversation.itemOwner.username);
+			return isOwner ? d.owner : d.requester(itemOwnerUsername);
 		}
 		const desc = texts.lending.statusDescription[status as RoleAwareStatus];
 		return isOwner ? desc.owner : desc.requester;
@@ -95,12 +99,20 @@
 								{texts.lending.actions.confirmHandover}
 							</button>
 						</form>
-					{:else if status === 'active' && !isOwner}
-						<form method="POST" action="?/requestReturn" use:enhance>
-							<button type="submit" class={actionBtnClass}>
-								{texts.lending.actions.requestReturn}
-							</button>
-						</form>
+					{:else if status === 'active'}
+						{#if !isOwner}
+							<form method="POST" action="?/requestReturn" use:enhance>
+								<button type="submit" class={actionBtnClass}>
+									{texts.lending.actions.requestReturn}
+								</button>
+							</form>
+						{:else}
+							<form method="POST" action="?/confirmReturn" use:enhance>
+								<button type="submit" class={secondaryBtnClass}>
+									{texts.lending.actions.confirmReturn}
+								</button>
+							</form>
+						{/if}
 					{:else if status === 'return_requested' && isOwner}
 						<form method="POST" action="?/confirmReturn" use:enhance>
 							<button type="submit" class={actionBtnClass}>
