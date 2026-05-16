@@ -12,6 +12,8 @@
 
 	let status = $state<'idle' | 'loading' | 'granted' | 'denied'>('idle');
 
+	// Guards against state mutations and the auto-advance timer firing after the component
+	// is destroyed — e.g. if the user navigates away while the permission dialog is still open.
 	let cancelled = false;
 	let advanceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -34,6 +36,8 @@
 	async function setupPushSubscription() {
 		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 		try {
+			// `serviceWorker.ready` can hang indefinitely if the SW never activates,
+			// so we race it against a 10 s failsafe to avoid a silent hang here.
 			const swReadyTimeout = new Promise<never>((_, reject) =>
 				setTimeout(() => reject(new Error('serviceWorker.ready timeout')), 10000)
 			);

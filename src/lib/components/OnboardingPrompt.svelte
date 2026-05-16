@@ -18,6 +18,7 @@
 	}
 </script>
 
+<!-- `show` stays true until the user completes onboarding, so we also suppress it on the onboarding page itself -->
 {#if show && !dismissed && page.url.pathname !== '/onboarding'}
 	<div class="fixed bottom-10 right-4 z-50 w-72 rounded-xl shadow-lg bg-sand border border-tinte-200 dark:bg-tinte-800 dark:border-tinte-700 p-4 flex flex-col gap-3">
 		<p class="text-sm text-tinte-700 dark:text-tinte-300 leading-snug">
