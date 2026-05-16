@@ -542,6 +542,7 @@ export const texts = {
 			searchPlaceholder: 'Nutzername suchen...',
 			noResults: 'Keine Personen gefunden.',
 			noTrusteesYet: 'Noch niemanden hinzugefügt.',
+			remove: 'Entfernen',
 		},
 		browserLocation: {
 			title: 'Standort freigeben?',
