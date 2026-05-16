@@ -402,6 +402,7 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			completeOnboarding: 'Onboarding fertigstellen',
 			emailVerified: 'E-Mail-Adresse bestätigt',
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
 			resendVerification: 'Bestätigungs-E-Mail erneut senden',
@@ -505,10 +506,9 @@ export const texts = {
 	// Onboarding
 	onboarding: {
 		welcome: {
-			title: 'Willkommen bei AllerLeih!',
-			subtitle:
-				'Die Plattform zum Teilen und Ausleihen von Dingen – mit Freund:innen, deiner Nachbarschaft oder neuen Bekannten in deiner Umgebung.',
-			ethos: 'Gemeinwohlorientiert und open-source.',
+			title: 'Willkommen bei',
+			body: 'Auf AllerLeih kannst du Dinge aus deiner Umgebung leihen und verleihen. Du hast jetzt die Möglichkeit, ein paar Einstellungen festzulegen, oder dich erstmal umzuschauen.',
+			findSettings: 'Die Einstellungen kannst du jederzeit wieder über dein Profil festlegen.',
 		},
 		howItWorks: {
 			title: "So funktioniert's",
@@ -568,6 +568,8 @@ export const texts = {
 			next: 'Weiter',
 			skip: 'Überspringen',
 			finish: "Los geht's!",
+			configure: 'Kurzes Onboarding: 1-2 Minuten, um die wichtigsten Einstellungen festzulegen',
+			exploreFirst: 'Direkt losstöbern, Dinge einstellen oder Freunde einladen.',
 		},
 	},
 
