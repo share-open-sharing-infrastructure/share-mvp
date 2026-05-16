@@ -190,7 +190,7 @@
 	<p class="text-sm text-tinte-500">
 		{texts.feedback.voiceMemoHint}
 		<a
-			href="https://t.me/matteo_allerleih"
+			href="https://t.me/@allerleih_org"
 			target="_blank"
 			rel="noopener noreferrer"
 			class="text-primary-500 hover:underline"
