@@ -24,7 +24,7 @@
 
 	let selectedSeverity = $state<string | null>(null);
 
-const severityOptions = [
+	const severityOptions = [
 		{ value: 'kleinigkeit', label: texts.feedback.severityKleinigkeit },
 		{ value: 'nervt', label: texts.feedback.severityNervt },
 		{ value: 'blocker', label: texts.feedback.severityBlocker },
@@ -177,6 +177,7 @@ const severityOptions = [
 						? 'bg-primary-500 border-primary-500 text-white'
 						: 'border-tinte-300 text-tinte-600 hover:border-primary-400 hover:text-primary-600'}"
 					onclick={() => {
+						// Clicking the active option deselects it (severity is optional)
 						selectedSeverity = selectedSeverity === option.value ? null : option.value;
 					}}
 				>

@@ -8,6 +8,8 @@
 	let { class: className = '' } = $props<{ class?: string }>();
 	let isFeedbackModalOpen = $state(false);
 
+	// Maps the current URL path to a human-readable German page name for the feedback modal.
+	// Dynamic routes (e.g. /items/[id]) are matched by prefix; unknown paths fall back to the raw pathname.
 	function getPageName(pathname: string): string {
 		const names: Record<string, string> = {
 			'/': 'Startseite',

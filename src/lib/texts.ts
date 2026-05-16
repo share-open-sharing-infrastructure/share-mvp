@@ -102,7 +102,7 @@ export const texts = {
 	feedback: {
 		likesLabel: (page: string) => `Was gefällt dir an der Seite "${page}?"`,
 		likesPlaceholder: 'Was funktioniert gut, was magst du?',
-		improvementsLabel: (page: string) => `Was könnte besser sein an an der Seite "${page}?"`,
+		improvementsLabel: (page: string) => `Was könnte besser sein an der Seite "${page}?"`,
 		improvementsPlaceholder: 'Was nervt dich, was fehlt dir?',
 		severityLabel: 'Wie schwerwiegend ist dein Feedback?',
 		severityKleinigkeit: 'Kleinigkeit',
