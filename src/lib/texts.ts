@@ -638,6 +638,13 @@ export const texts = {
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
 	},
 
+	// Onboarding nudge banner
+	onboardingPrompt: {
+		text: 'Du hast dein Onboarding noch nicht abgeschlossen. Nimm dir 1–2 Minuten!',
+		cta: 'Jetzt starten',
+		dismiss: 'Später',
+	},
+
 	// PWA install and notification prompts
 	pwa: {
 		notifBannerText: 'Erhalte Benachrichtigungen für neue Nachrichten und Anfragen.',
