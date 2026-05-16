@@ -5,6 +5,7 @@ import type { Message } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser, isMessageNotificationThrottled } from '$lib/server/notifications.js';
 
+/** Convenience alias for the return type of SvelteKit's `fail()`. */
 type FailResult = ReturnType<typeof fail>;
 
 export async function sendMessage(
@@ -23,6 +24,8 @@ export async function sendMessage(
 		return fail(e.status ?? 500, { fail: true, message: e.data?.message ?? texts.errors.failedToSendMessage });
 	}
 
+	// Re-fetch the conversation to read the current messages array before appending.
+	// PocketBase's create() response doesn't include parent collection data.
 	const conversationRecord = await pb
 		.collection('conversations')
 		.getOne(conversationId, { expand: 'requester,itemOwner,requestedItem' });

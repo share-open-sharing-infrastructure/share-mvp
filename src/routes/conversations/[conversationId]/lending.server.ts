@@ -61,6 +61,11 @@ async function getItemName(pb: PocketBase, itemId: string): Promise<string> {
 	}
 }
 
+/**
+ * State transition: `pending` → `accepted` (called by item owner).
+ * Marks the item unavailable and auto-rejects all other pending conversations
+ * for the same item so only one borrower can proceed.
+ */
 export async function acceptRequest(
 	pb: PocketBase,
 	conversationId: string,
@@ -96,6 +101,7 @@ export async function acceptRequest(
 	}
 }
 
+/** State transition: `pending` → `rejected` (called by item owner). */
 export async function rejectRequest(
 	pb: PocketBase,
 	conversationId: string,
@@ -116,6 +122,7 @@ export async function rejectRequest(
 	await notifyUser(pb, conv.requester as string, userId, 'request_rejected', conversationId, texts.notifications.requestRejected(itemName));
 }
 
+/** State transition: `accepted` → `active` (called by item owner after physical handover). */
 export async function confirmHandover(
 	pb: PocketBase,
 	conversationId: string,
@@ -136,6 +143,7 @@ export async function confirmHandover(
 	await notifyUser(pb, conv.requester as string, userId, 'handover_confirmed', conversationId, texts.notifications.handoverConfirmed(itemName));
 }
 
+/** State transition: `active` → `return_requested` (called by the borrower). */
 export async function requestReturn(
 	pb: PocketBase,
 	conversationId: string,
@@ -157,6 +165,10 @@ export async function requestReturn(
 	await notifyUser(pb, conv.itemOwner as string, userId, 'return_requested', conversationId, texts.notifications.returnRequested(requesterName, itemName));
 }
 
+/**
+ * State transition: `active` | `return_requested` → `completed` (called by item owner).
+ * Marks the item available again so it can receive new requests.
+ */
 export async function confirmReturn(
 	pb: PocketBase,
 	conversationId: string,

@@ -12,6 +12,7 @@
 
 	let { lendingStatus, isOwner, itemOwnerUsername }: Props = $props();
 
+	// Short alias used throughout this file; keeps template expressions concise.
 	const status = $derived(lendingStatus);
 
 	// The five forward-progress steps. `rejected` is a dead-end handled separately below.
@@ -39,8 +40,8 @@
 		if (status === 'completed') return texts.lending.statusDescription.completed;
 		if (status === 'rejected') return texts.lending.statusDescription.rejected;
 		if (status === 'pending') {
-			const d = texts.lending.statusDescription.pending;
-			return isOwner ? d.owner : d.requester(itemOwnerUsername);
+			const pendingDesc = texts.lending.statusDescription.pending;
+			return isOwner ? pendingDesc.owner : pendingDesc.requester(itemOwnerUsername);
 		}
 		const desc = texts.lending.statusDescription[status as RoleAwareStatus];
 		return isOwner ? desc.owner : desc.requester;
