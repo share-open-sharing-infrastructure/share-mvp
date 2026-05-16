@@ -3,6 +3,7 @@
 	import { MessagesOutline } from 'flowbite-svelte-icons';
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
+	import { resolve } from '$app/paths';
 	import type { Item } from '$lib/types/models';
 
 	interface Props {
@@ -11,9 +12,10 @@
 		isOwnItem: boolean;
 		isTrustRestricted: boolean;
 		isArchived: boolean;
+		existingConversation: { id: string; lendingStatus: string } | null;
 	}
 
-	const { item, isExternal, isOwnItem, isTrustRestricted, isArchived }: Props = $props();
+	const { item, isExternal, isOwnItem, isTrustRestricted, isArchived, existingConversation }: Props = $props();
 </script>
 
 <div class="flex items-center gap-3">
@@ -71,6 +73,14 @@
 		<Tooltip type="light" placement="top">
 			{texts.pages.itemDetail.trustRestrictedTooltip}
 		</Tooltip>
+	{:else if existingConversation}
+		<a
+			href={resolve(`/conversations/${existingConversation.id}`)}
+			class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
+		>
+			<MessagesOutline class="h-4 w-4 mr-2" />
+			{texts.lending.goToConversation}
+		</a>
 	{:else}
 		<form method="POST" action="?/startConversation">
 			<Input name="itemId" value={item.id} hidden />

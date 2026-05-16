@@ -13,6 +13,7 @@
 	import type { Message } from '$lib/types/models';
 	import ConversationHeader from './ConversationHeader.svelte';
 	import MessageForm from './MessageForm.svelte';
+	import LendingStatusBar from './LendingStatusBar.svelte';
 
 	// Props and state variables
 	let { data } = $props();
@@ -112,6 +113,8 @@
 	{loggedInUserIsItemOwner}
 	currentUser={data.currentUser}
 />
+
+<LendingStatusBar conversation={data.conversation} isOwner={loggedInUserIsItemOwner} />
 
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900">

@@ -580,6 +580,57 @@ export const texts = {
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
 		pushTitle: 'AllerLeih',
 		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
+		requestAccepted: (item: string) => `Deine Anfrage für „${item}" wurde angenommen`,
+		requestRejected: (item: string) => `Deine Anfrage für „${item}" wurde abgelehnt`,
+		handoverConfirmed: (item: string) => `Übergabe von „${item}" wurde bestätigt`,
+		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
+		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
+	},
+
+	// Lending process
+	lending: {
+		statusLabel: {
+			pending: 'Angefragt',
+			accepted: 'Angenommen',
+			rejected: 'Abgelehnt',
+			active: 'Unterwegs',
+			return_requested: 'Rückgabe gemeldet',
+			completed: 'Abgeschlossen',
+		},
+		actions: {
+			accept: 'Annehmen',
+			reject: 'Ablehnen',
+			confirmHandover: 'Übergabe bestätigen',
+			requestReturn: 'Rückgabe melden',
+			confirmReturn: 'Rückgabe bestätigen',
+		},
+		statusDescription: {
+			pending: {
+				owner: 'Jemand möchte diesen Gegenstand ausleihen. Nimm die Anfrage an oder lehne sie ab.',
+				requester: (owner: string) => `Deine Anfrage wurde an ${owner} gesendet. \
+				Schicke gegebenenfalls schon eine Nachricht mit Details .`,
+			},
+			accepted: {
+				owner: 'Du hast die Anfrage angenommen. Bestätige die Übergabe, wenn du den Gegenstand übergeben hast.',
+				requester: 'Deine Anfrage wurde angenommen. Macht die Details in der Unterhaltung aus.',
+			},
+			active: {
+				owner: 'Der Gegenstand ist unterwegs. Warte auf die Rückgabe.',
+				requester: 'Du hast den Gegenstand. Melde die Rückgabe, wenn du ihn zurückgegeben hast.',
+			},
+			return_requested: {
+				owner: 'Rückgabe wurde gemeldet. Bestätige, dass du den Gegenstand zurückerhalten hast.',
+				requester: 'Du hast die Rückgabe gemeldet. Warte auf die Bestätigung.',
+			},
+			completed: 'Die Ausleihe ist abgeschlossen.',
+			rejected: 'Diese Anfrage wurde abgelehnt.',
+		},
+		goToConversation: 'Zur laufenden Anfrage →',
+		errors: {
+			notFound: 'Anfrage nicht gefunden.',
+			noPermission: 'Keine Berechtigung für diese Aktion.',
+			invalidState: 'Diese Aktion ist im aktuellen Status nicht möglich.',
+		},
 	},
 
 	// SEO meta titles and descriptions

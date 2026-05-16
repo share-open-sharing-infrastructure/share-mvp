@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { texts } from '$lib/texts';
 
 	let { conversation, currentUser, PB_IMG_URL, activeTab } = $props();
 
@@ -63,8 +64,16 @@
 				{conversation.expand.requestedItem.name}
 			</p>
 			<p class="text-xs text-tinte-400 dark:text-tinte-500 truncate leading-tight mt-0.5">
-				@{otherUser.username}
+				{activeTab === 'borrowing' ? 'von' : 'an'} {otherUser.username}
 			</p>
+			{#if conversation.lendingStatus}
+				<span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium mt-0.5
+					{conversation.lendingStatus === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+					: conversation.lendingStatus === 'rejected' ? 'bg-gray-100 dark:bg-tinte-800 text-tinte-400 dark:text-tinte-500'
+					: 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'}">
+					{texts.lending.statusLabel[conversation.lendingStatus as keyof typeof texts.lending.statusLabel]}
+				</span>
+			{/if}
 		</div>
 
 		<!-- Unread dot -->

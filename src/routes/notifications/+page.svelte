@@ -7,8 +7,18 @@
 
 	let { data } = $props();
 
+	const conversationNotificationTypes = new Set([
+		'new_message',
+		'new_request',
+		'request_accepted',
+		'request_rejected',
+		'handover_confirmed',
+		'return_requested',
+		'return_confirmed',
+	]);
+
 	function notificationHref(n: Notification): string {
-		if (n.type === 'new_message' || n.type === 'new_request') {
+		if (conversationNotificationTypes.has(n.type)) {
 			return resolve(`/conversations/${n.relatedId}`);
 		}
 		if (n.type === 'trust_added' || n.type === 'invite_accepted') {
@@ -42,7 +52,7 @@
 						<div class="mt-0.5 shrink-0 text-accent">
 							{#if notification.type === 'new_message'}
 								<EnvelopeOutline class="h-5 w-5" />
-							{:else if notification.type === 'new_request'}
+							{:else if conversationNotificationTypes.has(notification.type)}
 								<EnvelopeOutline class="h-5 w-5" />
 							{:else if notification.type === 'trust_added' || notification.type === 'invite_accepted'}
 								<UserAddOutline class="h-5 w-5" />
