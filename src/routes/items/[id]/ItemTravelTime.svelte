@@ -23,19 +23,26 @@
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 
 	async function fetchTravelTime(mode: TransportMode, userLocation: { lon: number; lat: number }) {
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 15_000);
 		try {
 			const res = await fetch('/api/travel-times/item', {
 				method: 'POST',
+				signal: controller.signal,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ itemId, userLocation, transportMode: mode }),
 			});
 			if (res.ok) {
 				const { minutes } = await res.json();
 				travelMinutes = minutes ?? null;
+			} else {
+				fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify({ event: 'fetch_error', page: 'item_detail', status: res.status }) }).catch(() => {});
 			}
-		} catch {
-			// silently skip
+		} catch (err) {
+			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+			fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify({ event: isTimeout ? 'fetch_timeout' : 'fetch_error', page: 'item_detail' }) }).catch(() => {});
 		} finally {
+			clearTimeout(timeoutId);
 			calculating = false;
 		}
 	}

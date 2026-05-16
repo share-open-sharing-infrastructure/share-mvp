@@ -52,15 +52,26 @@
 	async function fetchTravelTimes(mode: TransportMode, userLocation: { lon: number; lat: number }) {
 		const owners = extractOwnerLocations();
 		if (owners.length === 0) return;
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 15_000);
 		try {
 			const response = await fetch('/api/travel-times', {
 				method: 'POST',
+				signal: controller.signal,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ userLocation, transportMode: mode, owners }),
 			});
-			if (response.ok) travelTimes = await response.json();
+			if (response.ok) {
+				travelTimes = await response.json();
+			} else {
+				fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify({ event: 'fetch_error', page: 'search', status: response.status }) }).catch(() => {});
+			}
 		} catch (err) {
+			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+			fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify({ event: isTimeout ? 'fetch_timeout' : 'fetch_error', page: 'search' }) }).catch(() => {});
 			console.error('Travel time fetch failed:', err);
+		} finally {
+			clearTimeout(timeoutId);
 		}
 	}
 
