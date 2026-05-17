@@ -48,12 +48,18 @@
 	const signalLink = $derived(signalAvailable ? chatPartner.signalLink : null);
 
 	const showMessengerSection = $derived(telegramAvailable || telegramHidden || signalAvailable || signalHidden);
+
+	const chatPartnerAvatarUrl = $derived(
+		chatPartner.profileImage
+			? `${PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}`
+			: `https://ui-avatars.com/api/?name=${encodeURIComponent(chatPartner.username)}&background=random`
+	);
 </script>
 
 <div class="flex items-center gap-3 px-4 py-3 border-b border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 shrink-0 min-h-15">
 	<!-- Back button (mobile only) -->
 	<a
-		href="/conversations"
+		href={resolve('/conversations')}
 		class="md:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 transition-colors shrink-0"
 		aria-label="Zurück"
 	>
@@ -67,15 +73,12 @@
 	>
 		<img
 			src={`${PB_URL}api/files/${conversation.requestedItem.collectionId}/${conversation.requestedItem.id}/${conversation.requestedItem.image}`}
-			class="w-10 h-10 rounded-xl object-cover shrink-0"
+			class="w-10 h-10 rounded-full object-cover shrink-0"
 			alt={conversation.requestedItem.name}
 		/>
 		<div class="flex flex-col min-w-0">
 			<span class="text-sm font-semibold truncate">{conversation.requestedItem.name}</span>
-			<!-- Location: hidden on mobile -->
-			<span class="hidden md:flex items-center gap-0.5 text-xs text-tinte-500 dark:text-tinte-400 truncate">
-				<MapPinOutline class="w-3 h-3 shrink-0" />{conversation.requestedItem.place}
-			</span>
+
 			<!-- Status badge: hidden on mobile -->
 			<div class="hidden md:block">
 				{#if loggedInUserIsItemOwner}
@@ -171,8 +174,8 @@
 			</div>
 			<div class="relative shrink-0">
 				<img
-					src={`https://ui-avatars.com/api/?name=${chatPartner.username}&background=random`}
-					class="w-9 h-9 rounded-xl object-cover"
+					src={chatPartnerAvatarUrl}
+					class="w-9 h-9 rounded-full border object-cover"
 					alt="Avatar"
 				/>
 				{#if chatPartner.verified}
