@@ -92,6 +92,19 @@ export const actions = {
 		}
 	},
 
+	saveTransportMode: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const mode = formData.get('mode')?.toString();
+		if (mode === 'foot' || mode === 'bicycle' || mode === 'car') {
+			try {
+				await locals.pb.collection('users').update(locals.user.id, { preferredTransportMode: mode });
+			} catch {
+				// non-critical — proceed regardless
+			}
+		}
+		return { success: true };
+	},
+
 	complete: async ({ locals, request }) => {
 		const formData = await request.formData();
 

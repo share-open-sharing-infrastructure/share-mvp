@@ -413,6 +413,8 @@ export const texts = {
 			bioLabelInstitution: 'Über uns',
 			bioPlaceholder: 'Stelle dich kurz vor...',
 			profileImageLabel: 'Profilbild',
+			transportModeLabel: 'Standard-Verkehrsmittel',
+			transportModeNote: 'Wird für die Reisezeitanzeige in der Suche verwendet.',
 			deleteProfileImage: 'Foto löschen',
 			cannotUpdate: 'Daten konnten nicht aktualisiert werden. Bitte überprüfe deine Eingaben.',
 			notifications: {
@@ -566,6 +568,11 @@ export const texts = {
 				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
 			allow: 'Benachrichtigungen aktivieren',
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Bitte stelle sicher, dass du Benachrichtigungen in deinem Browser oder Betriebssystem aktiviert hast, um diese Funktion zu nutzen.',
+		},
+		transportMode: {
+			title: 'Wie kommst du am liebsten voran?',
+			explanation:
+				'AllerLeih zeigt dir, wie lange du zu den Dingen in deiner Umgebung unterwegs bist. Wähle dein bevorzugtes Verkehrsmittel.',
 		},
 		done: {
 			title: 'Alles bereit! 🎉',

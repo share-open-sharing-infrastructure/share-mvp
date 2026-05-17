@@ -9,8 +9,15 @@
 	import MessengerField from './MessengerField.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import InviteLink from './InviteLink.svelte';
+	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+
+	type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	let { data, form } = $props();
+
+	let selectedTransportMode = $state<TransportMode>(
+		(data.currentUser.preferredTransportMode as TransportMode | undefined) ?? 'bicycle'
+	);
 
 	const profileImageUrl = $derived(
 		data.currentUser.profileImage
@@ -70,6 +77,34 @@
 						</p>
 						<p class="text-xs text-tinte-500 dark:text-tinte-400 mb-5">
 							{texts.pages.userProfile.addressHint}
+						</p>
+					</div>
+				</div>
+
+				<!-- Transport Mode -->
+				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+					<label class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white">
+						{texts.pages.profile.transportModeLabel}
+					</label>
+					<div>
+						<div class="flex gap-2">
+							<input type="hidden" name="preferredTransportMode" value={selectedTransportMode} />
+							{#each (['foot', 'bicycle', 'car'] as TransportMode[]) as mode (mode)}
+								<button
+									type="button"
+									onclick={() => (selectedTransportMode = mode)}
+									class="flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 transition-colors cursor-pointer
+										{selectedTransportMode === mode
+										? 'border-primary bg-primary-50 dark:bg-primary-900/20 text-primary dark:text-primary-300'
+										: 'border-tinte-200 dark:border-tinte-600 text-tinte-600 dark:text-tinte-300 hover:border-tinte-400 dark:hover:border-tinte-400'}"
+								>
+									<TransportModeIcon {mode} class="h-5 w-5" />
+									<span class="text-xs font-medium">{texts.pages.search.transportModes[mode]}</span>
+								</button>
+							{/each}
+						</div>
+						<p class="text-xs text-tinte-500 dark:text-tinte-400 mt-2">
+							{texts.pages.profile.transportModeNote}
 						</p>
 					</div>
 				</div>

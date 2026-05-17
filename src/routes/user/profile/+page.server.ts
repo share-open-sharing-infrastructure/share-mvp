@@ -136,6 +136,12 @@ export const actions = {
 			updateData['geolocation'] = null;
 		}
 
+		// Handle preferred transport mode
+		const preferredTransportMode = formData?.get('preferredTransportMode')?.toString();
+		if (preferredTransportMode === 'foot' || preferredTransportMode === 'bicycle' || preferredTransportMode === 'car') {
+			updateData['preferredTransportMode'] = preferredTransportMode;
+		}
+
 		// Handle bio
 		const bio = formData?.get('bio')?.toString();
 		if (bio !== undefined) {
