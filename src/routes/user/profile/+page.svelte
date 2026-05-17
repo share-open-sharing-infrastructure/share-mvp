@@ -115,7 +115,6 @@
 						<ProfileImageField imageUrl={profileImageUrl} />
 					</div>
 				</div>
-
 				<!-- Bio -->
 				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
 					<label for="bio" class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white">
@@ -138,6 +137,12 @@
 					</Button>
 				</div>
 			</form>
+			<form
+				id="delete-profile-image-form"
+				method="POST"
+				action="?/deleteProfileImage"
+				use:enhance={() => ({ update }) => update({ reset: false })}
+			></form>
 
 			<EmailSection
 				email={data.currentUser.email}

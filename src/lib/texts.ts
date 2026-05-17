@@ -519,6 +519,13 @@ export const texts = {
 			contact:
 				'Kontaktiere andere direkt über AllerLeih, Telegram oder Signal – ohne deine Telefonnummer zu teilen.',
 		},
+		profile: {
+			title: 'Dein Profil',
+			explanation: 'Ein Profilbild und eine kurze Beschreibung helfen anderen, dir zu vertrauen.',
+			imageLabel: 'Profilbild',
+			bioLabel: 'Über dich',
+			bioPlaceholder: 'Erzähl kurz, wer du bist und was du so teilst...',
+		},
 		location: {
 			title: 'Wo verleihst du?',
 			explanation:

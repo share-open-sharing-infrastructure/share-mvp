@@ -72,6 +72,26 @@ export const actions = {
 		await sendPushToUser(locals.pb, newTrusteeId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
 	},
 
+	saveProfile: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const pbFormData = new FormData();
+
+		const bio = formData.get('bio')?.toString();
+		if (bio !== undefined) pbFormData.append('bio', bio.trim());
+
+		const profileImageFile = formData.get('profileImage');
+		if (profileImageFile instanceof File && profileImageFile.size > 0) {
+			pbFormData.append('profileImage', profileImageFile);
+		}
+
+		try {
+			await locals.pb.collection('users').update(locals.user.id, pbFormData);
+			return { success: true };
+		} catch {
+			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+		}
+	},
+
 	complete: async ({ locals, request }) => {
 		const formData = await request.formData();
 
