@@ -42,7 +42,7 @@
 			{/if}
 
 			<!-- reset: false preserves typed field values after use:enhance processes the submission -->
-			<form method="POST" action="?/saveProfile" enctype="multipart/form-data" class="space-y-4" use:enhance={() => ({ update }) => update({ reset: false })}>
+			<form method="POST" action="?/saveProfile" enctype="multipart/form-data" class="space-y-4" use:enhance={() => async ({ update }) => { await update({ reset: false }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
 				<!-- Username -->
 				<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
 					<label for="username" class="sm:w-36 sm:shrink-0 text-sm font-medium text-tinte-900 dark:text-white">
