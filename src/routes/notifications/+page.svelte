@@ -35,6 +35,9 @@
 						href={notificationHref(notification)}
 						class="flex items-start gap-4 flex-1 min-w-0"
 						onclick={() => {
+							// Fire-and-forget: navigation proceeds immediately while the server
+							// marks the notification as read in the background. SvelteKit's
+							// client-side routing does not cancel in-flight fetches on navigate.
 							if (!notification.read) {
 								const fd = new FormData();
 								fd.append('id', notification.id);

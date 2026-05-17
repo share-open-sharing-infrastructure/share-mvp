@@ -46,7 +46,9 @@ export async function load({ params, locals }) {
 			});
 		}
 
-		// Mark related notifications as read
+		// Conversation read state (readByRequester/readByOwner) and notification read
+		// state are tracked in separate collections, so viewing the conversation does
+		// not automatically clear the notification badge. We sync them here.
 		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
 			filter: `recipient="${locals.user.id}" && relatedId="${conversationId}" && read=false`,
 			fields: 'id',

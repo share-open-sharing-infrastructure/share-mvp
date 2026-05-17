@@ -21,6 +21,8 @@ export async function load({ locals }) {
 }
 
 export const actions = {
+	// One-way mark-as-read, called fire-and-forget from the notification link's onclick.
+	// Early-exits if already read so repeated calls are safe.
 	markRead: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const id = formData.get('id')?.toString();
@@ -30,6 +32,7 @@ export const actions = {
 		await locals.pb.collection('notifications').update(id, { read: true });
 	},
 
+	// Bidirectional toggle used by the dot button on each row.
 	toggleRead: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const id = formData.get('id')?.toString();
