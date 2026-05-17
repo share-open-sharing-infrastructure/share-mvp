@@ -20,7 +20,10 @@
 					name=""
 					aClass="flex items-center"
 				>
-					<img src="/AllerLeih.png" class="mr-3 h-12" alt={texts.names.app} />
+					<div class="flex flex-col items-center mr-3">
+						<img src="/AllerLeih.png" class="h-12" alt={texts.names.app} />
+						<span class="text-sm text-gray-400 tracking-wide mt-0.5">Lüneburg</span>
+					</div>
 					<p class="max-w-xs text-sm text-light">
 						Ein gemeinnütziger Verleih-Marktplatz.<br/>
 						Open-Source. Für Alle.
