@@ -10,7 +10,7 @@
 		Button,
 		Tooltip
 	} from 'flowbite-svelte';
-	import { UserAddOutline, ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
+	import { UserAddOutline, ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -233,12 +233,9 @@
 
 					<!-- Vertraut dir (read-only) -->
 					<TableBodyCell class="text-center">
-						<input
-							type="checkbox"
-							checked={entry.theyTrustMe}
-							disabled
-							class="w-4 h-4 rounded border-tinte-600 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600"
-						/>
+						{#if entry.theyTrustMe}
+							<CheckCircleOutline class="h-5 w-5 text-green-500 inline" />
+						{/if}
 					</TableBodyCell>
 
 					<!-- Du vertraust (interactive) -->
@@ -252,7 +249,7 @@
 							<input
 								type="checkbox"
 								checked={entry.iTrustThem}
-								class="w-4 h-4 rounded border-tinte-600 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer focus:ring-primary-500"
+								class="w-4 h-4 rounded-full border-tinte-600 text-green-500 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer focus:ring-primary-500"
 								onchange={(e) => (e.target as HTMLInputElement).form?.requestSubmit()}
 							/>
 						</form>
