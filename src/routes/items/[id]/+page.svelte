@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Badge, Alert, Tooltip } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
 	import { HeartSolid } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
@@ -95,7 +96,7 @@
 	{#if data.item.categories?.length}
 		<div class="flex flex-wrap gap-2">
 			{#each data.item.categories as cat (cat)}
-				<Badge class="rounded-xl text-md shadow bg-primary-100 border border-primary">{cat}</Badge>
+				<Badge href="{resolve('/search')}?cats={encodeURIComponent(cat)}" class="rounded-xl text-md shadow bg-primary-100 border border-primary hover:opacity-80">{cat}</Badge>
 			{/each}
 		</div>
 	{/if}
