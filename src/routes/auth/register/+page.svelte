@@ -120,7 +120,7 @@
 						<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
 						<span>Ich habe die <a href={resolve("/misc/tos")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">AGB</a> und die <a href={resolve("/misc/privacy")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Datenschutzerklärung</a> gelesen und stimme beiden zu.</span>
 					</label>
-					<Button type="submit" class="min-button bg-primary cursor-pointer"
+					<Button type="submit" class="min-button bg-primary-200 hover:bg-primary cursor-pointer"
 						>{texts.auth.register}</Button
 					>
 				</form>

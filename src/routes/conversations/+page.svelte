@@ -19,7 +19,7 @@
 	</div>
 	<a
 		href={resolve('/search')}
-		class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-white hover:bg-primary-600 transition-colors"
+		class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium bg-primary-200 hover:bg-primary min-button transition-colors"
 	>
 		Zur Suche
 	</a>

@@ -175,10 +175,10 @@
 	{/if}
 
 	<div class="mt-6 flex justify-end gap-3">
-		<Button type="button" color="alternative" onclick={onBack}>Zurück</Button>
+		<Button type="button" color="alternative" class="rounded-full hover:cursor-pointer" onclick={onBack}>Zurück</Button>
 		<Button
 			type="submit"
-			class="bg-primary"
+			class="bg-primary-400 rounded-full hover:bg-primary hover:cursor-pointer"
 			disabled={submitting || drafts.length === 0 || !allAnalyzed}
 		>
 			{#if submitting}

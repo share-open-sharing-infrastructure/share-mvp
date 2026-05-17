@@ -60,7 +60,7 @@
 					class="
 						me-2 mb-2 w-full
 						min-button 
-						bg-primary
+						bg-primary-200 hover:bg-primary
 						cursor-pointer
 
 						">{texts.auth.loginButton}</Button

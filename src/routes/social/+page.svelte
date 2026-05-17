@@ -267,7 +267,7 @@
 		<div class="flex items-center justify-between mt-4 px-1">
 			<Button
 				size="sm"
-				color="alternative"
+				class="min-button bg-primary-200 hover:bg-primary"
 				disabled={currentPage === 0}
 				onclick={() => (currentPage -= 1)}
 			>
@@ -278,7 +278,7 @@
 			</span>
 			<Button
 				size="sm"
-				color="alternative"
+				class="min-button bg-primary-200 hover:bg-primary"
 				disabled={currentPage >= totalPages - 1}
 				onclick={() => (currentPage += 1)}
 			>

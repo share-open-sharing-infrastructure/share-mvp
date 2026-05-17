@@ -84,14 +84,14 @@
 		<div class="flex flex-col sm:flex-row gap-4 mb-6">
 			<Button
 				onclick={() => { showAddModal = true; }}
-				class="flex-1 cursor-pointer flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-primary-200 bg-primary-50 hover:bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-100 dark:border-primary-700"
+				class="flex-1 cursor-pointer flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-full shadow-sm border border-primary-200 bg-primary-50 hover:bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-100 dark:border-primary-700"
 			>
 				<span class="text-xl">📦</span>
 				{texts.pages.items.addSingle}
 			</Button>
 			<Button
 				href="/user/items/bulk-add"
-				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-xl shadow-sm border border-primary-400 bg-primary-100 hover:bg-primary-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
+				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-full shadow-sm border border-primary-400 bg-primary-100 hover:bg-primary-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
 			>
 				<span class="text-xl">✨</span>
 				{texts.pages.items.addBulk}
@@ -105,11 +105,11 @@
 				value={searchValue}
 				oninput={onSearchInput}
 				placeholder={texts.pages.items.search}
-				class="flex-1 rounded-lg border border-tinte-300 bg-papier px-4 py-2 text-sm text-tinte-900 placeholder-tinte-400 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
+				class="flex-1 rounded-full border border-tinte-300 bg-papier px-4 py-2 text-sm text-tinte-900 placeholder-tinte-400 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
 			/>
 			<select
 				onchange={onStatusChange}
-				class="rounded-lg border border-tinte-300 bg-papier px-3 py-2 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
+				class="rounded-full border border-tinte-300 bg-papier px-3 py-2 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
 			>
 				<option value="all" selected={data.statusFilter === 'all'}>{texts.pages.items.filterAll}</option>
 				<option value="available" selected={data.statusFilter === 'available'}>{texts.pages.items.filterAvailable}</option>
