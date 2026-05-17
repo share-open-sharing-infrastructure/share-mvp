@@ -28,7 +28,7 @@
 	<Register class="w-full">
 		<div class="space-y-4 p-4">
 			<form
-				action="https://app.keila.io/forms/nfrm_b94Bj5RD"
+				action="?/subscribe"
 				class="flex flex-col gap-2"
 				method="post"
 			>
