@@ -11,8 +11,6 @@
 	import { dev } from '$app/environment';
 	import { fade } from 'svelte/transition';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
-	import { SvelteSet } from 'svelte/reactivity';
-
 	interface BeforeInstallPromptEvent extends Event {
 		prompt(): Promise<void>;
 		userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -24,13 +22,19 @@
 	beforeNavigate(() => { isNavigating = true; });
 	afterNavigate(() => { isNavigating = false; });
 
-	// eslint-disable-next-line svelte/prefer-writable-derived
-	let unreadCount = $state(0);
+	let unreadCount = $state(data.unreadNotificationCount ?? 0);
 	let installPromptEvent = $state<BeforeInstallPromptEvent | null>(null);
 
-	// Keep the local unread count in sync when the server reloads page data
+	// Sync from server when the layout load genuinely re-runs (navigation).
+	// Using a plain variable prevents spurious resets when only the page load
+	// replaced `data` without the layout count actually changing.
+	let _serverCount: number | undefined = undefined;
 	$effect(() => {
-		unreadCount = data.unreadNotificationCount ?? 0;
+		const count = data.unreadNotificationCount ?? 0;
+		if (count !== _serverCount) {
+			_serverCount = count;
+			unreadCount = count;
+		}
 	});
 
 	onMount(() => {
@@ -47,46 +51,33 @@
 		}
 	});
 
-	// Realtime notification badge — re-subscribes when the authenticated user
-	// changes (login / logout / user switch) by depending on `data.currentUser?.id`.
-	// Keeping this in an $effect (rather than onMount) ensures the handler's
-	// closure always reflects the currently-authenticated user, and that a
-	// logout-then-login within the same session re-establishes the subscription
-	// under the new session rather than leaving a stale one behind.
+	// Re-subscribes when the authenticated user changes (login/logout/switch).
 	$effect(() => {
 		const userId = data.currentUser?.id;
 		if (!userId) return;
 
 		const pb = getClientPB();
 
-		// Track IDs we silently absorbed so we don't double-decrement
-		const suppressedIds = new SvelteSet<string>();
-
-		pb.collection('notifications').subscribe('*', (e) => {
+		pb.collection('notifications').subscribe('*', async (e) => {
 			if (e.record.recipient !== userId) return;
-			if (e.action === 'create' && !e.record.read) {
-				// If the user is already viewing this conversation, mark it as read
-				// immediately and don't bump the badge
-				if (e.record.relatedId && e.record.relatedId === page.params.conversationId) {
-					suppressedIds.add(e.record.id);
-					pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
-					return;
-				}
-				unreadCount += 1;
-			} else if (e.action === 'update' && e.record.read) {
-				if (suppressedIds.has(e.record.id)) {
-					// This update was triggered by our own suppression — don't decrement
-					suppressedIds.delete(e.record.id);
-					return;
-				}
-				// Mark-as-read updates from the notifications page or conversation load
-				unreadCount = Math.max(0, unreadCount - 1);
+
+			// Auto-mark as read when a notification arrives for the currently-open conversation
+			if (
+				e.action === 'create' &&
+				!e.record.read &&
+				e.record.relatedId &&
+				e.record.relatedId === page.params.conversationId
+			) {
+				await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
 			}
+
+			const result = await pb.collection('notifications').getList(1, 1, {
+				filter: pb.filter('recipient = {:userId} && read = false', { userId }),
+			});
+			unreadCount = result.totalItems;
 		});
 
-		return () => {
-			pb.collection('notifications').unsubscribe('*');
-		};
+		return () => pb.collection('notifications').unsubscribe('*');
 	});
 
 

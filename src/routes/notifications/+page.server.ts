@@ -17,13 +17,27 @@ export async function load({ locals }) {
 		console.error('Failed to load notifications:', err);
 	}
 
-	// Mark all unread as read
-	const unread = notifications.filter((n) => !n.read);
-	await Promise.all(
-		unread.map((n) =>
-			locals.pb.collection('notifications').update(n.id, { read: true }).catch(() => {})
-		)
-	);
-
 	return { notifications };
 }
+
+export const actions = {
+	markRead: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const id = formData.get('id')?.toString();
+		if (!id) return;
+		const notification = await locals.pb.collection('notifications').getOne(id);
+		if (notification.recipient !== locals.user.id || notification.read) return;
+		await locals.pb.collection('notifications').update(id, { read: true });
+	},
+
+	toggleRead: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const id = formData.get('id')?.toString();
+		if (!id) return;
+
+		const notification = await locals.pb.collection('notifications').getOne(id);
+		if (notification.recipient !== locals.user.id) return;
+
+		await locals.pb.collection('notifications').update(id, { read: !notification.read });
+	},
+};

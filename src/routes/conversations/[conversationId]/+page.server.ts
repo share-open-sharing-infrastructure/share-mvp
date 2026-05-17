@@ -45,6 +45,19 @@ export async function load({ params, locals }) {
 				...(isOwner && { readByOwner: true }),
 			});
 		}
+
+		// Mark related notifications as read
+		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
+			filter: `recipient="${locals.user.id}" && relatedId="${conversationId}" && read=false`,
+			fields: 'id',
+		});
+		if (unreadNotifs.length > 0) {
+			await Promise.all(
+				unreadNotifs.map((n) =>
+					locals.pb.collection('notifications').update(n.id, { read: true }).catch(() => {})
+				)
+			);
+		}
 	}
 
 	return {

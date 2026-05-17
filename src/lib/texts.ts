@@ -592,6 +592,8 @@ export const texts = {
 	notifications: {
 		title: 'Benachrichtigungen',
 		empty: 'Keine Benachrichtigungen',
+		markRead: 'Als gelesen markieren',
+		markUnread: 'Als ungelesen markieren',
 		newMessage: (from: string) => `Neue Nachricht von ${from}`,
 		newRequest: (from: string, item: string) => `${from} möchte „${item}" ausleihen`,
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,

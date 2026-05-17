@@ -70,7 +70,7 @@
 	<div class="relative">
 		<NavHamburger />
 		{#if unreadCount > 0}
-			<span class="absolute top-0.5 right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full pointer-events-none xl:hidden"></span>
+			<span class="absolute md:hidden top-0.5 right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full pointer-events-none"></span>
 		{/if}
 	</div>
 	<NavUl
