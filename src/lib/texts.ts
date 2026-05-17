@@ -207,7 +207,7 @@ export const texts = {
 	// Item status
 	itemStatus: {
 		available: 'Verfügbar',
-		unavailable: 'Nicht verfügbar',
+		unavailable: 'Verliehen',
 		unknown: 'Verfügbarkeit unbekannt',
 		markAvailable: 'auf "Verfügbar" setzen',
 		markUnavailable: 'auf "Nicht verfügbar" setzen',

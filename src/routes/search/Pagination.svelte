@@ -53,11 +53,11 @@
 			{#if page > 1}
 				<a
 					href={pageUrl(page - 1)}
-					class="flex h-8 w-8 items-center justify-center rounded-lg border border-tinte-300 bg-sand text-sm text-tinte-500 hover:bg-tinte-100 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400 dark:hover:bg-tinte-700"
+					class="flex h-8 w-8 items-center justify-center rounded-full border border-tinte-300 bg-sand text-sm text-tinte-500 hover:bg-tinte-100 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400 dark:hover:bg-tinte-700"
 					aria-label="Vorherige Seite"
 				>‹</a>
 			{:else}
-				<span class="flex h-8 w-8 items-center justify-center rounded-lg border border-tinte-200 bg-papier text-sm text-tinte-300 dark:border-tinte-700 dark:bg-tinte-800 dark:text-tinte-600 cursor-not-allowed">‹</span>
+				<span class="flex h-8 w-8 items-center justify-center rounded-full border border-tinte-200 bg-papier text-sm text-tinte-300 dark:border-tinte-700 dark:bg-tinte-800 dark:text-tinte-600 cursor-not-allowed">‹</span>
 			{/if}
 
 			<!-- Page numbers -->
@@ -65,13 +65,13 @@
 				{#if p === '...'}
 					<span class="flex h-8 w-8 items-center justify-center text-sm text-tinte-400">…</span>
 				{:else if p === page}
-					<span class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-white">
+					<span class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
 						{p}
 					</span>
 				{:else}
 					<a
 						href={pageUrl(p)}
-						class="flex h-8 w-8 items-center justify-center rounded-lg border border-tinte-300 bg-sand text-sm text-tinte-500 hover:bg-tinte-100 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400 dark:hover:bg-tinte-700"
+						class="flex h-8 w-8 items-center justify-center rounded-full border border-tinte-300 bg-sand text-sm text-tinte-500 hover:bg-tinte-100 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400 dark:hover:bg-tinte-700"
 					>{p}</a>
 				{/if}
 			{/each}
@@ -80,11 +80,11 @@
 			{#if page < totalPages}
 				<a
 					href={pageUrl(page + 1)}
-					class="flex h-8 w-8 items-center justify-center rounded-lg border border-tinte-300 bg-sand text-sm text-tinte-500 hover:bg-tinte-100 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400 dark:hover:bg-tinte-700"
+					class="flex h-8 w-8 items-center justify-center rounded-full border border-tinte-300 bg-sand text-sm text-tinte-500 hover:bg-tinte-100 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400 dark:hover:bg-tinte-700"
 					aria-label="Nächste Seite"
 				>›</a>
 			{:else}
-				<span class="flex h-8 w-8 items-center justify-center rounded-lg border border-tinte-200 bg-papier text-sm text-tinte-300 dark:border-tinte-700 dark:bg-tinte-800 dark:text-tinte-600 cursor-not-allowed">›</span>
+				<span class="flex h-8 w-8 items-center justify-center rounded-full border border-tinte-200 bg-papier text-sm text-tinte-300 dark:border-tinte-700 dark:bg-tinte-800 dark:text-tinte-600 cursor-not-allowed">›</span>
 			{/if}
 		</div>
 
@@ -105,7 +105,7 @@
 			<select
 				name="perPage"
 				onchange={(e) => (e.currentTarget as HTMLSelectElement).form?.submit()}
-				class="w-14 rounded-lg border border-tinte-300 bg-papier px-2 py-1 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
+				class="w-14 rounded-full border border-tinte-300 bg-papier px-2 py-1 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
 			>
 				{#each perPageOptions as opt (opt)}
 					<option value={opt} selected={opt === perPage}>{opt}</option>
