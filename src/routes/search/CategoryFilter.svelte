@@ -10,18 +10,22 @@
 		op: 'or' | 'and';
 		q: string;
 		perPage: number;
+		onlyAvailable: boolean;
+		ownerType: string;
 	}
 
-	let { selectedCategories, op, q, perPage }: Props = $props();
+	let { selectedCategories, op, q, perPage, onlyAvailable, ownerType }: Props = $props();
 
 	function buildUrl(newCats: string[], newOp: 'or' | 'and'): string {
-		const params = new URLSearchParams();
-		if (q) params.set('q', q);
-		if (perPage !== 10) params.set('perPage', String(perPage));
-		if (newCats.length > 0) params.set('cats', newCats.join(','));
-		if (newOp === 'and') params.set('op', 'and');
+		const parts: string[] = [];
+		if (q) parts.push(`q=${encodeURIComponent(q)}`);
+		if (perPage !== 10) parts.push(`perPage=${perPage}`);
+		if (newCats.length > 0) parts.push(`cats=${encodeURIComponent(newCats.join(','))}`);
+		if (newOp === 'and') parts.push('op=and');
+		if (!onlyAvailable) parts.push('onlyAvailable=false');
+		if (ownerType !== 'all') parts.push(`ownerType=${ownerType}`);
 		// always reset to page 1 when filter changes
-		return resolve('/search') + '?' + params.toString();
+		return resolve('/search') + (parts.length ? '?' + parts.join('&') : '');
 	}
 
 	function toggleCat(cat: string) {

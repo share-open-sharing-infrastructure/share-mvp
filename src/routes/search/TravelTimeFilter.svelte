@@ -124,7 +124,7 @@
 
 {#if isLoggedIn && hasQuery}
 	<div
-		class="flex flex-wrap justify-center items-center gap-3 border border-primary-100 dark:border-tinte-700 rounded-xl px-4 py-3 mt-3"
+		class="flex flex-wrap justify-center items-center border border-primary-100 dark:border-tinte-700 rounded-xl px-3 py-1"
 	>
 		<!-- Transport mode selector -->
 		<div class="relative">
@@ -133,7 +133,7 @@
 				<button
 					type="button"
 					onclick={() => handleTransportModeChange(preferredMode)}
-					class="flex items-center gap-1.5 text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1.5 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
+					class="flex items-center text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
 				>
 					{texts.pages.itemDetail.calculateTravelTime}
 				</button>
@@ -142,7 +142,7 @@
 				<button
 					id="search-transport-btn"
 					type="button"
-					class="flex items-center gap-1.5 text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1.5 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
+					class="flex items-center text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
 				>
 					{#if transportMode === null}
 						{texts.pages.itemDetail.calculateTravelTime}
@@ -175,7 +175,7 @@
 
 		<!-- Travel time slider (only once a mode is chosen) -->
 		{#if transportMode !== null}
-			<div class="flex items-center gap-2">
+			<div class="flex items-center gap-2 ml-1">
 				<input
 					type="range"
 					min="5"

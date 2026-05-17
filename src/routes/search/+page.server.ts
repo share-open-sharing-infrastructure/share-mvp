@@ -16,12 +16,19 @@ export async function load({ locals, url }) {
 	const onlyAvailable = url.searchParams.get('onlyAvailable') !== 'false';
 	const availabilityFilter = onlyAvailable ? "status != 'unavailable'" : null;
 
+	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
+	const ownerType = ownerTypeParam === 'institution' || ownerTypeParam === 'private' ? ownerTypeParam : 'all';
+	const institutionFilter =
+		ownerType === 'institution' ? 'owner.isInstitution = true' :
+		ownerType === 'private' ? 'owner.isInstitution != true' :
+		null;
+
 	if (!q && selectedCategories.length === 0) {
 		const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
 		const trustFilter = locals.user
 			? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
 			: `trusteesOnly = false`;
-		const filter = [ownerFilter, trustFilter, availabilityFilter].filter(Boolean).join(' && ') || undefined;
+		const filter = [ownerFilter, trustFilter, availabilityFilter, institutionFilter].filter(Boolean).join(' && ') || undefined;
 
 		const result = await locals.pb.collection('items').getList<Item>(1, 8, {
 			expand: 'owner',
@@ -36,6 +43,7 @@ export async function load({ locals, url }) {
 			selectedCategories,
 			op,
 			onlyAvailable,
+			ownerType,
 			currentUser: locals.user ?? null,
 			page: 1,
 			perPage,
@@ -62,7 +70,7 @@ export async function load({ locals, url }) {
 	const trustFilter = locals.user
 		? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
 		: `trusteesOnly = false`;
-	const filter = [nameFilter, ownerFilter, categoryFilter, trustFilter, availabilityFilter].filter(Boolean).join(' && ') || undefined;
+	const filter = [nameFilter, ownerFilter, categoryFilter, trustFilter, availabilityFilter, institutionFilter].filter(Boolean).join(' && ') || undefined;
 
 	const result = await locals.pb.collection('items').getList<Item>(page, perPage, {
 		expand: 'owner',
@@ -82,6 +90,7 @@ export async function load({ locals, url }) {
 		selectedCategories,
 		op,
 		onlyAvailable,
+		ownerType,
 		currentUser: locals.user ?? null,
 		page: result.page,
 		perPage: result.perPage,

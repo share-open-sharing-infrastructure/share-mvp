@@ -359,7 +359,10 @@ export const texts = {
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
 			randomItemsHeading: 'Entdecke zufällige Gegenstände',
-			onlyAvailable: 'Nur verfügbare Dinge zeigen',
+			onlyAvailable: 'Nur Verfügbare',
+			ownerTypeAll: 'Von Allen',
+			ownerTypeInstitution: 'Nur von Institutionen',
+			ownerTypePrivate: 'Nur von Personen',
 		},
 		logout: {
 			message: 'Ausloggen...',

@@ -7,7 +7,6 @@
 	import CategoryFilter from './CategoryFilter.svelte';
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
-	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -23,6 +22,18 @@
 	let maxMinutes = $state(30);
 
 	const filterActive = $derived(maxMinutes < 30 && Object.keys(travelTimes).length > 0);
+
+	function searchUrl(overrides: { onlyAvailable?: boolean; ownerType?: string } = {}): string {
+		const onlyAvailable = overrides.onlyAvailable ?? data.onlyAvailable;
+		const ownerType = overrides.ownerType ?? data.ownerType;
+		const parts: string[] = [];
+		if (data.q) parts.push(`q=${encodeURIComponent(data.q)}`);
+		if (data.selectedCategories.length > 0) parts.push(`cats=${encodeURIComponent(data.selectedCategories.join(','))}`);
+		if (data.op === 'and') parts.push('op=and');
+		if (!onlyAvailable) parts.push('onlyAvailable=false');
+		if (ownerType !== 'all') parts.push(`ownerType=${ownerType}`);
+		return resolve('/search') + (parts.length ? '?' + parts.join('&') : '');
+	}
 	const filteredItems = $derived.by(() => {
 		const items = filterActive
 			? (data.items ?? []).filter((item) => {
@@ -66,6 +77,7 @@
 			selectedCategories={data.selectedCategories}
 			op={data.op}
 			onlyAvailable={data.onlyAvailable}
+			ownerType={data.ownerType}
 		/>
 	{/if}
 {/snippet}
@@ -87,7 +99,36 @@
 		op={data.op}
 		q={data.q}
 		perPage={data.perPage}
+		onlyAvailable={data.onlyAvailable}
+		ownerType={data.ownerType}
 	/>
+
+	<hr class="border-tinte-300 max-w-100! my-2 mx-auto"/>
+
+	{@const ownerTypeNext = { all: 'institution', institution: 'private', private: 'all' } as const}
+	{@const ownerTypeLabel = {
+		all: texts.pages.search.ownerTypeAll,
+		institution: texts.pages.search.ownerTypeInstitution,
+		private: texts.pages.search.ownerTypePrivate,
+	} as const}
+
+	<div class="flex flex-wrap justify-center items-center gap-1 my-3">
+		<a
+			href={searchUrl({ onlyAvailable: !data.onlyAvailable })}
+			class="rounded-full border px-3 py-1 text-sm font-medium transition-colors
+				{data.onlyAvailable
+				? 'bg-primary border-primary text-white'
+				: 'border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary'}"
+		>{texts.pages.search.onlyAvailable}</a>
+
+		<a
+			href={searchUrl({ ownerType: ownerTypeNext[data.ownerType as keyof typeof ownerTypeNext] })}
+			class="rounded-full border px-3 py-1 text-sm font-medium transition-colors 'border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary'}"
+		>{ownerTypeLabel[data.ownerType as keyof typeof ownerTypeLabel]}</a>
+
+	</div>
+
+	<hr class="border-tinte-300 max-w-100! my-2 mx-auto"/>
 
 	<TravelTimeFilter
 		{preferredMode}
@@ -98,24 +139,6 @@
 		bind:travelTimes
 		bind:maxMinutes
 	/>
-
-	<div class="flex items-center gap-2 mt-3 text-sm text-tinte-600 dark:text-tinte-400">
-		<input
-			type="checkbox"
-			id="onlyAvailable"
-			checked={data.onlyAvailable}
-			onchange={() => {
-				const parts: string[] = [];
-				if (data.q) parts.push(`q=${encodeURIComponent(data.q)}`);
-				if (data.selectedCategories.length > 0) parts.push(`cats=${encodeURIComponent(data.selectedCategories.join(','))}`);
-				if (data.op === 'and') parts.push('op=and');
-				if (data.onlyAvailable) parts.push('onlyAvailable=false');
-				goto(resolve('/search') + (parts.length ? '?' + parts.join('&') : ''));
-			}}
-			class="w-4 h-4 rounded accent-primary cursor-pointer"
-		/>
-		<label for="onlyAvailable" class="cursor-pointer">{texts.pages.search.onlyAvailable}</label>
-	</div>
 
 	{#if data.isRandom}
 		<div class="w-full text-center mt-4 mb-2">

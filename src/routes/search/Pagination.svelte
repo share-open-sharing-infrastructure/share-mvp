@@ -11,21 +11,23 @@
 		selectedCategories: string[];
 		op: 'or' | 'and';
 		onlyAvailable: boolean;
+		ownerType: string;
 	}
 
-	let { page, totalPages, perPage, q, selectedCategories, op, onlyAvailable }: Props = $props();
+	let { page, totalPages, perPage, q, selectedCategories, op, onlyAvailable, ownerType }: Props = $props();
 
 	const perPageOptions = [10, 20, 50];
 
 	function pageUrl(n: number): string {
-		const params = new URLSearchParams();
-		if (q) params.set('q', q);
-		params.set('page', String(n));
-		params.set('perPage', String(perPage));
-		if (selectedCategories.length > 0) params.set('cats', selectedCategories.join(','));
-		if (op === 'and') params.set('op', 'and');
-		if (!onlyAvailable) params.set('onlyAvailable', 'false');
-		return resolve('/search') + '?' + params.toString();
+		const parts: string[] = [];
+		if (q) parts.push(`q=${encodeURIComponent(q)}`);
+		parts.push(`page=${n}`);
+		parts.push(`perPage=${perPage}`);
+		if (selectedCategories.length > 0) parts.push(`cats=${encodeURIComponent(selectedCategories.join(','))}`);
+		if (op === 'and') parts.push('op=and');
+		if (!onlyAvailable) parts.push('onlyAvailable=false');
+		if (ownerType !== 'all') parts.push(`ownerType=${ownerType}`);
+		return resolve('/search') + '?' + parts.join('&');
 	}
 
 	function getPages(): (number | '...')[] {
@@ -100,6 +102,9 @@
 			{/if}
 			{#if !onlyAvailable}
 				<input type="hidden" name="onlyAvailable" value="false" />
+			{/if}
+			{#if ownerType !== 'all'}
+				<input type="hidden" name="ownerType" value={ownerType} />
 			{/if}
 			<span>{texts.pages.search.perPage}</span>
 			<select
