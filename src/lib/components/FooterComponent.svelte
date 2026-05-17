@@ -8,6 +8,7 @@
 		FooterLink,
 		FooterLinkGroup,
 	} from 'flowbite-svelte';
+	import { GithubSolid } from 'flowbite-svelte-icons';
 </script>
 
 <Footer footerType="socialmedia" class="mt-5">
@@ -59,6 +60,12 @@
 						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
 							>{texts.nav.contact}</FooterLink
 						>
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="noopener noreferrer">
+							<span class="flex items-center gap-1">
+								<GithubSolid class="h-4 w-4" />
+								GitHub
+							</span>
+						</FooterLink>
 					</FooterLinkGroup>
 				</div>
 				<div>
