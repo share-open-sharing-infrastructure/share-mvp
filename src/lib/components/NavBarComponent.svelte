@@ -134,7 +134,7 @@
 	{#if showTranslate}
 		<Popover
 			triggeredBy="#translate-btn"
-			class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+			class="w-72 bg-papier text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
 			placement="bottom-end"
 		>
 			<div class="space-y-2 p-3">

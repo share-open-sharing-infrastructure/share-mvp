@@ -104,16 +104,19 @@ export const texts = {
 		signal: 'Signal',
 		introText:
 			'Du kannst deine Kontaktdaten für Signal und Telegram hinzufügen, um anderen Nutzern:innen die Möglichkeit zu geben, dich über diese Dienste zu kontaktieren, ohne deine Telefonnummer zu teilen.',
-		telegramUsername: 'Telegram Nutzername',
-		telegramUsernamePlaceholder: 'z.B. @meinname',
+		telegramUsername: 'Telegram-User',
+		telegramUsernamePlaceholder: 'z.B. mein_name',
 		signalLink: 'Signal-Link',
-		signalLinkPlaceholder: 'z.B. signal.me/#p/...',
+		signalLinkPlaceholder: 'z.B. signal.me/#eu/...',
 		telegramTooltipTitle: 'Telegram Nutzername hinzufügen',
 		telegramTooltipText:
-			'Dein Telegram-Nutzername findest du in der Telegram App unter Einstellungen > Nutzername. Kopiere nur den Namen ohne das @ Zeichen.',
+			'Dein Telegram-Nutzername findest du in der Telegram App unter Einstellungen/Profil > Benutzername. \
+			Kopiere nur den Namen ohne das @ Zeichen.',
 		signalTooltipTitle: 'Signal-Link hinzufügen',
 		signalTooltipText:
-			'In der Signal App kannst du einen teilbaren Link unter Einstellungen > Profil > Namen/Profillink erstellen. Kopiere den kompletten Link in dieses Feld.',
+			'In Signal kannst du einen teilbaren Link erstellen. \
+			Dafür musst du unter Einstellungen > Profil einen Namen erstellen. \
+			Dann kannst du auf "QR-Code oder Link" gehen und den kompletten Link kopieren.',
 		visibleToTrustedOnly: 'Nur Vertrauten zeigen',
 		contactViaTelegram: 'Telegram',
 		contactViaSignal: 'Signal',
