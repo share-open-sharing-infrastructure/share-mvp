@@ -124,6 +124,7 @@
 			{isOwnItem}
 			{isTrustRestricted}
 			{isArchived}
+			existingConversation={data.existingConversation}
 		/>
 	</div>
 

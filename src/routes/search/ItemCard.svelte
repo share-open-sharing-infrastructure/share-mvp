@@ -1,8 +1,7 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { Card } from 'flowbite-svelte';
-	import { UserCircleOutline, HomeOutline, ChevronRightOutline, HeartSolid } from 'flowbite-svelte-icons';
-	import { Popover } from 'flowbite-svelte';
+	import { UserCircleOutline, HeartSolid, HomeOutline } from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -15,8 +14,6 @@
 	interface Props {
 		item: Item;
 		imgUrl: string;
-		/** Owner profile image URL — used as a low-opacity placeholder when the item has no image */
-		ownerImgUrl?: string;
 		profileView?: boolean;
 		/** Travel time in minutes. undefined = not yet fetched, null = owner has no location */
 		travelMinutes?: number | null;
@@ -26,7 +23,6 @@
 	let {
 		item,
 		imgUrl,
-		ownerImgUrl,
 		profileView = false,
 		travelMinutes,
 		transportMode = 'bicycle',
@@ -122,26 +118,3 @@
 		{/if}
 	</div>
 </Card>
-
-{#if !profileView && isTrusted}
-	<Popover
-		triggeredBy="#owner-{item.id}"
-		trigger="hover"
-		class="w-72 bg-papier text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
-		placement="bottom-start"
-	>
-		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-tinte-900 dark:text-white">
-				{texts.ui.trustFunction}
-			</h3>
-			{texts.ui.trustDescription}
-			<a
-				href={resolve('/social')}
-				class="text-accent hover:underline flex items-center font-medium mt-1"
-			>
-				{texts.ui.trustFunction}
-				<ChevronRightOutline class="text-accent ms-1.5 h-4 w-4" />
-			</a>
-		</div>
-	</Popover>
-{/if}

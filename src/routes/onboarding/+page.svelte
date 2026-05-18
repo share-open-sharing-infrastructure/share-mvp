@@ -81,7 +81,7 @@
 		{:else if step === 9}
 			<StepPushNotifications onNext={next} />
 		{:else if step === 10}
-			<StepDone inviteUrl={data.inviteUrl} />
+			<StepDone inviteUrl={data.inviteUrl} username={data.username} />
 		{/if}
 
 	</div>

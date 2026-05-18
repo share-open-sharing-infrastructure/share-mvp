@@ -7,7 +7,6 @@
 		Helper,
 		Toggle,
 		Img,
-		Popover,
 		Textarea,
 		Checkbox,
 	} from 'flowbite-svelte';
@@ -48,6 +47,8 @@
 	let isAvailable = $derived(editingItem?.status === 'available' ? true : false);
 
 	let selectedCategories = $state<string[]>([]);
+	let showTrustInfo = $state(false);
+	let showAvailabilityInfo = $state(false);
 
 	$effect(() => {
 		if (isVisible) {
@@ -172,7 +173,7 @@
 			<span>{texts.forms.description}</span>
 			<Textarea
 				name="itemDescription"
-				class="w-full"
+				class="w-full min-h-50"
 				placeholder={texts.forms.itemDescription}
 				value={editingItem?.description ? editingItem.description : ''}
 				autocomplete="off"
@@ -206,15 +207,23 @@
 				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
 				>{texts.ui.trustedOnly}</Toggle
 			>
-			<div
-				class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400"
-			>
-				<button id="b4">
+			<!-- Click-toggled inline panel instead of a hover Popover — hover doesn't work on mobile. -->
+			<div class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400">
+				<button type="button" onclick={() => showTrustInfo = !showTrustInfo}>
 					<QuestionCircleSolid class="ml-1 h-full" />
 					<span class="sr-only">{texts.ui.explainThis}</span>
 				</button>
 			</div>
 		</Label>
+		{#if showTrustInfo}
+			<div class="rounded-lg border border-tinte-200 bg-sand p-3 text-sm text-tinte-500 space-y-1">
+				<p class="font-semibold text-tinte-900">Vertrauensfunktion</p>
+				<p>Wenn du diese Option aktivierst, ist der Gegenstand nur für deine vertrauten Kontakte sichtbar.</p>
+				<a href={resolve('/social')} class="text-accent hover:underline flex items-center font-medium">
+					Vertraute hinzufügen<ChevronRightOutline class="text-accent ms-1.5 h-4 w-4" />
+				</a>
+			</div>
+		{/if}
 
 		{#if type === 'edit'}
 			<Label class="flex">
@@ -224,15 +233,20 @@
 					bind:checked={isAvailable}
 					>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle
 				>
-				<div
-					class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400"
-				>
-					<button id="b4">
+				<!-- Same click-toggle pattern as trust info above. -->
+				<div class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400">
+					<button type="button" onclick={() => showAvailabilityInfo = !showAvailabilityInfo}>
 						<QuestionCircleSolid class="ml-1 h-full" />
 						<span class="sr-only">{texts.ui.explainThis}</span>
 					</button>
 				</div>
 			</Label>
+			{#if showAvailabilityInfo}
+				<div class="rounded-lg border border-tinte-200 bg-sand p-3 text-sm text-tinte-500 space-y-1">
+					<p class="font-semibold text-tinte-900">{texts.ui.availabilityTitle}</p>
+					<p>{texts.ui.availabilityExplain}</p>
+				</div>
+			{/if}
 		{/if}
 
 		<!-- SUBMIT BUTTON -->
@@ -263,25 +277,4 @@
 			>
 		</form>
 	{/if}
-	<Popover
-		triggeredBy="#b4"
-		class="w-72 bg-papier text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
-		placement="top-start"
-	>
-		<div class="space-y-2 p-3">
-			<h3 class="font-semibold text-tinte-900 dark:text-white">
-				Vertrauensfunktion
-			</h3>
-			Wenn du diese Option aktivierst, ist der Gegenstand nur für deine vertrauten
-			Kontakte sichtbar.
-			<a
-				href={resolve('/social')}
-				class="text-accent hover:underline flex items-center font-medium"
-			>
-				Vertraute hinzufügen<ChevronRightOutline
-					class="text-accent dark:text-primary-500 ms-1.5 h-4 w-4"
-				/>
-			</a>
-		</div>
-	</Popover>
 </Modal>

@@ -3,6 +3,7 @@
 	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
+	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
 	import { getClientPB } from '$lib/client-pb';
 	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
@@ -135,6 +136,7 @@
 		onNotificationGranted={setupPushSubscription}
 		{installPromptEvent}
 	/>
+	<OnboardingPrompt show={!!data.currentUser && !data.currentUser.hasOnboarded} />
 
 	{#if page.url.pathname !== '/onboarding'}
 		<FooterComponent />

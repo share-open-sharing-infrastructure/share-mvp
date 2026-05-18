@@ -1,21 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import InviteShareButton from '$lib/components/InviteShareButton.svelte';
 
 	interface Props {
 		inviteUrl: string;
+		username: string;
 	}
 
-	let { inviteUrl }: Props = $props();
-
-	let inviteCopied = $state(false);
-
-	function copyInviteLink() {
-		navigator.clipboard.writeText(inviteUrl).then(() => {
-			inviteCopied = true;
-			setTimeout(() => (inviteCopied = false), 2000);
-		});
-	}
+	let { inviteUrl, username }: Props = $props();
 </script>
 
 <div class="text-center space-y-2 mb-8">
@@ -38,12 +31,7 @@
 		<span>{texts.onboarding.done.uploadCta}</span>
 	</a>
 
-	<button
-		type="button"
-		onclick={copyInviteLink}
-		class="min-button bg-secondary-200 py-2 px-6 hover:bg-secondary flex items-center justify-center gap-2 cursor-pointer"
-	>
-		<span>🤝</span>
-		<span>{inviteCopied ? 'Link kopiert!' : texts.onboarding.done.inviteCta}</span>
-	</button>
+	<div class="flex justify-center">
+		<InviteShareButton {inviteUrl} {username} />
+	</div>
 </div>

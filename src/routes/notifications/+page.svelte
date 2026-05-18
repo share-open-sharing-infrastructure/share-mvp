@@ -4,11 +4,26 @@
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { enhance } from '$app/forms';
 	import { BellOutline, EnvelopeOutline, UserAddOutline } from 'flowbite-svelte-icons';
+	import type { Notification } from '$lib/types/models';
 	let { data } = $props();
 
-	function notificationHref(n: { type: string; relatedId: string }): string {
-		if (n.type === 'new_message' || n.type === 'new_request') return resolve(`/conversations/${n.relatedId}`);
-		if (n.type === 'trust_added' || n.type === 'invite_accepted') return resolve(`/users/${n.relatedId}`);
+	const conversationNotificationTypes = new Set([
+		'new_message',
+		'new_request',
+		'request_accepted',
+		'request_rejected',
+		'handover_confirmed',
+		'return_requested',
+		'return_confirmed',
+	]);
+
+	function notificationHref(n: Notification): string {
+		if (conversationNotificationTypes.has(n.type)) {
+			return resolve(`/conversations/${n.relatedId}`);
+		}
+		if (n.type === 'trust_added' || n.type === 'invite_accepted') {
+			return resolve(`/users/${n.relatedId}`);
+		}
 		return resolve('/notifications');
 	}
 </script>
@@ -46,7 +61,7 @@
 						}}
 					>
 						<div class="mt-0.5 shrink-0 text-accent">
-							{#if notification.type === 'new_message' || notification.type === 'new_request'}
+							{#if conversationNotificationTypes.has(notification.type)}
 								<EnvelopeOutline class="h-5 w-5" />
 							{:else if notification.type === 'trust_added' || notification.type === 'invite_accepted'}
 								<UserAddOutline class="h-5 w-5" />

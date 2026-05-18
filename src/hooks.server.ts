@@ -17,6 +17,7 @@ const unprotectedPrefix = [
 	'/invite',
 	'/sitemap.xml',
 	'/api/redirect',
+	'/api/diagnostics',
 ];
 
 export const authentication: Handle = async ({ event, resolve }) => {

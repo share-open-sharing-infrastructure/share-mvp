@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
-	import { MapPinOutline, TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
+	import { TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
 	import { Tooltip } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';

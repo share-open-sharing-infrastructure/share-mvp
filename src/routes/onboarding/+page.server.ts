@@ -18,6 +18,7 @@ export async function load({ locals, url }) {
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl: `${url.origin}/invite/${inviteCode}`,
+		username: locals.user.username as string,
 		users,
 		trustIds: (locals.user.trusts as string[]) ?? [],
 	};
@@ -103,6 +104,19 @@ export const actions = {
 			}
 		}
 		return { success: true };
+	},
+
+	removeTrustee: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const toRemoveTrusteeId = formData.get('trusteeId');
+		try {
+			const updatedTrusts = (locals.user.trusts || []).filter(
+				(id: string) => id !== toRemoveTrusteeId
+			);
+			await locals.pb.collection('users').update(locals.user.id, { trusts: updatedTrusts });
+		} catch (error: Error | any) {
+			console.error(error?.message ?? error);
+		}
 	},
 
 	complete: async ({ locals, request }) => {

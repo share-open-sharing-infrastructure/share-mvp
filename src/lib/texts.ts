@@ -30,6 +30,7 @@ export const texts = {
 		loginButton: 'Anmelden',
 		registerLink: 'Registrieren',
 		privacyConsentLabel: 'Ich habe die Datenschutzerklärung gelesen und stimme ihr zu.',
+		newsletterOptOut: 'Ich möchte den AllerLeih Newsletter erhalten (maximal 1x pro Monat, kein Spam).',
 	},
 
 	// Navigation
@@ -98,6 +99,22 @@ export const texts = {
 		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
 	},
 
+	// Feedback form
+	feedback: {
+		likesLabel: (page: string) => `Was gefällt dir an der Seite "${page}?"`,
+		likesPlaceholder: 'Was funktioniert gut, was magst du?',
+		improvementsLabel: (page: string) => `Was könnte besser sein an der Seite "${page}?"`,
+		improvementsPlaceholder: 'Was nervt dich, was fehlt dir?',
+		severityLabel: 'Wie schwerwiegend ist dein Feedback?',
+		severityKleinigkeit: 'Kleinigkeit',
+		severityNervt: 'Nervt schon',
+		severityBlocker: 'Entscheidend',
+		voiceMemoHint: 'Lieber sprechen?',
+		voiceMemoLink: 'Schick uns eine Sprachnachricht auf Telegram',
+		validationError: 'Bitte fülle mindestens eines der Textfelder aus.',
+		intro: 'Vielen Dank für dein Feedback! Alle Felder sind optional – fülle aus, was für dich passt.',
+	},
+
 	// Messenger contact
 	messenger: {
 		telegram: 'Telegram',
@@ -128,7 +145,7 @@ export const texts = {
 		username: 'Nutzername',
 		location: 'Standort/Postleitzahl',
 		itemName: 'Name des Gegenstands',
-		itemDescription: 'Beschreibe den Gegenstand, z.B. Zustand, Marke, Größe oder was sonst noch wichtig sein könnte.',
+		itemDescription: 'Beschreibe den Gegenstand, z.B. Zustand, Marke, Größe oder was dir beim Verleihen wichtig ist. ',
 		itemPlace: 'Ort des Gegenstands',
 		searchPlaceholder: 'Suche Dinge...',
 		messagePlaceholder: 'Tippe deine Nachricht...',
@@ -188,6 +205,9 @@ export const texts = {
 		trustDescription:
 			'Du siehst diesen Gegenstand nur, weil deren Besitzer:in dir vertraut. Füge auch Du Kontakte hinzu, um liebgewonnene Dinge nur mit Vertrauten zu teilen.',
 		trustLink: 'Vertrauensfunktion',
+		availabilityTitle: 'Verfügbarkeitsstatus',
+		availabilityExplain:
+			'Wenn du den Gegenstand gerade nicht verleihen möchtest, setze ihn auf „Nicht verfügbar".',
 		trustedPeople: 'Vertrauensnetzwerk',
 		trustedByPeople: 'Personen, die dir vertrauen',
 		noOneTrustsYet: 'Noch vertraut dir niemand.',
@@ -408,6 +428,7 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			completeOnboarding: 'Onboarding fertigstellen',
 			emailVerified: 'E-Mail-Adresse bestätigt',
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
 			resendVerification: 'Bestätigungs-E-Mail erneut senden',
@@ -435,6 +456,10 @@ export const texts = {
 			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir automatisch vertrauen. Du wirst benachrichtigt, wenn jemand sich mit deiner Einladung registriert hat.',
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
+			shareText: (username: string) =>
+				`${username} lädt dich ein, auf AllerLeih Dinge mit ihm/ihr zu teilen. Folge dem Einladungslink: `,
+			shareButton: 'Weitere Menschen einladen!',
+			linkCopied: 'Link und Text kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
 			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
 			invalidInvite: 'Dieser Einladungslink ist ungültig.',
@@ -513,10 +538,9 @@ export const texts = {
 	// Onboarding
 	onboarding: {
 		welcome: {
-			title: 'Willkommen bei AllerLeih!',
-			subtitle:
-				'Die Plattform zum Teilen und Ausleihen von Dingen – mit Freund:innen, deiner Nachbarschaft oder neuen Bekannten in deiner Umgebung.',
-			ethos: 'Gemeinwohlorientiert und open-source.',
+			title: 'Willkommen bei',
+			body: 'Auf AllerLeih kannst du Dinge aus deiner Umgebung leihen und verleihen. Du hast jetzt die Möglichkeit, ein paar Einstellungen festzulegen, oder dich erstmal umzuschauen.',
+			findSettings: 'Die Einstellungen kannst du jederzeit wieder über dein Profil festlegen.',
 		},
 		howItWorks: {
 			title: "So funktioniert's",
@@ -557,6 +581,7 @@ export const texts = {
 			searchPlaceholder: 'Nutzername suchen...',
 			noResults: 'Keine Personen gefunden.',
 			noTrusteesYet: 'Noch niemanden hinzugefügt.',
+			remove: 'Entfernen',
 		},
 		browserLocation: {
 			title: 'Standort freigeben?',
@@ -568,7 +593,7 @@ export const texts = {
 		pushNotifications: {
 			title: 'Benachrichtigungen aktivieren?',
 			explanation:
-				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
+				'Erhalte eine Benachrichtigung, wenn Menschen deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
 			allow: 'Benachrichtigungen aktivieren',
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Bitte stelle sicher, dass du Benachrichtigungen in deinem Browser oder Betriebssystem aktiviert hast, um diese Funktion zu nutzen.',
 		},
@@ -588,6 +613,8 @@ export const texts = {
 			next: 'Weiter',
 			skip: 'Überspringen',
 			finish: "Los geht's!",
+			configure: 'Kurzes Onboarding: 1-2 Minuten, um die wichtigsten Einstellungen festzulegen',
+			exploreFirst: 'Direkt losstöbern, Dinge einstellen oder Freunde einladen.',
 		},
 	},
 
@@ -602,6 +629,57 @@ export const texts = {
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
 		pushTitle: 'AllerLeih',
 		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
+		requestAccepted: (item: string) => `Deine Anfrage für „${item}" wurde angenommen`,
+		requestRejected: (item: string) => `Deine Anfrage für „${item}" wurde abgelehnt`,
+		handoverConfirmed: (item: string) => `Übergabe von „${item}" wurde bestätigt`,
+		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
+		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
+	},
+
+	// Lending process
+	lending: {
+		statusLabel: {
+			pending: 'Angefragt',
+			accepted: 'Angenommen',
+			rejected: 'Abgelehnt',
+			active: 'Unterwegs',
+			return_requested: 'Rückgabe gemeldet',
+			completed: 'Abgeschlossen',
+		},
+		actions: {
+			accept: 'Annehmen',
+			reject: 'Ablehnen',
+			confirmHandover: 'Übergabe bestätigen',
+			requestReturn: 'Rückgabe melden',
+			confirmReturn: 'Rückgabe bestätigen',
+		},
+		statusDescription: {
+			pending: {
+				owner: 'Jemand möchte diesen Gegenstand ausleihen. Nimm die Anfrage an oder lehne sie ab.',
+				requester: (owner: string) => `Deine Anfrage wurde an ${owner} gesendet. \
+				Schicke gegebenenfalls schon eine Nachricht mit Details .`,
+			},
+			accepted: {
+				owner: 'Du hast die Anfrage angenommen. Bestätige die Übergabe, wenn du den Gegenstand übergeben hast.',
+				requester: 'Deine Anfrage wurde angenommen. Macht die Details in der Unterhaltung aus.',
+			},
+			active: {
+				owner: 'Der Gegenstand ist unterwegs. Du kannst die Rückgabe direkt bestätigen oder warten, bis der Ausleiher sie meldet.',
+				requester: 'Du hast den Gegenstand. Melde die Rückgabe, wenn du ihn zurückgegeben hast.',
+			},
+			return_requested: {
+				owner: 'Rückgabe wurde gemeldet. Bestätige, dass du den Gegenstand zurückerhalten hast.',
+				requester: 'Du hast die Rückgabe gemeldet. Warte auf die Bestätigung.',
+			},
+			completed: 'Die Ausleihe ist abgeschlossen.',
+			rejected: 'Diese Anfrage wurde abgelehnt.',
+		},
+		goToConversation: 'Zur laufenden Anfrage →',
+		errors: {
+			notFound: 'Anfrage nicht gefunden.',
+			noPermission: 'Keine Berechtigung für diese Aktion.',
+			invalidState: 'Diese Aktion ist im aktuellen Status nicht möglich.',
+		},
 	},
 
 	// SEO meta titles and descriptions
@@ -655,6 +733,13 @@ export const texts = {
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
+	},
+
+	// Onboarding nudge banner
+	onboardingPrompt: {
+		text: 'Du hast dein Onboarding noch nicht abgeschlossen. Nimm dir 1–2 Minuten!',
+		cta: 'Jetzt starten',
+		dismiss: 'Später',
 	},
 
 	// PWA install and notification prompts
