@@ -51,10 +51,12 @@
 		if (data.currentUser && 'Notification' in window && Notification.permission === 'granted') {
 			setupPushSubscription();
 		}
-	});
 
-	// Re-subscribes when the authenticated user changes (login/logout/switch).
-	$effect(() => {
+		// Set up once at mount rather than in $effect — $effect's cleanup/re-run cycle
+		// tears down and re-creates the subscription on every invalidateAll(), which
+		// causes PocketBase to auto-cancel concurrent getList requests.
+		// Login/logout are full-page navigations in SvelteKit, so remounting handles
+		// user changes correctly without needing $effect reactivity here.
 		const userId = data.currentUser?.id;
 		if (!userId) return;
 
