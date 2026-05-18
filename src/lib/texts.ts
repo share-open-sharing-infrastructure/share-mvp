@@ -30,6 +30,7 @@ export const texts = {
 		loginButton: 'Anmelden',
 		registerLink: 'Registrieren',
 		privacyConsentLabel: 'Ich habe die Datenschutzerklärung gelesen und stimme ihr zu.',
+		newsletterOptOut: 'Ich möchte den AllerLeih Newsletter erhalten (maximal 1x pro Monat, kein Spam).',
 	},
 
 	// Navigation
