@@ -203,7 +203,7 @@
 		<Label class="flex">
 			<Toggle
 				name="trusteesOnly"
-				spanClass="bg-primary-300 peer-checked:bg-safety"
+				classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
 				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
 				>{texts.ui.trustedOnly}</Toggle
 			>
@@ -228,7 +228,7 @@
 		{#if type === 'edit'}
 			<Label class="flex">
 				<Toggle
-					spanClass="bg-primary-300 peer-checked:bg-safety"
+					classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
 					name="isAvailable"
 					bind:checked={isAvailable}
 					>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle

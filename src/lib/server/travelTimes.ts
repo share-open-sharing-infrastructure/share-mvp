@@ -9,6 +9,10 @@ const ORS_PROFILE: Record<TransportMode, string> = {
 	car: 'driving-car',
 };
 
+const ORS_TIMEOUT_MS = 8_000;
+// Log a warning when ORS takes longer than this — indicates degraded performance before a full timeout
+const ORS_SLOW_THRESHOLD_MS = 5_000;
+
 function isNullIsland(geo: { lon: number; lat: number } | undefined | null) {
 	return !geo || (geo.lon === 0 && geo.lat === 0);
 }
@@ -27,7 +31,7 @@ export function extractOwnerLocations(items: Item[]): OwnerLocation[] {
 	return Array.from(seen.values());
 }
 
-/** Calls the ORS matrix API and returns raw travel durations in seconds, one per owner. 
+/** Calls the ORS matrix API and returns raw travel durations in seconds, one per owner.
  * We have 500 requests per day on our free plan, use them wisely!
 */
 async function fetchDurationsFromOrs(
@@ -40,27 +44,61 @@ async function fetchDurationsFromOrs(
 		...owners.map((o) => [o.lon, o.lat]),
 	];
 
-	const response = await fetch(
-		`https://api.openrouteservice.org/v2/matrix/${ORS_PROFILE[transportMode]}`,
-		{
-			method: 'POST',
-			headers: {
-				Accept: 'application/json',
-				Authorization: ORS_API_KEY ?? '',
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				locations,
-				sources: [0],
-				destinations: owners.map((_, i) => i + 1),
-				metrics: ['duration'],
-			}),
-		}
-	);
+	const requestStart = Date.now();
+	let response: Response;
+	try {
+		response = await fetch(
+			`https://api.openrouteservice.org/v2/matrix/${ORS_PROFILE[transportMode]}`,
+			{
+				signal: AbortSignal.timeout(ORS_TIMEOUT_MS),
+				method: 'POST',
+				headers: {
+					Accept: 'application/json',
+					Authorization: ORS_API_KEY ?? '',
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					locations,
+					sources: [0],
+					destinations: owners.map((_, i) => i + 1),
+					metrics: ['duration'],
+				}),
+			}
+		);
+	} catch (err) {
+		// Covers both network failures and AbortSignal timeout (TimeoutError)
+		console.error('[TRAVEL_DIAG]', JSON.stringify({
+			event: 'ors_error',
+			transport_mode: transportMode,
+			owner_count: owners.length,
+			duration_ms: Date.now() - requestStart,
+			error: err instanceof Error ? err.message : String(err),
+		}));
+		return [];
+	}
+
+	const durationMs = Date.now() - requestStart;
 
 	if (!response.ok) {
-		console.error('ORS API error:', response.status, await response.text());
+		const responseBody = await response.text().catch(() => '');
+		console.error('[TRAVEL_DIAG]', JSON.stringify({
+			event: 'ors_error',
+			transport_mode: transportMode,
+			owner_count: owners.length,
+			duration_ms: durationMs,
+			status: response.status,
+			body: responseBody.slice(0, 200),
+		}));
 		return [];
+	}
+
+	if (durationMs > ORS_SLOW_THRESHOLD_MS) {
+		console.warn('[TRAVEL_DIAG]', JSON.stringify({
+			event: 'ors_slow',
+			transport_mode: transportMode,
+			owner_count: owners.length,
+			duration_ms: durationMs,
+		}));
 	}
 
 	const data = await response.json();

@@ -72,10 +72,7 @@
 		/>
 		<div class="flex flex-col min-w-0">
 			<span class="text-sm font-semibold truncate">{conversation.requestedItem.name}</span>
-			<!-- Location: hidden on mobile -->
-			<span class="hidden md:flex items-center gap-0.5 text-xs text-tinte-500 dark:text-tinte-400 truncate">
-				<MapPinOutline class="w-3 h-3 shrink-0" />{conversation.requestedItem.place}
-			</span>
+
 			<!-- Status badge: hidden on mobile -->
 			<div class="hidden md:block">
 				{#if loggedInUserIsItemOwner}
@@ -117,7 +114,7 @@
 				<!-- Telegram -->
 				{#if telegramAvailable}
 					<button
-						onclick={() => window.open(telegramLink!, '_blank', 'noopener,noreferrer')}
+						onclick={() => window.open(`/api/redirect?to=${encodeURIComponent(telegramLink!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer')}
 						class="w-7 h-7 rounded-full bg-[#2CA5E0] hover:bg-[#229ED9] flex items-center justify-center transition-colors shrink-0"
 						aria-label={texts.messenger.contactViaTelegram}
 					>
@@ -142,7 +139,7 @@
 				<!-- Signal -->
 				{#if signalAvailable}
 					<button
-						onclick={() => window.open(signalLink!, '_blank', 'noopener,noreferrer')}
+						onclick={() => window.open(`/api/redirect?to=${encodeURIComponent(signalLink!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer')}
 						class="w-7 h-7 rounded-full bg-[#2C6BED] hover:bg-[#2460D4] flex items-center justify-center transition-colors shrink-0"
 						aria-label={texts.messenger.contactViaSignal}
 					>

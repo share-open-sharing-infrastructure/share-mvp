@@ -6,6 +6,8 @@ export const actions = {
 		const formData = await request.formData();
 
 		const feedbackMessage = formData.get('feedbackMessage');
+		const feedbackLikes = formData.get('feedbackLikes');
+		const feedbackSeverity = formData.get('feedbackSeverity');
 		const device = formData.get('device');
 		const viewportSize = formData.get('viewportSize');
 		const inputType = formData.get('inputType');
@@ -16,6 +18,8 @@ export const actions = {
 
 		const feedbackData = {
 			feedbackMessage,
+			feedbackLikes,
+			feedbackSeverity,
 			route,
 			device,
 			viewportSize,

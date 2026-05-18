@@ -7,12 +7,15 @@
 	import { texts } from '$lib/texts';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	interface Props {
 		item: Item;
 		imgUrl: string;
+		/** Owner profile image URL — used as a low-opacity placeholder when the item has no image */
+		ownerImgUrl?: string;
 		profileView?: boolean;
 		/** Travel time in minutes. undefined = not yet fetched, null = owner has no location */
 		travelMinutes?: number | null;
@@ -22,6 +25,7 @@
 	let {
 		item,
 		imgUrl,
+		ownerImgUrl,
 		profileView = false,
 		travelMinutes,
 		transportMode = 'bicycle',
@@ -31,16 +35,31 @@
 	const isTrusted = $derived(
 		!!currentUserId && !!item.expand?.owner?.trusts?.includes(currentUserId)
 	);
+	const isInstitution = $derived(!!item.expand?.owner?.isInstitution);
+	const hasRealImage = $derived(!!imgUrl);
+	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
 </script>
 
 <Card
 	href="/items/{item.id}"
-	img={imgUrl}
+	img={hasRealImage ? imgUrl : undefined}
 	class="flex-row relative"
 	classes={{ image: 'w-24 max-h-36 max-w-36 object-cover shrink-0 rounded-s-lg rounded-tr-none rounded-br-none' }}
 	horizontal
 	size="xl"
 >
+	{#if !hasRealImage}
+		<!-- Placeholder sits in the same flex position as <img> would — no img prop means no Card img element.
+		     w-24 md:w-48 max-w-36 mirrors the theme's md:w-48 + our max-w-36 on the real <img>. -->
+		<div class="w-24 md:w-48 max-w-36 shrink-0 self-stretch rounded-s-lg rounded-tr-none rounded-br-none bg-gray-100 flex items-center justify-center overflow-hidden">
+			{#if categoryPlaceholder}
+				<img src={categoryPlaceholder} alt="" class="w-full h-full object-contain p-3 opacity-30" />
+			{:else}
+				<span class="text-[10px] text-gray-400 text-center px-1 leading-tight">{texts.institutional.imagePlaceholder}</span>
+			{/if}
+		</div>
+	{/if}
+
 	{#if !profileView}
 		<!-- Owner pill: overlaid on image top-left -->
 		<button
@@ -54,7 +73,11 @@
 				? 'bg-green-50/90 text-green-800 border-green-300 hover:bg-green-100/90'
 				: 'bg-white/90 text-tinte-700 border-tinte-300 hover:bg-tinte-50/90'}"
 		>
-			<UserCircleOutline class="h-6 w-6 inline" />
+			{#if isInstitution}
+				<HomeOutline class="h-6 w-6 inline" />
+			{:else}
+				<UserCircleOutline class="h-6 w-6 inline" />
+			{/if}
 			<span class="font-medium text-xs">{item.expand?.owner?.username ?? 'Unknown'}</span>
 			<div class="absolute top-0 -left-2.5 flex flex-col gap-0.1 items-center">
 				{#if item.expand?.owner?.verified}
@@ -68,8 +91,6 @@
 	{/if}
 
 	<div class="m-6 grow min-w-0">
-		
-
 		<h5
 			class="mb-2 text-lg font-bold tracking-tight line-clamp-1 text-tinte-900 dark:text-white"
 		>

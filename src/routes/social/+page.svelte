@@ -14,6 +14,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import InviteShareButton from '$lib/components/InviteShareButton.svelte';
 
 	const { data } = $props();
 
@@ -72,6 +73,7 @@
 <svelte:head>
 	<meta name="robots" content="noindex, nofollow" />
 </svelte:head>
+
 
 <!-- HEADER -->
 <div class="pb-4 px-4 mx-auto max-w-7xl">
@@ -157,6 +159,27 @@
 	</div>
 </div>
 
+<!-- INVITE SECTION -->
+<div class="max-w-2xl mx-auto px-4 pt-6 pb-4">
+	<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8">
+		<h2 class="text-lg font-semibold text-tinte-900 dark:text-white mb-2">
+			{texts.pages.invite.sectionTitle}
+		</h2>
+		<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-4">
+			{texts.pages.invite.description}
+		</p>
+		<div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+			<input
+				type="text"
+				readonly
+				value={data.inviteUrl}
+				class="flex-1 px-3 py-2 bg-tinte-100 border border-tinte-200 rounded-lg text-sm text-tinte-600 cursor-default dark:bg-tinte-700 dark:border-tinte-600 dark:text-tinte-400 truncate"
+			/>
+			<InviteShareButton inviteUrl={data.inviteUrl} username={data.username} />
+		</div>
+	</div>
+</div>
+
 {#snippet sortIcon(col: SortCol)}
 	{#if sortCol !== col}
 		<ArrowUpDownOutline class="shrink-0 h-3 w-3" />
@@ -197,7 +220,7 @@
 				<th class="bg-transparent! px-3 py-2" colspan={4}>
 					<input
 						type="search"
-						placeholder="Netzwerk durchsuchen..."
+						placeholder="Bestehendes Netzwerk durchsuchen..."
 						class="search-bar w-full text-sm font-normal"
 						bind:value={tableSearch}
 						oninput={() => (currentPage = 0)}

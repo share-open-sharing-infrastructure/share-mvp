@@ -30,6 +30,7 @@ export const texts = {
 		loginButton: 'Anmelden',
 		registerLink: 'Registrieren',
 		privacyConsentLabel: 'Ich habe die Datenschutzerklärung gelesen und stimme ihr zu.',
+		newsletterOptOut: 'Ich möchte den AllerLeih Newsletter erhalten (maximal 1x pro Monat, kein Spam).',
 	},
 
 	// Navigation
@@ -82,6 +83,8 @@ export const texts = {
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
+		itemNotFound: 'Gegenstand nicht gefunden.',
+		noPermission: 'Keine Berechtigung.',
 	},
 
 	// Success messages
@@ -94,6 +97,22 @@ export const texts = {
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
 		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
 		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
+	},
+
+	// Feedback form
+	feedback: {
+		likesLabel: (page: string) => `Was gefällt dir an der Seite "${page}?"`,
+		likesPlaceholder: 'Was funktioniert gut, was magst du?',
+		improvementsLabel: (page: string) => `Was könnte besser sein an der Seite "${page}?"`,
+		improvementsPlaceholder: 'Was nervt dich, was fehlt dir?',
+		severityLabel: 'Wie schwerwiegend ist dein Feedback?',
+		severityKleinigkeit: 'Kleinigkeit',
+		severityNervt: 'Nervt schon',
+		severityBlocker: 'Entscheidend',
+		voiceMemoHint: 'Lieber sprechen?',
+		voiceMemoLink: 'Schick uns eine Sprachnachricht auf Telegram',
+		validationError: 'Bitte fülle mindestens eines der Textfelder aus.',
+		intro: 'Vielen Dank für dein Feedback! Alle Felder sind optional – fülle aus, was für dich passt.',
 	},
 
 	// Messenger contact
@@ -209,6 +228,7 @@ export const texts = {
 	itemStatus: {
 		available: 'Verfügbar',
 		unavailable: 'Nicht verfügbar',
+		unknown: 'Verfügbarkeit unbekannt',
 		markAvailable: 'auf "Verfügbar" setzen',
 		markUnavailable: 'auf "Nicht verfügbar" setzen',
 	},
@@ -355,7 +375,8 @@ export const texts = {
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
-			randomItemsHeading: 'Entdecke Gegenstände',
+			randomItemsHeading: 'Entdecke zufällige Gegenstände',
+			onlyAvailable: 'Nur verfügbare Dinge zeigen',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -389,13 +410,29 @@ export const texts = {
 			countNone: 'Du verleihst noch keine Ding(e)...',
 			addSingle: 'Dinge einzeln hochladen',
 			addBulk: 'Mit KI-Bilderkennung hochladen',
+			search: 'Suchen...',
+			filterAll: 'Alle',
+			filterAvailable: 'Verfügbar',
+			filterUnavailable: 'Nicht verfügbar',
+			selected: (n: number) => `${n} ausgewählt`,
+			setAvailable: 'Verfügbar setzen',
+			setUnavailable: 'Nicht verfügbar setzen',
+			deselectAll: 'Alle abwählen',
+			selectAll: 'Alle auf dieser Seite',
 		},
 		profile: {
 			title: 'Mein Profil',
+			completeOnboarding: 'Onboarding fertigstellen',
 			emailVerified: 'E-Mail-Adresse bestätigt',
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
 			resendVerification: 'Bestätigungs-E-Mail erneut senden',
 			verificationSent: 'Bestätigungs-E-Mail wurde gesendet.',
+			bioLabel: 'Über mich',
+			bioLabelInstitution: 'Über uns',
+			bioPlaceholder: 'Stelle dich kurz vor...',
+			profileImageLabel: 'Profilbild',
+			deleteProfileImage: 'Foto löschen',
+			cannotUpdate: 'Daten konnten nicht aktualisiert werden. Bitte überprüfe deine Eingaben.',
 			notifications: {
 				sectionTitle: 'Benachrichtigungen',
 				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
@@ -411,6 +448,10 @@ export const texts = {
 			description: 'Teile diesen Link, um Freunde einzuladen. Alle, die sich darüber registrieren, werden dir automatisch vertrauen. Du wirst benachrichtigt, wenn jemand sich mit deiner Einladung registriert hat.',
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
+			shareText: (username: string) =>
+				`${username} lädt dich ein, auf AllerLeih Dinge mit ihm/ihr zu teilen. Folge dem Einladungslink: `,
+			shareButton: 'Weitere Menschen einladen!',
+			linkCopied: 'Link und Text kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
 			noInvite: 'Du benötigst einen Einladungslink, um dich zu registrieren.',
 			invalidInvite: 'Dieser Einladungslink ist ungültig.',
@@ -428,6 +469,11 @@ export const texts = {
 			locationLabel: 'Ort',
 			noImage: 'Kein Bild vorhanden',
 			calculateTravelTime: 'Wegzeit berechnen',
+			unknownRequester: 'Jemand',
+			unknownItem: 'einem Gegenstand',
+			ownerCardTitle: 'Verliehen von',
+			institutionCardTitle: 'Angeboten von',
+			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
@@ -440,7 +486,17 @@ export const texts = {
 			trustedItems: 'Nur für Vertraute',
 			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
 			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
-			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen. Du kannst auch nur eine ungefähre Adresse angeben oder das Feld leer lassen. Je genauer du die Adresse angibst, desto genauer können die Reisezeiten berechnet werden.',
+			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
+			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
+			itemsSectionTitle: 'Gegenstände',
+			allCategories: 'Alle',
+			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',
+			noItemsInCategory: 'Keine Gegenstände in dieser Kategorie.',
+			lockedCard: 'Nur für Vertraute',
+			moreLockedItems: (n: number) => `+${n} weitere Artikel`,
+			lockedTooltipTitle: 'Nur für Vertraute sichtbar',
+			lockedTooltipBody: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Vertraue ihr über den Schalter oben auf dieser Seite – vielleicht vertraut sie dir dann auch!',
+			lockedTooltipBodyGuest: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Melde dich an und vertraue dieser Person, um Zugang zu erhalten.',
 		},
 	},
 
@@ -474,24 +530,25 @@ export const texts = {
 	// Onboarding
 	onboarding: {
 		welcome: {
-			title: 'Willkommen bei AllerLeih!',
-			subtitle:
-				'Die Plattform zum Teilen und Ausleihen von Dingen – mit Freund:innen, deiner Nachbarschaft oder neuen Bekannten in deiner Umgebung.',
-			ethos: 'Gemeinwohlorientiert und open-source.',
+			title: 'Willkommen bei',
+			body: 'Auf AllerLeih kannst du Dinge aus deiner Umgebung leihen und verleihen. Du hast jetzt die Möglichkeit, ein paar Einstellungen festzulegen, oder dich erstmal umzuschauen.',
+			findSettings: 'Die Einstellungen kannst du jederzeit wieder über dein Profil festlegen.',
 		},
 		howItWorks: {
 			title: "So funktioniert's",
 			search: 'Stöbere in Gegenständen aus deiner Umgebung und frage direkt an, was du brauchst.',
-			share: 'Stelle Gegenstände ein, die du verleihen möchtest – von der Bohrmaschine bis zum Buch.',
+			share: 'Stelle Gegenstände ein, die du verleihen magst – von der Bohrmaschine bis zum Buch.',
 			trust:
 				'Baue ein Vertrauensnetzwerk auf und teile bestimmte Dinge nur mit ausgewählten Personen.',
 			contact:
-				'Kontaktiere andere direkt über Telegram oder Signal – ohne deine Telefonnummer zu teilen.',
+				'Kontaktiere andere direkt über AllerLeih, Telegram oder Signal – ohne deine Telefonnummer zu teilen.',
 		},
 		location: {
-			title: 'Wo bist du?',
+			title: 'Wo verleihst du?',
 			explanation:
-				'AllerLeih nutzt deine Adresse, um dir und anderen die Reisezeit zueinander anzuzeigen. Deine Adresse wird nicht öffentlich angezeigt. Du kannst auch nur einen ungefähren Ort angeben oder das Feld überspringen.',
+				'AllerLeih nutzt diesen Standort, um anderen Nutzer:innen die ungefähre Wegzeit zum Ausleihen anzuzeigen. Wir geben diese Adresse nicht nach außen.',
+			hint:
+				'Du kannst auch nur eine ungefähre Adresse (z.B. nur Straßennamen oder eine Straße um die Ecke) angeben oder das Feld leer lassen.',
 		},
 		contact: {
 			title: 'Wie kann man dich erreichen?',
@@ -509,6 +566,7 @@ export const texts = {
 			searchPlaceholder: 'Nutzername suchen...',
 			noResults: 'Keine Personen gefunden.',
 			noTrusteesYet: 'Noch niemanden hinzugefügt.',
+			remove: 'Entfernen',
 		},
 		browserLocation: {
 			title: 'Standort freigeben?',
@@ -520,7 +578,7 @@ export const texts = {
 		pushNotifications: {
 			title: 'Benachrichtigungen aktivieren?',
 			explanation:
-				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
+				'Erhalte eine Benachrichtigung, wenn Menschen deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
 			allow: 'Benachrichtigungen aktivieren',
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Bitte stelle sicher, dass du Benachrichtigungen in deinem Browser oder Betriebssystem aktiviert hast, um diese Funktion zu nutzen.',
 		},
@@ -535,6 +593,8 @@ export const texts = {
 			next: 'Weiter',
 			skip: 'Überspringen',
 			finish: "Los geht's!",
+			configure: 'Kurzes Onboarding: 1-2 Minuten, um die wichtigsten Einstellungen festzulegen',
+			exploreFirst: 'Direkt losstöbern, Dinge einstellen oder Freunde einladen.',
 		},
 	},
 
@@ -547,12 +607,63 @@ export const texts = {
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
 		pushTitle: 'AllerLeih',
 		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
+		requestAccepted: (item: string) => `Deine Anfrage für „${item}" wurde angenommen`,
+		requestRejected: (item: string) => `Deine Anfrage für „${item}" wurde abgelehnt`,
+		handoverConfirmed: (item: string) => `Übergabe von „${item}" wurde bestätigt`,
+		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
+		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
+	},
+
+	// Lending process
+	lending: {
+		statusLabel: {
+			pending: 'Angefragt',
+			accepted: 'Angenommen',
+			rejected: 'Abgelehnt',
+			active: 'Unterwegs',
+			return_requested: 'Rückgabe gemeldet',
+			completed: 'Abgeschlossen',
+		},
+		actions: {
+			accept: 'Annehmen',
+			reject: 'Ablehnen',
+			confirmHandover: 'Übergabe bestätigen',
+			requestReturn: 'Rückgabe melden',
+			confirmReturn: 'Rückgabe bestätigen',
+		},
+		statusDescription: {
+			pending: {
+				owner: 'Jemand möchte diesen Gegenstand ausleihen. Nimm die Anfrage an oder lehne sie ab.',
+				requester: (owner: string) => `Deine Anfrage wurde an ${owner} gesendet. \
+				Schicke gegebenenfalls schon eine Nachricht mit Details .`,
+			},
+			accepted: {
+				owner: 'Du hast die Anfrage angenommen. Bestätige die Übergabe, wenn du den Gegenstand übergeben hast.',
+				requester: 'Deine Anfrage wurde angenommen. Macht die Details in der Unterhaltung aus.',
+			},
+			active: {
+				owner: 'Der Gegenstand ist unterwegs. Du kannst die Rückgabe direkt bestätigen oder warten, bis der Ausleiher sie meldet.',
+				requester: 'Du hast den Gegenstand. Melde die Rückgabe, wenn du ihn zurückgegeben hast.',
+			},
+			return_requested: {
+				owner: 'Rückgabe wurde gemeldet. Bestätige, dass du den Gegenstand zurückerhalten hast.',
+				requester: 'Du hast die Rückgabe gemeldet. Warte auf die Bestätigung.',
+			},
+			completed: 'Die Ausleihe ist abgeschlossen.',
+			rejected: 'Diese Anfrage wurde abgelehnt.',
+		},
+		goToConversation: 'Zur laufenden Anfrage →',
+		errors: {
+			notFound: 'Anfrage nicht gefunden.',
+			noPermission: 'Keine Berechtigung für diese Aktion.',
+			invalidState: 'Diese Aktion ist im aktuellen Status nicht möglich.',
+		},
 	},
 
 	// SEO meta titles and descriptions
 	seo: {
 		home: {
-			title: 'AllerLeih – Dinge leihen und teilen in deiner Umgebung',
+			title: 'AllerLeih',
 			description:
 				'Kostenlos Gegenstände leihen und teilen mit Menschen in deiner Umgebung. Spare Geld, Platz und Ressourcen und stärke deine Gemeinschaft.',
 		},
@@ -602,6 +713,13 @@ export const texts = {
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
 	},
 
+	// Onboarding nudge banner
+	onboardingPrompt: {
+		text: 'Du hast dein Onboarding noch nicht abgeschlossen. Nimm dir 1–2 Minuten!',
+		cta: 'Jetzt starten',
+		dismiss: 'Später',
+	},
+
 	// PWA install and notification prompts
 	pwa: {
 		notifBannerText: 'Erhalte Benachrichtigungen für neue Nachrichten und Anfragen.',
@@ -619,6 +737,40 @@ export const texts = {
 	alerts: {
 		errorPrefix: 'Error:',
 		successPrefix: 'Success:',
+	},
+
+	// Institutional partner integration
+	institutional: {
+		badge: 'Institution',
+		externalLendCta: (name: string) => `Bei ${name} ausleihen →`,
+		availabilityHintExternal: 'Aktuelle Verfügbarkeit beim Anbieter prüfen.',
+		availabilityHintUnknown: 'Verfügbarkeit unbekannt',
+		archivedBanner: 'Dieses Angebot ist nicht mehr Teil des Bestandes.',
+		imagePlaceholder: 'Foto folgt',
+		importNavLabel: 'Bestand importieren',
+		importTitle: 'Bestand als CSV importieren',
+		importTemplateLink: 'Vorlage herunterladen',
+		importUploadLabel: 'CSV-Datei auswählen',
+		importUploadHint: 'Nur .csv-Dateien, max. 1 MB, max. 5.000 Zeilen.',
+		importXlsxError: 'Bitte als CSV speichern und erneut hochladen.',
+		importFileTooLarge: 'Die Datei ist zu groß (max. 1 MB).',
+		importTooManyRows: 'Zu viele Zeilen (max. 5.000).',
+		importPreviewButton: 'Vorschau laden',
+		importApplyButton: 'Importieren',
+		importBackButton: 'Zurück',
+		importPreviewSummary: (c: { create: number; update: number; archive: number; skip: number }) =>
+			`${c.create} neu · ${c.update} aktualisiert · ${c.archive} archiviert · ${c.skip} übersprungen`,
+		importApplySummary: (c: {
+			created: number;
+			updated: number;
+			archived: number;
+			errors: number;
+		}) =>
+			`${c.created} erstellt · ${c.updated} aktualisiert · ${c.archived} archiviert · ${c.errors} Fehler`,
+		importDoneTitle: 'Import abgeschlossen',
+		importAnotherButton: 'Weiteren Import starten',
+		institutionCardTitle: 'Über die Institution',
+		aboutOwnerTitle: (name: string) => `Über ${name}`,
 	},
 };
 
