@@ -27,6 +27,23 @@ export async function load({ params, locals }) {
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
 	const ownerTrustsViewer = currentUserId ? ownerTrusts.includes(currentUserId) : false;
 
+	// Find an in-progress conversation for this viewer + item so the CTA can link
+	// to it instead of creating a duplicate. We exclude rejected/completed states
+	// (borrower may legitimately re-request) and the empty string (conversations
+	// created before the lending feature was added have no lendingStatus value).
+	let existingConversation: { id: string; lendingStatus: string } | null = null;
+	if (currentUserId && !isOwnItem) {
+		try {
+			const conv = await locals.pb.collection('conversations').getFirstListItem(
+				`requester="${currentUserId}" && requestedItem="${item.id}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				{ sort: '-created', fields: 'id,lendingStatus' }
+			);
+			existingConversation = { id: conv.id, lendingStatus: conv.lendingStatus };
+		} catch {
+			// No matching conversation — leave null
+		}
+	}
+
 	// Total items listed by this owner (all statuses).
 	let ownerItemCount = 0;
 	if (item.expand?.owner?.id) {
@@ -63,6 +80,7 @@ export async function load({ params, locals }) {
 		ownerHasLocation,
 		ownerItemCount,
 		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
+		existingConversation,
 	};
 }
 
@@ -111,11 +129,17 @@ export const actions = {
 		const requesterId = locals.user.id;
 		const itemOwnerId = itemRecord.owner;
 
-		// Check if a conversation already exists between requester and item owner for this item.
+		// Check if a non-rejected/completed conversation already exists for this requester+item.
 		let targetConversationId = '';
-		const existingConversations = await locals.pb.collection('conversations').getFullList({
-			filter: `requester = "${requesterId}" && itemOwner = "${itemOwnerId}" && requestedItem = "${itemId}"`,
-		});
+		let existingConversations;
+		try {
+			existingConversations = await locals.pb.collection('conversations').getFullList({
+				filter: `requester = "${requesterId}" && requestedItem = "${itemId}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				sort: '-created',
+			});
+		} catch {
+			existingConversations = [];
+		}
 
 		if (existingConversations.length > 0) {
 			targetConversationId = existingConversations[0].id;
@@ -126,6 +150,7 @@ export const actions = {
 					requester: requesterId,
 					itemOwner: itemOwnerId,
 					requestedItem: itemId,
+					lendingStatus: 'pending',
 					readByRequester: true,
 					readByOwner: false,
 				});

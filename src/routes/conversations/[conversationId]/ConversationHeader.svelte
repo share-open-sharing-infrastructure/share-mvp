@@ -72,10 +72,7 @@
 		/>
 		<div class="flex flex-col min-w-0">
 			<span class="text-sm font-semibold truncate">{conversation.requestedItem.name}</span>
-			<!-- Location: hidden on mobile -->
-			<span class="hidden md:flex items-center gap-0.5 text-xs text-tinte-500 dark:text-tinte-400 truncate">
-				<MapPinOutline class="w-3 h-3 shrink-0" />{conversation.requestedItem.place}
-			</span>
+
 			<!-- Status badge: hidden on mobile -->
 			<div class="hidden md:block">
 				{#if loggedInUserIsItemOwner}

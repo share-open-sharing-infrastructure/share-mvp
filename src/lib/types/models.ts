@@ -193,11 +193,21 @@ export interface Conversation extends PocketBaseEntity {
 	messages: Message[];
 	readByRequester: boolean;
 	readByOwner: boolean;
+	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
 }
 
 // --- NOTIFICATION ---
 
-export type NotificationType = 'new_message' | 'new_request' | 'trust_added' | 'invite_accepted';
+export type NotificationType =
+	| 'new_message'
+	| 'new_request'
+	| 'trust_added'
+	| 'invite_accepted'
+	| 'request_accepted'
+	| 'request_rejected'
+	| 'handover_confirmed'
+	| 'return_requested'
+	| 'return_confirmed';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
