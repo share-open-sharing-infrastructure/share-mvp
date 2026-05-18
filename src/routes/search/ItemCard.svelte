@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { Card } from 'flowbite-svelte';
-	import { UserCircleOutline, HeartSolid } from 'flowbite-svelte-icons';
+	import { UserCircleOutline, HeartSolid, HomeOutline } from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -14,8 +14,6 @@
 	interface Props {
 		item: Item;
 		imgUrl: string;
-		/** Owner profile image URL — used as a low-opacity placeholder when the item has no image */
-		ownerImgUrl?: string;
 		profileView?: boolean;
 		/** Travel time in minutes. undefined = not yet fetched, null = owner has no location */
 		travelMinutes?: number | null;
@@ -25,7 +23,6 @@
 	let {
 		item,
 		imgUrl,
-		ownerImgUrl,
 		profileView = false,
 		travelMinutes,
 		transportMode = 'bicycle',

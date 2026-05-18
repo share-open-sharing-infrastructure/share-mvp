@@ -66,11 +66,15 @@
 	{:else if item.status === 'unknown'}
 		<!-- Status is shown near the title; nothing actionable to display here -->
 	{:else if isTrustRestricted}
-		<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 cursor-not-allowed">
-			<MessagesOutline class="h-4 w-4 mr-2" />
-			{texts.pages.itemDetail.requestButton}
-		</Button>
-		<Tooltip type="light" placement="top">
+		<!-- Disabled buttons suppress pointer events, so the tooltip must be anchored
+		     to the surrounding span instead of the button itself. -->
+		<span id="anfragen-disabled" class="cursor-not-allowed">
+			<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 pointer-events-none">
+				<MessagesOutline class="h-4 w-4 mr-2" />
+				{texts.pages.itemDetail.requestButton}
+			</Button>
+		</span>
+		<Tooltip triggeredBy="#anfragen-disabled" type="light" placement="top" trigger="click">
 			{texts.pages.itemDetail.trustRestrictedTooltip}
 		</Tooltip>
 	{:else if existingConversation}
