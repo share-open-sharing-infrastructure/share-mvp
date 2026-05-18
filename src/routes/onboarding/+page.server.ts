@@ -72,6 +72,19 @@ export const actions = {
 		await sendPushToUser(locals.pb, newTrusteeId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
 	},
 
+	removeTrustee: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const toRemoveTrusteeId = formData.get('trusteeId');
+		try {
+			const updatedTrusts = (locals.user.trusts || []).filter(
+				(id: string) => id !== toRemoveTrusteeId
+			);
+			await locals.pb.collection('users').update(locals.user.id, { trusts: updatedTrusts });
+		} catch (error: Error | any) {
+			console.error(error?.message ?? error);
+		}
+	},
+
 	complete: async ({ locals, request }) => {
 		const formData = await request.formData();
 

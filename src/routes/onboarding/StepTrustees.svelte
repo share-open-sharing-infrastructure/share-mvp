@@ -92,7 +92,13 @@
 				{#each trustees as trustee (trustee.id)}
 					<li class="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-papier dark:bg-tinte-700/50 text-sm text-tinte-800 dark:text-tinte-200">
 						<span class="text-primary">✓</span>
-						@{trustee.username}
+						<span class="flex-1">@{trustee.username}</span>
+						<form method="POST" action="?/removeTrustee" use:enhance={() => async ({ update }) => { await update(); }}>
+							<input type="hidden" name="trusteeId" value={trustee.id} />
+							<button type="submit" class="text-xs text-tinte-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">
+								{texts.onboarding.trustees.remove}
+							</button>
+						</form>
 					</li>
 				{/each}
 			</ul>

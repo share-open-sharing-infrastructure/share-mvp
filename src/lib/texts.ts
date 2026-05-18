@@ -419,6 +419,7 @@ export const texts = {
 		},
 		profile: {
 			title: 'Mein Profil',
+			completeOnboarding: 'Onboarding fertigstellen',
 			emailVerified: 'E-Mail-Adresse bestätigt',
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
 			resendVerification: 'Bestätigungs-E-Mail erneut senden',
@@ -522,10 +523,9 @@ export const texts = {
 	// Onboarding
 	onboarding: {
 		welcome: {
-			title: 'Willkommen bei AllerLeih!',
-			subtitle:
-				'Die Plattform zum Teilen und Ausleihen von Dingen – mit Freund:innen, deiner Nachbarschaft oder neuen Bekannten in deiner Umgebung.',
-			ethos: 'Gemeinwohlorientiert und open-source.',
+			title: 'Willkommen bei',
+			body: 'Auf AllerLeih kannst du Dinge aus deiner Umgebung leihen und verleihen. Du hast jetzt die Möglichkeit, ein paar Einstellungen festzulegen, oder dich erstmal umzuschauen.',
+			findSettings: 'Die Einstellungen kannst du jederzeit wieder über dein Profil festlegen.',
 		},
 		howItWorks: {
 			title: "So funktioniert's",
@@ -559,6 +559,7 @@ export const texts = {
 			searchPlaceholder: 'Nutzername suchen...',
 			noResults: 'Keine Personen gefunden.',
 			noTrusteesYet: 'Noch niemanden hinzugefügt.',
+			remove: 'Entfernen',
 		},
 		browserLocation: {
 			title: 'Standort freigeben?',
@@ -570,7 +571,7 @@ export const texts = {
 		pushNotifications: {
 			title: 'Benachrichtigungen aktivieren?',
 			explanation:
-				'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
+				'Erhalte eine Benachrichtigung, wenn Menschen deine Dinge anfragen oder dir schreiben. Du kannst das jederzeit in den Browser-Einstellungen ändern.',
 			allow: 'Benachrichtigungen aktivieren',
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Bitte stelle sicher, dass du Benachrichtigungen in deinem Browser oder Betriebssystem aktiviert hast, um diese Funktion zu nutzen.',
 		},
@@ -585,6 +586,8 @@ export const texts = {
 			next: 'Weiter',
 			skip: 'Überspringen',
 			finish: "Los geht's!",
+			configure: 'Kurzes Onboarding: 1-2 Minuten, um die wichtigsten Einstellungen festzulegen',
+			exploreFirst: 'Direkt losstöbern, Dinge einstellen oder Freunde einladen.',
 		},
 	},
 
@@ -701,6 +704,13 @@ export const texts = {
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
+	},
+
+	// Onboarding nudge banner
+	onboardingPrompt: {
+		text: 'Du hast dein Onboarding noch nicht abgeschlossen. Nimm dir 1–2 Minuten!',
+		cta: 'Jetzt starten',
+		dismiss: 'Später',
 	},
 
 	// PWA install and notification prompts

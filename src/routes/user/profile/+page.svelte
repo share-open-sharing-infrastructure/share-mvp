@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { Button } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AddressInput from '$lib/components/AddressInput.svelte';
@@ -34,6 +35,17 @@
 
 <main class="bg-secondary-100 dark:bg-tinte-900 min-h-screen">
 	<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+		{#if !data.currentUser.hasOnboarded}
+			<div class="mb-4">
+				<a
+					href={resolve('/onboarding')}
+					class="flex items-center justify-center gap-2 w-full py-3 px-6 bg-primary text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+				>
+					{texts.pages.profile.completeOnboarding}
+				</a>
+			</div>
+		{/if}
+
 		<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8">
 			{#if form}
 				<div class="mb-6">
