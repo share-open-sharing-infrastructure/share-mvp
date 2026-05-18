@@ -143,7 +143,7 @@
 							>
 								<UserAddOutline class="h-6 w-6" />
 							</button>
-							<Tooltip triggeredBy="#add-btn-{potentialFriend.id}" type="light" placement="left">
+							<Tooltip triggeredBy="#add-btn-{potentialFriend.id}" type="light" placement="left" trigger="click">
 								als Vertraute(n) hinzufügen
 							</Tooltip>
 						</form>

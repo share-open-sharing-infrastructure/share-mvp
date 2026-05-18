@@ -120,16 +120,20 @@
 					>
 						<img src={telegramLogo} class="w-3.5 h-3.5" alt="Telegram" />
 					</button>
-					<Tooltip type="light" placement="bottom">{texts.messenger.telegram}</Tooltip>
+					<Tooltip type="light" placement="bottom" trigger="click">{texts.messenger.telegram}</Tooltip>
 				{:else if telegramHidden}
-					<button
-						disabled
-						class="w-7 h-7 rounded-full bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center opacity-40 cursor-not-allowed shrink-0"
-						aria-label={texts.messenger.telegram}
-					>
-						<img src={telegramLogo} class="w-3.5 h-3.5 opacity-50" alt="Telegram" />
-					</button>
-					<Tooltip type="light" placement="bottom">{texts.messenger.onlyForTrusted}</Tooltip>
+					<!-- Disabled buttons suppress pointer events, preventing tooltip attachment.
+					     The span acts as the tooltip target while the button stays non-interactive. -->
+					<span id="tg-hidden-{chatPartner.id}" class="cursor-not-allowed">
+						<button
+							disabled
+							class="w-7 h-7 rounded-full bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center opacity-40 cursor-not-allowed shrink-0 pointer-events-none"
+							aria-label={texts.messenger.telegram}
+						>
+							<img src={telegramLogo} class="w-3.5 h-3.5 opacity-50" alt="Telegram" />
+						</button>
+					</span>
+					<Tooltip triggeredBy="#tg-hidden-{chatPartner.id}" type="light" placement="bottom" trigger="click">{texts.messenger.onlyForTrusted}</Tooltip>
 				{/if}
 
 				<!-- Signal -->
@@ -141,16 +145,19 @@
 					>
 						<img src={signalLogo} class="w-3.5 h-3.5" alt="Signal" />
 					</button>
-					<Tooltip type="light" placement="bottom">{texts.messenger.signal}</Tooltip>
+					<Tooltip type="light" placement="bottom" trigger="click">{texts.messenger.signal}</Tooltip>
 				{:else if signalHidden}
-					<button
-						disabled
-						class="w-7 h-7 rounded-full bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center opacity-40 cursor-not-allowed shrink-0"
-						aria-label={texts.messenger.signal}
-					>
-						<img src={signalLogo} class="w-3.5 h-3.5 opacity-50" alt="Signal" />
-					</button>
-					<Tooltip type="light" placement="bottom">{texts.messenger.onlyForTrusted}</Tooltip>
+					<!-- Same span-wrapper pattern as Telegram above: disabled button → pointer-events-none, span is the tooltip target. -->
+					<span id="sig-hidden-{chatPartner.id}" class="cursor-not-allowed">
+						<button
+							disabled
+							class="w-7 h-7 rounded-full bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center opacity-40 cursor-not-allowed shrink-0 pointer-events-none"
+							aria-label={texts.messenger.signal}
+						>
+							<img src={signalLogo} class="w-3.5 h-3.5 opacity-50" alt="Signal" />
+						</button>
+					</span>
+					<Tooltip triggeredBy="#sig-hidden-{chatPartner.id}" type="light" placement="bottom" trigger="click">{texts.messenger.onlyForTrusted}</Tooltip>
 				{/if}
 			</div>
 		{/if}

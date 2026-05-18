@@ -88,24 +88,45 @@
 		</p>
 	{/if}
 
-	<!-- Travel Time + CTA -->
-	<div class="flex items-center justify-end gap-3">
-		<div>
-			{#if data.isAuthenticated && !isOwnItem && data.ownerHasLocation}
-				<ItemTravelTime
-					itemId={data.item.id}
-					preferredTransportMode={data.preferredTransportMode}
-				/>
-			{/if}
-		</div>
-		<ItemCta
-			item={data.item}
-			{isExternal}
-			{isOwnItem}
-			{isTrustRestricted}
-			{isArchived}
-			existingConversation={data.existingConversation}
-		/>
+	<!-- Anfragen CTA / Status Toggle -->
+	<div class="flex justify-end">
+		{#if isOwnItem}
+			<form method="POST" action="?/toggleStatus" use:enhance>
+				<button
+					type="submit"
+					class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold border transition-colors cursor-pointer
+						{data.item.status === 'available'
+							? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
+							: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
+				>
+					{data.item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
+					<span class="ml-2 text-xs opacity-60">
+						{'→ ' + (data.item.status === 'available' ? texts.itemStatus.markUnavailable : texts.itemStatus.markAvailable)}
+					</span>
+				</button>
+			</form>
+		{:else if isTrustRestricted}
+			<!-- Disabled buttons suppress pointer events, so the tooltip must be anchored
+			     to the surrounding span instead of the button itself. -->
+			<span id="anfragen-disabled" class="cursor-not-allowed">
+				<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 pointer-events-none">
+					<MessagesOutline class="h-4 w-4 mr-2" />
+					{texts.pages.itemDetail.requestButton}
+				</Button>
+			</span>
+			<Tooltip triggeredBy="#anfragen-disabled" type="light" placement="top" trigger="click">
+				{texts.pages.itemDetail.trustRestrictedTooltip}
+			</Tooltip>
+		{:else}
+			<form method="POST" action="?/startConversation">
+				<Input name="itemId" value={item.id} hidden />
+				<Input name="ownerId" value={item.expand?.owner?.id} hidden />
+				<Button pill type="submit" class="cursor-pointer min-button bg-primary-200 hover:bg-primary">
+					<MessagesOutline class="h-4 w-4 mr-2" />
+					{texts.pages.itemDetail.requestButton}
+				</Button>
+			</form>
+		{/if}
 	</div>
 
 	<!-- Owner card -->
