@@ -23,6 +23,7 @@
 	beforeNavigate(() => { isNavigating = true; });
 	afterNavigate(() => { isNavigating = false; });
 
+	// svelte-ignore state_referenced_locally
 	let unreadCount = $state(data.unreadNotificationCount ?? 0);
 	let installPromptEvent = $state<BeforeInstallPromptEvent | null>(null);
 

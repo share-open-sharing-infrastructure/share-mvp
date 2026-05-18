@@ -95,9 +95,9 @@
 
 				<!-- Transport Mode -->
 				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
-					<label class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white">
+					<div class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white">
 						{texts.pages.profile.transportModeLabel}
-					</label>
+					</div>
 					<div>
 						<div class="flex gap-2">
 							<input type="hidden" name="preferredTransportMode" value={selectedTransportMode} />

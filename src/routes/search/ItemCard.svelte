@@ -14,6 +14,7 @@
 	interface Props {
 		item: Item;
 		imgUrl: string;
+		ownerImgUrl?: string;
 		profileView?: boolean;
 		/** Travel time in minutes. undefined = not yet fetched, null = owner has no location */
 		travelMinutes?: number | null;
@@ -23,6 +24,7 @@
 	let {
 		item,
 		imgUrl,
+		ownerImgUrl,
 		profileView = false,
 		travelMinutes,
 		transportMode = 'bicycle',
@@ -99,7 +101,9 @@
 						? 'bg-green-50/90 text-green-800 border-green-300 hover:bg-green-100/90'
 						: 'bg-white/90 text-tinte-700 border-tinte-300 hover:bg-tinte-50/90'}"
 				>
-					{#if isInstitution}
+					{#if ownerImgUrl}
+						<img src={ownerImgUrl} alt="" class="h-6 w-6 rounded-full object-cover" />
+					{:else if isInstitution}
 						<HomeOutline class="h-6 w-6 inline" />
 					{:else}
 						<UserCircleOutline class="h-6 w-6 inline" />
