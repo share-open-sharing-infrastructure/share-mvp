@@ -18,6 +18,7 @@ export async function load({ locals, url }) {
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl: `${url.origin}/invite/${inviteCode}`,
+		username: locals.user.username as string,
 		users,
 		trustIds: (locals.user.trusts as string[]) ?? [],
 	};
