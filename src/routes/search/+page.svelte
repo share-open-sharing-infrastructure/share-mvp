@@ -7,9 +7,9 @@
 	import CategoryFilter from './CategoryFilter.svelte';
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
-	import { resolve } from '$app/paths';
 	import { invalidateAll } from '$app/navigation';
 	import { ShuffleOutline, ArrowsRepeatOutline } from 'flowbite-svelte-icons';
+	import { buildSearchUrl } from './searchUrl';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -26,15 +26,13 @@
 	const filterActive = $derived(maxMinutes < 30 && Object.keys(travelTimes).length > 0);
 
 	function searchUrl(overrides: { onlyAvailable?: boolean; ownerType?: string } = {}): string {
-		const onlyAvailable = overrides.onlyAvailable ?? data.onlyAvailable;
-		const ownerType = overrides.ownerType ?? data.ownerType;
-		const parts: string[] = [];
-		if (data.q) parts.push(`q=${encodeURIComponent(data.q)}`);
-		if (data.selectedCategories.length > 0) parts.push(`cats=${encodeURIComponent(data.selectedCategories.join(','))}`);
-		if (data.op === 'and') parts.push('op=and');
-		if (!onlyAvailable) parts.push('onlyAvailable=false');
-		if (ownerType !== 'all') parts.push(`ownerType=${ownerType}`);
-		return resolve('/search') + (parts.length ? '?' + parts.join('&') : '');
+		return buildSearchUrl({
+			q: data.q,
+			cats: data.selectedCategories,
+			op: data.op,
+			onlyAvailable: overrides.onlyAvailable ?? data.onlyAvailable,
+			ownerType: overrides.ownerType ?? data.ownerType,
+		});
 	}
 	const filteredItems = $derived.by(() => {
 		const items = filterActive

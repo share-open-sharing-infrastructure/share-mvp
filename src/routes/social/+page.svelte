@@ -116,7 +116,7 @@
 		<div class="relative flex items-center">
 			<input
 				type="text"
-				placeholder="Netzwerk durchsuchen..."
+				placeholder={texts.pages.social.searchPlaceholder}
 				class="search-bar w-full pr-10"
 				bind:value={search}
 				oninput={() => { currentPage = 0; showAddDropdown = false; }}
@@ -128,7 +128,7 @@
 					class="flex absolute right-2 text-tinte-400 hover:text-primary transition-colors cursor-pointer"
 					title="Nutzer:in hinzufügen"
 				>
-					<span class="text-md text-tinte-400 mr-2">Noch nicht im Netzwerk? Suche</span>
+					<span class="text-md text-tinte-400 mr-2">{texts.pages.social.searchNewUser}</span>
 					<SearchOutline class="h-5 w-5" />
 				</button>
 			{/if}
@@ -137,7 +137,7 @@
 		{#if showAddDropdown}
 			<div class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-tinte-300 bg-sand shadow-lg dark:border-primary-700 dark:bg-primary-900">
 				{#if filteredUsers.length === 0}
-					<p class="p-3 text-sm text-tinte-400">Keine neuen Nutzer:innen gefunden.</p>
+					<p class="p-3 text-sm text-tinte-400">{texts.pages.social.noNewUsersFound}</p>
 				{:else}
 					{#each filteredUsers as potentialFriend (potentialFriend.id)}
 						<div class="flex items-center hover:bg-primary-50 dark:hover:bg-primary-900">

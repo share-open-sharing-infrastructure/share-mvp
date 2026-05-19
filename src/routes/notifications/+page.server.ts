@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import type { Notification } from '$lib/types/models.js';
 
 export async function load({ locals }) {
@@ -22,25 +22,39 @@ export async function load({ locals }) {
 
 export const actions = {
 	// One-way mark-as-read, called fire-and-forget from the notification link's onclick.
-	// Early-exits if already read so repeated calls are safe.
+	// Uses a filter to guard ownership server-side, so no separate fetch is needed.
 	markRead: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const id = formData.get('id')?.toString();
 		if (!id) return;
-		const notification = await locals.pb.collection('notifications').getOne(id);
-		if (notification.recipient !== locals.user.id || notification.read) return;
-		await locals.pb.collection('notifications').update(id, { read: true });
+		try {
+			await locals.pb.collection('notifications').update(id, { read: true }, {
+				filter: `recipient="${locals.user.id}" && read=false`,
+			});
+		} catch {
+			// Notification already read or not found — both are acceptable for fire-and-forget.
+		}
 	},
 
 	// Bidirectional toggle used by the dot button on each row.
 	toggleRead: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const id = formData.get('id')?.toString();
-		if (!id) return;
+		if (!id) return fail(400, { fail: true });
 
-		const notification = await locals.pb.collection('notifications').getOne(id);
-		if (notification.recipient !== locals.user.id) return;
+		let notification: Notification;
+		try {
+			notification = await locals.pb.collection('notifications').getOne<Notification>(id);
+		} catch {
+			return fail(404, { fail: true });
+		}
 
-		await locals.pb.collection('notifications').update(id, { read: !notification.read });
+		if (notification.recipient !== locals.user.id) return fail(403, { fail: true });
+
+		try {
+			await locals.pb.collection('notifications').update(id, { read: !notification.read });
+		} catch {
+			return fail(500, { fail: true });
+		}
 	},
 };

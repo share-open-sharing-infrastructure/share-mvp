@@ -2,6 +2,7 @@
 	/* eslint-disable svelte/no-navigation-without-resolve */
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import { buildSearchUrl } from './searchUrl';
 
 	interface Props {
 		page: number;
@@ -19,15 +20,7 @@
 	const perPageOptions = [10, 20, 50];
 
 	function pageUrl(n: number): string {
-		const parts: string[] = [];
-		if (q) parts.push(`q=${encodeURIComponent(q)}`);
-		parts.push(`page=${n}`);
-		parts.push(`perPage=${perPage}`);
-		if (selectedCategories.length > 0) parts.push(`cats=${encodeURIComponent(selectedCategories.join(','))}`);
-		if (op === 'and') parts.push('op=and');
-		if (!onlyAvailable) parts.push('onlyAvailable=false');
-		if (ownerType !== 'all') parts.push(`ownerType=${ownerType}`);
-		return resolve('/search') + '?' + parts.join('&');
+		return buildSearchUrl({ q, page: n, perPage, cats: selectedCategories, op, onlyAvailable, ownerType });
 	}
 
 	function getPages(): (number | '...')[] {

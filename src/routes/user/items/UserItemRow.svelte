@@ -13,8 +13,10 @@
 	let { item, PB_URL, selected, onselectedchange }: Props = $props();
 
 	let showEditModal = $state(false);
-	let optimisticStatus = $derived(item.status) as 'available' | 'unavailable';
-	let optimisticTrusteesOnly = $derived(item.trusteesOnly) as boolean;
+	let optimisticStatus = $state(item.status as 'available' | 'unavailable');
+	$effect(() => { optimisticStatus = item.status as 'available' | 'unavailable'; });
+	let optimisticTrusteesOnly = $state(item.trusteesOnly);
+	$effect(() => { optimisticTrusteesOnly = item.trusteesOnly; });
 
 	function getRealImageUrl(i: Item): string | null {
 		if (i.image) return `${PB_URL}api/files/${i.collectionId}/${i.id}/${i.image}`;

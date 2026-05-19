@@ -28,14 +28,7 @@
 		method="POST"
 		action="?/saveTransportMode"
 		class="space-y-5 mt-2"
-		use:enhance={() =>
-			({ result }) => {
-				if (result.type === 'success' || result.type === 'redirect') {
-					onNext();
-				} else {
-					onNext();
-				}
-			}}
+		use:enhance={() => () => { onNext(); }}
 	>
 		<input type="hidden" name="mode" value={selected} />
 

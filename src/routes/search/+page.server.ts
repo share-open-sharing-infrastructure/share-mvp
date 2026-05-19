@@ -1,6 +1,7 @@
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { Item } from '$lib/types/models';
 import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import { buildSearchFilter } from './searchFilter';
 
 export async function load({ locals, url }) {
 	const q = url.searchParams.get('q')?.trim() ?? '';
@@ -55,17 +56,6 @@ export async function load({ locals, url }) {
 
 	const isAllItems = !q || q === '*';
 
-	const buildSearchFilter = (raw: string): string | null => {
-		if (!raw || raw === '*') return null;
-		const tokens = raw.trim().split(/\s+/).filter(Boolean);
-		if (tokens.length === 0) return null;
-		return tokens
-			.map((token) => {
-				const safe = token.replace(/"/g, '\\"');
-				return `(name ~ "${safe}" || description ~ "${safe}")`;
-			})
-			.join(' && ');
-	};
 	const nameFilter = buildSearchFilter(q);
 	const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
 

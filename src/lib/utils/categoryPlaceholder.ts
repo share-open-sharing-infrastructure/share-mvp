@@ -3,6 +3,7 @@ import { ITEM_CATEGORIES } from '$lib/texts';
 const PLACEHOLDERS: Record<(typeof ITEM_CATEGORIES)[number], string> = {
 	'Freizeit und Sport': '/category-placeholders/Freizeit-und-Sport.svg',
 	'Werkzeug und Garten': '/category-placeholders/Werkzeug-und-Garten.svg',
+	'Reisen und Outdoor': '/category-placeholders/Freizeit-und-Sport.svg',
 	'Bücher': '/category-placeholders/Buecher.svg',
 	'Spiele': '/category-placeholders/Spiele.svg',
 	'Küche': '/category-placeholders/Kueche.svg',

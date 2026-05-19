@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
-import type { Conversation } from '$lib/types/models.js';
+import type { Conversation, CounterfactualAnswer } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import * as lending from './lending.server.js';
 import * as messaging from './conversation.server.js';
@@ -129,8 +129,9 @@ export const actions = {
 		const form = await request.formData();
 		const conversationId = form.get('conversationId') as string;
 		let answer = form.get('answer') as string;
-		const valid = ['would_buy', 'not_important', 'too_expensive', 'borrow_elsewhere', 'unsure', 'other', 'skipped'];
-		if (!valid.includes(answer)) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+		// 'other' is a UI-only sentinel replaced by free text below; all other values must be valid CounterfactualAnswer values (excluding 'pending' which is server-assigned).
+		const valid: (CounterfactualAnswer | 'other')[] = ['would_buy', 'not_important', 'too_expensive', 'borrow_elsewhere', 'unsure', 'other', 'skipped'];
+		if (!valid.includes(answer as CounterfactualAnswer | 'other')) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
 		if (answer === 'other') {
 			const text = (form.get('answerText') as string)?.trim();
 			if (!text) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });

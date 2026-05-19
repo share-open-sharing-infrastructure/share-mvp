@@ -86,6 +86,7 @@ export const texts = {
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 		itemNotFound: 'Gegenstand nicht gefunden.',
 		noPermission: 'Keine Berechtigung.',
+		missingId: 'Fehlende ID.',
 	},
 
 	// Success messages
@@ -128,13 +129,13 @@ export const texts = {
 		signalLinkPlaceholder: 'z.B. signal.me/#eu/...',
 		telegramTooltipTitle: 'Telegram Nutzername hinzufügen',
 		telegramTooltipText:
-			'Dein Telegram-Nutzername findest du in der Telegram App unter Einstellungen/Profil > Benutzername. \
-			Kopiere nur den Namen ohne das @ Zeichen.',
+			'Dein Telegram-Nutzername findest du in der Telegram App unter Einstellungen/Profil > Benutzername. ' +
+			'Kopiere nur den Namen ohne das @ Zeichen.',
 		signalTooltipTitle: 'Signal-Link hinzufügen',
 		signalTooltipText:
-			'In Signal kannst du einen teilbaren Link erstellen. \
-			Dafür musst du unter Einstellungen > Profil einen Namen erstellen. \
-			Dann kannst du auf "QR-Code oder Link" gehen und den kompletten Link kopieren.',
+			'In Signal kannst du einen teilbaren Link erstellen. ' +
+			'Dafür musst du unter Einstellungen > Profil einen Namen erstellen. ' +
+			'Dann kannst du auf "QR-Code oder Link" gehen und den kompletten Link kopieren.',
 		visibleToTrustedOnly: 'Nur Vertrauten zeigen',
 		contactViaTelegram: 'Telegram',
 		contactViaSignal: 'Signal',
@@ -393,6 +394,9 @@ export const texts = {
 		},
 		social: {
 			yourItems: 'deine Dinge',
+			searchPlaceholder: 'Netzwerk durchsuchen...',
+			searchNewUser: 'Noch nicht im Netzwerk? Suche',
+			noNewUsersFound: 'Keine neuen Nutzer:innen gefunden.',
 		},
 		reset: {
 			title: 'Passwort zurücksetzen',

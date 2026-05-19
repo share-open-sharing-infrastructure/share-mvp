@@ -5,8 +5,11 @@ import type { NotificationType } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 
-// This is a constant to randomly ask a subset of users for counterfactual feedback after confirming a return. Adjust the percentage as needed or implement a more robust sampling strategy before launch.
 const PERCENTAGE_OF_USERS_ASKED = 0.33;
+
+export function shouldAskCounterfactual(rng: () => number = Math.random): boolean {
+	return rng() < PERCENTAGE_OF_USERS_ASKED;
+}
 
 /** Convenience alias for the return type of SvelteKit's `fail()`. */
 type FailResult = ReturnType<typeof fail>;
@@ -184,7 +187,7 @@ export async function confirmReturn(
 	const itemName = await getItemName(pb, conv.requestedItem as string);
 
 	try {
-		const counterfactualPatch = Math.random() < PERCENTAGE_OF_USERS_ASKED ? { counterfactual: 'pending' } : {};
+		const counterfactualPatch = shouldAskCounterfactual() ? { counterfactual: 'pending' } : {};
 		await pb.collection('conversations').update(conversationId, { lendingStatus: 'completed', ...counterfactualPatch });
 		await pb.collection('items').update(conv.requestedItem as string, { status: 'available' });
 	} catch (err) {
