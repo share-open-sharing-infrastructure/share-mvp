@@ -55,10 +55,18 @@ export async function load({ locals, url }) {
 
 	const isAllItems = !q || q === '*';
 
-	// Escape double-quotes to prevent filter injection (only needed for name filter)
-	const safeQ = q.replace(/"/g, '\\"');
-
-	const nameFilter = isAllItems ? null : `name ~ "${safeQ}"`;
+	const buildSearchFilter = (raw: string): string | null => {
+		if (!raw || raw === '*') return null;
+		const tokens = raw.trim().split(/\s+/).filter(Boolean);
+		if (tokens.length === 0) return null;
+		return tokens
+			.map((token) => {
+				const safe = token.replace(/"/g, '\\"');
+				return `(name ~ "${safe}" || description ~ "${safe}")`;
+			})
+			.join(' && ');
+	};
+	const nameFilter = buildSearchFilter(q);
 	const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
 
 	// Escape & as \& so PocketBase's filter parser doesn't misinterpret it as the && operator.
