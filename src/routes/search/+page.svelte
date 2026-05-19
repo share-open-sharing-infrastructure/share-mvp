@@ -8,6 +8,8 @@
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
+	import { invalidateAll } from '$app/navigation';
+	import { ShuffleOutline } from 'flowbite-svelte-icons';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -141,8 +143,15 @@
 	/>
 
 	{#if data.isRandom}
-		<div class="w-full text-center mt-4 mb-2">
-			<h5 class="text-tinte-500">{texts.pages.search.randomItemsHeading}</h5>
+		<div class="w-full text-center mt-4 mb-2 flex flex-col items-center gap-2">
+
+			<button
+				onclick={() => invalidateAll()}
+				class="flex rounded-full hover:cursor-pointer border px-3 py-1 text-sm font-medium transition-colors border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary"
+			>
+			<ShuffleOutline class="mr-1"></ShuffleOutline>
+			{texts.pages.search.randomItemsHeading}
+		</button>
 		</div>
 	{/if}
 

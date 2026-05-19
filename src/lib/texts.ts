@@ -379,6 +379,7 @@ export const texts = {
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
 			randomItemsHeading: 'Entdecke zufällige Gegenstände',
+			shuffleItems: 'Andere anzeigen',
 			onlyAvailable: 'Nur Verfügbare',
 			ownerTypeAll: 'Von Allen',
 			ownerTypeInstitution: 'Nur von Institutionen',
