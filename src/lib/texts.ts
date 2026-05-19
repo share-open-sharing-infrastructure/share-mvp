@@ -1,6 +1,7 @@
 export const ITEM_CATEGORIES = [
 	'Freizeit und Sport',
 	'Werkzeug und Garten',
+	'Reisen und Outdoor',
 	'Bücher',
 	'Spiele',
 	'Küche',
