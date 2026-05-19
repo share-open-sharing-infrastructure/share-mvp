@@ -108,7 +108,7 @@
 					{:else}
 						<UserCircleOutline class="h-6 w-6 inline" />
 					{/if}
-					<span class="font-medium text-xs max-w-20 truncate">{item.expand?.owner?.username ?? 'Unknown'}</span>
+					<span class="font-medium text-xs max-w-20 truncate ml-1">{item.expand?.owner?.username ?? 'Unknown'}</span>
 					<div class="absolute top-0 -right-1.5 flex flex-col gap-0.1 items-center">
 						{#if item.expand?.owner?.verified}
 							<VerifiedIcon class="h-3.5 w-3.5" />
