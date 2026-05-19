@@ -9,7 +9,7 @@
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 	import { invalidateAll } from '$app/navigation';
-	import { ShuffleOutline } from 'flowbite-svelte-icons';
+	import { ShuffleOutline, ArrowsRepeatOutline } from 'flowbite-svelte-icons';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -125,8 +125,8 @@
 
 		<a
 			href={searchUrl({ ownerType: ownerTypeNext[data.ownerType as keyof typeof ownerTypeNext] })}
-			class="rounded-full border px-3 py-1 text-sm font-medium transition-colors 'border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary'}"
-		>{ownerTypeLabel[data.ownerType as keyof typeof ownerTypeLabel]}</a>
+			class="flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary"
+		><ArrowsRepeatOutline class="mr-1 h-4 w-4 shrink-0" />{texts.pages.search.ownerTypePrefix}: {ownerTypeLabel[data.ownerType as keyof typeof ownerTypeLabel]}</a>
 
 	</div>
 

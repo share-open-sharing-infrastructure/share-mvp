@@ -382,9 +382,10 @@ export const texts = {
 			randomItemsHeading: 'Entdecke zufällige Gegenstände',
 			shuffleItems: 'Andere anzeigen',
 			onlyAvailable: 'Nur Verfügbare',
-			ownerTypeAll: 'Von Allen',
-			ownerTypeInstitution: 'Nur von Institutionen',
-			ownerTypePrivate: 'Nur von Personen',
+			ownerTypePrefix: 'Anbieter',
+			ownerTypeAll: 'Alle',
+			ownerTypeInstitution: 'Institutionen',
+			ownerTypePrivate: 'Personen',
 		},
 		logout: {
 			message: 'Ausloggen...',
