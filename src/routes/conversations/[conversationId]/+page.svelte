@@ -11,6 +11,7 @@
 	import MessageElement from './MessageElement.svelte';
 	import { setupPocketBaseSubscription } from '$lib/utils/utils';
 	import type { Conversation, Message } from '$lib/types/models';
+	import { texts } from '$lib/texts';
 	import ConversationHeader from './ConversationHeader.svelte';
 	import MessageForm from './MessageForm.svelte';
 	import LendingStatusBar from './LendingStatusBar.svelte';
@@ -137,6 +138,11 @@
 
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900">
+	{#if lendingStatus === 'pending' && messages.length === 0 && !loggedInUserIsItemOwner}
+		<p class="text-xl p-4 text-center max-w-100 mx-auto my-auto text-tinte-400 dark:text-tinte-500 italic">
+			{texts.lending.statusDescription.pending.requesterNudge(chatPartner.username, data.conversation.requestedItem.name)}
+		</p>
+	{/if}
 	{#each messages as message (message.id)}
 		<MessageElement {message} isFromCurrentUser={data.currentUser?.id} />
 	{/each}

@@ -658,8 +658,9 @@ export const texts = {
 		statusDescription: {
 			pending: {
 				owner: 'Jemand möchte diesen Gegenstand ausleihen. Nimm die Anfrage an oder lehne sie ab.',
-				requester: (owner: string) => `Deine Anfrage wurde an ${owner} gesendet. \
-				Schicke gegebenenfalls schon eine Nachricht mit Details .`,
+				requester: (owner: string) => `Deine Anfrage wurde an ${owner} gesendet.`,
+				requesterNudge: (owner: string, item: string) =>
+					`Schreib' "${owner}" ruhig schon eine nette Nachricht: von wann bis wann (und vielleicht wofür) du den/die/das "${item}" brauchst!`,
 			},
 			accepted: {
 				owner: 'Du hast die Anfrage angenommen. Bestätige die Übergabe, wenn du den Gegenstand übergeben hast.',
