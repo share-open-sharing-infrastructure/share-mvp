@@ -64,11 +64,15 @@
 		{:else if step === 3}
 			<StepProfile onNext={next} currentUser={data.currentUser} pbUrl={data.PB_URL} />
 		{:else if step === 4}
-			<StepLocation onNext={next} />
+			<StepLocation
+				onNext={next}
+				initialCity={data.currentUser.city}
+				initialGeolocation={data.currentUser.geolocation?.lon || data.currentUser.geolocation?.lat ? data.currentUser.geolocation : null}
+			/>
 		{:else if step === 5}
 			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />
 		{:else if step === 6}
-			<StepContact onNext={next} />
+			<StepContact onNext={next} currentUser={data.currentUser} />
 		{:else if step === 7}
 			<StepTrustees
 				onNext={next}
