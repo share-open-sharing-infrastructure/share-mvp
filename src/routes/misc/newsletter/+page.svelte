@@ -26,7 +26,7 @@
 			AllerLeih News
 		</h2>
 		<p class="mb-6 text-center text-sm text-gray-500 dark:text-gray-400">
-			Neuigkeiten von uns und Community-Geschichten von euch — maximal einmal pro Monat, kein Spam.
+			Wir schicken dir maximal einmal pro Monat Neuigkeiten: was sich bei bei uns im Team tut, was du dir neues Ausleihen kannst, oder welche tollen neuen Funktionen wir für dich basteln.
 		</p>
 
 		<form

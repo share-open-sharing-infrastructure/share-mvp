@@ -125,9 +125,10 @@
 				<button
 					type="button"
 					onclick={() => (showAddDropdown = !showAddDropdown)}
-					class="absolute right-2 text-tinte-400 hover:text-primary transition-colors cursor-pointer"
+					class="flex absolute right-2 text-tinte-400 hover:text-primary transition-colors cursor-pointer"
 					title="Nutzer:in hinzufügen"
 				>
+					<span class="text-md text-tinte-400 mr-2">Noch nicht im Netzwerk? Suche</span>
 					<SearchOutline class="h-5 w-5" />
 				</button>
 			{/if}
