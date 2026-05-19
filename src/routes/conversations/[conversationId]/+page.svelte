@@ -2,7 +2,7 @@
 	// Imports for pocketbase real-time subcription
 	import type PocketBase from 'pocketbase';
 	import type { RecordSubscription } from 'pocketbase';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { getClientPB } from '$lib/client-pb';
 
@@ -119,16 +119,15 @@
 		}
 	}
 
-	// Sync local messages with server data when messages prop changes
-	// Set up real-time subscription
+	// Set up real-time subscription.
+	// data.conversation.id is read with untrack so this $effect only re-runs when pb changes
+	// (once, after onMount). Without untrack, invalidateAll() from MessageForm would cause
+	// the subscription to tear down and re-subscribe on every message send, which triggers
+	// PocketBase's submitSubscriptions and auto-cancels concurrent getList calls in the layout.
 	$effect(() => {
-		if (!pb) return; // Wait for pb to be initialized
-		const cleanup = setupPocketBaseSubscription(
-			pb,
-			'conversations',
-			data.conversation.id,
-			handleConversationEvent
-		);
+		if (!pb) return;
+		const id = untrack(() => data.conversation.id);
+		const cleanup = setupPocketBaseSubscription(pb, 'conversations', id, handleConversationEvent);
 		return cleanup;
 	});
 </script>

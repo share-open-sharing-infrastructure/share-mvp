@@ -75,10 +75,16 @@
 				await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
 			}
 
-			const result = await pb.collection('notifications').getList(1, 1, {
-				filter: pb.filter('recipient = {:userId} && read = false', { userId }),
-			});
-			unreadCount = result.totalItems;
+			try {
+				const result = await pb.collection('notifications').getList(1, 1, {
+					filter: pb.filter('recipient = {:userId} && read = false', { userId }),
+				});
+				unreadCount = result.totalItems;
+			} catch (err) {
+				// status 0 = auto-cancelled by PocketBase (a concurrent request superseded this one).
+				// The superseding request will update the badge, so this is safe to ignore.
+				if ((err as { status?: number }).status !== 0) throw err;
+			}
 		});
 
 		return () => pb.collection('notifications').unsubscribe('*');
