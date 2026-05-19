@@ -4,6 +4,7 @@ import type { Item } from '$lib/types/models';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
+import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
 
 export async function load({ params, locals }) {
 	let item: Item;
@@ -44,6 +45,18 @@ export async function load({ params, locals }) {
 		}
 	}
 
+	// Does this owner publish lending terms, and if so has the viewer accepted them?
+	// We only gate the request flow on terms when the viewer is logged in and not the owner.
+	let requiresTermsAcceptance = false;
+	if (currentUserId && !isOwnItem) {
+		const ownerId = item.expand?.owner?.id ?? item.owner;
+		const activeTerms = await getActiveTerms(locals.pb, ownerId);
+		if (activeTerms) {
+			const accepted = await hasAcceptedActiveTerms(locals.pb, currentUserId, ownerId);
+			requiresTermsAcceptance = !accepted;
+		}
+	}
+
 	// Total items listed by this owner (all statuses).
 	let ownerItemCount = 0;
 	if (item.expand?.owner?.id) {
@@ -81,6 +94,7 @@ export async function load({ params, locals }) {
 		ownerItemCount,
 		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
 		existingConversation,
+		requiresTermsAcceptance,
 	};
 }
 
@@ -121,6 +135,18 @@ export const actions = {
 			itemRecord = await locals.pb.collection('items').getOne(params.id);
 		} catch {
 			return fail(404, { fail: true, message: texts.errors.itemNotFound });
+		}
+
+		// If the item's owner publishes lending terms and the user has not accepted
+		// the active version, divert them through the terms acceptance flow. This
+		// guards against POSTing directly to ?/startConversation past the CTA UI.
+		const termsOk = await hasAcceptedActiveTerms(
+			locals.pb,
+			locals.user.id,
+			itemRecord.owner
+		);
+		if (!termsOk) {
+			redirect(303, `/items/${params.id}/terms`);
 		}
 
 		// Consume form data (itemId kept for the conversation filter; ownerId ignored).

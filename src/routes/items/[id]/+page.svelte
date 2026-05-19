@@ -125,6 +125,7 @@
 			{isTrustRestricted}
 			{isArchived}
 			existingConversation={data.existingConversation}
+			requiresTermsAcceptance={data.requiresTermsAcceptance}
 		/>
 	</div>
 

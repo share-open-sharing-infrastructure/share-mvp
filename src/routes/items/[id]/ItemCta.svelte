@@ -13,9 +13,28 @@
 		isTrustRestricted: boolean;
 		isArchived: boolean;
 		existingConversation: { id: string; lendingStatus: string } | null;
+		requiresTermsAcceptance?: boolean;
 	}
 
-	const { item, isExternal, isOwnItem, isTrustRestricted, isArchived, existingConversation }: Props = $props();
+	const {
+		item,
+		isExternal,
+		isOwnItem,
+		isTrustRestricted,
+		isArchived,
+		existingConversation,
+		requiresTermsAcceptance = false,
+	}: Props = $props();
+
+
+	const ctaHref = $derived(
+		existingConversation
+			? resolve(`/conversations/${existingConversation.id}`)
+			: resolve(`/items/${item.id}/terms`),
+	);
+	const ctaLabel = $derived(
+		existingConversation ? texts.lending.goToConversation : texts.pages.itemDetail.requestButton,
+	);
 </script>
 
 <div class="flex items-center gap-3">
@@ -77,13 +96,11 @@
 		<Tooltip triggeredBy="#anfragen-disabled" type="light" placement="top" trigger="click">
 			{texts.pages.itemDetail.trustRestrictedTooltip}
 		</Tooltip>
-	{:else if existingConversation}
-		<a
-			href={resolve(`/conversations/${existingConversation.id}`)}
-			class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
-		>
+	{:else if existingConversation || requiresTermsAcceptance}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={ctaHref} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
 			<MessagesOutline class="h-4 w-4 mr-2" />
-			{texts.lending.goToConversation}
+			{ctaLabel}
 		</a>
 	{:else}
 		<form method="POST" action="?/startConversation">
