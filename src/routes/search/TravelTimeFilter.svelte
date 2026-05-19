@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+	import AllerLoader from '$lib/components/AllerLoader.svelte';
 	import type { Item, OwnerLocation } from '$lib/types/models';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -31,6 +32,7 @@
 	let dropdownOpen = $state(false);
 	let showNoLocationPrompt = $state(false);
 	let locationStatus = $state<'idle' | 'requesting' | 'denied'>('idle');
+	let isFetchingTravelTimes = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 	let mounted = false;
 
@@ -58,6 +60,7 @@
 		const owners = extractOwnerLocations();
 		if (owners.length === 0) return;
 
+		isFetchingTravelTimes = true;
 		// Abort after 15s so a hanging ORS response doesn't leave the UI stuck indefinitely
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 15_000);
@@ -80,6 +83,7 @@
 			console.error('Travel time fetch failed:', err);
 		} finally {
 			clearTimeout(timeoutId);
+			isFetchingTravelTimes = false;
 		}
 	}
 
@@ -191,6 +195,11 @@
 				</Dropdown>
 			{/if}
 		</div>
+
+		<!-- Loading spinner while ORS fetch is in flight -->
+		{#if isFetchingTravelTimes}
+			<AllerLoader size={22} speed={1.2} variant="rotate" label="Reisezeiten werden berechnet …" />
+		{/if}
 
 		<!-- Travel time slider (only once a mode is chosen) -->
 		{#if transportMode !== null}
