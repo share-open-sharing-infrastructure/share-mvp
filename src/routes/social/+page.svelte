@@ -202,7 +202,7 @@
 
 <!-- TRUST NETWORK TABLE -->
 <div class="mx-auto max-w-2xl px-2">
-	<Table hoverable divClass="relative overflow-x-auto bg-transparent" class="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-transparent">
+	<Table hoverable classes={{ div: "relative overflow-x-auto bg-transparent" }} class="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-transparent">
 		<TableHead defaultRow={false} class="bg-transparent!">
 			<!-- Sort header row -->
 			<tr>
