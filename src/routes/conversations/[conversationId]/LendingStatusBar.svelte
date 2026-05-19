@@ -66,11 +66,14 @@
 			</div>
 		{:else}
 			<!-- Progress bar: one segment per step -->
-			<div class="flex items-center gap-1">
+			<div class="flex items-start gap-1">
 				{#each steps as step, idx (step)}
-					<div class="flex-1 flex flex-col items-center gap-1 min-w-0">
+					{@const labeled = idx === currentStepIndex || idx === currentStepIndex + 1}
+					<div class="flex flex-col items-center gap-1 {labeled ? 'flex-none sm:flex-1' : 'flex-1 min-w-0'}">
 						<div class="w-full h-1.5 rounded-full {isStepReached(idx) ? 'bg-primary' : 'bg-gray-200 dark:bg-tinte-700'}"></div>
-						<span class="hidden sm:block text-xs truncate w-full text-center {isStepReached(idx) ? 'text-primary dark:text-primary-300' : 'text-tinte-400 dark:text-tinte-500'}">
+						<span class="text-xs text-center w-full leading-tight px-2
+							{labeled ? 'block whitespace-nowrap sm:truncate' : 'hidden sm:block sm:truncate'}
+							{isStepReached(idx) ? 'text-primary dark:text-primary-300' : 'text-tinte-400 dark:text-tinte-500'}">
 							{texts.lending.statusLabel[step]}
 						</span>
 					</div>
