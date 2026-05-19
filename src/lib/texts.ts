@@ -178,6 +178,7 @@ export const texts = {
 		offerSomething: 'Biete selbst etwas an!',
 		newsletter: 'Für Newsletter registrieren',
 		search: 'Suchen',
+		showAll: 'Alles anzeigen',
 	},
 
 	// General UI
