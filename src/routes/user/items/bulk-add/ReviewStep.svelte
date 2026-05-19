@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button, Checkbox, Input, Label, Spinner } from 'flowbite-svelte';
+	import { Button, Checkbox, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
 	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import { compressImage } from '$lib/utils/imageUtils';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -13,6 +13,7 @@
 		name: string;
 		description: string;
 		categories: string[];
+		trusteesOnly: boolean;
 		status: DraftStatus;
 	};
 
@@ -83,6 +84,9 @@
 			formData.set(`categories_${i}`, JSON.stringify(drafts[i].categories));
 		}
 		formData.set('count', String(drafts.length));
+			for (let i = 0; i < drafts.length; i++) {
+				formData.set(`trusteesOnly_${i}`, drafts[i].trusteesOnly ? 'on' : 'off');
+			}
 		return async ({ result, update }) => {
 			submitting = false;
 			if (result.type === 'failure') {
@@ -151,6 +155,14 @@
 								{/each}
 							</div>
 						</div>
+
+						<Label class="flex items-center gap-2 text-xs">
+							<Toggle
+								classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
+								checked={draft.trusteesOnly}
+								onchange={() => { drafts[i] = { ...drafts[i], trusteesOnly: !drafts[i].trusteesOnly }; }}
+							>{texts.ui.trustedOnly}</Toggle>
+						</Label>
 					{/if}
 				</div>
 

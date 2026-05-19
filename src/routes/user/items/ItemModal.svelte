@@ -200,7 +200,7 @@
 			<Toggle
 				name="trusteesOnly"
 				classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
-				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
+				checked={editingItem?.trusteesOnly ?? true}
 				>{texts.ui.trustedOnly}</Toggle
 			>
 			<!-- Click-toggled inline panel instead of a hover Popover — hover doesn't work on mobile. -->
