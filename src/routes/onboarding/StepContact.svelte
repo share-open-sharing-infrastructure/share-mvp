@@ -75,7 +75,7 @@
 						type="button"
 						onclick={() => (showTrustInfo = !showTrustInfo)}
 					>
-						<QuestionCircleSolid class="ml-1 h-full" />
+						<QuestionCircleSolid class="ml-1 h-full hover:cursor-pointer" />
 						<span class="sr-only">{texts.ui.explainThis}</span>
 					</button>
 				</div>

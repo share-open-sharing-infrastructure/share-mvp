@@ -30,21 +30,6 @@ export const actions = {
 		const data = await request.formData();
 		const email = data.get('email');
 		const password = data.get('password');
-		const inviteCode = data.get('inviteCode')?.toString();
-
-		// Validate invite code
-		if (!inviteCode) {
-			return fail(400, { fail: true, message: texts.pages.invite.invalidInvite });
-		}
-
-		let inviter: User;
-		try {
-			inviter = await locals.pb
-				.collection('users')
-				.getFirstListItem<User>(`inviteCode = "${inviteCode}"`);
-		} catch {
-			return fail(400, { fail: true, message: texts.pages.invite.invalidInvite });
-		}
 
 		if (!email || !password) {
 			return fail(400, {
@@ -74,10 +59,25 @@ export const actions = {
 		// Must be removed before passing data to PocketBase — it doesn't know this field.
 		data.delete('subscribeToNewsletter');
 
+		const inviteCode = data.get('inviteCode')?.toString();
+		let inviter: User | null = null;
+		if (inviteCode) {
+			try {
+				inviter = await locals.pb
+					.collection('users')
+					.getFirstListItem<User>(`inviteCode = "${inviteCode}"`);
+			} catch {
+				// Invalid invite code — ignore, registration proceeds without it
+			}
+		}
+		data.delete('inviteCode');
+
 		const newInviteCode = await generateInviteSlug(locals.pb);
 		data.set('passwordConfirm', password.toString()); // TODO: Put into form eventually
 		data.set('inviteCode', newInviteCode);
-		data.set('invitedBy', inviter.id);
+		if (inviter) {
+			data.set('invitedBy', inviter.id);
+		}
 
 		let newUser: User;
 		try {
@@ -117,17 +117,17 @@ export const actions = {
 			}
 		}
 
-		// New user automatically trusts the inviter
-		try {
-			await locals.pb.collection('users').update(newUser.id, { trusts: [inviter.id] });
-		} catch (error) {
-			console.error('Failed to set new user trust:', error);
-		}
+		if (inviter) {
+			try {
+				await locals.pb.collection('users').update(newUser.id, { trusts: [inviter.id] });
+			} catch (error) {
+				console.error('Failed to set new user trust:', error);
+			}
 
-		// Notify inviter so they can choose to trust back
-		const body = texts.notifications.inviteAccepted(newUser.username);
-		await createNotification(locals.pb, inviter.id, newUser.id, 'invite_accepted', newUser.id, body);
-		await sendPushToUser(locals.pb, inviter.id, texts.notifications.pushTitle, body, `/users/${newUser.id}`);
+			const body = texts.notifications.inviteAccepted(newUser.username);
+			await createNotification(locals.pb, inviter.id, newUser.id, 'invite_accepted', newUser.id, body);
+			await sendPushToUser(locals.pb, inviter.id, texts.notifications.pushTitle, body, `/users/${newUser.id}`);
+		}
 
 		redirect(303, '/onboarding');
 	},

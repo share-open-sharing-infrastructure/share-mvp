@@ -62,75 +62,73 @@
 			{texts.pages.register.title}
 		{/snippet}
 		<div class="space-y-4 p-6 sm:p-8 md:space-y-6">
-			{#if !data.inviteCode}
-				<p class="text-tinte-700 dark:text-tinte-300">{texts.pages.invite.noInvite}</p>
-			{:else}
-				<form class="flex flex-col space-y-5" action="?/register" method="post" use:enhance>
-					<h3 class="p-0 text-xl font-medium text-tinte-900 dark:text-white">
-						{texts.ui.welcome}
-					</h3>
-					{#if data.inviter}
-						<p class="text-sm text-green-700 dark:text-green-400">
-							{texts.pages.invite.welcomeMessage(data.inviter.username)}
-						</p>
-					{/if}
+			<form class="flex flex-col space-y-5" action="?/register" method="post" use:enhance>
+				<h3 class="p-0 text-xl font-medium text-tinte-900 dark:text-white">
+					{texts.ui.welcome}
+				</h3>
+				{#if data.inviter}
+					<p class="text-sm text-green-700 dark:text-green-400">
+						{texts.pages.invite.welcomeMessage(data.inviter.username)}
+					</p>
+				{/if}
+				{#if data.inviteCode}
 					<input type="hidden" name="inviteCode" value={data.inviteCode} />
-					<Label class="space-y-2">
-						<span>{texts.forms.username}</span>
-						<Input
-							type="text"
-							name="username"
-							placeholder={texts.auth.usernamePlaceholder}
-							class="focus:border-primary-700 focus:ring-primary-700"
-							bind:value={username}
-							required
-							autocomplete="username"
-						/>
-						{#if usernameStatus === 'checking'}
-							<p class="text-sm text-tinte-500">...</p>
-						{:else if usernameStatus === 'available'}
-							<p class="text-sm text-green-600 dark:text-green-400">{texts.success.usernameAvailable}</p>
-						{:else if usernameStatus === 'taken'}
-							<p class="text-sm text-accent-600 dark:text-accent-400">{texts.errors.usernameTaken}</p>
-						{:else if usernameStatus === 'invalid'}
-							<p class="text-sm text-accent-600 dark:text-accent-400">{texts.errors.usernameNoSpaces}</p>
-						{/if}
-					</Label>
-					<Label class="space-y-2">
-						<span>{texts.forms.email}</span>
-						<Input
-							type="email"
-							name="email"
-							placeholder={texts.auth.emailPlaceholder}
-							class="focus:border-primary-700 focus:ring-primary-700"
-							autocomplete="email"
-							required
-						/>
-					</Label>
-					<Label class="space-y-2">
-						<span>{texts.forms.password}</span>
-						<Input
-							type="password"
-							name="password"
-							placeholder={texts.auth.passwordPlaceholder}
-							class="focus:border-primary-700 focus:ring-primary-700"
-							autocomplete="new-password"
-							required
-						/>
-					</Label>
-					<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
-						<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-						<span>Ich habe die <a href={resolve("/misc/tos")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">AGB</a> und die <a href={resolve("/misc/privacy")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Datenschutzerklärung</a> gelesen und stimme beiden zu.</span>
-					</label>
-					<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
-						<input type="checkbox" name="subscribeToNewsletter" checked class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-						<span>{texts.auth.newsletterOptOut}</span>
-					</label>
-					<Button type="submit" class="min-button bg-primary-200 hover:bg-primary cursor-pointer"
-						>{texts.auth.register}</Button
-					>
-				</form>
-			{/if}
+				{/if}
+				<Label class="space-y-2">
+					<span>{texts.forms.username}</span>
+					<Input
+						type="text"
+						name="username"
+						placeholder={texts.auth.usernamePlaceholder}
+						class="focus:border-primary-700 focus:ring-primary-700"
+						bind:value={username}
+						required
+						autocomplete="username"
+					/>
+					{#if usernameStatus === 'checking'}
+						<p class="text-sm text-tinte-500">...</p>
+					{:else if usernameStatus === 'available'}
+						<p class="text-sm text-green-600 dark:text-green-400">{texts.success.usernameAvailable}</p>
+					{:else if usernameStatus === 'taken'}
+						<p class="text-sm text-accent-600 dark:text-accent-400">{texts.errors.usernameTaken}</p>
+					{:else if usernameStatus === 'invalid'}
+						<p class="text-sm text-accent-600 dark:text-accent-400">{texts.errors.usernameNoSpaces}</p>
+					{/if}
+				</Label>
+				<Label class="space-y-2">
+					<span>{texts.forms.email}</span>
+					<Input
+						type="email"
+						name="email"
+						placeholder={texts.auth.emailPlaceholder}
+						class="focus:border-primary-700 focus:ring-primary-700"
+						autocomplete="email"
+						required
+					/>
+				</Label>
+				<Label class="space-y-2">
+					<span>{texts.forms.password}</span>
+					<Input
+						type="password"
+						name="password"
+						placeholder={texts.auth.passwordPlaceholder}
+						class="focus:border-primary-700 focus:ring-primary-700"
+						autocomplete="new-password"
+						required
+					/>
+				</Label>
+				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
+					<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+					<span>Ich habe die <a href={resolve("/misc/tos")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">AGB</a> und die <a href={resolve("/misc/privacy")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Datenschutzerklärung</a> gelesen und stimme beiden zu.</span>
+				</label>
+				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
+					<input type="checkbox" name="subscribeToNewsletter" checked class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+					<span>{texts.auth.newsletterOptOut}</span>
+				</label>
+				<Button type="submit" class="min-button bg-primary-200 hover:bg-primary cursor-pointer"
+					>{texts.auth.register}</Button
+				>
+			</form>
 		</div>
 	</Register>
 </Section>
