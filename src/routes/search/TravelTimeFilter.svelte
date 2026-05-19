@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Dropdown, DropdownItem } from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
@@ -57,10 +57,11 @@
 	}
 
 	async function fetchTravelTimes(mode: TransportMode, userLocation: { lon: number; lat: number }) {
+
+		isFetchingTravelTimes = true;
 		const owners = extractOwnerLocations();
 		if (owners.length === 0) return;
 
-		isFetchingTravelTimes = true;
 		// Abort after 15s so a hanging ORS response doesn't leave the UI stuck indefinitely
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 15_000);
@@ -88,6 +89,8 @@
 	}
 
 	function requestLocation(mode: TransportMode, { onDenied }: { onDenied?: () => void } = {}) {
+		
+		isFetchingTravelTimes = true;
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
 				if (!mounted) return;
@@ -137,6 +140,14 @@
 		});
 	}
 
+	$effect(() => {
+		if (items.length === 0) return; // tracks items as a reactive dependency; nothing to fetch when empty
+		untrack(() => {
+			if (!mounted || !transportMode || !cachedUserLocation) return;
+			fetchTravelTimes(transportMode, cachedUserLocation);
+		});
+	});
+
 	onMount(() => {
 		mounted = true;
 		return () => {
@@ -145,12 +156,18 @@
 	});
 </script>
 
+
+
 {#if isLoggedIn && hasQuery}
-	<div
+<div
 		class="flex flex-wrap justify-center items-center border border-primary-100 dark:border-tinte-700 rounded-xl px-3 py-1"
 	>
+		<!-- Loading spinner while ORS fetch is in flight -->
+		{#if isFetchingTravelTimes}
+			<AllerLoader size={22} speed={1.2} variant="rotate" label="Reisezeiten werden berechnet …" />
+		{/if}
 		<!-- Transport mode selector -->
-		<div class="relative">
+		<div class="relative ml-2">
 			{#if transportMode === null && preferredMode}
 				<!-- Preferred mode known: single click triggers calculation directly -->
 				<button
@@ -170,7 +187,7 @@
 					{#if transportMode === null}
 						{texts.pages.itemDetail.calculateTravelTime}
 					{:else}
-						<TransportModeIcon mode={transportMode} class="h-3.5 w-3.5" />
+						<TransportModeIcon mode={transportMode} class="h-3.5 w-3.5 mr-1" />
 						{texts.pages.search.transportModes[transportMode]}
 					{/if}
 					<ChevronDownOutline class="h-3 w-3 ml-0.5" />
@@ -195,11 +212,6 @@
 				</Dropdown>
 			{/if}
 		</div>
-
-		<!-- Loading spinner while ORS fetch is in flight -->
-		{#if isFetchingTravelTimes}
-			<AllerLoader size={22} speed={1.2} variant="rotate" label="Reisezeiten werden berechnet …" />
-		{/if}
 
 		<!-- Travel time slider (only once a mode is chosen) -->
 		{#if transportMode !== null}
