@@ -798,5 +798,21 @@ export const texts = {
 		institutionCardTitle: 'Über die Institution',
 		aboutOwnerTitle: (name: string) => `Über ${name}`,
 	},
+	counterfactual: {
+		title: 'Eine ganz kurze Frage!',
+		question: 'Was wäre passiert, wenn du diesen Artikel nicht geliehen hättest?',
+		options: {
+			would_buy: 'Ich hätte ihn wahrscheinlich gekauft.',
+			not_important: 'Ich hätte ihn eher nicht besorgt, ich wollte nur mal testen.',
+			too_expensive: 'Ich hätte ihn eher nicht besorgt, das wäre mir zu teuer gewesen.',
+			borrow_elsewhere: 'Ich hätte ihn wahrscheinlich woanders geliehen oder gemietet.',
+			unsure: 'Weiß ich nicht.',
+			other: 'Anderes (bitte beschreibe kurz):',
+		},
+		explainer: 'Wir fragen dich, weil wir verstehen wollen, ob AllerLeih tatsächlich ökologische und/oder soziale Wirkung entfaltet. Antworte gerne ehrlich und direkt. Danke!',
+		otherPlaceholder: 'Bitte beschreibe kurz ...',
+		skip: 'Lieber nicht beantworten',
+		submit: 'Abschicken',
+	},
 };
 

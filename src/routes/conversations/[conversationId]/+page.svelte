@@ -15,6 +15,7 @@
 	import ConversationHeader from './ConversationHeader.svelte';
 	import MessageForm from './MessageForm.svelte';
 	import LendingStatusBar from './LendingStatusBar.svelte';
+	import CounterfactualModal from './CounterfactualModal.svelte';
 
 	// Props and state variables
 	let { data } = $props();
@@ -39,6 +40,17 @@
 	$effect(() => {
 		lendingStatus = data.conversation.lendingStatus;
 	});
+
+	// eslint-disable-next-line svelte/prefer-writable-derived -- same pattern: written by the real-time event handler
+	let counterfactual: Conversation['counterfactual'] = $state(
+		// eslint-disable-next-line svelte/no-unused-svelte-ignore
+		// svelte-ignore state_referenced_locally
+		data.conversation.counterfactual
+	);
+	$effect(() => {
+		counterfactual = data.conversation.counterfactual;
+	});
+
 	let loggedInUserIsItemOwner = $derived(
 		data.currentUser.id === data.conversation.itemOwner.id
 	);
@@ -51,6 +63,7 @@
 
 	// UI state variables
 	let deleteConversationModal = $state(false);
+	let showCounterfactualModal = $derived(counterfactual === 'pending' && !loggedInUserIsItemOwner);
 	let isSubmitting: boolean = $state(false);
 	let chatWindow: HTMLDivElement;
 
@@ -81,6 +94,9 @@
 			// Update lending status if it changed
 			if (event.record.lendingStatus !== undefined) {
 				lendingStatus = event.record.lendingStatus || undefined;
+			}
+			if (event.record.counterfactual !== undefined) {
+				counterfactual = event.record.counterfactual || undefined;
 			}
 
 			// Extract the last message id from the updated conversation record
@@ -152,6 +168,8 @@
 <div class="border-t border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 px-4 py-3">
 	<MessageForm {chatPartner} bind:isSubmitting bind:messageText />
 </div>
+
+<CounterfactualModal open={showCounterfactualModal} conversationId={data.conversation.id} />
 
 <Modal title="Anfrage löschen" form bind:open={deleteConversationModal}>
 	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung

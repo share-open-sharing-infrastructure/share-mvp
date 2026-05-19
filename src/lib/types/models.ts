@@ -186,6 +186,15 @@ export interface Message extends PocketBaseEntity {
 	to: UserId;
 }
 
+export type CounterfactualAnswer =
+	| 'pending'
+	| 'would_buy'
+	| 'not_important'
+	| 'too_expensive'
+	| 'borrow_elsewhere'
+	| 'unsure'
+	| 'skipped';
+
 export interface Conversation extends PocketBaseEntity {
 	requester: User;
 	itemOwner: User;
@@ -194,6 +203,7 @@ export interface Conversation extends PocketBaseEntity {
 	readByRequester: boolean;
 	readByOwner: boolean;
 	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
+	counterfactual?: CounterfactualAnswer;
 }
 
 // --- NOTIFICATION ---

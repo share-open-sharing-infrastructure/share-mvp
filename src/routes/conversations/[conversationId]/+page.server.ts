@@ -29,6 +29,7 @@ export async function load({ params, locals }) {
 		readByRequester: conversationRecord.readByRequester,
 		readByOwner: conversationRecord.readByOwner,
 		lendingStatus: conversationRecord.lendingStatus ?? undefined,
+		counterfactual: conversationRecord.counterfactual ?? undefined,
 		created: conversationRecord.created,
 		updated: conversationRecord.updated,
 	};
@@ -122,5 +123,24 @@ export const actions = {
 	confirmReturn: async ({ locals, params }) => {
 		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
 		return lending.confirmReturn(locals.pb, params.conversationId, locals.user.id);
+	},
+
+	submitCounterfactual: async ({ locals, request }) => {
+		const form = await request.formData();
+		const conversationId = form.get('conversationId') as string;
+		let answer = form.get('answer') as string;
+		const valid = ['would_buy', 'not_important', 'too_expensive', 'borrow_elsewhere', 'unsure', 'other', 'skipped'];
+		if (!valid.includes(answer)) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+		if (answer === 'other') {
+			const text = (form.get('answerText') as string)?.trim();
+			if (!text) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+			answer = text;
+		}
+		try {
+			await locals.pb.collection('conversations').update(conversationId, { counterfactual: answer });
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+		}
 	},
 };
