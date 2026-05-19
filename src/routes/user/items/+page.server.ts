@@ -187,6 +187,29 @@ export const actions = {
 		}
 	},
 
+	toggleTrusteesOnly: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const itemId = formData.get('itemId')?.toString();
+		if (!itemId) return fail(400, { fail: true, message: 'Fehlende Item-ID.' });
+
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		let item: any;
+		try {
+			item = await locals.pb.collection('items').getOne(itemId);
+		} catch {
+			return fail(404, { fail: true, message: 'Gegenstand nicht gefunden.' });
+		}
+
+		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: 'Keine Berechtigung.' });
+
+		try {
+			await locals.pb.collection('items').update(itemId, { trusteesOnly: !item.trusteesOnly });
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} catch (err: Error | any) {
+			console.error(err?.message ?? err);
+		}
+	},
+
 	toggleStatus: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const itemId = formData.get('itemId')?.toString();
