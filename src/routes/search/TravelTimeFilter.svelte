@@ -5,7 +5,7 @@
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
-	import type { Item, OwnerLocation } from '$lib/types/models';
+	import type { ItemPublic } from '$lib/types/models';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -13,7 +13,7 @@
 		preferredMode: TransportMode | undefined;
 		isLoggedIn: boolean;
 		hasQuery: boolean;
-		items: Item[];
+		items: ItemPublic[];
 		transportMode: TransportMode | null;
 		travelTimes: Record<string, number>;
 		maxMinutes: number;
@@ -36,71 +36,69 @@
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 	let mounted = false;
 
-	function extractOwnerLocations(): OwnerLocation[] {
-		const seen: Record<string, true> = {};
-		const result: OwnerLocation[] = [];
-		for (const item of items) {
-			const owner = item.expand?.owner;
-			if (!owner?.id || seen[owner.id]) continue;
-			const geo = owner.geolocation as { lon: number; lat: number } | undefined;
-			if (geo && !(geo.lon === 0 && geo.lat === 0)) {
-				seen[owner.id] = true;
-				result.push({ id: owner.id, lon: geo.lon, lat: geo.lat });
-			}
-		}
-		return result;
-	}
-
 	// Fire-and-forget: sends a diagnostic event to the server log. Never throws.
 	function sendDiag(payload: Record<string, unknown>) {
 		fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify(payload) }).catch(() => {});
 	}
 
 	async function fetchTravelTimes(mode: TransportMode, userLocation: { lon: number; lat: number }) {
-
+		console.log('[TravelTime] fetchTravelTimes: starting', { mode, userLocation });
 		isFetchingTravelTimes = true;
-		const owners = extractOwnerLocations();
-		if (owners.length === 0) return;
+
+		const ownerIds = [...new Set(items.map((item) => item.userId).filter(Boolean))];
+		if (ownerIds.length === 0) {
+			console.warn('[TravelTime] fetchTravelTimes: no owner IDs found, aborting');
+			isFetchingTravelTimes = false;
+			return;
+		}
+		console.log(`[TravelTime] fetchTravelTimes: sending request for ${ownerIds.length} owners`);
 
 		// Abort after 15s so a hanging ORS response doesn't leave the UI stuck indefinitely
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 15_000);
 		try {
-			const response = await fetch('/api/travel-times', {
+			const response = await fetch('/api/travel-times/search', {
 				method: 'POST',
 				signal: controller.signal,
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userLocation, transportMode: mode, owners }),
+				body: JSON.stringify({ userLocation, transportMode: mode, ownerIds }),
 			});
+			console.log('[TravelTime] fetchTravelTimes: response received', { status: response.status, ok: response.ok });
 			if (response.ok) {
 				travelTimes = await response.json();
+				console.log('[TravelTime] fetchTravelTimes: travelTimes updated', travelTimes);
 			} else {
+				console.error('[TravelTime] fetchTravelTimes: non-OK response', response.status);
 				sendDiag({ event: 'fetch_error', page: 'search', status: response.status });
 			}
 		} catch (err) {
 			// AbortError means our 15s timeout fired; any other error is a network failure
 			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+			console.error(`[TravelTime] fetchTravelTimes: ${isTimeout ? 'timed out after 15s' : 'network error'}`, err);
 			sendDiag({ event: isTimeout ? 'fetch_timeout' : 'fetch_error', page: 'search' });
-			console.error('Travel time fetch failed:', err);
 		} finally {
 			clearTimeout(timeoutId);
 			isFetchingTravelTimes = false;
+			console.log('[TravelTime] fetchTravelTimes: done, isFetchingTravelTimes = false');
 		}
 	}
 
 	function requestLocation(mode: TransportMode, { onDenied }: { onDenied?: () => void } = {}) {
-		
+		console.log('[TravelTime] requestLocation: requesting browser geolocation', { mode });
 		isFetchingTravelTimes = true;
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
-				if (!mounted) return;
+				console.log('[TravelTime] requestLocation: position received', { mounted, lon: pos.coords.longitude, lat: pos.coords.latitude });
+				if (!mounted) { console.warn('[TravelTime] requestLocation: component unmounted, ignoring position'); return; }
 				cachedUserLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
 				fetchTravelTimes(mode, cachedUserLocation);
 				showNoLocationPrompt = false;
 				locationStatus = 'idle';
 			},
-			() => {
+			(err) => {
+				console.warn('[TravelTime] requestLocation: geolocation denied/failed', { mounted, code: err.code, message: err.message });
 				if (!mounted) return;
+				isFetchingTravelTimes = false;
 				onDenied?.();
 			}
 		);
@@ -116,6 +114,7 @@
 	}
 
 	function handleTransportModeChange(mode: TransportMode) {
+		console.log('[TravelTime] handleTransportModeChange:', mode, { cachedUserLocation });
 		transportMode = mode;
 		dropdownOpen = false;
 		showNoLocationPrompt = false;
@@ -129,10 +128,12 @@
 		}
 
 		if (cachedUserLocation) {
+			console.log('[TravelTime] handleTransportModeChange: using cached location');
 			fetchTravelTimes(mode, cachedUserLocation);
 			return;
 		}
 
+		console.log('[TravelTime] handleTransportModeChange: no cached location, requesting from browser');
 		requestLocation(mode, {
 			onDenied: () => {
 				showNoLocationPrompt = true;
@@ -141,9 +142,13 @@
 	}
 
 	$effect(() => {
-		if (items.length === 0) return; // tracks items as a reactive dependency; nothing to fetch when empty
+		if (items.length === 0) { console.debug('[TravelTime] $effect: items empty, skipping'); return; }
+		// tracks items as a reactive dependency; re-fetches when items change
 		untrack(() => {
-			if (!mounted || !transportMode || !cachedUserLocation) return;
+			console.log('[TravelTime] $effect: items changed', { mounted, transportMode, hasCachedLocation: !!cachedUserLocation });
+			if (!mounted) { console.debug('[TravelTime] $effect: not mounted, skipping'); return; }
+			if (!transportMode) { console.debug('[TravelTime] $effect: no transportMode selected, skipping'); return; }
+			if (!cachedUserLocation) { console.debug('[TravelTime] $effect: no cached location, skipping'); return; }
 			fetchTravelTimes(transportMode, cachedUserLocation);
 		});
 	});

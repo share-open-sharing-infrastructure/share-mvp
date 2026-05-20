@@ -1,5 +1,5 @@
 import { PUBLIC_PB_URL } from '../../hooks.server';
-import type { Item } from '$lib/types/models';
+import type { ItemPublic } from '$lib/types/models';
 import { parseSearchParameters, buildItemFilter, type SearchParameters } from './searchFilter';
 import type { ListResult } from 'pocketbase';
 
@@ -7,7 +7,7 @@ export async function load({ locals, url }) {
 	// 1. Parse search parameters from URL
 	const searchParameters = parseSearchParameters(url) as SearchParameters;
 	// If user hasn't queried anything, shows only a few random items
-	const isRandomResultSet = (!searchParameters.query && searchParameters.selectedCategories.length === 0) ? true : false; 
+	const isRandomResultSet = (!searchParameters.query && searchParameters.selectedCategories.length === 0) ? true : false;
 
 	// 2. Build PocketBase filter
 	const filter = buildItemFilter(searchParameters, locals.user?.id);
@@ -16,10 +16,10 @@ export async function load({ locals, url }) {
 	const fetchPage = isRandomResultSet ? 1 : searchParameters.page;
 	const fetchPerPage = isRandomResultSet ? 8 : searchParameters.perPage;
 	const fetchSort = isRandomResultSet ? '@random' : '-updated';
-	
-	let result: ListResult<Item> = { page: 1, perPage: fetchPerPage, totalItems: 0, totalPages: 0, items: [] };
+
+	let result: ListResult<ItemPublic> = { page: 1, perPage: fetchPerPage, totalItems: 0, totalPages: 0, items: [] };
 	try {
-		result = await locals.pb.collection('items_public').getList<Item>(fetchPage, fetchPerPage, {
+		result = await locals.pb.collection('items_public').getList<ItemPublic>(fetchPage, fetchPerPage, {
 			sort: fetchSort,
 			filter,
 		});
