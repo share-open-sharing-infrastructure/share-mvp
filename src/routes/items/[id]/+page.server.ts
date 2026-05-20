@@ -60,8 +60,8 @@ export async function load({ params, locals }) {
 	if (item.userId) {
 		try {
 			const { totalItems } = await locals.pb
-				.collection('items')
-				.getList(1, 1, { filter: `owner = "${item.userId}"` });
+				.collection('items_public')
+				.getList(1, 1, { filter: `userId = "${item.userId}"` });
 			ownerItemCount = totalItems;
 		} catch {
 			// silently fall back to 0
