@@ -4,6 +4,7 @@
 	import { untrack } from 'svelte';
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+	import AllerLoader from '$lib/components/AllerLoader.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -80,9 +81,7 @@
 </script>
 
 {#if calculating}
-	<span class="text-sm text-gray-400 dark:text-gray-500 animate-pulse px-2 py-0.5">
-		{texts.pages.itemDetail.calculateTravelTime}…
-	</span>
+	<AllerLoader size={22} speed={1.2} variant="rotate" label="Reisezeiten werden berechnet …" />
 {:else if travelMinutes === undefined}
 	<button
 		type="button"

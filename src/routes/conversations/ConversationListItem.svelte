@@ -45,7 +45,7 @@
 					: 'hover:bg-white dark:hover:bg-tinte-800 hover:shadow-sm'}"
 	>
 		<!-- Item thumbnail -->
-		<div class="shrink-0 w-11 h-11 rounded-xl overflow-hidden bg-tinte-200 dark:bg-tinte-700">
+		<div class="shrink-0 w-11 h-11 rounded-full border border-tinte-400 overflow-hidden bg-tinte-200 dark:bg-tinte-700">
 			{#if itemImage}
 				<img
 					src={itemImage}

@@ -33,12 +33,11 @@
 	<div class="flex items-start gap-3">
 		<!-- Avatar -->
 		{#if ownerImageUrl}
-			<a href={resolve('/users/[id]', { id: owner.id })}>
+			<a href={resolve('/users/[id]', { id: owner.id })} class="shrink-0 block h-12 w-12 mt-0.5">
 				<img
 					src={ownerImageUrl}
 					alt={owner.username}
-					
-					class="h-12 w-12 rounded-full object-cover shrink-0 mt-0.5"
+					class="h-full w-full rounded-full object-cover"
 				/>
 			</a>
 		{:else if isInstitution}

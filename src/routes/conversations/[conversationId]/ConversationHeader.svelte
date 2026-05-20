@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
-	import { MapPinOutline, TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
+	import { TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
 	import { Tooltip } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
@@ -45,15 +45,35 @@
 	);
 
 	const telegramLink = $derived(telegramAvailable ? `https://t.me/${chatPartner.telegramUsername}` : null);
-	const signalLink = $derived(signalAvailable ? chatPartner.signalLink : null);
+	const signalLink = $derived(signalAvailable ? (chatPartner.signalLink ?? null) : null);
 
 	const showMessengerSection = $derived(telegramAvailable || telegramHidden || signalAvailable || signalHidden);
+
+	const chatPartnerAvatarUrl = $derived(
+		chatPartner.profileImage
+			? `${PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}`
+			: `https://ui-avatars.com/api/?name=${encodeURIComponent(chatPartner.username)}&background=random`
+	);
 </script>
+
+{#snippet messengerBtn(href: string | null, available: boolean, hidden: boolean, logo: string, activeColors: string, label: string, logoSize: string)}
+	{#if available || hidden}
+		<button
+			disabled={!available}
+			onclick={available ? () => window.open(`/api/redirect?to=${encodeURIComponent(href!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer') : undefined}
+			class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 {available ? `${activeColors} transition-colors cursor-pointer` : 'bg-tinte-100 dark:bg-tinte-800 opacity-40 cursor-not-allowed'}"
+			aria-label={label}
+		>
+			<img src={logo} class="{logoSize} {available ? '' : 'opacity-50'}" alt={label} />
+		</button>
+		<Tooltip type="light" placement="bottom">{available ? `Auf ${label} schreiben` : texts.messenger.onlyForTrusted}</Tooltip>
+	{/if}
+{/snippet}
 
 <div class="flex items-center gap-3 px-4 py-3 border-b border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 shrink-0 min-h-15">
 	<!-- Back button (mobile only) -->
 	<a
-		href="/conversations"
+		href={resolve('/conversations')}
 		class="md:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 transition-colors shrink-0"
 		aria-label="Zurück"
 	>
@@ -67,7 +87,7 @@
 	>
 		<img
 			src={`${PB_URL}api/files/${conversation.requestedItem.collectionId}/${conversation.requestedItem.id}/${conversation.requestedItem.image}`}
-			class="w-10 h-10 rounded-xl object-cover shrink-0"
+			class="w-10 h-10 rounded-full object-cover shrink-0"
 			alt={conversation.requestedItem.name}
 		/>
 		<div class="flex flex-col min-w-0">
@@ -111,54 +131,8 @@
 		<!-- Messenger contact icon buttons -->
 		{#if showMessengerSection}
 			<div class="flex items-center gap-1.5">
-				<!-- Telegram -->
-				{#if telegramAvailable}
-					<button
-						onclick={() => window.open(`/api/redirect?to=${encodeURIComponent(telegramLink!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer')}
-						class="w-7 h-7 rounded-full bg-[#2CA5E0] hover:bg-[#229ED9] flex items-center justify-center transition-colors shrink-0"
-						aria-label={texts.messenger.contactViaTelegram}
-					>
-						<img src={telegramLogo} class="w-3.5 h-3.5" alt="Telegram" />
-					</button>
-					<Tooltip type="light" placement="bottom" trigger="click">{texts.messenger.telegram}</Tooltip>
-				{:else if telegramHidden}
-					<!-- Disabled buttons suppress pointer events, preventing tooltip attachment.
-					     The span acts as the tooltip target while the button stays non-interactive. -->
-					<span id="tg-hidden-{chatPartner.id}" class="cursor-not-allowed">
-						<button
-							disabled
-							class="w-7 h-7 rounded-full bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center opacity-40 cursor-not-allowed shrink-0 pointer-events-none"
-							aria-label={texts.messenger.telegram}
-						>
-							<img src={telegramLogo} class="w-3.5 h-3.5 opacity-50" alt="Telegram" />
-						</button>
-					</span>
-					<Tooltip triggeredBy="#tg-hidden-{chatPartner.id}" type="light" placement="bottom" trigger="click">{texts.messenger.onlyForTrusted}</Tooltip>
-				{/if}
-
-				<!-- Signal -->
-				{#if signalAvailable}
-					<button
-						onclick={() => window.open(`/api/redirect?to=${encodeURIComponent(signalLink!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer')}
-						class="w-7 h-7 rounded-full bg-[#2C6BED] hover:bg-[#2460D4] flex items-center justify-center transition-colors shrink-0"
-						aria-label={texts.messenger.contactViaSignal}
-					>
-						<img src={signalLogo} class="w-3.5 h-3.5" alt="Signal" />
-					</button>
-					<Tooltip type="light" placement="bottom" trigger="click">{texts.messenger.signal}</Tooltip>
-				{:else if signalHidden}
-					<!-- Same span-wrapper pattern as Telegram above: disabled button → pointer-events-none, span is the tooltip target. -->
-					<span id="sig-hidden-{chatPartner.id}" class="cursor-not-allowed">
-						<button
-							disabled
-							class="w-7 h-7 rounded-full bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center opacity-40 cursor-not-allowed shrink-0 pointer-events-none"
-							aria-label={texts.messenger.signal}
-						>
-							<img src={signalLogo} class="w-3.5 h-3.5 opacity-50" alt="Signal" />
-						</button>
-					</span>
-					<Tooltip triggeredBy="#sig-hidden-{chatPartner.id}" type="light" placement="bottom" trigger="click">{texts.messenger.onlyForTrusted}</Tooltip>
-				{/if}
+				{@render messengerBtn(telegramLink, telegramAvailable, telegramHidden, telegramLogo, 'bg-[#2CA5E0] hover:bg-[#229ED9]', texts.messenger.telegram, 'w-5 h-5')}
+				{@render messengerBtn(signalLink, signalAvailable, signalHidden, signalLogo, 'bg-[#2C6BED] hover:bg-[#2460D4]', texts.messenger.signal, 'w-3.5 h-3.5')}
 			</div>
 		{/if}
 
@@ -175,8 +149,8 @@
 			</div>
 			<div class="relative shrink-0">
 				<img
-					src={`https://ui-avatars.com/api/?name=${chatPartner.username}&background=random`}
-					class="w-9 h-9 rounded-xl object-cover"
+					src={chatPartnerAvatarUrl}
+					class="w-9 h-9 rounded-full border object-cover"
 					alt="Avatar"
 				/>
 				{#if chatPartner.verified}

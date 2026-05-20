@@ -8,6 +8,7 @@
 		FooterLink,
 		FooterLinkGroup,
 	} from 'flowbite-svelte';
+	import { GithubSolid } from 'flowbite-svelte-icons';
 </script>
 
 <Footer footerType="socialmedia" class="mt-5">
@@ -20,7 +21,10 @@
 					name=""
 					aClass="flex items-center"
 				>
-					<img src="/AllerLeih.png" class="mr-3 h-12" alt={texts.names.app} />
+					<div class="flex flex-col items-center mr-3">
+						<img src="/AllerLeih.png" class="h-12" alt={texts.names.app} />
+						<span class="text-sm text-gray-400 tracking-wide mt-0.5">Lüneburg</span>
+					</div>
 					<p class="max-w-xs text-sm text-light">
 						Ein gemeinnütziger Verleih-Marktplatz.<br/>
 						Open-Source. Für Alle.
@@ -56,6 +60,12 @@
 						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
 							>{texts.nav.contact}</FooterLink
 						>
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="noopener noreferrer">
+							<span class="flex items-center gap-1">
+								<GithubSolid class="h-4 w-4" />
+								GitHub
+							</span>
+						</FooterLink>
 					</FooterLinkGroup>
 				</div>
 				<div>
@@ -101,7 +111,7 @@
 								xmlns="http://www.w3.org/2000/svg"
 								viewBox="0 0 24 24"
 								fill="currentColor"
-								class="h-5 w-5"
+								class="h-5 w-5 shrink-0"
 								aria-hidden="true"
 							>
 								<path

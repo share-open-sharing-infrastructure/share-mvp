@@ -5,7 +5,7 @@
 
 <p>Wir freuen uns über dein Interesse an AllerLeih. Der Schutz deiner personenbezogenen Daten ist uns wichtig. Diese Datenschutzerklärung erläutert, welche personenbezogenen Daten wir im Rahmen des Betriebs der Plattform <strong>allerleih.org</strong> verarbeiten, zu welchen Zwecken und auf welcher Rechtsgrundlage das geschieht, an wen sie gegebenenfalls weitergegeben werden und welche Rechte dir zustehen.</p>
 
-<p>AllerLeih ist derzeit als geschlossene Beta nur für eingeladene Personen zugänglich und wird schrittweise zur Open Beta erweitert. Solange wir uns in dieser frühen Phase befinden, kommen regelmäßig neue Funktionen hinzu. Wesentliche Änderungen an der Datenverarbeitung pflegen wir hier ein und informieren angemeldete Nutzer:innen zusätzlich direkt in der Anwendung oder per Mail.</p>
+<p>AllerLeih ist derzeit als offener Beta-Test für Menschen in Lüneburg verfügbar. Solange wir uns in dieser frühen Phase befinden, kommen regelmäßig neue Funktionen hinzu. Wesentliche Änderungen an der Datenverarbeitung pflegen wir hier ein und informieren angemeldete Nutzer:innen zusätzlich direkt in der Anwendung oder per Mail.</p>
 
 <p>Diese Erklärung gilt ausschließlich für die Plattform allerleih.org. Für Leihläden, die AllerLeih als Infrastruktur nutzen (zum Beispiel den Leihladen im Commons Zentrum Lüneburg), ist datenschutzrechtlich die jeweilige Trägerorganisation vor Ort verantwortlich. Deren Datenschutzinformationen erhältst du beim Leihladen selbst.</p>
 

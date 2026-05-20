@@ -139,12 +139,8 @@
 			src={previewUrl ?? imgUrl ?? placeholderimg}
 			class="mx-auto h-50 w-50 rounded-md object-cover p-5"
 		/>
-		<Label class="space-y-2">
-			<span
-				>{type === 'edit'
-					? texts.forms.changeImage
-					: texts.forms.addImage}</span
-			>
+		<Label class="space-y-2 mx-auto text-center">
+
 			<input
 				type="file"
 				id="with_helper"
@@ -153,7 +149,7 @@
 				accept="image/*"
 				onchange={handleFileChange}
 			/>
-			<Helper>SVG, PNG, JPG or GIF (max. 800x400px).</Helper>
+			<Helper>Alle gängigen Bildformate</Helper>
 		</Label>
 
 		<!-- ITEM DETAILS -->
@@ -173,7 +169,7 @@
 			<span>{texts.forms.description}</span>
 			<Textarea
 				name="itemDescription"
-				class="w-full min-h-50"
+				class="w-full h-30"
 				placeholder={texts.forms.itemDescription}
 				value={editingItem?.description ? editingItem.description : ''}
 				autocomplete="off"
@@ -204,7 +200,7 @@
 			<Toggle
 				name="trusteesOnly"
 				classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
-				checked={editingItem?.trusteesOnly ? editingItem.trusteesOnly : false}
+				checked={editingItem?.trusteesOnly ?? true}
 				>{texts.ui.trustedOnly}</Toggle
 			>
 			<!-- Click-toggled inline panel instead of a hover Popover — hover doesn't work on mobile. -->

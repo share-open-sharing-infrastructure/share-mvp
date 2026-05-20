@@ -21,19 +21,13 @@
 </div>
 
 <div class="flex flex-col gap-3">
-	<a
-		href={resolve('/search')}
-		class="flex items-center gap-3 w-full py-4 px-5 bg-primary text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
-	>
-		<span class="text-xl">🔍</span>
+	<a href={resolve('/search')} class="min-button py-2 px-6 bg-primary-200 hover:bg-primary flex items-center justify-center gap-2">
+		<span>🔍</span>
 		<span>{texts.onboarding.done.searchCta}</span>
 	</a>
 
-	<a
-		href={resolve('/user/items')}
-		class="flex items-center gap-3 w-full py-4 px-5 bg-accent text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
-	>
-		<span class="text-xl">📦</span>
+	<a href={resolve('/user/items')} class="min-button py-2 px-6 bg-accent-200 hover:bg-accent flex items-center justify-center gap-2">
+		<span>📦</span>
 		<span>{texts.onboarding.done.uploadCta}</span>
 	</a>
 

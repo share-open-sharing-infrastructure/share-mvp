@@ -33,7 +33,7 @@
 	}
 </script>
 
-<Button onclick={share} class="gap-2 min-button bg-primary-300 hover:bg-primary whitespace-nowrap">
+<Button onclick={share} class="gap-2 min-button w-full bg-primary-300 hover:bg-primary whitespace-nowrap">
 	{#if copied}
 		<CheckOutline class="h-4 w-4" />
 		{texts.pages.invite.linkCopied}

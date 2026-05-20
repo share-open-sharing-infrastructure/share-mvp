@@ -10,7 +10,7 @@
 		Button,
 		Tooltip
 	} from 'flowbite-svelte';
-	import { UserAddOutline, ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline } from 'flowbite-svelte-icons';
+	import { UserAddOutline, SearchOutline, ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -18,24 +18,23 @@
 
 	const { data } = $props();
 
-	// ── Add new trustee ──────────────────────────────────────────────────────────
-	let usernameToBeAdded = $state('');
-	let showDropdown = $state(false);
+	// ── Unified search ───────────────────────────────────────────────────────────
+	let search = $state('');
+	let showAddDropdown = $state(false);
 	let addFeedback = $state<{ type: 'success' | 'error'; message: string } | null>(null);
 
 	let filteredUsers = $derived(
-		usernameToBeAdded.length > 1
+		search.length > 1
 			? data.users.filter(
 					(user) =>
-						user.username.toLowerCase().includes(usernameToBeAdded.toLowerCase()) &&
+						user.username.toLowerCase().includes(search.toLowerCase()) &&
 						!data.trustNetwork.some((n: { id: string }) => n.id === user.id) &&
 						user.id !== data.currentUser.id
 				)
 			: []
 	);
 
-	// ── Table: search / sort / paginate ──────────────────────────────────────────
-	let tableSearch = $state('');
+	// ── Table: sort / paginate ────────────────────────────────────────────────────
 	type SortCol = 'username' | 'theyTrustMe' | 'iTrustThem';
 	let sortCol = $state<SortCol>('username');
 	let sortDir = $state<'asc' | 'desc'>('asc');
@@ -44,7 +43,7 @@
 
 	let filtered = $derived(
 		[...data.trustNetwork]
-			.filter((e) => e.username.toLowerCase().includes(tableSearch.toLowerCase()))
+			.filter((e) => e.username.toLowerCase().includes(search.toLowerCase()))
 			.sort((a, b) => {
 				const mul = sortDir === 'asc' ? 1 : -1;
 				if (sortCol === 'username') return mul * a.username.localeCompare(b.username);
@@ -66,8 +65,6 @@
 		}
 		currentPage = 0;
 	}
-
-
 </script>
 
 <svelte:head>
@@ -76,8 +73,8 @@
 
 
 <!-- HEADER -->
-<div class="pb-4 px-4 mx-auto max-w-7xl">
-	<div class="mx-auto max-w-screen-sm text-center mb-2 lg:mb-4">
+<div class="px-4 mx-auto max-w-7xl">
+	<div class="mx-auto max-w-screen-sm text-center">
 		<h2 class="mb-4 text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.ui.trustedPeople}
 		</h2>
@@ -92,75 +89,8 @@
 	</div>
 </div>
 
-<!-- ADD TRUSTEE SEARCH -->
- 
-<div id="searchbar" class="mb-6 p-2 flex items-center justify-center">
-	<div class="relative w-full max-w-md">
-		<input
-			type="text"
-			placeholder="Suche nach Namen zum Hinzufügen..."
-			class="search-bar w-full"
-			bind:value={usernameToBeAdded}
-			onfocus={() => (showDropdown = true)}
-			oninput={() => (showDropdown = true)}
-			onfocusoutcapture={() => setTimeout(() => (showDropdown = false), 200)}
-		/>
-
-		{#if showDropdown && filteredUsers.length > 0}
-			<div
-				class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-tinte-300 bg-sand shadow-lg dark:border-primary-700 dark:bg-primary-900"
-			>
-				{#each filteredUsers as potentialFriend (potentialFriend.id)}
-					<div class="flex items-center hover:bg-primary-50 dark:hover:bg-primary-900">
-						<a
-							href={resolve(`/users/[id]`, { id: potentialFriend.id })}
-							class="flex-1 p-3 text-tinte-900 dark:text-white"
-						>
-							@{potentialFriend.username}
-						</a>
-						<form
-							method="POST"
-							action="?/addTrustee"
-							use:enhance={() => {
-								return async ({ result, update }) => {
-									await update();
-									usernameToBeAdded = '';
-									showDropdown = false;
-									if (result.type === 'success' && result.data) {
-										addFeedback = { type: 'success', message: result.data.message as string };
-									} else if (result.type === 'failure') {
-										addFeedback = { type: 'error', message: (result.data?.message as string) ?? texts.errors.somethingWentWrong };
-									}
-								};
-							}}
-						>
-							<input type="hidden" name="trusteeId" value={potentialFriend.id} />
-							<input type="hidden" name="trusteeUsername" value={potentialFriend.username} />
-							<button
-								type="submit"
-								id="add-btn-{potentialFriend.id}"
-								class="mx-2 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-white cursor-pointer hover:bg-primary-700 transition-colors"
-							>
-								<UserAddOutline class="h-6 w-6" />
-							</button>
-							<Tooltip triggeredBy="#add-btn-{potentialFriend.id}" type="light" placement="left" trigger="click">
-								als Vertraute(n) hinzufügen
-							</Tooltip>
-						</form>
-					</div>
-				{/each}
-			</div>
-		{/if}
-		{#if addFeedback}
-			<div class="mt-3">
-				<CustomAlert type={addFeedback.type} message={addFeedback.message} />
-			</div>
-		{/if}
-	</div>
-</div>
-
 <!-- INVITE SECTION -->
-<div class="max-w-2xl mx-auto px-4 pt-6 pb-4">
+<div class="max-w-2xl mx-auto px-4 py-6">
 	<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8">
 		<h2 class="text-lg font-semibold text-tinte-900 dark:text-white mb-2">
 			{texts.pages.invite.sectionTitle}
@@ -180,6 +110,86 @@
 	</div>
 </div>
 
+<!-- UNIFIED SEARCH BAR -->
+<div class="mb-6 px-2 flex items-center justify-center">
+	<div class="relative w-full max-w-md">
+		<div class="relative flex items-center">
+			<input
+				type="text"
+				placeholder={texts.pages.social.searchPlaceholder}
+				class="search-bar w-full pr-10"
+				bind:value={search}
+				oninput={() => { currentPage = 0; showAddDropdown = false; }}
+			/>
+			{#if search.length > 1}
+				<button
+					type="button"
+					onclick={() => (showAddDropdown = !showAddDropdown)}
+					class="flex absolute right-2 text-tinte-400 hover:text-primary transition-colors cursor-pointer"
+					title="Nutzer:in hinzufügen"
+				>
+					<span class="text-md text-tinte-400 mr-2">{texts.pages.social.searchNewUser}</span>
+					<SearchOutline class="h-5 w-5" />
+				</button>
+			{/if}
+		</div>
+
+		{#if showAddDropdown}
+			<div class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-tinte-300 bg-sand shadow-lg dark:border-primary-700 dark:bg-primary-900">
+				{#if filteredUsers.length === 0}
+					<p class="p-3 text-sm text-tinte-400">{texts.pages.social.noNewUsersFound}</p>
+				{:else}
+					{#each filteredUsers as potentialFriend (potentialFriend.id)}
+						<div class="flex items-center hover:bg-primary-50 dark:hover:bg-primary-900">
+							<a
+								href={resolve(`/users/[id]`, { id: potentialFriend.id })}
+								class="flex-1 p-3 text-tinte-900 dark:text-white"
+							>
+								@{potentialFriend.username}
+							</a>
+							<form
+								method="POST"
+								action="?/addTrustee"
+								use:enhance={() => async ({ result, update }) => {
+									await update();
+									search = '';
+									showAddDropdown = false;
+									if (result.type === 'success' && result.data) {
+										addFeedback = { type: 'success', message: result.data.message as string };
+									} else if (result.type === 'failure') {
+										addFeedback = { type: 'error', message: (result.data?.message as string) ?? texts.errors.somethingWentWrong };
+									}
+								}}
+							>
+								<input type="hidden" name="trusteeId" value={potentialFriend.id} />
+								<input type="hidden" name="trusteeUsername" value={potentialFriend.username} />
+								<button
+									type="submit"
+									id="add-btn-{potentialFriend.id}"
+									class="mx-2 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-white cursor-pointer hover:bg-primary-700 transition-colors"
+								>
+									<UserAddOutline class="h-6 w-6" />
+								</button>
+								<Tooltip triggeredBy="#add-btn-{potentialFriend.id}" type="light" placement="left" trigger="click">
+									als Vertraute(n) hinzufügen
+								</Tooltip>
+							</form>
+						</div>
+					{/each}
+				{/if}
+			</div>
+		{/if}
+
+		{#if addFeedback}
+			<div class="mt-3">
+				<CustomAlert type={addFeedback.type} message={addFeedback.message} />
+			</div>
+		{/if}
+	</div>
+</div>
+
+
+
 {#snippet sortIcon(col: SortCol)}
 	{#if sortCol !== col}
 		<ArrowUpDownOutline class="shrink-0 h-3 w-3" />
@@ -192,7 +202,7 @@
 
 <!-- TRUST NETWORK TABLE -->
 <div class="mx-auto max-w-2xl px-2">
-	<Table hoverable divClass="relative overflow-x-auto bg-transparent" class="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-transparent">
+	<Table hoverable classes={{ div: "relative overflow-x-auto bg-transparent" }} class="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-transparent">
 		<TableHead defaultRow={false} class="bg-transparent!">
 			<!-- Sort header row -->
 			<tr>
@@ -215,24 +225,12 @@
 					<span class="flex flex-wrap items-center justify-center gap-1">{texts.ui.youTrustThem} {@render sortIcon('iTrustThem')}</span>
 				</TableHeadCell>
 			</tr>
-			<!-- Filter row -->
-			<tr>
-				<th class="bg-transparent! px-3 py-2" colspan={4}>
-					<input
-						type="search"
-						placeholder="Bestehendes Netzwerk durchsuchen..."
-						class="search-bar w-full text-sm font-normal"
-						bind:value={tableSearch}
-						oninput={() => (currentPage = 0)}
-					/>
-				</th>
-			</tr>
 		</TableHead>
 		<TableBody>
 			{#if paginated.length === 0}
 				<TableBodyRow class="bg-transparent!">
 					<TableBodyCell colspan={4} class="text-center text-tinte-500 dark:text-tinte-400 bg-transparent!">
-						{tableSearch ? 'Keine Treffer.' : texts.ui.trustNetworkEmpty}
+						{search ? 'Keine Treffer.' : texts.ui.trustNetworkEmpty}
 					</TableBodyCell>
 				</TableBodyRow>
 			{/if}
@@ -256,12 +254,9 @@
 
 					<!-- Vertraut dir (read-only) -->
 					<TableBodyCell class="text-center">
-						<input
-							type="checkbox"
-							checked={entry.theyTrustMe}
-							disabled
-							class="w-4 h-4 rounded border-tinte-600 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600"
-						/>
+						{#if entry.theyTrustMe}
+							<CheckCircleOutline class="h-5 w-5 text-green-500 inline" />
+						{/if}
 					</TableBodyCell>
 
 					<!-- Du vertraust (interactive) -->
@@ -275,7 +270,7 @@
 							<input
 								type="checkbox"
 								checked={entry.iTrustThem}
-								class="w-4 h-4 rounded border-tinte-600 text-primary-600 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer focus:ring-primary-500"
+								class="w-4 h-4 rounded-full border-tinte-600 text-green-500 bg-gray-100 dark:bg-gray-700 dark:border-gray-600 cursor-pointer focus:ring-primary-500"
 								onchange={(e) => (e.target as HTMLInputElement).form?.requestSubmit()}
 							/>
 						</form>
@@ -290,7 +285,7 @@
 		<div class="flex items-center justify-between mt-4 px-1">
 			<Button
 				size="sm"
-				color="alternative"
+				class="min-button bg-primary-200 hover:bg-primary"
 				disabled={currentPage === 0}
 				onclick={() => (currentPage -= 1)}
 			>
@@ -301,7 +296,7 @@
 			</span>
 			<Button
 				size="sm"
-				color="alternative"
+				class="min-button bg-primary-200 hover:bg-primary"
 				disabled={currentPage >= totalPages - 1}
 				onclick={() => (currentPage += 1)}
 			>

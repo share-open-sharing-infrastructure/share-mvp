@@ -23,8 +23,8 @@
 	{disabled}
 	{onclick}
 	class={variant === 'primary'
-		? 'w-full py-3 px-6 bg-primary text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60'
-		: 'w-full py-2 px-6 text-sm rounded-xl text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200 transition-colors'}
+		? 'w-full py-2 px-6 min-button bg-primary-200 hover:bg-primary cursor-pointer disabled:opacity-60'
+		: 'w-full py-2 px-6 text-sm text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200 transition-colors'}
 >
 	{@render children()}
 </button>

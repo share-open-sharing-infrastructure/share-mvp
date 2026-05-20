@@ -12,6 +12,7 @@
 		name: string;
 		description: string;
 		categories: string[];
+		trusteesOnly: boolean;
 		status: DraftStatus;
 	};
 

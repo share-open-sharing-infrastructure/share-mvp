@@ -25,7 +25,7 @@
 	<button
 		type="button"
 		onclick={onNext}
-		class="w-full py-3 px-6 rounded-4xl font-semibold border-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+		class="w-full py-3 px-6 rounded-4xl font-semibold border-2 border-primary text-primary hover:bg-primary hover:cursor-pointer hover:text-white transition-colors"
 	>
 		{texts.onboarding.buttons.configure}
 	</button>

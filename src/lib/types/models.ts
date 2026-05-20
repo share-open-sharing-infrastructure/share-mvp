@@ -186,6 +186,15 @@ export interface Message extends PocketBaseEntity {
 	to: UserId;
 }
 
+export type CounterfactualAnswer =
+	| 'pending'
+	| 'would_buy'
+	| 'not_important'
+	| 'too_expensive'
+	| 'borrow_elsewhere'
+	| 'unsure'
+	| 'skipped';
+
 export interface Conversation extends PocketBaseEntity {
 	requester: User;
 	itemOwner: User;
@@ -194,6 +203,7 @@ export interface Conversation extends PocketBaseEntity {
 	readByRequester: boolean;
 	readByOwner: boolean;
 	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
+	counterfactual?: CounterfactualAnswer;
 }
 
 // --- NOTIFICATION ---
@@ -222,4 +232,78 @@ export interface Notification extends PocketBaseEntity {
 	body: string;
 	/** Whether the recipient has seen this notification */
 	read: boolean;
+}
+
+// --- LENDING TERMS ---
+
+/**
+ * Versioned terms of use ("Leihbedingungen") published by an institutional owner.
+ * Each institution (e.g. Mosaique, Commons Zentrum) maintains one record per version.
+ * Exactly one record per owner should have `active = true` at any time.
+ *
+ * Records are treated as immutable once any acceptance refers to them — to update
+ * the text, create a new record with a bumped version and flip `active`.
+ */
+export interface LendingTerms extends PocketBaseEntity {
+	/** Foreign key: institution user that issues these terms (must have isInstitution = true) */
+	owner: UserId;
+
+	/** Semantic or date-based version string, e.g. "1.0" or "2026-05" */
+	version: string;
+
+	/** Human-readable title shown to users, e.g. "Leihbedingungen Leihregal im mosaique" */
+	title: string;
+
+	/** Full text of the terms — rendered as-is to the user. Plain text with paragraphs. */
+	body: string;
+
+	/** ISO datetime — earliest point at which these terms apply */
+	effectiveFrom: string;
+
+	/** Whether this is the currently active version for this owner. Max one per owner. */
+	active: boolean;
+
+	/** Minimum age (in years) required to digitally accept these terms. Default 18. */
+	minAge: number;
+
+	/** Optional: name of the legally responsible person/body for display */
+	contactPerson?: string;
+}
+
+/**
+ * Audit-trail record of one user accepting one specific version of LendingTerms.
+ *
+ * Body of the terms is snapshotted at acceptance time so the acceptance remains
+ * legally interpretable even if the source `LendingTerms` record changes.
+ */
+export interface TermAcceptance extends PocketBaseEntity {
+	/** Foreign key: user who accepted */
+	user: UserId;
+
+	/** Foreign key: the exact LendingTerms record (and thus version) accepted */
+	terms: string;
+
+	/** Server-stamped acceptance timestamp (ISO) */
+	acceptedAt: string;
+
+	/** Separate confirmation the user is at least minAge years old */
+	confirmedAdult: boolean;
+
+	/** Snapshot of the user's username at acceptance time (username may change later) */
+	fullNameSnapshot: string;
+
+	/** Snapshot of the full terms body at acceptance time (robust acceptance copy) */
+	termsBody: string;
+
+	/** Snapshot of version string for quick display */
+	termsVersion?: string;
+
+	/** Snapshot of terms title for quick display */
+	termsTitle?: string;
+
+	/** Client IP at acceptance (best-effort, may be proxy IP) */
+	userIp?: string;
+
+	/** User-Agent string at acceptance */
+	userAgent?: string;
 }

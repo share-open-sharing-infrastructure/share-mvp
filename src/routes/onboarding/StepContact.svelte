@@ -10,9 +10,15 @@
 
 	interface Props {
 		onNext: () => void;
+		currentUser?: {
+			telegramUsername?: string;
+			telegramVisibleToTrustedOnly?: boolean;
+			signalLink?: string;
+			signalVisibleToTrustedOnly?: boolean;
+		};
 	}
 
-	let { onNext }: Props = $props();
+	let { onNext, currentUser }: Props = $props();
 	let showTrustInfo = $state(false);
 
 	let errorMessage = $state<string | undefined>(undefined);
@@ -59,12 +65,13 @@
 				type="text"
 				name="telegramUsername"
 				id="telegramUsername"
+				value={currentUser?.telegramUsername ? `@${currentUser.telegramUsername}` : ''}
 				placeholder={texts.messenger.telegramUsernamePlaceholder}
 				autocomplete="off"
 				class="w-full px-3 py-2 bg-papier border border-tinte-300 rounded-lg text-sm text-tinte-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-tinte-700 dark:border-tinte-600 dark:text-white"
 			/>
 			<label class="flex items-center gap-2 mt-2 cursor-pointer">
-				<Toggle name="telegramVisibleToTrustedOnly" checked={true} />
+				<Toggle name="telegramVisibleToTrustedOnly" checked={currentUser?.telegramVisibleToTrustedOnly ?? true} />
 				<span class="text-sm text-tinte-600 dark:text-tinte-400"
 					>{texts.messenger.visibleToTrustedOnly}</span
 				>
@@ -75,7 +82,7 @@
 						type="button"
 						onclick={() => (showTrustInfo = !showTrustInfo)}
 					>
-						<QuestionCircleSolid class="ml-1 h-full" />
+						<QuestionCircleSolid class="ml-1 h-full hover:cursor-pointer" />
 						<span class="sr-only">{texts.ui.explainThis}</span>
 					</button>
 				</div>
@@ -108,12 +115,13 @@
 				type="text"
 				name="signalLink"
 				id="signalLink"
+				value={currentUser?.signalLink ?? ''}
 				placeholder={texts.messenger.signalLinkPlaceholder}
 				autocomplete="off"
 				class="w-full px-3 py-2 bg-papier border border-tinte-300 rounded-lg text-sm text-tinte-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-tinte-700 dark:border-tinte-600 dark:text-white"
 			/>
 			<label class="flex items-center gap-2 mt-2 cursor-pointer">
-				<Toggle name="signalVisibleToTrustedOnly" checked={true} />
+				<Toggle name="signalVisibleToTrustedOnly" checked={currentUser?.signalVisibleToTrustedOnly ?? true} />
 				<span class="text-sm text-tinte-600 dark:text-tinte-400"
 					>{texts.messenger.visibleToTrustedOnly}</span
 				>

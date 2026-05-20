@@ -7,9 +7,11 @@
 
 	interface Props {
 		onNext: () => void;
+		initialCity?: string;
+		initialGeolocation?: { lon: number; lat: number } | null;
 	}
 
-	let { onNext }: Props = $props();
+	let { onNext, initialCity, initialGeolocation }: Props = $props();
 
 	let errorMessage = $state<string | undefined>(undefined);
 </script>
@@ -42,7 +44,7 @@
 				}
 			}}
 	>
-		<AddressInput />
+		<AddressInput initialValue={initialCity} initialGeo={initialGeolocation} />
 
 		<div class="flex flex-col gap-2 pt-2">
 			<OnboardingButton type="submit">{texts.onboarding.buttons.next} →</OnboardingButton>

@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
-import type { Conversation } from '$lib/types/models.js';
+import type { Conversation, CounterfactualAnswer } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import * as lending from './lending.server.js';
 import * as messaging from './conversation.server.js';
@@ -29,6 +29,7 @@ export async function load({ params, locals }) {
 		readByRequester: conversationRecord.readByRequester,
 		readByOwner: conversationRecord.readByOwner,
 		lendingStatus: conversationRecord.lendingStatus ?? undefined,
+		counterfactual: conversationRecord.counterfactual ?? undefined,
 		created: conversationRecord.created,
 		updated: conversationRecord.updated,
 	};
@@ -46,6 +47,21 @@ export async function load({ params, locals }) {
 				...(isRequester && { readByRequester: true }),
 				...(isOwner && { readByOwner: true }),
 			});
+		}
+
+		// Conversation read state (readByRequester/readByOwner) and notification read
+		// state are tracked in separate collections, so viewing the conversation does
+		// not automatically clear the notification badge. We sync them here.
+		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
+			filter: `recipient="${locals.user.id}" && relatedId="${conversationId}" && read=false`,
+			fields: 'id',
+		});
+		if (unreadNotifs.length > 0) {
+			await Promise.all(
+				unreadNotifs.map((n) =>
+					locals.pb.collection('notifications').update(n.id, { read: true }).catch(() => {})
+				)
+			);
 		}
 	}
 
@@ -107,5 +123,25 @@ export const actions = {
 	confirmReturn: async ({ locals, params }) => {
 		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
 		return lending.confirmReturn(locals.pb, params.conversationId, locals.user.id);
+	},
+
+	submitCounterfactual: async ({ locals, request }) => {
+		const form = await request.formData();
+		const conversationId = form.get('conversationId') as string;
+		let answer = form.get('answer') as string;
+		// 'other' is a UI-only sentinel replaced by free text below; all other values must be valid CounterfactualAnswer values (excluding 'pending' which is server-assigned).
+		const valid: (CounterfactualAnswer | 'other')[] = ['would_buy', 'not_important', 'too_expensive', 'borrow_elsewhere', 'unsure', 'other', 'skipped'];
+		if (!valid.includes(answer as CounterfactualAnswer | 'other')) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+		if (answer === 'other') {
+			const text = (form.get('answerText') as string)?.trim();
+			if (!text) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+			answer = text;
+		}
+		try {
+			await locals.pb.collection('conversations').update(conversationId, { counterfactual: answer });
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+		}
 	},
 };

@@ -3,16 +3,18 @@
 
 	interface Props {
 		initialValue?: string;
+		initialGeo?: { lon: number; lat: number } | null;
 		required?: boolean;
 	}
 
-	let { initialValue = '', required = true }: Props = $props();
+	let { initialValue = '', initialGeo = null, required = true }: Props = $props();
 
 	// svelte-ignore state_referenced_locally
 	let cityText = $state(initialValue);
 	let suggestions: { label: string; lon: number; lat: number }[] = $state([]);
 	let isLoadingGeo = $state(false);
-	let selectedGeo: { lon: number; lat: number } | null = $state(null);
+	// svelte-ignore state_referenced_locally
+	let selectedGeo: { lon: number; lat: number } | null = $state(initialGeo);
 	let isValidSelection = $state(true);
 	let showSuggestions = $state(false);
 	let cityInputEl: HTMLInputElement | undefined = $state(undefined);

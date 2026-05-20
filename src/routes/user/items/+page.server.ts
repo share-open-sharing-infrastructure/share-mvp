@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
+import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
-import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
 import type { Item } from '$lib/types/models';
 
 export async function load({ locals, url }) {
@@ -187,27 +188,48 @@ export const actions = {
 		}
 	},
 
+	toggleTrusteesOnly: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const itemId = formData.get('itemId')?.toString();
+		if (!itemId) return fail(400, { fail: true, message: texts.errors.missingId });
+
+		let item: Item;
+		try {
+			item = await locals.pb.collection('items').getOne<Item>(itemId);
+		} catch {
+			return fail(404, { fail: true, message: texts.errors.itemNotFound });
+		}
+
+		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: texts.errors.noPermission });
+
+		try {
+			await locals.pb.collection('items').update(itemId, { trusteesOnly: !item.trusteesOnly });
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+		}
+	},
+
 	toggleStatus: async ({ locals, request }) => {
 		const formData = await request.formData();
 		const itemId = formData.get('itemId')?.toString();
-		if (!itemId) return fail(400, { fail: true, message: 'Fehlende Item-ID.' });
+		if (!itemId) return fail(400, { fail: true, message: texts.errors.missingId });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		let item: any;
+		let item: Item;
 		try {
-			item = await locals.pb.collection('items').getOne(itemId);
+			item = await locals.pb.collection('items').getOne<Item>(itemId);
 		} catch {
-			return fail(404, { fail: true, message: 'Gegenstand nicht gefunden.' });
+			return fail(404, { fail: true, message: texts.errors.itemNotFound });
 		}
 
-		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: 'Keine Berechtigung.' });
+		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: texts.errors.noPermission });
 
 		const newStatus = item.status === 'available' ? 'unavailable' : 'available';
 		try {
 			await locals.pb.collection('items').update(itemId, { status: newStatus });
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (err: Error | any) {
-			console.error(err?.message ?? err);
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
 		}
 	},
 };

@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Badge, Alert } from 'flowbite-svelte';
+	import { Badge, Alert, Tooltip } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
+	import { HeartSolid } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 	import ItemImage from './ItemImage.svelte';
@@ -72,11 +74,29 @@
 		{data.item.name}
 	</h1>
 
+	<!-- Status + trustees-only pills -->
+	{#if data.item.status !== 'unknown' || data.item.trusteesOnly}
+		<div class="flex flex-wrap gap-2 items-center">
+			{#if data.item.status !== 'unknown'}
+				<span class="text-sm font-semibold rounded-full border px-3 py-0.5 {data.item.status === 'available' ? 'bg-green-50 text-green-700 border-green-300' : 'bg-red-50 text-red-600 border-red-300'}">
+					{data.item.status === 'available' ? texts.itemStatus.available : texts.itemStatus.unavailable}
+				</span>
+			{/if}
+			{#if data.item.trusteesOnly}
+				<span class="inline-flex items-center gap-1.5 text-sm font-semibold rounded-full border px-3 py-0.5 bg-green-50 text-green-700 border-green-300 cursor-default">
+					<HeartSolid class="h-3.5 w-3.5 shrink-0" />
+					{texts.ui.trustedOnly}
+				</span>
+				<Tooltip type="light" placement="top">{texts.pages.itemDetail.trustRestrictedTooltip}</Tooltip>
+			{/if}
+		</div>
+	{/if}
+
 	<!-- Categories -->
 	{#if data.item.categories?.length}
 		<div class="flex flex-wrap gap-2">
 			{#each data.item.categories as cat (cat)}
-				<Badge class="rounded-xl text-md shadow bg-primary-100 border border-primary">{cat}</Badge>
+				<Badge href="{resolve('/search')}?cats={encodeURIComponent(cat)}" class="rounded-xl text-md shadow bg-primary-100 border border-primary hover:opacity-80">{cat}</Badge>
 			{/each}
 		</div>
 	{/if}
@@ -105,6 +125,7 @@
 			{isTrustRestricted}
 			{isArchived}
 			existingConversation={data.existingConversation}
+			requiresTermsAcceptance={data.requiresTermsAcceptance}
 		/>
 	</div>
 

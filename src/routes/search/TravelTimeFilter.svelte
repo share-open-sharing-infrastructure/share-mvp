@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { Dropdown, DropdownItem } from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+	import AllerLoader from '$lib/components/AllerLoader.svelte';
 	import type { Item, OwnerLocation } from '$lib/types/models';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -31,6 +32,7 @@
 	let dropdownOpen = $state(false);
 	let showNoLocationPrompt = $state(false);
 	let locationStatus = $state<'idle' | 'requesting' | 'denied'>('idle');
+	let isFetchingTravelTimes = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 	let mounted = false;
 
@@ -55,6 +57,8 @@
 	}
 
 	async function fetchTravelTimes(mode: TransportMode, userLocation: { lon: number; lat: number }) {
+
+		isFetchingTravelTimes = true;
 		const owners = extractOwnerLocations();
 		if (owners.length === 0) return;
 
@@ -80,10 +84,13 @@
 			console.error('Travel time fetch failed:', err);
 		} finally {
 			clearTimeout(timeoutId);
+			isFetchingTravelTimes = false;
 		}
 	}
 
 	function requestLocation(mode: TransportMode, { onDenied }: { onDenied?: () => void } = {}) {
+		
+		isFetchingTravelTimes = true;
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
 				if (!mounted) return;
@@ -133,6 +140,14 @@
 		});
 	}
 
+	$effect(() => {
+		if (items.length === 0) return; // tracks items as a reactive dependency; nothing to fetch when empty
+		untrack(() => {
+			if (!mounted || !transportMode || !cachedUserLocation) return;
+			fetchTravelTimes(transportMode, cachedUserLocation);
+		});
+	});
+
 	onMount(() => {
 		mounted = true;
 		return () => {
@@ -141,18 +156,24 @@
 	});
 </script>
 
+
+
 {#if isLoggedIn && hasQuery}
-	<div
-		class="flex flex-wrap justify-center items-center gap-3 border border-primary-100 dark:border-tinte-700 rounded-xl px-4 py-3 mt-3"
+<div
+		class="flex flex-wrap justify-center items-center border border-primary-100 dark:border-tinte-700 rounded-xl px-3 py-1"
 	>
+		<!-- Loading spinner while ORS fetch is in flight -->
+		{#if isFetchingTravelTimes}
+			<AllerLoader size={22} speed={1.2} variant="rotate" label="Reisezeiten werden berechnet …" />
+		{/if}
 		<!-- Transport mode selector -->
-		<div class="relative">
+		<div class="relative ml-2">
 			{#if transportMode === null && preferredMode}
 				<!-- Preferred mode known: single click triggers calculation directly -->
 				<button
 					type="button"
 					onclick={() => handleTransportModeChange(preferredMode)}
-					class="flex items-center gap-1.5 text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1.5 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
+					class="flex items-center text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
 				>
 					{texts.pages.itemDetail.calculateTravelTime}
 				</button>
@@ -161,12 +182,12 @@
 				<button
 					id="search-transport-btn"
 					type="button"
-					class="flex items-center gap-1.5 text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1.5 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
+					class="flex items-center text-sm font-medium text-tinte-700 dark:text-tinte-200 bg-white dark:bg-tinte-700 border border-tinte-300 dark:border-tinte-600 rounded-full px-3 py-1 hover:bg-tinte-50 dark:hover:bg-tinte-600 cursor-pointer transition-colors"
 				>
 					{#if transportMode === null}
 						{texts.pages.itemDetail.calculateTravelTime}
 					{:else}
-						<TransportModeIcon mode={transportMode} class="h-3.5 w-3.5" />
+						<TransportModeIcon mode={transportMode} class="h-3.5 w-3.5 mr-1" />
 						{texts.pages.search.transportModes[transportMode]}
 					{/if}
 					<ChevronDownOutline class="h-3 w-3 ml-0.5" />
@@ -194,7 +215,7 @@
 
 		<!-- Travel time slider (only once a mode is chosen) -->
 		{#if transportMode !== null}
-			<div class="flex items-center gap-2">
+			<div class="flex items-center gap-2 ml-1">
 				<input
 					type="range"
 					min="5"
