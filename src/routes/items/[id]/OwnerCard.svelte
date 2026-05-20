@@ -19,6 +19,7 @@
 	const cardTitle = $derived(
 		isInstitution ? texts.pages.itemDetail.institutionCardTitle : texts.pages.itemDetail.ownerCardTitle
 	);
+	console.log(owner.created);
 	const registeredSince = $derived(
 		new Date(owner.created).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
 	);

@@ -18,7 +18,7 @@
 		verified: item.verified,
 		isInstitution: item.isInstitution,
 		profileImage: item.profileImage,
-		created: item.created,
+		created: item.userCreated,
 	}) as UserPublic;
 
 	const isTrustRestricted = $derived(data.isTrustRestricted);

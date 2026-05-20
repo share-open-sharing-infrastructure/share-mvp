@@ -127,7 +127,6 @@ export interface UserPublic extends PocketBaseEntity {
 	profileImage: string | null;
 	telegramVisibleToTrustedOnly: boolean;
 	signalVisibleToTrustedOnly: boolean;
-	created: string;
 }
 
 // --- ITEM ---
@@ -208,6 +207,7 @@ export interface ItemPublic extends PocketBaseEntity {
 	bio: string;
 	verified: boolean;
 	profileImage: string | null;
+	userCreated: string;
 	/** 1 if the owner has a non-zero geolocation set, 0 otherwise. Evaluated in the view SQL — never exposes coordinates. */
 	ownerHasLocation: 0 | 1;
 }
