@@ -80,7 +80,7 @@ export async function sendPushToUser(
 
 	const payload = JSON.stringify({ title, body, url });
 
-	await Promise.all(
+	await Promise.allSettled(
 		subscriptions.map(async (sub) => {
 			try {
 				await webpush.sendNotification(

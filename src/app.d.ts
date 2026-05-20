@@ -10,6 +10,7 @@ declare global {
 		interface PageData {
 			currentUser: import('pocketbase').Record | null;
 			unreadNotificationCount?: number;
+			pbAuthToken?: string | null;
 		}
 		// interface PageState {}
 		// interface Platform {}

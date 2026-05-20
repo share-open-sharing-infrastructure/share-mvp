@@ -4,7 +4,7 @@
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
-	import { getClientPB } from '$lib/client-pb';
+	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
 	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
@@ -39,6 +39,15 @@
 		}
 	});
 
+	// Keep the client PB auth in sync with the server-issued JWT.
+	// The auth cookie is httpOnly so JS cannot read it directly; the token is
+	// passed via page data instead. This effect re-runs on every navigation
+	// that causes the layout load to re-execute (which issues a fresh JWT via
+	// authRefresh), keeping the singleton's token current without cookie access.
+	$effect(() => {
+		syncClientPBAuth(data.pbAuthToken ?? null, data.currentUser ?? null);
+	});
+
 	onMount(() => {
 		// Capture Chrome/Edge's install prompt before it shows the mini-infobar
 		window.addEventListener('beforeinstallprompt', (e) => {
@@ -60,6 +69,7 @@
 		const userId = data.currentUser?.id;
 		if (!userId) return;
 
+		// Auth is already synced by the $effect above (effects run before onMount).
 		const pb = getClientPB();
 
 		pb.collection('notifications').subscribe('*', async (e) => {

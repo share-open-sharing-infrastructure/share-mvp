@@ -20,6 +20,11 @@ export async function load({ params, locals }) {
 		error(e.status === 404 ? 404 : 500, e.status === 404 ? texts.errors.conversationNotFound : 'Unable to load conversation.');
 	}
 
+	const isParticipant =
+		locals.user?.id === conversationRecord.requester ||
+		locals.user?.id === conversationRecord.itemOwner;
+	if (!isParticipant) error(403, texts.errors.noPermission);
+
 	const conversation: Conversation = {
 		id: conversationRecord.id,
 		requester: conversationRecord.expand?.requester,
@@ -71,11 +76,14 @@ export async function load({ params, locals }) {
 export const actions = {
 	sendMessage: async ({ locals, request, params }) => {
 		const data = await request.formData();
+		const content = data.get('messageContent')?.toString().trim();
+		if (!content) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+		if (content.length > 5000) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
 		const senderName = locals.user.username ?? locals.user.name ?? 'Jemand';
 		return messaging.sendMessage(
 			locals.pb,
 			params.conversationId,
-			data.get('messageContent'),
+			content,
 			locals.user.id,
 			data.get('chatPartnerId') as string,
 			senderName
@@ -91,6 +99,12 @@ export const actions = {
 		const data = await request.formData();
 		const conversationId = data.get('conversationId') as string;
 		try {
+			const conv = await locals.pb
+				.collection('conversations')
+				.getOne(conversationId, { fields: 'requester,itemOwner' });
+			if (conv.requester !== locals.user?.id && conv.itemOwner !== locals.user?.id) {
+				return fail(403, { fail: true, message: texts.errors.noPermission });
+			}
 			await messaging.deleteConversation(locals.pb, conversationId);
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
@@ -138,6 +152,12 @@ export const actions = {
 			answer = text;
 		}
 		try {
+			const conv = await locals.pb
+				.collection('conversations')
+				.getOne(conversationId, { fields: 'requester,itemOwner' });
+			if (conv.requester !== locals.user?.id && conv.itemOwner !== locals.user?.id) {
+				return fail(403, { fail: true, message: texts.errors.noPermission });
+			}
 			await locals.pb.collection('conversations').update(conversationId, { counterfactual: answer });
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;

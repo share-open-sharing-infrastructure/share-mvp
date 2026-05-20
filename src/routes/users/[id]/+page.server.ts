@@ -61,15 +61,9 @@ export async function load({ params, locals }) {
 }
 
 export const actions = {
-	addTrust: async ({ params, locals }): Promise<void> => {
-		if (!locals.user) {
-			fail(401, { message: texts.errors.noPermission });
-			return;
-		}
-		if (params.id === locals.user.id) {
-			fail(400, { message: texts.errors.noPermission });
-			return;
-		}
+	addTrust: async ({ params, locals }) => {
+		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
+		if (params.id === locals.user.id) return fail(400, { message: texts.errors.noPermission });
 
 		const profileUserId = params.id;
 		const updatedTrusts = [...(locals.user.trusts || []), profileUserId];
@@ -90,11 +84,8 @@ export const actions = {
 		}
 	},
 
-	removeTrust: async ({ params, locals }): Promise<void> => {
-		if (!locals.user) {
-			fail(401, { message: texts.errors.noPermission });
-			return;
-		}
+	removeTrust: async ({ params, locals }) => {
+		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
 
 		const profileUserId = params.id;
 		const updatedTrusts = (locals.user.trusts || []).filter((id: string) => id !== profileUserId);

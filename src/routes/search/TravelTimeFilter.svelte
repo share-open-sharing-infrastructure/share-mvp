@@ -85,7 +85,7 @@
 				showNoLocationPrompt = false;
 				locationStatus = 'idle';
 			},
-			(err) => {
+			() => {
 				if (!mounted) return;
 				isFetchingTravelTimes = false;
 				onDenied?.();

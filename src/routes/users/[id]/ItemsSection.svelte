@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import type { Item } from '$lib/types/models';
+	import type { Item, ItemPublic } from '$lib/types/models';
 	import ItemCard from '../../search/ItemCard.svelte';
 	import LockedItemCard from './LockedItemCard.svelte';
 
@@ -100,7 +100,7 @@
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 			{#each displayedItems as item (item.id)}
 				<ItemCard
-					{item}
+					item={item as unknown as ItemPublic}
 					imgUrl={item.image ? `${pbImgUrl}api/files/${item.collectionId}/${item.id}/${item.image}` : (item.externalImgUrl ?? '')}
 					ownerImgUrl={profileImageUrl ?? undefined}
 					profileView={true}
