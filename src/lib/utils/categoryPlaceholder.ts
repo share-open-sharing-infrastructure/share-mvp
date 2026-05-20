@@ -13,7 +13,7 @@ const PLACEHOLDERS: Record<(typeof ITEM_CATEGORIES)[number], string> = {
 	'Sonstiges': '/category-placeholders/Sonstiges.svg',
 };
 
-export function getCategoryPlaceholder(categories?: string[]): string | null {
+export function getCategoryPlaceholder(categories: string[]): string | null {
 	if (!categories || categories.length === 0) return null;
 	return PLACEHOLDERS[categories[0] as (typeof ITEM_CATEGORIES)[number]] ?? null;
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ItemWithOwner } from '$lib/types/models';
+	import type { ItemPublic } from '$lib/types/models';
 	import { Card } from 'flowbite-svelte';
 	import { UserCircleOutline, HeartSolid, HomeOutline } from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
@@ -12,7 +12,7 @@
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	interface Props {
-		item: ItemWithOwner;
+		item: ItemPublic;
 		imgUrl: string;
 		ownerImgUrl?: string;
 		profileView?: boolean;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Gallery } from 'flowbite-svelte';
 	import ItemCard from './ItemCard.svelte';
-	import type { ItemWithOwner } from '$lib/types/models';
+	import type { ItemPublic } from '$lib/types/models';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -12,7 +12,7 @@
 		transportMode = 'bicycle',
 		currentUserId,
 	}: {
-		filteredItemList: ItemWithOwner[];
+		filteredItemList: ItemPublic[];
 		PB_IMG_URL: string;
 		travelTimes: Record<string, number | null>;
 		transportMode?: TransportMode;

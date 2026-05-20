@@ -173,13 +173,27 @@ export interface Item extends PocketBaseEntity {
 	externalImgUrl?: string;
 }
 
-export interface ItemWithOwner extends Item {
-	userId: string;
+/**
+ * Flat row returned by the `items_public` PocketBase view.
+ * Mirrors the view's SELECT exactly — field names here must stay in sync with the SQL.
+ */
+export interface ItemPublic extends PocketBaseEntity {
+	id: string;
+	name: string;
+	image: string | null;
+	externalImgUrl: string | null;
+	description: string;
+	trusteesOnly: boolean;
+	status: 'available' | 'unavailable' | 'unknown';
+	collectionId: string;
+	categories: string[];
+	updated: string;
+    userId: UserId;
 	username: string;
-	trusts: UserId[];
-	isInstitution?: boolean;
-	verified?: boolean;
-	profileImage?: string;
+	trusts: string[]; 
+	isInstitution: boolean;
+	verified: boolean;
+	profileImage: string | null;
 }
 
 // --- MESSAGE ---

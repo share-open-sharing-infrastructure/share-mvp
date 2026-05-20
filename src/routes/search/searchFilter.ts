@@ -1,4 +1,5 @@
 import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import type { ItemPublic } from '$lib/types/models';
 
 export type SearchParameters = {
 	query: string;
@@ -9,6 +10,14 @@ export type SearchParameters = {
 	onlyAvailable: boolean;
 	ownerType: 'all' | 'institution' | 'private';
 };
+
+/**
+ * Returns the field name as a string, validated at compile time against the `items_public` view schema.
+ * Use this for every field reference in PocketBase filter strings so that renames are caught by TypeScript.
+ */
+function validateFilterField(field: keyof ItemPublic): string {
+	return field;
+}
 
 /**
  * Converts a free-text search query into a PocketBase filter expression that matches items
@@ -23,7 +32,7 @@ export function buildSearchFilter(raw: string): string | null {
 	return tokens
 		.map((token) => {
 			const safe = token.replace(/"/g, '\\"');
-			return `(name ~ "${safe}" || description ~ "${safe}")`;
+			return `(${validateFilterField('name')} ~ "${safe}" || ${validateFilterField('description')} ~ "${safe}")`;
 		})
 		.join(' && ');
 }
@@ -56,8 +65,9 @@ export function parseSearchParameters(url: URL): SearchParameters {
 }
 
 /**
- * Builds the complete PocketBase filter string for the items collection by combining all
+ * Builds the complete PocketBase filter string for the `items_public` view by combining all
  * active search constraints (name, owner, categories, trust, availability, owner type) with `&&`.
+ * All field references are validated at compile time via `col()` against `ItemPublic`.
  * @param params the parsed search parameters produced by `parseSearchParameters`
  * @param userId the id of the logged-in user, or `undefined` if unauthenticated; used to exclude
  *   the user's own items and to apply trust-based visibility rules
@@ -65,26 +75,26 @@ export function parseSearchParameters(url: URL): SearchParameters {
  */
 export function buildItemFilter(params: SearchParameters, userId?: string): string | undefined {
 	const nameFilter = buildSearchFilter(params.query);
-	const ownerFilter = userId ? `owner != "${userId}"` : null;
+	const ownerFilter = userId ? `${validateFilterField('userId')} != "${userId}"` : null;
 
 	// Escape & as \& so PocketBase's filter parser doesn't misinterpret it as the && operator.
 	const escapeCategoryValue = (c: string) => c.replace(/&/g, '\\&');
 	const categoryFilter =
 		params.selectedCategories.length > 0
-			? `(${params.selectedCategories.map((c) => `categories ~ '${escapeCategoryValue(c)}'`).join(params.op === 'and' ? ' && ' : ' || ')})`
+			? `(${params.selectedCategories.map((c) => `${validateFilterField('categories')} ~ '${escapeCategoryValue(c)}'`).join(params.op === 'and' ? ' && ' : ' || ')})`
 			: null;
 
 	const trustFilter = userId
-		? `(trusteesOnly = false || owner.trusts ~ "${userId}")`
-		: `trusteesOnly = false`;
+		? `(${validateFilterField('trusteesOnly')} = false || ${validateFilterField('trusts')} ~ "${userId}")`
+		: `${validateFilterField('trusteesOnly')} = false`;
 
-	const availabilityFilter = params.onlyAvailable ? "status != 'unavailable'" : null;
+	const availabilityFilter = params.onlyAvailable ? `${validateFilterField('status')} != 'unavailable'` : null;
 
 	const institutionFilter =
 		params.ownerType === 'institution'
-			? 'owner.isInstitution = true'
+			? `${validateFilterField('isInstitution')} = true`
 			: params.ownerType === 'private'
-				? 'owner.isInstitution != true'
+				? `${validateFilterField('isInstitution')} != true`
 				: null;
 
 	return (
