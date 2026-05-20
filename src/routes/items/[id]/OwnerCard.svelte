@@ -2,24 +2,24 @@
 	import { UserCircleOutline, HomeOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
-	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
-	import type { User } from '$lib/types/models';
+	import type { UserPublic } from '$lib/types/models';
 
 	interface Props {
-		owner: User;
-		ownerImageUrl: string | null;
+		owner: UserPublic;
+		pbImgUrl: string;
 		ownerTrustsViewer: boolean;
 		ownerItemCount: number;
 		isAuthenticated: boolean;
 		isOwnItem: boolean;
 	}
 
-	const { owner, ownerImageUrl, ownerTrustsViewer, ownerItemCount, isAuthenticated, isOwnItem }: Props = $props();
+	const { owner, pbImgUrl, ownerTrustsViewer, ownerItemCount, isAuthenticated, isOwnItem }: Props = $props();
 
 	const isInstitution = $derived(!!owner.isInstitution);
 	const cardTitle = $derived(
 		isInstitution ? texts.pages.itemDetail.institutionCardTitle : texts.pages.itemDetail.ownerCardTitle
 	);
+	console.log(owner.created);
 	const registeredSince = $derived(
 		new Date(owner.created).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
 	);
@@ -32,10 +32,10 @@
 
 	<div class="flex items-start gap-3">
 		<!-- Avatar -->
-		{#if ownerImageUrl}
+		{#if owner.profileImage}
 			<a href={resolve('/users/[id]', { id: owner.id })} class="shrink-0 block h-12 w-12 mt-0.5">
 				<img
-					src={ownerImageUrl}
+					src={`${pbImgUrl}api/files/users/${owner.id}/${owner.profileImage}`}
 					alt={owner.username}
 					class="h-full w-full rounded-full object-cover"
 				/>

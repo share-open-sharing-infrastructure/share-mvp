@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import ItemModal from './ItemModal.svelte';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		item: Item;
@@ -13,8 +14,12 @@
 	let { item, PB_URL, selected, onselectedchange }: Props = $props();
 
 	let showEditModal = $state(false);
+	// svelte-ignore state_referenced_locally
+	// eslint-disable-next-line svelte/prefer-writable-derived	
 	let optimisticStatus = $state(item.status as 'available' | 'unavailable');
 	$effect(() => { optimisticStatus = item.status as 'available' | 'unavailable'; });
+	// svelte-ignore state_referenced_locally
+	// eslint-disable-next-line svelte/prefer-writable-derived
 	let optimisticTrusteesOnly = $state(item.trusteesOnly);
 	$effect(() => { optimisticTrusteesOnly = item.trusteesOnly; });
 
@@ -41,15 +46,15 @@
 		<img src={getRealImageUrl(item)!} alt={item.name} class="w-10 h-10 rounded object-cover shrink-0" />
 	{:else}
 		<div class="w-10 h-10 rounded shrink-0 bg-gray-100 flex items-center justify-center overflow-hidden">
-			{#if getCategoryPlaceholder(item.categories)}
-				<img src={getCategoryPlaceholder(item.categories)!} alt="" class="w-full h-full object-contain p-1 opacity-40" />
+			{#if getCategoryPlaceholder(item.categories ?? [])}
+				<img src={getCategoryPlaceholder(item.categories ?? [])!} alt="" class="w-full h-full object-contain p-1 opacity-40" />
 			{/if}
 		</div>
 	{/if}
 
 	<!-- Name + badges -->
 	<div class="flex-1 flex items-center gap-2 min-w-0">
-		<a href="/items/{item.id}" class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline sm:max-w-[40%] sm:min-w-32">{item.name}</a>
+		<a href={resolve(`/items/${item.id}`)} class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline sm:max-w-[40%] sm:min-w-32">{item.name}</a>
 		{#if item.description}
 			<span class="hidden sm:block text-xs text-tinte-400 dark:text-tinte-500 truncate min-w-0">{item.description}</span>
 		{/if}
@@ -132,5 +137,5 @@
 	bind:isVisible={showEditModal}
 	type="edit"
 	editingItem={item}
-	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories) ?? ''}
+	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories ?? []) ?? ''}
 />

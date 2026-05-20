@@ -19,7 +19,8 @@ const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
 export async function POST({ request, locals }) {
-	const userId = locals.user!.id;
+	if (!locals.user) error(401, 'Unauthorized');
+	const userId = locals.user.id;
 	const now = Date.now();
 	const entry = rateLimits.get(userId);
 
