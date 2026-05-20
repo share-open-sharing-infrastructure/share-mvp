@@ -803,6 +803,36 @@ export const texts = {
 		institutionCardTitle: 'Über die Institution',
 		aboutOwnerTitle: (name: string) => `Über ${name}`,
 	},
+	// Lending terms acceptance (Leihbedingungen for institutional partners)
+	lendingTerms: {
+		pageTitle: 'Leihbedingungen zustimmen',
+		introWithOwner: (ownerName: string) =>
+			`Bevor du diesen Gegenstand bei ${ownerName} anfragst, musst du den Leihbedingungen zustimmen.`,
+		introGeneric: 'Bevor du diesen Gegenstand anfragst, musst du den Leihbedingungen zustimmen.',
+		responsibleNote: (contact: string) =>
+			`Verantwortlich für den Verleih und im Sinne der DSGVO: ${contact}.`,
+		platformOnlyNote:
+			'AllerLeih ist nicht Vertragspartner des Verleihs, sondern vermittelt nur die Anfrage zwischen dir und der oben genannten Stelle.',
+		versionLabel: (version: string) => `Version ${version}`,
+		effectiveFromLabel: (date: string) => `Gültig ab ${date}`,
+		confirmAdultLabel: (minAge: number) =>
+			`Ich bestätige, dass ich mindestens ${minAge} Jahre alt bin.`,
+		minorHintTitle: 'Du bist 14–17?',
+		minorHintBody:
+			'Komm bitte mit einer erziehungsberechtigten Person zum Ausleihen. Vor Ort gibt es ein Einwilligungsformular, das einmalig unterschrieben wird – danach kannst du selbstständig ausleihen.',
+		confirmTermsLabel: (version: string) =>
+			`Ich habe die Leihbedingungen (Version ${version}) gelesen und stimme ihnen zu.`,
+		acceptAndRequestButton: 'Zustimmen und Anfrage senden',
+		cancel: 'Abbrechen',
+		errors: {
+			notFound: 'Für diesen Gegenstand sind keine Leihbedingungen hinterlegt.',
+			mustConfirmAdult: 'Bitte bestätige dein Mindestalter.',
+			mustConfirmTerms: 'Bitte stimme den Leihbedingungen zu.',
+			acceptanceFailed: 'Die Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut.',
+		},
+		alreadyAcceptedNote: 'Du hast diese Leihbedingungen bereits akzeptiert.',
+	},
+
 	counterfactual: {
 		title: 'Eine ganz kurze Frage!',
 		question: 'Was wäre passiert, wenn du diesen Artikel nicht geliehen hättest?',
