@@ -737,8 +737,8 @@ export const texts = {
 				'Erstelle ein kostenloses AllerLeih-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.',
 		},
 		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
-		itemDetailDescription: (name: string, owner: string, city: string) =>
-			`Leihe ${name} von ${owner} in ${city} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
+		itemDetailDescription: (name: string, owner: string) =>
+			`Leihe ${name} von ${owner} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,

@@ -119,6 +119,17 @@ export interface User extends PocketBaseEntity {
 	bio?: string;
 }
 
+export interface UserPublic extends PocketBaseEntity {
+	username: string;
+	bio: string;
+	verified: boolean;
+	isInstitution: boolean;
+	profileImage: string | null;
+	telegramVisibleToTrustedOnly: boolean;
+	signalVisibleToTrustedOnly: boolean;
+	created: string;
+}
+
 // --- ITEM ---
 
 export interface Item extends PocketBaseEntity {
@@ -182,18 +193,23 @@ export interface ItemPublic extends PocketBaseEntity {
 	name: string;
 	image: string | null;
 	externalImgUrl: string | null;
+	externalUrl: string | null;
 	description: string;
 	trusteesOnly: boolean;
 	status: 'available' | 'unavailable' | 'unknown';
 	collectionId: string;
 	categories: string[];
 	updated: string;
+	/** joined user fields */
     userId: UserId;
 	username: string;
 	trusts: string[]; 
 	isInstitution: boolean;
+	bio: string;
 	verified: boolean;
 	profileImage: string | null;
+	/** 1 if the owner has a non-zero geolocation set, 0 otherwise. Evaluated in the view SQL — never exposes coordinates. */
+	ownerHasLocation: 0 | 1;
 }
 
 // --- MESSAGE ---

@@ -4,10 +4,10 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
-	import type { Item } from '$lib/types/models';
+	import type { ItemPublic } from '$lib/types/models';
 
 	interface Props {
-		item: Item;
+		item: ItemPublic;
 		isExternal: boolean;
 		isOwnItem: boolean;
 		isTrustRestricted: boolean;
@@ -54,7 +54,7 @@
 				rel="noopener noreferrer"
 				class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
 			>
-				{texts.institutional.externalLendCta(item.expand?.owner?.username ?? '')}
+				{texts.institutional.externalLendCta(item.username ?? '')}
 			</a>
 			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		{/if}
