@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Item } from '$lib/types/models';
+	import type { ItemWithOwner } from '$lib/types/models';
 	import { Card } from 'flowbite-svelte';
 	import { UserCircleOutline, HeartSolid, HomeOutline } from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
@@ -12,7 +12,7 @@
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	interface Props {
-		item: Item;
+		item: ItemWithOwner;
 		imgUrl: string;
 		ownerImgUrl?: string;
 		profileView?: boolean;
@@ -32,9 +32,9 @@
 	}: Props = $props();
 
 	const isTrusted = $derived(
-		!!currentUserId && !!item.expand?.owner?.trusts?.includes(currentUserId)
+		!!currentUserId && !!item.trusts.includes(currentUserId)
 	);
-	const isInstitution = $derived(!!item.expand?.owner?.isInstitution);
+	const isInstitution = $derived(!!item.isInstitution);
 	const hasRealImage = $derived(!!imgUrl);
 	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
 </script>
@@ -95,7 +95,7 @@
 					type="button"
 					onclick={(e) => {
 						e.preventDefault();
-						goto(resolve('/users/[id]', { id: item.expand?.owner?.id ?? '' }));
+						goto(resolve('/users/[id]', { id: item.userId ?? '' }));
 					}}
 					class="relative inline-flex items-center rounded-full border hover:cursor-pointer pl-1 pr-2 py-0.5 {isTrusted
 						? 'bg-green-50/90 text-green-800 border-green-300 hover:bg-green-100/90'
@@ -108,9 +108,9 @@
 					{:else}
 						<UserCircleOutline class="h-6 w-6 inline" />
 					{/if}
-					<span class="font-medium text-xs max-w-20 truncate ml-1">{item.expand?.owner?.username ?? 'Unknown'}</span>
+					<span class="font-medium text-xs max-w-20 truncate ml-1">{item.username ?? 'Unknown'}</span>
 					<div class="absolute top-0 -right-1.5 flex flex-col gap-0.1 items-center">
-						{#if item.expand?.owner?.verified}
+						{#if item.verified}
 							<VerifiedIcon class="h-3.5 w-3.5" />
 						{/if}
 						{#if isTrusted}

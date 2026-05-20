@@ -173,6 +173,15 @@ export interface Item extends PocketBaseEntity {
 	externalImgUrl?: string;
 }
 
+export interface ItemWithOwner extends Item {
+	userId: string;
+	username: string;
+	trusts: UserId[];
+	isInstitution?: boolean;
+	verified?: boolean;
+	profileImage?: string;
+}
+
 // --- MESSAGE ---
 
 export interface Message extends PocketBaseEntity {

@@ -1,99 +1,54 @@
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { Item } from '$lib/types/models';
-import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
-import { buildSearchFilter } from './searchFilter';
+import { parseSearchParameters, buildItemFilter, type SearchParameters } from './searchFilter';
+import type { ListResult } from 'pocketbase';
 
 export async function load({ locals, url }) {
-	const q = url.searchParams.get('q')?.trim() ?? '';
-	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1', 10) || 1);
-	const perPage = Math.min(50, Math.max(1, parseInt(url.searchParams.get('perPage') ?? '20', 10) || 20));
+	// 1. Parse search parameters from URL
+	const searchParameters = parseSearchParameters(url) as SearchParameters;
+	// If user hasn't queried anything, shows only a few random items
+	const isRandomResultSet = (!searchParameters.query && searchParameters.selectedCategories.length === 0) ? true : false; 
 
-	const catsParam = url.searchParams.get('cats') ?? '';
-	const selectedCategories = catsParam
-		.split(',')
-		.map((s) => s.trim())
-		.filter((s): s is ItemCategory => ITEM_CATEGORIES.includes(s as ItemCategory));
-	const op: 'or' | 'and' = url.searchParams.get('op') === 'and' ? 'and' : 'or';
-	const onlyAvailable = url.searchParams.get('onlyAvailable') !== 'false';
-	const availabilityFilter = onlyAvailable ? "status != 'unavailable'" : null;
+	// 2. Build PocketBase filter
+	const filter = buildItemFilter(searchParameters, locals.user?.id);
 
-	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
-	const ownerType = ownerTypeParam === 'institution' || ownerTypeParam === 'private' ? ownerTypeParam : 'all';
-	const institutionFilter =
-		ownerType === 'institution' ? 'owner.isInstitution = true' :
-		ownerType === 'private' ? 'owner.isInstitution != true' :
-		null;
-
-	if (!q && selectedCategories.length === 0) {
-		const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
-		const trustFilter = locals.user
-			? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
-			: `trusteesOnly = false`;
-		const filter = [ownerFilter, trustFilter, availabilityFilter, institutionFilter].filter(Boolean).join(' && ') || undefined;
-
-		const result = await locals.pb.collection('items').getList<Item>(1, 8, {
-			expand: 'owner',
-			sort: '@random',
+	// 3. Fetch items — random sample when no query, paginated results otherwise
+	const fetchPage = isRandomResultSet ? 1 : searchParameters.page;
+	const fetchPerPage = isRandomResultSet ? 8 : searchParameters.perPage;
+	const fetchSort = isRandomResultSet ? '@random' : '-updated';
+	
+	let result: ListResult<Item> = { page: 1, perPage: fetchPerPage, totalItems: 0, totalPages: 0, items: [] };
+	try {
+		result = await locals.pb.collection('items_public').getList<Item>(fetchPage, fetchPerPage, {
+			sort: fetchSort,
 			filter,
 		});
-
-		return {
-			items: result.items,
-			PB_IMG_URL: PUBLIC_PB_URL,
-			q: '',
-			selectedCategories,
-			op,
-			onlyAvailable,
-			ownerType,
-			currentUser: locals.user ?? null,
-			page: 1,
-			perPage,
-			totalItems: result.totalItems,
-			totalPages: 0,
-			isRandom: true,
-		};
+	} catch (error) {
+		console.error('Error fetching items:', error);
 	}
 
-	const isAllItems = !q || q === '*';
-
-	const nameFilter = buildSearchFilter(q);
-	const ownerFilter = locals.user ? `owner != "${locals.user.id}"` : null;
-
-	// Escape & as \& so PocketBase's filter parser doesn't misinterpret it as the && operator.
-	const escapeCatValue = (c: string) => c.replace(/&/g, '\\&');
-	const categoryFilter =
-		selectedCategories.length > 0
-			? `(${selectedCategories.map((c) => `categories ~ '${escapeCatValue(c)}'`).join(op === 'and' ? ' && ' : ' || ')})`
-			: null;
-	const trustFilter = locals.user
-		? `(trusteesOnly = false || owner.trusts ~ "${locals.user.id}")`
-		: `trusteesOnly = false`;
-	const filter = [nameFilter, ownerFilter, categoryFilter, trustFilter, availabilityFilter, institutionFilter].filter(Boolean).join(' && ') || undefined;
-
-	const result = await locals.pb.collection('items').getList<Item>(page, perPage, {
-		expand: 'owner',
-		sort: '-updated',
-		filter,
-	});
-
-	void locals.pb.collection('searches').create({
-		query: q,
-		categories: selectedCategories.join(','),
-	});
+	// 4. Log search queries (fire-and-forget)
+	if (!isRandomResultSet) {
+		void locals.pb.collection('searches').create({
+			query: searchParameters.query,
+			categories: searchParameters.selectedCategories.join(','),
+		});
+	}
 
 	return {
 		items: result.items,
 		PB_IMG_URL: PUBLIC_PB_URL,
-		q,
-		selectedCategories,
-		op,
-		onlyAvailable,
-		ownerType,
+		q: searchParameters.query,
+		selectedCategories: searchParameters.selectedCategories,
+		op: searchParameters.op,
+		onlyAvailable: searchParameters.onlyAvailable,
+		ownerType: searchParameters.ownerType,
 		currentUser: locals.user ?? null,
-		page: result.page,
+		page: isRandomResultSet ? 1 : result.page,
 		perPage: result.perPage,
 		totalItems: result.totalItems,
-		totalPages: result.totalPages,
+		totalPages: isRandomResultSet ? 0 : result.totalPages,
+		isRandom: isRandomResultSet,
 	};
 }
 
