@@ -16,5 +16,6 @@ export const load = async (event) => {
 	return {
 		currentUser,
 		unreadNotificationCount,
+		pbAuthToken: event.locals.pb.authStore.token ?? null,
 	};
 };

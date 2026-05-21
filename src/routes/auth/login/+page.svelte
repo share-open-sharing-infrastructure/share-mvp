@@ -41,6 +41,7 @@
 						name="email"
 						placeholder={texts.auth.emailPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
+						autocomplete="email"
 						required
 					/>
 				</Label>
@@ -51,6 +52,7 @@
 						name="password"
 						placeholder={texts.auth.passwordPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
+						autocomplete="current-password"
 						required
 					/>
 				</Label>
@@ -60,7 +62,7 @@
 					class="
 						me-2 mb-2 w-full
 						min-button 
-						bg-primary
+						bg-primary-200 hover:bg-primary
 						cursor-pointer
 
 						">{texts.auth.loginButton}</Button

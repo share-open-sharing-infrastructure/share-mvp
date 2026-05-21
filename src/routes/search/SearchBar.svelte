@@ -5,7 +5,8 @@
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { texts } from '$lib/texts';
 
-	const SEARCH_DELAY_MS = 1500;
+	const SEARCH_DELAY_MS = 1200;
+	const MINIMAL_SEARCHSTRING_LENGTH = 3;
 
 	let { q = '' }: { q: string } = $props();
 
@@ -44,7 +45,7 @@
 
 		const value = inputValue.trim();
 
-		if (value.length < 4) {
+		if (value.length < MINIMAL_SEARCHSTRING_LENGTH) {
 			isDebouncing = false;
 			if (q) {
 				await goto(resolve('/search'));
@@ -136,8 +137,8 @@
 			</button>
 		{/if}
 	</div>
-	<Button type="submit" aria-label={texts.buttons.search} class="min-button bg-primary-200 hover:bg-primary shrink-0">
-		<SearchOutline class="h-5 w-5" /> {texts.buttons.search}
+	<Button type="submit" aria-label={inputValue.trim() ? texts.buttons.search : texts.buttons.showAll} class="min-button bg-primary-200 hover:bg-primary shrink-0">
+		<SearchOutline class="h-5 w-5"/><span class="ml-1">{inputValue.trim() ? texts.buttons.search : texts.buttons.showAll}</span>
 	</Button>
 
 </form>

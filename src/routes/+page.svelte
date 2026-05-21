@@ -71,7 +71,7 @@
 			<h3 class={titleClass}>{t.how}</h3>
 			<p class={infoParagraphClass}>
 				<a href={resolve('/misc/guide')} class="text-accent hover:underline font-medium">{t.howLinkText}</a>
-				{t.howBodyPart1} {texts.names.app} {t.howBodyPart2}
+				{t.howBodyPart1} {texts.names.app}{t.howBodyPart2}
 			</p>
 		</div>
 
@@ -80,7 +80,7 @@
 			<h3 class={titleClass}>{t.who}</h3>
 			<p class={infoParagraphClass}>
 				{t.whoBodyPart1}
-				<a href={resolve('/misc/contact')} class="text-accent hover:underline font-medium">{t.whoLinkText}</a>{t.whoBodyPart2}
+				<a href={resolve('/misc/about')} class="text-accent hover:underline font-medium">{t.whoLinkText}</a>{t.whoBodyPart2}
 			</p>
 		</div>
 

@@ -18,6 +18,7 @@ export async function load({ locals, url }) {
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl: `${url.origin}/invite/${inviteCode}`,
+		username: locals.user.username as string,
 		users,
 		trustIds: (locals.user.trusts as string[]) ?? [],
 	};
@@ -70,6 +71,52 @@ export const actions = {
 		const notificationBody = texts.notifications.trustAdded(adderName);
 		await createNotification(locals.pb, newTrusteeId as string, locals.user.id, 'trust_added', locals.user.id, notificationBody);
 		await sendPushToUser(locals.pb, newTrusteeId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+	},
+
+	saveProfile: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const pbFormData = new FormData();
+
+		const bio = formData.get('bio')?.toString();
+		if (bio !== undefined) pbFormData.append('bio', bio.trim());
+
+		const profileImageFile = formData.get('profileImage');
+		if (profileImageFile instanceof File && profileImageFile.size > 0) {
+			pbFormData.append('profileImage', profileImageFile);
+		}
+
+		try {
+			await locals.pb.collection('users').update(locals.user.id, pbFormData);
+			return { success: true };
+		} catch {
+			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+		}
+	},
+
+	saveTransportMode: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const mode = formData.get('mode')?.toString();
+		if (mode === 'foot' || mode === 'bicycle' || mode === 'car') {
+			try {
+				await locals.pb.collection('users').update(locals.user.id, { preferredTransportMode: mode });
+			} catch {
+				// non-critical — proceed regardless
+			}
+		}
+		return { success: true };
+	},
+
+	removeTrustee: async ({ locals, request }) => {
+		const formData = await request.formData();
+		const toRemoveTrusteeId = formData.get('trusteeId');
+		try {
+			const updatedTrusts = (locals.user.trusts || []).filter(
+				(id: string) => id !== toRemoveTrusteeId
+			);
+			await locals.pb.collection('users').update(locals.user.id, { trusts: updatedTrusts });
+		} catch (error: Error | any) {
+			console.error(error?.message ?? error);
+		}
 	},
 
 	complete: async ({ locals, request }) => {

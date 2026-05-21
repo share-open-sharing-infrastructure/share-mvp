@@ -10,6 +10,7 @@
 		name: string;
 		description: string;
 		categories: string[];
+		trusteesOnly: boolean;
 		status: DraftStatus;
 	};
 
@@ -33,6 +34,7 @@
 				name: '',
 				description: '',
 				categories: [],
+				trusteesOnly: true,
 				status: 'pending' as DraftStatus,
 			}));
 		drafts = [...drafts, ...newDrafts];
@@ -94,7 +96,7 @@
 	<p class="text-sm text-tinte-500 dark:text-tinte-400">{texts.bulkUpload.dropzoneLabel}</p>
 
 	<label
-		class="cursor-pointer rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700"
+		class="cursor-pointer rounded-full bg-primary-400 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700"
 	>
 		{texts.bulkUpload.selectFiles}
 		<input
@@ -139,7 +141,7 @@
 	{/if}
 </div>
 
-<Accordion flush class="mb-4">
+<Accordion flush class="mb-4 bg-papier border rounded-lg my-2 px-3">
 	<AccordionItem>
 		{#snippet header()}{texts.bulkUpload.howItWorksHeader}{/snippet}
 		<p class="text-sm text-tinte-600 dark:text-tinte-400">
@@ -149,8 +151,8 @@
 </Accordion>
 
 <div class="mt-6 flex justify-end gap-3">
-	<Button href="/user/items" color="alternative">Zurück</Button>
-	<Button onclick={onContinue} class="bg-primary" disabled={drafts.length === 0}>
+	<Button href="/user/items" color="alternative" class="rounded-full">Zurück</Button>
+	<Button onclick={onContinue} class="bg-primary-400 rounded-full hover:bg-primary hover:cursor-pointer" disabled={drafts.length === 0}>
 		{texts.bulkUpload.continue}
 	</Button>
 </div>

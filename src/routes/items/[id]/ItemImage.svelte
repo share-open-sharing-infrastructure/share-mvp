@@ -36,15 +36,16 @@
 		<img src={imageUrl} alt={itemName} class="relative max-h-96 w-full object-contain" />
 		{@render statusBadge()}
 	</div>
+{:else if categoryPlaceholder}
+	<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-tinte-100 relative overflow-hidden">
+		<img src={categoryPlaceholder} alt="" class="h-40 w-40 object-contain opacity-25" />
+		<span class="relative text-sm text-tinte-400">{texts.institutional.imagePlaceholder}</span>
+		{@render statusBadge()}
+	</div>
 {:else if ownerImageUrl}
 	<div class="w-full h-64 flex flex-col items-center justify-center rounded-lg bg-tinte-100 relative overflow-hidden">
 		<img src={ownerImageUrl} alt="" class="absolute inset-0 w-full h-full object-cover opacity-30" />
 		<span class="relative text-sm text-tinte-400">{texts.institutional.imagePlaceholder}</span>
-		{@render statusBadge()}
-	</div>
-{:else if categoryPlaceholder}
-	<div class="relative w-full h-64 flex items-center justify-center rounded-lg bg-tinte-100">
-		<img src={categoryPlaceholder} alt="" class="h-40 w-40 object-contain opacity-25" />
 		{@render statusBadge()}
 	</div>
 {:else}

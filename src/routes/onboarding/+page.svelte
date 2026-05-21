@@ -1,9 +1,11 @@
 <script lang="ts">
 	import StepWelcome from './StepWelcome.svelte';
 	import StepHowItWorks from './StepHowItWorks.svelte';
+	import StepProfile from './StepProfile.svelte';
 	import StepLocation from './StepLocation.svelte';
 	import StepContact from './StepContact.svelte';
 	import StepTrustees from './StepTrustees.svelte';
+	import StepTransportMode from './StepTransportMode.svelte';
 	import StepBrowserLocation from './StepBrowserLocation.svelte';
 	import StepPushNotifications from './StepPushNotifications.svelte';
 	import StepDone from './StepDone.svelte';
@@ -11,7 +13,7 @@
 	let { data } = $props();
 
 	let step = $state(1);
-	const totalSteps = 8;
+	const totalSteps = 10;
 
 	function next() {
 		if (step < totalSteps) step++;
@@ -60,22 +62,30 @@
 		{:else if step === 2}
 			<StepHowItWorks onNext={next} />
 		{:else if step === 3}
-			<StepLocation onNext={next} />
+			<StepProfile onNext={next} currentUser={data.currentUser} pbUrl={data.PB_URL} />
 		{:else if step === 4}
-			<StepContact onNext={next} />
+			<StepLocation
+				onNext={next}
+				initialCity={data.currentUser.city}
+				initialGeolocation={data.currentUser.geolocation?.lon || data.currentUser.geolocation?.lat ? data.currentUser.geolocation : null}
+			/>
 		{:else if step === 5}
+			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />
+		{:else if step === 6}
+			<StepContact onNext={next} currentUser={data.currentUser} />
+		{:else if step === 7}
 			<StepTrustees
 				onNext={next}
 				users={data.users}
 				trustIds={data.trustIds}
 				currentUserId={data.currentUser.id}
 			/>
-		{:else if step === 6}
-			<StepBrowserLocation onNext={next} />
-		{:else if step === 7}
-			<StepPushNotifications onNext={next} />
 		{:else if step === 8}
-			<StepDone inviteUrl={data.inviteUrl} />
+			<StepBrowserLocation onNext={next} />
+		{:else if step === 9}
+			<StepPushNotifications onNext={next} />
+		{:else if step === 10}
+			<StepDone inviteUrl={data.inviteUrl} username={data.username} />
 		{/if}
 
 	</div>

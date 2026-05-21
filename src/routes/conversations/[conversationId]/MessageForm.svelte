@@ -38,7 +38,7 @@
 	<button
 		type="submit"
 		disabled={isSubmitting}
-		class="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-white hover:bg-primary-600 disabled:opacity-50 transition-colors shrink-0"
+		class="flex items-center justify-center w-9 h-9 rounded-full bg-primary-400 text-white hover:bg-primary hover:cursor-pointer disabled:opacity-50 transition-colors shrink-0"
 	>
 		<PaperPlaneSolid class="w-4 h-4" />
 	</button>

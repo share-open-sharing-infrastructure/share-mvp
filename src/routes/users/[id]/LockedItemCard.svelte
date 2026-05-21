@@ -32,7 +32,7 @@
 <Popover
 	triggeredBy="#{id}"
 	trigger="hover"
-	class="w-72 bg-sand text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
+	class="w-72 bg-papier text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
 	placement="top"
 >
 	<div class="space-y-2 p-3">
