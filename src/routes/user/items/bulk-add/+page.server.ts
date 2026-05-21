@@ -34,7 +34,7 @@ export const actions = {
 					owner: locals.user.id,
 					categories,
 					status: 'available',
-					trusteesOnly: false,
+					trusteesOnly: formData.get(`trusteesOnly_${i}`) === 'on',
 				});
 				successCount++;
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any

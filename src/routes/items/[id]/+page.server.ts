@@ -1,16 +1,15 @@
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { error, fail, redirect } from '@sveltejs/kit';
-import type { Item } from '$lib/types/models';
+import type { ItemPublic } from '$lib/types/models';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
+import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
 
 export async function load({ params, locals }) {
-	let item: Item;
+	let item: ItemPublic;
 	try {
-		item = await locals.pb.collection('items').getOne(params.id, {
-			expand: 'owner',
-		});
+		item = await locals.pb.collection('items_public').getOne(params.id, {});
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
 		error(e.status === 404 ? 404 : 500, 'Item not found');
@@ -18,37 +17,55 @@ export async function load({ params, locals }) {
 
 	const currentUserId = locals.user?.id ?? null;
 	const isAuthenticated = locals.pb.authStore.isValid;
-	const ownerTrusts: string[] = item.expand?.owner?.trusts ?? [];
+	const ownerTrusts: string[] = item.trusts ?? [];
 	const isTrustRestricted =
 		item.trusteesOnly && isAuthenticated && !ownerTrusts.includes(currentUserId);
-	const isOwnItem = currentUserId === item.expand?.owner?.id;
-	const viewerTrustsOwner = locals.user?.trusts?.includes(item.expand?.owner?.id) ?? false;
+	const isOwnItem = currentUserId === item.userId;
+	const viewerTrustsOwner = locals.user?.trusts?.includes(item.userId) ?? false;
 
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
 	const ownerTrustsViewer = currentUserId ? ownerTrusts.includes(currentUserId) : false;
 
+	// Find an in-progress conversation for this viewer + item so the CTA can link
+	// to it instead of creating a duplicate. We exclude rejected/completed states
+	// (borrower may legitimately re-request) and the empty string (conversations
+	// created before the lending feature was added have no lendingStatus value).
+	let existingConversation: { id: string; lendingStatus: string } | null = null;
+	if (currentUserId && !isOwnItem) {
+		try {
+			const conv = await locals.pb.collection('conversations').getFirstListItem(
+				`requester="${currentUserId}" && requestedItem="${item.id}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				{ sort: '-created', fields: 'id,lendingStatus' }
+			);
+			existingConversation = { id: conv.id, lendingStatus: conv.lendingStatus };
+		} catch {
+			// No matching conversation — leave null
+		}
+	}
+
+	// Does this owner publish lending terms, and if so has the viewer accepted them?
+	// We only gate the request flow on terms when the viewer is logged in and not the owner.
+	let requiresTermsAcceptance = false;
+	if (currentUserId && !isOwnItem) {
+		const ownerId = item.userId;
+		const activeTerms = await getActiveTerms(locals.pb, ownerId);
+		if (activeTerms) {
+			const accepted = await hasAcceptedActiveTerms(locals.pb, currentUserId, ownerId);
+			requiresTermsAcceptance = !accepted;
+		}
+	}
+
 	// Total items listed by this owner (all statuses).
 	let ownerItemCount = 0;
-	if (item.expand?.owner?.id) {
+	if (item.userId) {
 		try {
 			const { totalItems } = await locals.pb
-				.collection('items')
-				.getList(1, 1, { filter: `owner = "${item.expand.owner.id}"` });
+				.collection('items_public')
+				.getList(1, 1, { filter: `userId = "${item.userId}"` });
 			ownerItemCount = totalItems;
 		} catch {
 			// silently fall back to 0
 		}
-	}
-
-	// Determine whether the owner has a valid geolocation before stripping it.
-	const ownerGeo = item.expand?.owner?.geolocation as { lon: number; lat: number } | undefined;
-	const ownerHasLocation =
-		!!ownerGeo && !(ownerGeo.lon === 0 && ownerGeo.lat === 0);
-
-	// Strip fields from owner expand that must not reach the client.
-	if (item.expand?.owner) {
-		delete item.expand.owner.geolocation;
-		delete item.expand.owner.trusts;
 	}
 
 	return {
@@ -60,9 +77,11 @@ export async function load({ params, locals }) {
 		isOwnItem,
 		viewerTrustsOwner,
 		ownerTrustsViewer,
-		ownerHasLocation,
 		ownerItemCount,
 		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
+		existingConversation,
+		requiresTermsAcceptance,
+		ownerHasLocation: !!item.ownerHasLocation,
 	};
 }
 
@@ -72,14 +91,14 @@ export const actions = {
 			redirect(303, `/auth/login?redirectTo=/items/${params.id}`);
 		}
 
-		let item: Item;
+		let item: ItemPublic;
 		try {
-			item = await locals.pb.collection('items').getOne(params.id);
+			item = await locals.pb.collection('items_public').getOne(params.id);
 		} catch {
 			return fail(404, { fail: true, message: texts.errors.itemNotFound });
 		}
 
-		if (item.owner !== locals.user.id) {
+		if (item.userId !== locals.user.id) {
 			return fail(403, { fail: true, message: texts.errors.noPermission });
 		}
 
@@ -98,24 +117,42 @@ export const actions = {
 		}
 
 		// Fetch the item server-side so we never trust ownerId from form data.
-		let itemRecord: Item;
+		let itemRecord: ItemPublic;
 		try {
-			itemRecord = await locals.pb.collection('items').getOne(params.id);
+			itemRecord = await locals.pb.collection('items_public').getOne(params.id);
 		} catch {
 			return fail(404, { fail: true, message: texts.errors.itemNotFound });
+		}
+
+		// If the item's owner publishes lending terms and the user has not accepted
+		// the active version, divert them through the terms acceptance flow. This
+		// guards against POSTing directly to ?/startConversation past the CTA UI.
+		const termsOk = await hasAcceptedActiveTerms(
+			locals.pb,
+			locals.user.id,
+			itemRecord.userId
+		);
+		if (!termsOk) {
+			redirect(303, `/items/${params.id}/terms`);
 		}
 
 		// Consume form data (itemId kept for the conversation filter; ownerId ignored).
 		const formData = await request.formData();
 		const itemId = formData.get('itemId') as string;
 		const requesterId = locals.user.id;
-		const itemOwnerId = itemRecord.owner;
+		const itemOwnerId = itemRecord.userId;
 
-		// Check if a conversation already exists between requester and item owner for this item.
+		// Check if a non-rejected/completed conversation already exists for this requester+item.
 		let targetConversationId = '';
-		const existingConversations = await locals.pb.collection('conversations').getFullList({
-			filter: `requester = "${requesterId}" && itemOwner = "${itemOwnerId}" && requestedItem = "${itemId}"`,
-		});
+		let existingConversations;
+		try {
+			existingConversations = await locals.pb.collection('conversations').getFullList({
+				filter: `requester = "${requesterId}" && requestedItem = "${itemId}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				sort: '-created',
+			});
+		} catch {
+			existingConversations = [];
+		}
 
 		if (existingConversations.length > 0) {
 			targetConversationId = existingConversations[0].id;
@@ -126,6 +163,7 @@ export const actions = {
 					requester: requesterId,
 					itemOwner: itemOwnerId,
 					requestedItem: itemId,
+					lendingStatus: 'pending',
 					readByRequester: true,
 					readByOwner: false,
 				});

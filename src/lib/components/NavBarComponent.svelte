@@ -46,6 +46,7 @@
 		<NavBrand href={resolve('/')}>
 			<div id="beta" class="relative flex flex-col items-center">
 				<img src="/AllerLeih.png" alt={texts.names.app} class="h-10" />
+				<span class="text-sm text-gray-400 tracking-wide leading-none mt-0.5">Lüneburg</span>
 				<span
 						class="absolute top-7 bg-accent-100 -right-3 -rotate-25 text-[12px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
 					>
@@ -66,7 +67,12 @@
 			{texts.nav.translate}
 		</button>
 	{/if}
-	<NavHamburger />
+	<div class="relative">
+		<NavHamburger />
+		{#if unreadCount > 0}
+			<span class="absolute md:hidden top-0.5 right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full pointer-events-none"></span>
+		{/if}
+	</div>
 	<NavUl
 		{activeUrl}
 		classes={{
@@ -133,7 +139,7 @@
 	{#if showTranslate}
 		<Popover
 			triggeredBy="#translate-btn"
-			class="w-72 bg-white text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
+			class="w-72 bg-papier text-sm font-light text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400"
 			placement="bottom-end"
 		>
 			<div class="space-y-2 p-3">

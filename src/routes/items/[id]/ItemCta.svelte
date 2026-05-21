@@ -3,17 +3,38 @@
 	import { MessagesOutline } from 'flowbite-svelte-icons';
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
-	import type { Item } from '$lib/types/models';
+	import { resolve } from '$app/paths';
+	import type { ItemPublic } from '$lib/types/models';
 
 	interface Props {
-		item: Item;
+		item: ItemPublic;
 		isExternal: boolean;
 		isOwnItem: boolean;
 		isTrustRestricted: boolean;
 		isArchived: boolean;
+		existingConversation: { id: string; lendingStatus: string } | null;
+		requiresTermsAcceptance?: boolean;
 	}
 
-	const { item, isExternal, isOwnItem, isTrustRestricted, isArchived }: Props = $props();
+	const {
+		item,
+		isExternal,
+		isOwnItem,
+		isTrustRestricted,
+		isArchived,
+		existingConversation,
+		requiresTermsAcceptance = false,
+	}: Props = $props();
+
+
+	const ctaHref = $derived(
+		existingConversation
+			? resolve(`/conversations/${existingConversation.id}`)
+			: resolve(`/items/${item.id}/terms`),
+	);
+	const ctaLabel = $derived(
+		existingConversation ? texts.lending.goToConversation : texts.pages.itemDetail.requestButton,
+	);
 </script>
 
 <div class="flex items-center gap-3">
@@ -33,7 +54,7 @@
 				rel="noopener noreferrer"
 				class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
 			>
-				{texts.institutional.externalLendCta(item.expand?.owner?.username ?? '')}
+				{texts.institutional.externalLendCta(item.username ?? '')}
 			</a>
 			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		{/if}
@@ -64,13 +85,23 @@
 	{:else if item.status === 'unknown'}
 		<!-- Status is shown near the title; nothing actionable to display here -->
 	{:else if isTrustRestricted}
-		<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 cursor-not-allowed">
-			<MessagesOutline class="h-4 w-4 mr-2" />
-			{texts.pages.itemDetail.requestButton}
-		</Button>
-		<Tooltip type="light" placement="top">
+		<!-- Disabled buttons suppress pointer events, so the tooltip must be anchored
+		     to the surrounding span instead of the button itself. -->
+		<span id="anfragen-disabled" class="cursor-not-allowed">
+			<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 pointer-events-none">
+				<MessagesOutline class="h-4 w-4 mr-2" />
+				{texts.pages.itemDetail.requestButton}
+			</Button>
+		</span>
+		<Tooltip triggeredBy="#anfragen-disabled" type="light" placement="top" trigger="click">
 			{texts.pages.itemDetail.trustRestrictedTooltip}
 		</Tooltip>
+	{:else if existingConversation || requiresTermsAcceptance}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={ctaHref} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
+			<MessagesOutline class="h-4 w-4 mr-2" />
+			{ctaLabel}
+		</a>
 	{:else}
 		<form method="POST" action="?/startConversation">
 			<Input name="itemId" value={item.id} hidden />

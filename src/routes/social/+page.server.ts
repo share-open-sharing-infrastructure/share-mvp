@@ -3,8 +3,9 @@ import { fail } from '@sveltejs/kit';
 import type { User } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
+import { generateInviteSlug } from '$lib/inviteSlug.js';
 
-export async function load({ locals }) {
+export async function load({ locals, url }) {
 	let users: User[] = [];
 
 	try {
@@ -29,10 +30,21 @@ export async function load({ locals }) {
 			theyTrustMe: trustedByIds.has(u.id),
 		}));
 
+	// Lazily create an invite code: most users will already have one from onboarding,
+	// so we only hit the DB to generate + persist when the field is empty.
+	let inviteCode = locals.user.inviteCode as string | undefined;
+	if (!inviteCode) {
+		inviteCode = await generateInviteSlug(locals.pb);
+		await locals.pb.collection('users').update(locals.user.id, { inviteCode });
+	}
+	const inviteUrl = `${url.origin}/invite/${inviteCode}`;
+
 	return {
 		users,
 		currentUser: { id: locals.user.id },
 		trustNetwork,
+		inviteUrl,
+		username: locals.user.username as string,
 	};
 }
 

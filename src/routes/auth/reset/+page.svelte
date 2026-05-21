@@ -34,7 +34,7 @@
 				<Button
 					type="submit"
 					formaction="?/reset"
-					class="min-button bg-primary cursor-pointer w-full"
+					class="min-button bg-primary-200 hover:bg-primary cursor-pointer w-full"
 					>{texts.pages.reset.resetButton}</Button
 				>
 			</form>

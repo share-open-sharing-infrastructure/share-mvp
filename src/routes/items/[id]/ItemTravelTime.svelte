@@ -4,6 +4,7 @@
 	import { untrack } from 'svelte';
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+	import AllerLoader from '$lib/components/AllerLoader.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -22,20 +23,34 @@
 	let calculating = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 
+	// Fire-and-forget: sends a diagnostic event to the server log. Never throws.
+	function sendDiag(payload: Record<string, unknown>) {
+		fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify(payload) }).catch(() => {});
+	}
+
 	async function fetchTravelTime(mode: TransportMode, userLocation: { lon: number; lat: number }) {
+		// Abort after 15s so a hanging ORS response doesn't leave `calculating` stuck as true indefinitely
+		const controller = new AbortController();
+		const timeoutId = setTimeout(() => controller.abort(), 15_000);
 		try {
 			const res = await fetch('/api/travel-times/item', {
 				method: 'POST',
+				signal: controller.signal,
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ itemId, userLocation, transportMode: mode }),
 			});
 			if (res.ok) {
 				const { minutes } = await res.json();
 				travelMinutes = minutes ?? null;
+			} else {
+				sendDiag({ event: 'fetch_error', page: 'item_detail', status: res.status });
 			}
-		} catch {
-			// silently skip
+		} catch (err) {
+			// AbortError means our 15s timeout fired; any other error is a network failure
+			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
+			sendDiag({ event: isTimeout ? 'fetch_timeout' : 'fetch_error', page: 'item_detail' });
 		} finally {
+			clearTimeout(timeoutId);
 			calculating = false;
 		}
 	}
@@ -66,9 +81,7 @@
 </script>
 
 {#if calculating}
-	<span class="text-sm text-gray-400 dark:text-gray-500 animate-pulse px-2 py-0.5">
-		{texts.pages.itemDetail.calculateTravelTime}…
-	</span>
+	<AllerLoader size={22} speed={1.2} variant="rotate" label="Reisezeiten werden berechnet …" />
 {:else if travelMinutes === undefined}
 	<button
 		type="button"

@@ -1,10 +1,9 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { enhance } from '$app/forms';
-	import { Badge } from 'flowbite-svelte';
 	import ItemModal from './ItemModal.svelte';
-	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { resolve } from '$app/paths';
 
 	interface Props {
 		item: Item;
@@ -15,8 +14,14 @@
 	let { item, PB_URL, selected, onselectedchange }: Props = $props();
 
 	let showEditModal = $state(false);
-	let optimisticStatus = $state(item.status);
-	$effect(() => { optimisticStatus = item.status; });
+	// svelte-ignore state_referenced_locally
+	// eslint-disable-next-line svelte/prefer-writable-derived	
+	let optimisticStatus = $state(item.status as 'available' | 'unavailable');
+	$effect(() => { optimisticStatus = item.status as 'available' | 'unavailable'; });
+	// svelte-ignore state_referenced_locally
+	// eslint-disable-next-line svelte/prefer-writable-derived
+	let optimisticTrusteesOnly = $state(item.trusteesOnly);
+	$effect(() => { optimisticTrusteesOnly = item.trusteesOnly; });
 
 	function getRealImageUrl(i: Item): string | null {
 		if (i.image) return `${PB_URL}api/files/${i.collectionId}/${i.id}/${i.image}`;
@@ -41,24 +46,48 @@
 		<img src={getRealImageUrl(item)!} alt={item.name} class="w-10 h-10 rounded object-cover shrink-0" />
 	{:else}
 		<div class="w-10 h-10 rounded shrink-0 bg-gray-100 flex items-center justify-center overflow-hidden">
-			{#if getCategoryPlaceholder(item.categories)}
-				<img src={getCategoryPlaceholder(item.categories)!} alt="" class="w-full h-full object-contain p-1 opacity-40" />
+			{#if getCategoryPlaceholder(item.categories ?? [])}
+				<img src={getCategoryPlaceholder(item.categories ?? [])!} alt="" class="w-full h-full object-contain p-1 opacity-40" />
 			{/if}
 		</div>
 	{/if}
 
 	<!-- Name + badges -->
 	<div class="flex-1 flex items-center gap-2 min-w-0">
-		<a href="/items/{item.id}" class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline sm:max-w-[40%] sm:min-w-32">{item.name}</a>
+		<a href={resolve(`/items/${item.id}`)} class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline sm:max-w-[40%] sm:min-w-32">{item.name}</a>
 		{#if item.description}
 			<span class="hidden sm:block text-xs text-tinte-400 dark:text-tinte-500 truncate min-w-0">{item.description}</span>
 		{/if}
-		{#if item.trusteesOnly}
-			<Badge rounded border color="green" class="shrink-0">
-				<span class="text-green-900 bg-green-100 text-xs">{texts.ui.trustedOnly}</span>
-			</Badge>
-		{/if}
 	</div>
+
+	<!-- Trustees-only heart toggle -->
+	<form
+		method="POST"
+		action="?/toggleTrusteesOnly"
+		use:enhance={() => {
+			optimisticTrusteesOnly = !optimisticTrusteesOnly;
+			return async ({ update }) => update({ reset: false });
+		}}
+	>
+		<input type="hidden" name="itemId" value={item.id} />
+		<button
+			type="submit"
+			title={optimisticTrusteesOnly ? 'Nur für Vertraute — klicken zum Aufheben' : 'Für alle — klicken um auf Vertraute zu beschränken'}
+			class="shrink-0 p-1.5 rounded hover:bg-tinte-100 dark:hover:bg-tinte-700 transition-colors cursor-pointer"
+		>
+			{#if optimisticTrusteesOnly}
+				<!-- Heart solid — green = trusted only -->
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="currentColor">
+					<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+				</svg>
+			{:else}
+				<!-- Heart outline — muted = open to all -->
+				<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-tinte-300 dark:text-tinte-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+				</svg>
+			{/if}
+		</button>
+	</form>
 
 	<!-- Inline status toggle -->
 	<form
@@ -108,5 +137,5 @@
 	bind:isVisible={showEditModal}
 	type="edit"
 	editingItem={item}
-	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories) ?? ''}
+	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories ?? []) ?? ''}
 />

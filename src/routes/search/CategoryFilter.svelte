@@ -1,27 +1,24 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { Toggle } from 'flowbite-svelte';
 	import { ITEM_CATEGORIES } from '$lib/texts';
 	import { texts } from '$lib/texts';
+	import { buildSearchUrl } from './searchUrl';
 
 	interface Props {
 		selectedCategories: string[];
 		op: 'or' | 'and';
 		q: string;
 		perPage: number;
+		onlyAvailable: boolean;
+		ownerType: string;
 	}
 
-	let { selectedCategories, op, q, perPage }: Props = $props();
+	let { selectedCategories, op, q, perPage, onlyAvailable, ownerType }: Props = $props();
 
 	function buildUrl(newCats: string[], newOp: 'or' | 'and'): string {
-		const params = new URLSearchParams();
-		if (q) params.set('q', q);
-		if (perPage !== 10) params.set('perPage', String(perPage));
-		if (newCats.length > 0) params.set('cats', newCats.join(','));
-		if (newOp === 'and') params.set('op', 'and');
-		// always reset to page 1 when filter changes
-		return resolve('/search') + '?' + params.toString();
+		// Always reset to page 1 when filter changes (omit page param).
+		return buildSearchUrl({ q, cats: newCats, op: newOp, onlyAvailable, ownerType, perPage: perPage !== 10 ? perPage : undefined });
 	}
 
 	function toggleCat(cat: string) {

@@ -9,7 +9,7 @@ export async function load({ params, locals }) {
 
 	let profileUser: User;
 	try {
-		profileUser = await locals.pb.collection('users').getOne(params.id);
+		profileUser = await locals.pb.collection('users_public').getOne(params.id);
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
 		error(e.status === 404 ? 404 : 500, 'User not found');
@@ -17,10 +17,9 @@ export async function load({ params, locals }) {
 
 	let allItems: Item[] = [];
 	try {
-		allItems = await locals.pb.collection('items').getFullList({
-			filter: `owner = "${params.id}"`,
-			sort: '-updated',
-			expand: 'owner',
+		allItems = await locals.pb.collection('items_public').getFullList({
+			filter: `userId = "${params.id}"`,
+			sort: '-updated'
 		});
 	} catch (err) {
 		console.error('Failed to load items for user profile', err);
@@ -61,15 +60,9 @@ export async function load({ params, locals }) {
 }
 
 export const actions = {
-	addTrust: async ({ params, locals }): Promise<void> => {
-		if (!locals.user) {
-			fail(401, { message: texts.errors.noPermission });
-			return;
-		}
-		if (params.id === locals.user.id) {
-			fail(400, { message: texts.errors.noPermission });
-			return;
-		}
+	addTrust: async ({ params, locals }) => {
+		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
+		if (params.id === locals.user.id) return fail(400, { message: texts.errors.noPermission });
 
 		const profileUserId = params.id;
 		const updatedTrusts = [...(locals.user.trusts || []), profileUserId];
@@ -90,11 +83,8 @@ export const actions = {
 		}
 	},
 
-	removeTrust: async ({ params, locals }): Promise<void> => {
-		if (!locals.user) {
-			fail(401, { message: texts.errors.noPermission });
-			return;
-		}
+	removeTrust: async ({ params, locals }) => {
+		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
 
 		const profileUserId = params.id;
 		const updatedTrusts = (locals.user.trusts || []).filter((id: string) => id !== profileUserId);

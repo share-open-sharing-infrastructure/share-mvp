@@ -17,6 +17,7 @@ const unprotectedPrefix = [
 	'/invite',
 	'/sitemap.xml',
 	'/api/redirect',
+	'/api/diagnostics',
 ];
 
 export const authentication: Handle = async ({ event, resolve }) => {
@@ -44,7 +45,9 @@ export const authentication: Handle = async ({ event, resolve }) => {
 	response.headers.append(
 		'set-cookie',
 		event.locals.pb.authStore.exportToCookie({
-			httpOnly: false, // required for SvelteKit to access the cookie on the client side, necessary for /chat
+			httpOnly: true,
+			secure: !event.url.hostname.includes('localhost'),
+			sameSite: 'Lax',
 		})
 	);
 

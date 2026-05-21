@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { Button } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AddressInput from '$lib/components/AddressInput.svelte';
@@ -9,8 +10,15 @@
 	import MessengerField from './MessengerField.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import InviteLink from './InviteLink.svelte';
+	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+
+	type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	let { data, form } = $props();
+
+	let selectedTransportMode = $state<TransportMode>(
+		(data.currentUser.preferredTransportMode as TransportMode | undefined) ?? 'bicycle'
+	);
 
 	const profileImageUrl = $derived(
 		data.currentUser.profileImage
@@ -34,6 +42,17 @@
 
 <main class="bg-secondary-100 dark:bg-tinte-900 min-h-screen">
 	<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12">
+		{#if !data.currentUser.hasOnboarded}
+			<div class="mb-4">
+				<a
+					href={resolve('/onboarding')}
+					class="flex items-center justify-center gap-2 w-full py-3 px-6 min-button bg-primary-200 hover:bg-primary-300 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
+				>
+					{texts.pages.profile.completeOnboarding}
+				</a>
+			</div>
+		{/if}
+
 		<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8">
 			{#if form}
 				<div class="mb-6">
@@ -42,7 +61,7 @@
 			{/if}
 
 			<!-- reset: false preserves typed field values after use:enhance processes the submission -->
-			<form method="POST" action="?/saveProfile" enctype="multipart/form-data" class="space-y-4" use:enhance={() => ({ update }) => update({ reset: false })}>
+			<form method="POST" action="?/saveProfile" enctype="multipart/form-data" class="space-y-4" use:enhance={() => async ({ update }) => { await update({ reset: false }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
 				<!-- Username -->
 				<div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
 					<label for="username" class="sm:w-36 sm:shrink-0 text-sm font-medium text-tinte-900 dark:text-white">
@@ -65,8 +84,39 @@
 					</label>
 					<div class="sm:flex-1">
 						<AddressInput initialValue={data.currentUser.city ?? ''} />
-						<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-2">
+						<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-2 mt-2">
 							{texts.pages.userProfile.addressNote}
+						</p>
+						<p class="text-xs text-tinte-500 dark:text-tinte-400 mb-5">
+							{texts.pages.userProfile.addressHint}
+						</p>
+					</div>
+				</div>
+
+				<!-- Transport Mode -->
+				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+					<div class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white">
+						{texts.pages.profile.transportModeLabel}
+					</div>
+					<div>
+						<div class="flex gap-2">
+							<input type="hidden" name="preferredTransportMode" value={selectedTransportMode} />
+							{#each (['foot', 'bicycle', 'car'] as TransportMode[]) as mode (mode)}
+								<button
+									type="button"
+									onclick={() => (selectedTransportMode = mode)}
+									class="flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 transition-colors cursor-pointer
+										{selectedTransportMode === mode
+										? 'border-primary bg-primary-50 dark:bg-primary-900/20 text-primary dark:text-primary-300'
+										: 'border-tinte-200 dark:border-tinte-600 text-tinte-600 dark:text-tinte-300 hover:border-tinte-400 dark:hover:border-tinte-400'}"
+								>
+									<TransportModeIcon {mode} class="h-5 w-5" />
+									<span class="text-xs font-medium">{texts.pages.search.transportModes[mode]}</span>
+								</button>
+							{/each}
+						</div>
+						<p class="text-xs text-tinte-500 dark:text-tinte-400 mt-2">
+							{texts.pages.profile.transportModeNote}
 						</p>
 					</div>
 				</div>
@@ -112,7 +162,6 @@
 						<ProfileImageField imageUrl={profileImageUrl} />
 					</div>
 				</div>
-
 				<!-- Bio -->
 				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
 					<label for="bio" class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white">
@@ -135,6 +184,12 @@
 					</Button>
 				</div>
 			</form>
+			<form
+				id="delete-profile-image-form"
+				method="POST"
+				action="?/deleteProfileImage"
+				use:enhance={() => ({ update }) => update({ reset: false })}
+			></form>
 
 			<EmailSection
 				email={data.currentUser.email}

@@ -1,9 +1,10 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
-import type { Conversation, Message } from '$lib/types/models.js';
+import type { Conversation, CounterfactualAnswer } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
-import { createNotification, sendPushToUser, isMessageNotificationThrottled } from '$lib/server/notifications.js';
+import * as lending from './lending.server.js';
+import * as messaging from './conversation.server.js';
 
 export async function load({ params, locals }) {
 	const conversationId: string = params.conversationId;
@@ -19,6 +20,11 @@ export async function load({ params, locals }) {
 		error(e.status === 404 ? 404 : 500, e.status === 404 ? texts.errors.conversationNotFound : 'Unable to load conversation.');
 	}
 
+	const isParticipant =
+		locals.user?.id === conversationRecord.requester ||
+		locals.user?.id === conversationRecord.itemOwner;
+	if (!isParticipant) error(403, texts.errors.noPermission);
+
 	const conversation: Conversation = {
 		id: conversationRecord.id,
 		requester: conversationRecord.expand?.requester,
@@ -27,6 +33,8 @@ export async function load({ params, locals }) {
 		messages: conversationRecord.expand?.messages,
 		readByRequester: conversationRecord.readByRequester,
 		readByOwner: conversationRecord.readByOwner,
+		lendingStatus: conversationRecord.lendingStatus ?? undefined,
+		counterfactual: conversationRecord.counterfactual ?? undefined,
 		created: conversationRecord.created,
 		updated: conversationRecord.updated,
 	};
@@ -45,131 +53,115 @@ export async function load({ params, locals }) {
 				...(isOwner && { readByOwner: true }),
 			});
 		}
+
+		// Conversation read state (readByRequester/readByOwner) and notification read
+		// state are tracked in separate collections, so viewing the conversation does
+		// not automatically clear the notification badge. We sync them here.
+		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
+			filter: `recipient="${locals.user.id}" && relatedId="${conversationId}" && read=false`,
+			fields: 'id',
+		});
+		if (unreadNotifs.length > 0) {
+			await Promise.all(
+				unreadNotifs.map((n) =>
+					locals.pb.collection('notifications').update(n.id, { read: true }).catch(() => {})
+				)
+			);
+		}
 	}
 
-	return {
-		conversation,
-		PB_URL: PUBLIC_PB_URL,
-	};
+	return { conversation, PB_URL: PUBLIC_PB_URL };
 }
 
 export const actions = {
 	sendMessage: async ({ locals, request, params }) => {
-		const formData = await request.formData();
-
-		const messageContent = formData.get('messageContent');
-		const fromUserId = locals.user.id;
-		const toUserId = formData.get('chatPartnerId') as string;
-
-		const messageData = {
-			messageContent: messageContent,
-			from: fromUserId,
-			to: toUserId,
-		};
-
-		let createdMessage: Message;
-		// try to send message to database
-		try {
-			createdMessage = await locals.pb
-				.collection('messages')
-				.create(messageData);
-		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, {
-				fail: true,
-				message: e.data?.message ?? texts.errors.failedToSendMessage,
-			});
-		}
-
-		// Append created message to conversation and update unread status for recipient
-		if (createdMessage) {
-			const conversationId: string = params.conversationId;
-			const conversationRecord = await locals.pb
-				.collection('conversations')
-				.getOne(conversationId, { expand: 'requester,itemOwner,requestedItem' });
-			const updatedMessages = conversationRecord.messages
-				? [...conversationRecord.messages, createdMessage.id]
-				: [createdMessage.id];
-
-			// Mark conversation as unread for the recipient
-			const recipientIsRequester = conversationRecord.requester === toUserId;
-			try {
-				await locals.pb
-					.collection('conversations')
-					.update(conversationId, {
-						messages: updatedMessages,
-						...(recipientIsRequester
-							? { readByRequester: false }
-							: { readByOwner: false }),
-					});
-			} catch (err) {
-				const e = err as Partial<ClientResponseError>;
-				return fail(e.status ?? 500, {
-					fail: true,
-					message: e.data?.message ?? texts.errors.failedToSendMessage,
-				});
-			}
-
-			// Create in-app notification and send push for the recipient
-			const senderName = locals.user.username ?? locals.user.name ?? 'Jemand';
-			const notificationBody = texts.notifications.newMessage(senderName);
-			const conversationUrl = `/conversations/${conversationId}`;
-
-			const throttled = await isMessageNotificationThrottled(locals.pb, toUserId, conversationId);
-			if (!throttled) {
-				await createNotification(locals.pb, toUserId, locals.user.id, 'new_message', conversationId, notificationBody);
-				await sendPushToUser(locals.pb, toUserId, texts.notifications.pushTitle, notificationBody, conversationUrl);
-			}
-		}
+		const data = await request.formData();
+		const content = data.get('messageContent')?.toString().trim();
+		if (!content) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+		if (content.length > 5000) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+		const senderName = locals.user.username ?? locals.user.name ?? 'Jemand';
+		return messaging.sendMessage(
+			locals.pb,
+			params.conversationId,
+			content,
+			locals.user.id,
+			data.get('chatPartnerId') as string,
+			senderName
+		);
 	},
+
 	toggleStatus: async ({ locals, request }) => {
-		const formData = await request.formData();
-		const itemId = formData.get('itemId')?.toString();
-		if (!itemId) return fail(400, { fail: true, message: 'Fehlende Item-ID.' });
-
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		let item: any;
-		try {
-			item = await locals.pb.collection('items').getOne(itemId);
-		} catch {
-			return fail(404, { fail: true, message: 'Gegenstand nicht gefunden.' });
-		}
-
-		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: 'Keine Berechtigung.' });
-
-		const newStatus = item.status === 'available' ? 'unavailable' : 'available';
-		try {
-			await locals.pb.collection('items').update(itemId, { status: newStatus });
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (err: Error | any) {
-			console.error(err?.message ?? err);
-		}
+		const data = await request.formData();
+		return messaging.toggleItemStatus(locals.pb, data.get('itemId')?.toString() ?? '', locals.user.id);
 	},
 
 	deleteConversation: async ({ locals, request }) => {
-		const formData = await request.formData();
-		const conversationId = formData.get('conversationId') as string;
-
+		const data = await request.formData();
+		const conversationId = data.get('conversationId') as string;
 		try {
-			await locals.pb.collection('conversations').delete(conversationId);
+			const conv = await locals.pb
+				.collection('conversations')
+				.getOne(conversationId, { fields: 'requester,itemOwner' });
+			if (conv.requester !== locals.user?.id && conv.itemOwner !== locals.user?.id) {
+				return fail(403, { fail: true, message: texts.errors.noPermission });
+			}
+			await messaging.deleteConversation(locals.pb, conversationId);
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, {
-				fail: true,
-				message: e.data?.message ?? texts.errors.failedToDeleteConversation,
-			});
+			return fail(e.status ?? 500, { fail: true, message: e.data?.message ?? texts.errors.failedToDeleteConversation });
 		}
-
-		// Clean up notifications pointing to this conversation
-		try {
-			const orphaned = await locals.pb.collection('notifications').getFullList({
-				filter: `relatedId="${conversationId}"`,
-			});
-			await Promise.all(orphaned.map((n) => locals.pb.collection('notifications').delete(n.id)));
-		} catch (err) {
-			console.error('Failed to clean up orphaned notifications for conversation', err);
-		}
-
 		redirect(303, '/conversations');
+	},
+
+	acceptRequest: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
+		return lending.acceptRequest(locals.pb, params.conversationId, locals.user.id);
+	},
+
+	rejectRequest: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
+		return lending.rejectRequest(locals.pb, params.conversationId, locals.user.id);
+	},
+
+	confirmHandover: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
+		return lending.confirmHandover(locals.pb, params.conversationId, locals.user.id);
+	},
+
+	requestReturn: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
+		const requesterName = locals.user.username ?? texts.pages.itemDetail.unknownRequester;
+		return lending.requestReturn(locals.pb, params.conversationId, locals.user.id, requesterName);
+	},
+
+	confirmReturn: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
+		return lending.confirmReturn(locals.pb, params.conversationId, locals.user.id);
+	},
+
+	submitCounterfactual: async ({ locals, request }) => {
+		const form = await request.formData();
+		const conversationId = form.get('conversationId') as string;
+		let answer = form.get('answer') as string;
+		// 'other' is a UI-only sentinel replaced by free text below; all other values must be valid CounterfactualAnswer values (excluding 'pending' which is server-assigned).
+		const valid: (CounterfactualAnswer | 'other')[] = ['would_buy', 'not_important', 'too_expensive', 'borrow_elsewhere', 'unsure', 'other', 'skipped'];
+		if (!valid.includes(answer as CounterfactualAnswer | 'other')) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+		if (answer === 'other') {
+			const text = (form.get('answerText') as string)?.trim();
+			if (!text) return fail(400, { fail: true, message: texts.errors.somethingWentWrong });
+			answer = text;
+		}
+		try {
+			const conv = await locals.pb
+				.collection('conversations')
+				.getOne(conversationId, { fields: 'requester,itemOwner' });
+			if (conv.requester !== locals.user?.id && conv.itemOwner !== locals.user?.id) {
+				return fail(403, { fail: true, message: texts.errors.noPermission });
+			}
+			await locals.pb.collection('conversations').update(conversationId, { counterfactual: answer });
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+		}
 	},
 };

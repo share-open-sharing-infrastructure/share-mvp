@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
 	import { texts } from '$lib/texts';
 	import OnboardingButton from './OnboardingButton.svelte';
 
@@ -10,6 +11,14 @@
 
 	let status = $state<'idle' | 'loading' | 'done' | 'denied'>('idle');
 
+	let cancelled = false;
+	let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+
+	onDestroy(() => {
+		cancelled = true;
+		if (advanceTimer) clearTimeout(advanceTimer);
+	});
+
 	function request() {
 		if (!('geolocation' in navigator)) {
 			status = 'denied';
@@ -18,12 +27,15 @@
 		status = 'loading';
 		navigator.geolocation.getCurrentPosition(
 			() => {
+				if (cancelled) return;
 				status = 'done';
-				setTimeout(onNext, 800);
+				advanceTimer = setTimeout(onNext, 800);
 			},
 			() => {
+				if (cancelled) return;
 				status = 'denied';
-			}
+			},
+			{ timeout: 15000 }
 		);
 	}
 </script>
