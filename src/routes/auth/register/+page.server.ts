@@ -1,9 +1,16 @@
 import { fail, redirect } from '@sveltejs/kit';
-import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import type { User } from '$lib/types/models';
-import { createNotification, sendPushToUser } from '$lib/server/notifications';
 import { generateInviteSlug } from '$lib/inviteSlug';
+import {
+	validateRegistrationForm,
+	resolveInviter,
+	buildCreateUserPayload,
+	createUserAndAuthenticate,
+	requestEmailVerification,
+	signUpForNewsletter,
+	handleInviterRelationship,
+} from '$lib/server/registration';
 
 export async function load({ locals, url }) {
 	if (locals.user) {
@@ -28,106 +35,29 @@ export async function load({ locals, url }) {
 export const actions = {
 	register: async ({ locals, request }) => {
 		const data = await request.formData();
-		const email = data.get('email');
-		const password = data.get('password');
 
-		if (!email || !password) {
-			return fail(400, {
-				emailRequired: email === null,
-				passwordRequired: password === null,
-			});
+		const validation = validateRegistrationForm(data);
+		if (!validation.ok) return fail(validation.status, validation.fields);
+
+		const { email, password, username, subscribeToNewsletter, inviteCode: rawInviteCode } = validation;
+
+		const [inviter, newInviteCode] = await Promise.all([
+			resolveInviter(locals.pb, rawInviteCode),
+			generateInviteSlug(locals.pb),
+		]);
+
+		const payload = buildCreateUserPayload({ email, password, username }, newInviteCode, inviter?.id ?? null);
+
+		const result = await createUserAndAuthenticate(locals.pb, payload, email, password);
+		if (!result.ok) {
+			if (result.error === 'email_taken') return fail(400, { fail: true, message: texts.errors.emailAlreadyTaken });
+			if (result.error === 'username_taken') return fail(400, { fail: true, message: texts.errors.usernameTaken });
+			return fail(500, { fail: true, message: texts.errors.somethingWentWrong });
 		}
 
-		if (password.toString().length < 8) {
-			return fail(400, { fail: true, message: texts.errors.passwordTooShort });
-		}
-
-		const userConsent = data.get('userConsent');
-		if (userConsent !== 'on') {
-			return fail(400, { fail: true, message: texts.errors.userConsentRequired });
-		}
-
-		const username = data.get('username')?.toString().trim();
-		if (!username) {
-			return fail(400, { fail: true, message: texts.errors.usernameRequired });
-		}
-		if (username.includes(' ')) {
-			return fail(400, { fail: true, message: texts.errors.usernameNoSpaces });
-		}
-
-		const subscribeToNewsletter = data.get('subscribeToNewsletter') === 'on';
-		// Must be removed before passing data to PocketBase — it doesn't know this field.
-		data.delete('subscribeToNewsletter');
-
-		const inviteCode = data.get('inviteCode')?.toString();
-		let inviter: User | null = null;
-		if (inviteCode) {
-			try {
-				inviter = await locals.pb
-					.collection('users')
-					.getFirstListItem<User>(`inviteCode = "${inviteCode}"`);
-			} catch {
-				// Invalid invite code — ignore, registration proceeds without it
-			}
-		}
-		data.delete('inviteCode');
-
-		const newInviteCode = await generateInviteSlug(locals.pb);
-		data.set('passwordConfirm', password.toString()); // TODO: Put into form eventually
-		data.set('inviteCode', newInviteCode);
-		if (inviter) {
-			data.set('invitedBy', inviter.id);
-		}
-
-		let newUser: User;
-		try {
-			newUser = await locals.pb.collection('users').create<User>(data);
-			await locals.pb
-				.collection('users')
-				.authWithPassword(email.toString(), password.toString());
-			await locals.pb.collection('users').requestVerification(email.toString());
-		} catch (error) {
-			const errorObj = error as ClientResponseError;
-			console.error('Registration error:', errorObj);
-
-			if (errorObj.status === 400 && errorObj.data?.data?.email?.code === 'validation_not_unique') {
-				return fail(400, { fail: true, message: texts.errors.emailAlreadyTaken });
-			}
-
-			return fail(500, {
-				fail: true,
-				message: texts.errors.somethingWentWrong,
-			});
-		}
-
-		// Non-fatal: newsletter signup should never block registration.
-		if (subscribeToNewsletter) {
-			try {
-				const keilaData = new URLSearchParams();
-				keilaData.set('contact[email]', email.toString());
-				keilaData.set('contact[first_name]', username);
-				// Keila honeypot field — must be sent empty; a non-empty value signals a bot submission.
-				keilaData.set('h[url]', '');
-				await fetch('https://app.keila.io/forms/nfrm_b94Bj5RD', {
-					method: 'POST',
-					body: keilaData,
-				});
-			} catch (error) {
-				console.error('Newsletter signup failed:', error);
-			}
-		}
-
-		if (inviter) {
-			try {
-				await locals.pb.collection('users').update(newUser.id, { trusts: [inviter.id] });
-			} catch (error) {
-				console.error('Failed to set new user trust:', error);
-			}
-
-			const body = texts.notifications.inviteAccepted(newUser.username);
-			await createNotification(locals.pb, inviter.id, newUser.id, 'invite_accepted', newUser.id, body);
-			await sendPushToUser(locals.pb, inviter.id, texts.notifications.pushTitle, body, `/users/${newUser.id}`);
-		}
+		await requestEmailVerification(locals.pb, email);
+		if (subscribeToNewsletter) await signUpForNewsletter(email, username);
+		if (inviter) await handleInviterRelationship(locals.pb, result.user, inviter);
 
 		redirect(303, '/onboarding');
 	},
