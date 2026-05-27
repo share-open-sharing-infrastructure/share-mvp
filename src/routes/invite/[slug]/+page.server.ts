@@ -5,7 +5,7 @@ export async function load({ locals, params }) {
 
 	try {
 		const inviter = await locals.pb
-			.collection('users')
+			.collection('users_public')
 			.getFirstListItem<User>(`inviteCode = "${slug}"`);
 		return { inviterName: inviter.username, slug };
 	} catch {

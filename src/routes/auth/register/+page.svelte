@@ -18,7 +18,7 @@
 
 	const checkUsername = debounce(async (value: string) => {
 		try {
-			await pb.collection('users').getFirstListItem(`username = "${value}"`);
+			await pb.collection('users_public').getFirstListItem(`username = "${value}"`);
 			usernameStatus = 'taken';
 		} catch {
 			usernameStatus = 'available';
