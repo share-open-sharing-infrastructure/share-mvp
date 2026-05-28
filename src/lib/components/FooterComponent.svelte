@@ -45,6 +45,11 @@
 						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
 							>{texts.nav.newsletter}</FooterLink
 						>
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" 
+							href="/api/redirect?to=https%3A%2F%2Fallerleih.notion.site%2F36de086dc6ab80f69529e6cf68afe7c4%3Fv%3D36de086dc6ab80869c89000c98bbac63&source=footer"
+							target="_blank"
+							>{texts.nav.contribute}</FooterLink
+						>
 					</FooterLinkGroup>
 				</div>
 				<div>

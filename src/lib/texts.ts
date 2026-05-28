@@ -49,6 +49,7 @@ export const texts = {
 		imprint: 'Impressum',
 		contact: 'Kontakt',
 		newsletter: 'Newsletter',
+		contribute: 'Mitmachen',
 		faq: 'FAQ',
 		translate: 'Translate',
 		translateTitle: 'Translate this page',
