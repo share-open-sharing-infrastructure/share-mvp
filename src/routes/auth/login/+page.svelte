@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
+	import { EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
 	let { form, data } = $props();
+
+	let showPassword = $state(false);
 </script>
 
 <svelte:head>
@@ -46,16 +49,30 @@
 					/>
 				</Label>
 				<Label class="space-y-2">
-					<span>{texts.forms.password}</span>
+				<span>{texts.forms.password}</span>
+				<div class="relative">
 					<Input
-						type="password"
+						type={showPassword ? 'text' : 'password'}
 						name="password"
 						placeholder={texts.auth.passwordPlaceholder}
-						class="focus:border-primary-700 focus:ring-primary-700"
+						class="focus:border-primary-700 focus:ring-primary-700 pr-10"
 						autocomplete="current-password"
 						required
 					/>
-				</Label>
+					<button
+						type="button"
+						class="absolute inset-y-0 right-0 flex items-center pr-3 text-tinte-500 hover:text-tinte-700 dark:text-tinte-400 dark:hover:text-tinte-200"
+						onclick={() => (showPassword = !showPassword)}
+						aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+					>
+						{#if showPassword}
+							<EyeSlashOutline class="h-5 w-5" />
+						{:else}
+							<EyeOutline class="h-5 w-5" />
+						{/if}
+					</button>
+				</div>
+			</Label>
 
 				<Button
 					type="submit"

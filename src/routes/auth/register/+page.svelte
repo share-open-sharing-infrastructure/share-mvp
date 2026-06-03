@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Button, Label, Input } from 'flowbite-svelte';
+	import { EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -15,6 +16,7 @@
 
 	let username = $state('');
 	let usernameStatus: 'idle' | 'checking' | 'available' | 'taken' | 'invalid' = $state('idle');
+	let showPassword = $state(false);
 
 	const checkUsername = debounce(async (value: string) => {
 		try {
@@ -107,16 +109,30 @@
 					/>
 				</Label>
 				<Label class="space-y-2">
-					<span>{texts.forms.password}</span>
+				<span>{texts.forms.password}</span>
+				<div class="relative">
 					<Input
-						type="password"
+						type={showPassword ? 'text' : 'password'}
 						name="password"
 						placeholder={texts.auth.passwordPlaceholder}
-						class="focus:border-primary-700 focus:ring-primary-700"
+						class="focus:border-primary-700 focus:ring-primary-700 pr-10"
 						autocomplete="new-password"
 						required
 					/>
-				</Label>
+					<button
+						type="button"
+						class="absolute inset-y-0 right-0 flex items-center pr-3 text-tinte-500 hover:text-tinte-700 dark:text-tinte-400 dark:hover:text-tinte-200"
+						onclick={() => (showPassword = !showPassword)}
+						aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+					>
+						{#if showPassword}
+							<EyeSlashOutline class="h-5 w-5" />
+						{:else}
+							<EyeOutline class="h-5 w-5" />
+						{/if}
+					</button>
+				</div>
+			</Label>
 				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
 					<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
 					<span>Ich habe die <a href={resolve("/misc/tos")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">AGB</a> und die <a href={resolve("/misc/privacy")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Datenschutzerklärung</a> gelesen und stimme beiden zu.</span>
