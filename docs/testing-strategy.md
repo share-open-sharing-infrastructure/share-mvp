@@ -14,13 +14,13 @@ Currently, this means that we gradually implement unit tests for server-side fun
 
 ## Practice
 
-Test files currently live next to their target. For example, for testing chat functionality, the test file [/src/routes/chat/[userId]/page.server.test.js](/src/routes/chat/[userId]/page.server.test.js) lives directly next to [/src/routes/chat/[userId]/+page.server.ts](/src/routes/chat/[userId]/+page.server.ts).
+Test files currently live next to their target. For example, for testing conversation functionality, the test file lives directly next to [/src/routes/conversations/[conversationId]/+page.server.ts](/src/routes/conversations/[conversationId]/+page.server.ts).
 
 To test a page and its functions, use Vitest like so:
 
 ```javascript
 
-describe('page name, e.g. Chat Page', () => {
+describe('page name, e.g. Conversation Page', () => {
     // Define mock objects for server-side SvelteKit objects
     let mockLocals; // locals contain the database object the current user
     let mockRequest; // request object, e.g. from forms
@@ -47,7 +47,7 @@ describe('page name, e.g. Chat Page', () => {
         };
 
         mockParams = {
-            userId: 'user456'
+            conversationId: 'conv456'
         };
     });
 
@@ -90,3 +90,7 @@ describe('page name, e.g. Chat Page', () => {
             });
         });
 ```
+
+## CI Integration
+
+Tests run automatically on every pull request to `main` via GitHub Actions (`.github/workflows/vitest.yaml`). Coverage is reported as a PR comment via `davelosert/vitest-coverage-report-action` (json + lcov artifacts are also uploaded for download). The build step (`npm run build`) runs in the same workflow, catching TypeScript and Svelte compilation errors before merging.
