@@ -5,6 +5,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import PasswordInput from '$lib/components/PasswordInput.svelte';
 
 	let { form, data } = $props();
 </script>
@@ -45,17 +46,7 @@
 						required
 					/>
 				</Label>
-				<Label class="space-y-2">
-					<span>{texts.forms.password}</span>
-					<Input
-						type="password"
-						name="password"
-						placeholder={texts.auth.passwordPlaceholder}
-						class="focus:border-primary-700 focus:ring-primary-700"
-						autocomplete="current-password"
-						required
-					/>
-				</Label>
+				<PasswordInput autocomplete="current-password" />
 
 				<Button
 					type="submit"
