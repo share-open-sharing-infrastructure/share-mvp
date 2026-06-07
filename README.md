@@ -67,3 +67,7 @@ npm run test
 ```
 
 For a basic introduction, check the tutorial on the vitest page: [Writing Tests in vitest](https://vitest.dev/guide/#writing-tests). For more extensive information, have a look at our work-in-progress testing documentation [/docs/testing-strategy.md](/docs/testing-strategy.md) ([GitHub Page](https://share-open-sharing-infrastructure.github.io/share-mvp/testing-strategy.html))
+
+# License
+
+This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0-only)](LICENSE). This means you are free to use, modify, and distribute this software, provided that any modified version made available over a network also makes its source code available under the same license. See the [LICENSE](LICENSE) file for details.
