@@ -6,7 +6,11 @@ export const load = async (event) => {
 		try {
 			const result = await event.locals.pb
 				.collection('notifications')
-				.getList(1, 1, { filter: `recipient="${currentUser.id}" && read=false` });
+				.getList(1, 1, {
+					filter: event.locals.pb.filter('recipient={:userId} && read=false', {
+						userId: currentUser.id,
+					}),
+				});
 			unreadNotificationCount = result.totalItems;
 		} catch {
 			// notifications collection may not exist yet during setup

@@ -10,8 +10,8 @@ export async function load({ locals, url }) {
 	const search = url.searchParams.get('search') ?? '';
 	const statusFilter = url.searchParams.get('status') ?? 'all';
 
-	const filters: string[] = [`owner = "${locals.user.id}"`];
-	if (search) filters.push(`name ~ "${search.replace(/"/g, '')}"`);
+	const filters: string[] = [locals.pb.filter('owner = {:ownerId}', { ownerId: locals.user.id })];
+	if (search) filters.push(locals.pb.filter('name ~ {:search}', { search }));
 	if (statusFilter === 'available') filters.push(`status = "available"`);
 	else if (statusFilter === 'unavailable') filters.push(`status = "unavailable"`);
 
@@ -153,7 +153,7 @@ export const actions = {
 			try {
 				const conversations = await locals.pb
 					.collection('conversations')
-					.getFullList({ filter: `requestedItem = "${itemId}"` });
+					.getFullList({ filter: locals.pb.filter('requestedItem = {:itemId}', { itemId }) });
 
 				for (const conversation of conversations) {
 					await locals.pb.collection('conversations').delete(conversation.id);

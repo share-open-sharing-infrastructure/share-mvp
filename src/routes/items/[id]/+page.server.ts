@@ -61,7 +61,9 @@ export async function load({ params, locals }) {
 		try {
 			const { totalItems } = await locals.pb
 				.collection('items_public')
-				.getList(1, 1, { filter: `userId = "${item.userId}"` });
+				.getList(1, 1, {
+					filter: locals.pb.filter('userId = {:userId}', { userId: item.userId }),
+				});
 			ownerItemCount = totalItems;
 		} catch {
 			// silently fall back to 0
@@ -147,7 +149,10 @@ export const actions = {
 		let existingConversations;
 		try {
 			existingConversations = await locals.pb.collection('conversations').getFullList({
-				filter: `requester = "${requesterId}" && requestedItem = "${itemId}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				filter: locals.pb.filter(
+					'requester = {:requesterId} && requestedItem = {:itemId} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+					{ requesterId, itemId }
+				),
 				sort: '-created',
 			});
 		} catch {

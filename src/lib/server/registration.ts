@@ -72,7 +72,9 @@ export function validateRegistrationForm(data: FormData): ValidationResult {
 export async function resolveInviter(pb: PocketBase, inviteCode: string | null): Promise<User | null> {
 	if (!inviteCode) return null;
 	try {
-		return await pb.collection('users_public').getFirstListItem<User>(`inviteCode = "${inviteCode}"`);
+		return await pb
+			.collection('users_public')
+			.getFirstListItem<User>(pb.filter('inviteCode = {:code}', { code: inviteCode }));
 	} catch {
 		return null;
 	}

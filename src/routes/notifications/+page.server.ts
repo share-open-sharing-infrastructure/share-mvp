@@ -9,7 +9,7 @@ export async function load({ locals }) {
 	let notifications: Notification[] = [];
 	try {
 		const records = await locals.pb.collection('notifications').getFullList({
-			filter: `recipient="${locals.user.id}"`,
+			filter: locals.pb.filter('recipient={:userId}', { userId: locals.user.id }),
 			sort: '-created',
 		});
 		notifications = records as unknown as Notification[];
@@ -29,7 +29,7 @@ export const actions = {
 		if (!id) return;
 		try {
 			await locals.pb.collection('notifications').update(id, { read: true }, {
-				filter: `recipient="${locals.user.id}" && read=false`,
+				filter: locals.pb.filter('recipient={:userId} && read=false', { userId: locals.user.id }),
 			});
 		} catch {
 			// Notification already read or not found — both are acceptable for fire-and-forget.

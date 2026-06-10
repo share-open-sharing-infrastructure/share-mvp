@@ -27,7 +27,7 @@ export async function upsertPushSubscription(
 ): Promise<void> {
 	const { items: matchingSubscriptions } = await pb
 		.collection(PUSH_SUBSCRIPTIONS)
-		.getList(1, 1, { filter: `endpoint="${endpoint}"` })
+		.getList(1, 1, { filter: pb.filter('endpoint={:endpoint}', { endpoint }) })
 		.catch(() => ({ items: [] as { id: string }[] }));
 
 	const [existingSubscription] = matchingSubscriptions;
@@ -58,7 +58,7 @@ export async function upsertPushSubscription(
 export async function deleteAllPushSubscriptions(pb: PocketBase, userId: string): Promise<void> {
 	const allSubscriptions = await pb
 		.collection(PUSH_SUBSCRIPTIONS)
-		.getFullList({ filter: `user="${userId}"` })
+		.getFullList({ filter: pb.filter('user={:userId}', { userId }) })
 		.catch(() => []);
 
 	await Promise.allSettled(
@@ -80,7 +80,9 @@ export async function deletePushSubscription(
 ): Promise<void> {
 	const { items: matchingSubscriptions } = await pb
 		.collection(PUSH_SUBSCRIPTIONS)
-		.getList(1, 1, { filter: `endpoint="${endpoint}" && user="${userId}"` })
+		.getList(1, 1, {
+			filter: pb.filter('endpoint={:endpoint} && user={:userId}', { endpoint, userId }),
+		})
 		.catch(() => ({ items: [] as { id: string }[] }));
 
 	const [existingSubscription] = matchingSubscriptions;

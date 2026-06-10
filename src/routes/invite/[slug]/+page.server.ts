@@ -6,7 +6,7 @@ export async function load({ locals, params }) {
 	try {
 		const inviter = await locals.pb
 			.collection('users_public')
-			.getFirstListItem<User>(`inviteCode = "${slug}"`);
+			.getFirstListItem<User>(locals.pb.filter('inviteCode = {:code}', { code: slug }));
 		return { inviterName: inviter.username, slug };
 	} catch {
 		return { inviterName: null, slug };

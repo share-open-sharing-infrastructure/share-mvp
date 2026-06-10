@@ -58,7 +58,10 @@ export async function load({ params, locals }) {
 		// state are tracked in separate collections, so viewing the conversation does
 		// not automatically clear the notification badge. We sync them here.
 		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
-			filter: `recipient="${locals.user.id}" && relatedId="${conversationId}" && read=false`,
+			filter: locals.pb.filter('recipient={:userId} && relatedId={:conversationId} && read=false', {
+				userId: locals.user.id,
+				conversationId,
+			}),
 			fields: 'id',
 		});
 		if (unreadNotifs.length > 0) {

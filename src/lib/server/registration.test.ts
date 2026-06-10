@@ -13,8 +13,21 @@ import { texts } from '$lib/texts';
 // Helpers
 // ---------------------------------------------------------------------------
 
+function mockFilter(raw: string, params?: Record<string, unknown>): string {
+	if (!params) return raw;
+	let result = raw;
+	for (const [key, value] of Object.entries(params)) {
+		const escaped = typeof value === 'string' ? `'${value.replace(/'/g, "\\'")}'` : `${value}`;
+		result = result.replaceAll(`{:${key}}`, escaped);
+	}
+	return result;
+}
+
 function makeMockPb(collectionImpl: (name: string) => object): PocketBase {
-	return { collection: vi.fn((name: string) => collectionImpl(name)) } as unknown as PocketBase;
+	return {
+		collection: vi.fn((name: string) => collectionImpl(name)),
+		filter: vi.fn(mockFilter)
+	} as unknown as PocketBase;
 }
 
 function makeFormData(fields: Record<string, string>): FormData {
@@ -153,7 +166,7 @@ describe('resolveInviter', () => {
 		const pb = makeMockPb(() => ({ getFirstListItem: mockGetFirstListItem }));
 		const result = await resolveInviter(pb, 'valid-code');
 		expect(result).toEqual(stubUser);
-		expect(mockGetFirstListItem).toHaveBeenCalledWith('inviteCode = "valid-code"');
+		expect(mockGetFirstListItem).toHaveBeenCalledWith("inviteCode = 'valid-code'");
 	});
 
 	it('returns null when invite code is not found', async () => {

@@ -140,8 +140,21 @@ describe('cleanTermsHtml', () => {
 // Helpers for DB tests
 // ---------------------------------------------------------------------------
 
+function mockFilter(raw: string, params?: Record<string, unknown>): string {
+	if (!params) return raw;
+	let result = raw;
+	for (const [key, value] of Object.entries(params)) {
+		const escaped = typeof value === 'string' ? `'${value.replace(/'/g, "\\'")}'` : `${value}`;
+		result = result.replaceAll(`{:${key}}`, escaped);
+	}
+	return result;
+}
+
 function makeMockPb(collectionImpl: (name: string) => object): PocketBase {
-	return { collection: vi.fn((name: string) => collectionImpl(name)) } as unknown as PocketBase;
+	return {
+		collection: vi.fn((name: string) => collectionImpl(name)),
+		filter: vi.fn(mockFilter)
+	} as unknown as PocketBase;
 }
 
 const stubTerms: LendingTerms = {
@@ -204,9 +217,9 @@ describe('getActiveTerms', () => {
 		mockGetFirstListItem.mockResolvedValue(stubTerms);
 		await getActiveTerms(pb, 'owner1');
 		const [filter] = mockGetFirstListItem.mock.calls[0];
-		expect(filter).toContain('owner = "owner1"');
+		expect(filter).toContain("owner = 'owner1'");
 		expect(filter).toContain('active = true');
-		expect(filter).toMatch(/effectiveFrom <= "/);
+		expect(filter).toMatch(/effectiveFrom <= '/);
 	});
 
 	it('sorts by -effectiveFrom', async () => {
@@ -252,8 +265,8 @@ describe('getAcceptance', () => {
 		mockGetFirstListItem.mockResolvedValue(stubAcceptance);
 		await getAcceptance(pb, 'user1', 'terms1');
 		const [filter] = mockGetFirstListItem.mock.calls[0];
-		expect(filter).toContain('user = "user1"');
-		expect(filter).toContain('terms = "terms1"');
+		expect(filter).toContain("user = 'user1'");
+		expect(filter).toContain("terms = 'terms1'");
 	});
 
 	it('sorts by -acceptedAt to get the most recent acceptance', async () => {
@@ -312,6 +325,6 @@ describe('hasAcceptedActiveTerms', () => {
 		}));
 		await hasAcceptedActiveTerms(pb, 'user1', 'owner1');
 		const [filter] = acceptanceGet.mock.calls[0];
-		expect(filter).toContain(`terms = "${stubTerms.id}"`);
+		expect(filter).toContain(`terms = '${stubTerms.id}'`);
 	});
 });
