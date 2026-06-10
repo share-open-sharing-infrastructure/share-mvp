@@ -3,17 +3,21 @@
 	import { EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 
-	let { autocomplete = 'current-password' }: { autocomplete?: AutoFill | null } = $props();
+	let {
+		autocomplete = 'current-password',
+		name = 'password',
+		label = texts.forms.password,
+	}: { autocomplete?: AutoFill | null; name?: string; label?: string } = $props();
 
 	let showPassword = $state(false);
 </script>
 
 <Label class="space-y-2">
-	<span>{texts.forms.password}</span>
+	<span>{label}</span>
 	<div class="relative">
 		<Input
 			type={showPassword ? 'text' : 'password'}
-			name="password"
+			{name}
 			placeholder={texts.auth.passwordPlaceholder}
 			class="focus:border-primary-700 focus:ring-primary-700 pr-10"
 			{autocomplete}
