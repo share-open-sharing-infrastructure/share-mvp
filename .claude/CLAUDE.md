@@ -116,7 +116,7 @@ Breaking `use:enhance` reactivity is the #1 footgun. Always access page data dir
 // +page.server.ts
 export async function load({ locals }) {
   const items = await locals.pb.collection('items').getFullList({
-    filter: `owner != "${locals.user.id}"`,
+    filter: locals.pb.filter('owner != {:userId}', { userId: locals.user.id }),
     expand: 'owner',
     sort: '-updated'
   });
@@ -125,6 +125,26 @@ export async function load({ locals }) {
 ```
 
 Schema changes are made in the PocketBase admin dashboard — no migration files in this repo.
+
+### CRITICAL: always build PocketBase filters with `pb.filter()`
+
+Never interpolate values directly into a filter string with template literals
+(`` `owner = "${id}"` ``) — a value containing `"` can break out of the filter
+expression and change which records are matched (filter injection). Always use
+the SDK's `pb.filter(raw, params)` helper, which escapes each placeholder:
+
+```typescript
+// CORRECT
+pb.filter('inviteCode = {:code}', { code: inviteCode })
+
+// WRONG — filter injection if `code` contains a `"`
+`inviteCode = "${code}"`
+```
+
+This applies to every interpolated value, including IDs from `locals.user.id`
+or route params, not just obviously "user-supplied" fields — be consistent.
+Use `locals.pb.filter(...)` in routes and `pb.filter(...)` in `$lib/server/*`
+helpers that take `pb: PocketBase` as a parameter.
 
 ### Item image URLs
 
