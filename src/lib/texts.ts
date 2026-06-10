@@ -243,7 +243,7 @@ export const texts = {
 	// Pages
 	pages: {
 		landing: {
-			tagline: 'Leihe und teile Dinge in',
+			tagline: 'Leihe und teile kostenlos Dinge in',
 			ctaButtonSearch: 'Dinge Finden',
 			ctaButtonUpload: 'Dinge Verleihen',
 			city: 'Lüneburg',
@@ -286,17 +286,18 @@ export const texts = {
 				title: 'Erklärvideo: Wie funktioniert AllerLeih?',
 			},
 			intro:
-				'AllerLeih ist eine offene, gemeinwohlorientierte Plattform, auf der du Dinge aus- und verleihen kannst.',
+				'AllerLeih ist eine offene, gemeinwohlorientierte Plattform, auf der du kostenlos Dinge aus- und verleihen kannst.',
 			borrowing: {
 				title: 'Ausleihen',
 				steps: [
 					{
 						label: 'Suchen',
-						text: 'Stöbere in der Suche nach Gegenständen aus deiner Umgebung. Wir bündeln für dich das lokale Angebot: von Freund:innen, aus der Nachbarschaft oder vom nächsten Leihladen.',
+						text: 'Stöbere in der Suche nach Gegenständen aus deiner Umgebung. Wir bündeln für dich das lokale Angebot: \
+						von Freund:innen, aus der Nachbarschaft oder vom nächsten Leihladen.',
 					},
 					{
 						label: 'Anfragen',
-						text: 'Schreibe der verleihenden Person direkt. Falls sie Signal oder Telegram hinterlegt hat, auch darüber. Bei externen Angeboten wirst du unter Umständen weitergeleitet.',
+						text: 'Kontaktiere die verleihende Person direkt. Falls sie Signal oder Telegram hinterlegt hat, könnt ihr auch darüber kommunizieren. Bei externen Angeboten wirst du unter Umständen weitergeleitet.',
 					},
 					{
 						label: 'Austauschen',
@@ -322,7 +323,7 @@ export const texts = {
 					},
 					{
 						label: 'Anfragen empfangen',
-						text: 'Interessierte melden sich direkt bei dir. Du entscheidest, ob und wann du verleihst.',
+						text: 'Interessierte melden sich direkt über AllerLeih bei dir. Du entscheidest, ob und wann du verleihst.',
 					},
 					{
 						label: 'Verfügbarkeit verwalten',
@@ -341,8 +342,8 @@ export const texts = {
 					a: 'Wir bekommen die Frage häufiger und haben eine vielleicht etwas unbefriedigende Antwort: das, was sonst auch passieren würde. Wenn euer Gegenüber eine Haftpflicht hat, greift die. Oder ihr regelt das zwischen euch. Wir wollen bewusst keine Sozialtechnik wie Versicherungen oder Ähnliches anbieten, weil wir Vertrauen nicht outsourcen wollen. Über die Vertrauensfunktion habt ihr die volle Kontrolle darüber, an wen ihr verleiht. Wenn es doch einmal zu größeren Problemen kommt, meldet euch gerne und wir versuchen zu helfen!',
 				},
 				{
-					q: 'Wie finanziert ihr euch?',
-					a: 'Aktuell finanzieren wir uns aus eigener Tasche und suchen sehr aktiv nach Finanzierungsmöglichkeiten. Matteo ist zudem bis 2027 durch ein Stipendium der Studienstiftung des deutschen Volkes abgesichert. Falls ihr Ideen oder Kontakte habt, meldet euch gerne bei uns! Wir sind für alles offen, solange es zu unseren Werten passt.',
+					q: 'Was kostet das?',
+					a: 'AllerLeih kostet dich als Privatperson nichts, und das wird auch so bleiben, denn AllerLeih ist für alle! Wir finanzieren uns aktuell aus eigener Tasche und suchen aktiv nach Finanzierungsmöglichkeiten. Falls ihr Ideen oder Kontakte habt, meldet euch gerne bei uns!',
 				},
 				{
 					q: 'Was habt ihr vor?',
