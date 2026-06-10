@@ -8,12 +8,13 @@
 	import StepTransportMode from './StepTransportMode.svelte';
 	import StepBrowserLocation from './StepBrowserLocation.svelte';
 	import StepPushNotifications from './StepPushNotifications.svelte';
+	import StepSurvey from './StepSurvey.svelte';
 	import StepDone from './StepDone.svelte';
 
 	let { data } = $props();
 
 	let step = $state(1);
-	const totalSteps = 10;
+	const totalSteps = 11;
 
 	function next() {
 		if (step < totalSteps) step++;
@@ -62,29 +63,31 @@
 		{:else if step === 2}
 			<StepHowItWorks onNext={next} />
 		{:else if step === 3}
-			<StepProfile onNext={next} currentUser={data.currentUser} pbUrl={data.PB_URL} />
+			<StepSurvey onNext={next} />
 		{:else if step === 4}
+			<StepProfile onNext={next} currentUser={data.currentUser} pbUrl={data.PB_URL} />
+		{:else if step === 5}
 			<StepLocation
 				onNext={next}
 				initialCity={data.currentUser.city}
 				initialGeolocation={data.currentUser.geolocation?.lon || data.currentUser.geolocation?.lat ? data.currentUser.geolocation : null}
 			/>
-		{:else if step === 5}
-			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />
 		{:else if step === 6}
-			<StepContact onNext={next} currentUser={data.currentUser} />
+			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />
 		{:else if step === 7}
+			<StepContact onNext={next} currentUser={data.currentUser} />
+		{:else if step === 8}
 			<StepTrustees
 				onNext={next}
 				users={data.users}
 				trustIds={data.trustIds}
 				currentUserId={data.currentUser.id}
 			/>
-		{:else if step === 8}
-			<StepBrowserLocation onNext={next} />
 		{:else if step === 9}
-			<StepPushNotifications onNext={next} />
+			<StepBrowserLocation onNext={next} />
 		{:else if step === 10}
+			<StepPushNotifications onNext={next} />
+		{:else if step === 11}
 			<StepDone inviteUrl={data.inviteUrl} username={data.username} />
 		{/if}
 
