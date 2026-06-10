@@ -625,6 +625,10 @@ export const texts = {
 			configure: 'Kurzes Onboarding: 1-2 Minuten, um die wichtigsten Einstellungen festzulegen',
 			exploreFirst: 'Direkt losstöbern, Dinge einstellen oder Freunde einladen.',
 		},
+		survey:{
+			title: 'Eine ganz kurze Umfrage',
+			explanation: 'Wir wollen verstehen, was dich zum Teilen motiviert. Deine Antwort hilft uns, AllerLeih besser zu machen und Fördermittel zu beantragen. Die Antwort bleibt vollständig anonym! Du kannst die Umfrage auch überspringen.'
+		}
 	},
 
 	// Notifications
