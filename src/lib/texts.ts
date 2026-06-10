@@ -255,6 +255,7 @@ export const texts = {
 			howLinkText: 'Hier ist eine kurze Anleitung',
 			howBodyPart1: 'für',
 			howBodyPart2: '. Du kannst aber auch einfach direkt mit der Suche starten und dich umschauen!',
+			howVideoLinkText: 'oder schau dir das Erklärvideo an',
 			who: 'Wer seid ihr?',
 			whoBodyPart1: 'Wir sind eine gemeinwohlorientierte Initiative aus Lüneburg. Unter',
 			whoLinkText: 'Über Uns',
@@ -281,6 +282,9 @@ export const texts = {
 		},
 		guide: {
 			title: 'Wie funktioniert AllerLeih?',
+			video: {
+				title: 'Erklärvideo: Wie funktioniert AllerLeih?',
+			},
 			intro:
 				'AllerLeih ist eine offene, gemeinwohlorientierte Plattform, auf der du Dinge aus- und verleihen kannst.',
 			borrowing: {

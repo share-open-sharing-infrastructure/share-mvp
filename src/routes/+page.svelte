@@ -71,7 +71,10 @@
 			<h3 class={titleClass}>{t.how}</h3>
 			<p class={infoParagraphClass}>
 				<a href={resolve('/misc/guide')} class="text-accent hover:underline font-medium">{t.howLinkText}</a>
-				{t.howBodyPart1} {texts.names.app}{t.howBodyPart2}
+				{t.howBodyPart1} {texts.names.app}, <a href="https://www.youtube.com/watch?v=IMPZfuff3eI" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline font-medium">{t.howVideoLinkText}</a>{t.howBodyPart2}
+			</p>
+			<p class={infoParagraphClass}>
+				
 			</p>
 		</div>
 

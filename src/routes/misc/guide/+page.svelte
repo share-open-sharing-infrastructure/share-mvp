@@ -27,6 +27,18 @@
 	<link rel="canonical" href="https://allerleih.org/misc/guide" />
 </svelte:head>
 
+<div class="mb-8 aspect-video w-full overflow-hidden rounded-2xl">
+	<iframe
+		class="h-full w-full"
+		src="https://www.youtube-nocookie.com/embed/IMPZfuff3eI"
+		title={guide.video.title}
+		frameborder="0"
+		allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+		referrerpolicy="strict-origin-when-cross-origin"
+		allowfullscreen
+	></iframe>
+</div>
+
 <h1 class="mb-3 text-2xl font-bold">{guide.title}</h1>
 <p class="mb-8 text-gray-600">{guide.intro}</p>
 
