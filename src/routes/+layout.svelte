@@ -2,6 +2,7 @@
 	import '../app.css';
 	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
+	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
 	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
@@ -115,6 +116,10 @@
 			currentUser={data.currentUser}
 			{unreadCount}
 		/>
+	{:else}
+		<div class="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+			<FeedbackButton />
+		</div>
 	{/if}
 
 	<main class="flex-1 py-8">
