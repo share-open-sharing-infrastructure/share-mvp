@@ -151,7 +151,10 @@ async function startConversationForItem(
 	let existingConversations;
 	try {
 		existingConversations = await locals.pb.collection('conversations').getFullList({
-			filter: `requester = "${requesterId}" && requestedItem = "${itemRecord.id}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+			filter: locals.pb.filter(
+				'requester = {:requesterId} && requestedItem = {:itemId} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+				{ requesterId, itemId: itemRecord.id }
+			),
 			sort: '-created',
 		});
 	} catch {

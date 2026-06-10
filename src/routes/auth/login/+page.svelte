@@ -32,7 +32,7 @@
 				{#if form?.fail}
 					<CustomAlert
 						type="error"
-						message={form?.message + ' ' + texts.auth.loginFailed}
+						message={form?.message}
 					/>
 				{/if}
 				<Label class="space-y-2">

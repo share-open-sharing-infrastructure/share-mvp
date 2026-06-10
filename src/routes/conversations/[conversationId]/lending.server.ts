@@ -96,7 +96,10 @@ export async function acceptRequest(
 	// Auto-reject all other pending conversations for the same item
 	try {
 		const otherPending = await pb.collection('conversations').getFullList({
-			filter: `requestedItem="${conv.requestedItem}" && lendingStatus="pending" && id!="${conversationId}"`,
+			filter: pb.filter('requestedItem={:requestedItem} && lendingStatus="pending" && id!={:conversationId}', {
+				requestedItem: conv.requestedItem,
+				conversationId,
+			}),
 		});
 		await Promise.all(otherPending.map(async (other) => {
 			await pb.collection('conversations').update(other.id, { lendingStatus: 'rejected' });

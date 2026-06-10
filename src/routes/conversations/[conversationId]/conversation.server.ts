@@ -86,7 +86,7 @@ export async function deleteConversation(pb: PocketBase, conversationId: string)
 
 	try {
 		const orphaned = await pb.collection('notifications').getFullList({
-			filter: `relatedId="${conversationId}"`,
+			filter: pb.filter('relatedId={:conversationId}', { conversationId }),
 		});
 		await Promise.all(orphaned.map((n) => pb.collection('notifications').delete(n.id)));
 	} catch (err) {

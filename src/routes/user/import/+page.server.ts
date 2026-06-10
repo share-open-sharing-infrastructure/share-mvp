@@ -90,7 +90,7 @@ export const actions = {
 		let existingItems: Array<{ id: string; externalId: string; name: string }> = [];
 		try {
 			existingItems = await locals.pb.collection('items').getFullList({
-				filter: `owner = "${ownerId}" && externalId != ""`,
+				filter: locals.pb.filter('owner = {:ownerId} && externalId != ""', { ownerId }),
 				fields: 'id,externalId,name',
 			});
 		} catch {
@@ -164,7 +164,7 @@ export const actions = {
 		let existingItems: Array<{ id: string; externalId: string; description: string }> = [];
 		try {
 			existingItems = await locals.pb.collection('items').getFullList({
-				filter: `owner = "${ownerId}" && externalId != ""`,
+				filter: locals.pb.filter('owner = {:ownerId} && externalId != ""', { ownerId }),
 				fields: 'id,externalId,description',
 			});
 		} catch {

@@ -20,7 +20,10 @@ export async function isMessageNotificationThrottled(
 ): Promise<boolean> {
 	try {
 		const recent = await pb.collection('notifications').getList(1, 1, {
-			filter: `recipient="${recipientId}" && relatedId="${conversationId}" && type="new_message"`,
+			filter: pb.filter('recipient={:recipientId} && relatedId={:conversationId} && type="new_message"', {
+				recipientId,
+				conversationId,
+			}),
 			sort: '-created',
 		});
 		if (recent.items.length === 0) return false;
@@ -72,7 +75,7 @@ export async function sendPushToUser(
 	try {
 		subscriptions = await pb
 			.collection('push_subscriptions')
-			.getFullList({ filter: `user="${userId}"` });
+			.getFullList({ filter: pb.filter('user={:userId}', { userId }) });
 	} catch (err) {
 		console.error('Failed to fetch push subscriptions:', err);
 		return;

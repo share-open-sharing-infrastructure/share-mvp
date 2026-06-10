@@ -8,7 +8,10 @@ export async function load({ locals }) {
 
 	try {
 		allConversations = await locals.pb.collection('conversations').getFullList({
-			filter: `requester = "${currentUserId}" || itemOwner = "${currentUserId}"`, // TODO: Check if this even needs the filter given PocketBase should only return records the user has access to based on API rules
+			// TODO: Check if this even needs the filter given PocketBase should only return records the user has access to based on API rules
+			filter: locals.pb.filter('requester = {:userId} || itemOwner = {:userId}', {
+				userId: currentUserId,
+			}),
 			expand: 'requester, itemOwner, requestedItem',
 			sort: '-updated', // sort by newest first
 		});

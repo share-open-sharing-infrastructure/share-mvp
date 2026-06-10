@@ -18,7 +18,7 @@
 	let usernameStatus: 'idle' | 'checking' | 'available' | 'taken' | 'invalid' = $state('idle');
 	const checkUsername = debounce(async (value: string) => {
 		try {
-			await pb.collection('users').getFirstListItem(`username = "${value}"`);
+			await pb.collection('users_public').getFirstListItem(`username = "${value}"`);
 			usernameStatus = 'taken';
 		} catch {
 			usernameStatus = 'available';
@@ -84,6 +84,9 @@
 						bind:value={username}
 						required
 						autocomplete="username"
+						autocorrect="off"
+						autocapitalize="off"
+						spellcheck={false}
 					/>
 					{#if usernameStatus === 'checking'}
 						<p class="text-sm text-tinte-500">...</p>

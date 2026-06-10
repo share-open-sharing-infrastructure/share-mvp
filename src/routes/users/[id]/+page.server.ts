@@ -18,7 +18,7 @@ export async function load({ params, locals }) {
 	let allItems: Item[] = [];
 	try {
 		allItems = await locals.pb.collection('items_public').getFullList({
-			filter: `userId = "${params.id}"`,
+			filter: locals.pb.filter('userId = {:userId}', { userId: params.id }),
 			sort: '-updated'
 		});
 	} catch (err) {
