@@ -30,6 +30,8 @@ erDiagram
         string inviteCode
         string invitedBy FK
         User[] trusts FK
+        string leihbackendUrl "leihbackend instance origin, for institutional sync"
+        string leihbackendItemUrlTemplate "deep-link template, {id}/{iid} placeholders"
         date created
         date updated
     }

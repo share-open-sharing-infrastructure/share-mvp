@@ -14,7 +14,7 @@ Currently, this means that we gradually implement unit tests for server-side fun
 
 ## Practice
 
-Test files currently live next to their target. For example, for testing conversation functionality, the test file lives directly next to [/src/routes/conversations/[conversationId]/+page.server.ts](/src/routes/conversations/[conversationId]/+page.server.ts).
+Test files currently live next to their target. For example, for testing conversation functionality, the test file lives directly next to [/src/routes/conversations/[conversationId]/+page.server.ts](/src/routes/conversations/[conversationId]/+page.server.ts). It should NOT have a leading +, this is reserved for Svelte files only.
 
 To test a page and its functions, use Vitest like so:
 

@@ -9,19 +9,9 @@ import {
 	type ArchiveRow,
 	type PreviewSummary,
 } from './importUtils';
+import { archiveDescription, pbErrorMessage } from '$lib/server/itemArchive';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pbErrorMessage(err: any): string {
-	const fieldErrors: Record<string, { message?: string }> =
-		err?.response?.data ?? err?.data?.data ?? {};
-	const fields = Object.entries(fieldErrors)
-		.map(([k, v]) => `${k}: ${v?.message ?? JSON.stringify(v)}`)
-		.join(', ');
-	if (fields) return fields;
-	return err?.data?.message ?? err?.message ?? String(err);
-}
 
 export async function load({ locals }) {
 	if (!locals.user?.isInstitution) {
@@ -260,11 +250,10 @@ export const actions = {
 			const chunkIds: string[] = [];
 
 			for (const item of chunk) {
-				const descriptionPrefix = '[Nicht mehr im Bestand] ';
-				const newDescription = item.description?.startsWith(descriptionPrefix)
-					? item.description
-					: `${descriptionPrefix}${item.description ?? ''}`;
-				batch.collection('items').update(item.id, { status: 'unavailable', description: newDescription });
+				batch.collection('items').update(item.id, {
+					status: 'unavailable',
+					description: archiveDescription(item.description),
+				});
 				chunkIds.push(item.id);
 			}
 

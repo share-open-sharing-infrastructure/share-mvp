@@ -117,6 +117,21 @@ export interface User extends PocketBaseEntity {
 	 * Institutions: address, opening hours, website, lending modalities.
 	 */
 	bio?: string;
+
+	/**
+	 * Bare origin of a leihbackend instance (no trailing slash, no /api), e.g.
+	 * "https://allerlei.uber.space". When set together with `isInstitution = true`,
+	 * this institution's items are periodically synced from leihbackend's `item_public` view.
+	 */
+	leihbackendUrl?: string;
+
+	/**
+	 * Human-facing deep-link template for an institution's leihbackend items, e.g.
+	 * "https://allerlei.uber.space/reservierung/{iid}". Placeholders `{id}` and `{iid}`
+	 * are substituted with the leihbackend record id / inventory number. Empty if no
+	 * public catalogue page exists.
+	 */
+	leihbackendItemUrlTemplate?: string;
 }
 
 export interface UserPublic extends PocketBaseEntity {
