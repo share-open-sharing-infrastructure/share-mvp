@@ -82,6 +82,9 @@ export const texts = {
 		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
 		usernameTaken: 'Dieser Nutzername ist bereits vergeben.',
 		passwordTooShort: 'Das Passwort muss mindestens 8 Zeichen lang sein.',
+		passwordsDoNotMatch: 'Die Passwörter stimmen nicht überein.',
+		invalidOrExpiredResetToken:
+			'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link zum Zurücksetzen des Passworts an.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
@@ -98,6 +101,8 @@ export const texts = {
 		loggedOut: 'Erfolgreich ausgeloggt',
 		passwordResetSent:
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
+		passwordResetConfirmed:
+			'Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt anmelden.',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
 		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
 		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
@@ -404,6 +409,13 @@ export const texts = {
 			title: 'Passwort zurücksetzen',
 			emailLabel: 'Deine E-Mail Adresse',
 			resetButton: 'Setze mein Passwort zurück!',
+			confirm: {
+				title: 'Neues Passwort festlegen',
+				newPasswordLabel: 'Neues Passwort',
+				confirmPasswordLabel: 'Passwort bestätigen',
+				submitButton: 'Passwort speichern',
+				backToReset: 'Neuen Link anfordern',
+			},
 		},
 		updatemail: {
 			title: 'Mailadresse ändern',
