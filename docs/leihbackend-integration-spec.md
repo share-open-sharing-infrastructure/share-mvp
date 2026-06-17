@@ -4,6 +4,8 @@ _Created: 2026-06-10 · Status: ready for implementation (Phase 1) · Architectu
 
 This spec is written to be executed by Claude Code inside this repository. It is self-contained: all relevant facts about the external system (leihbackend) are stated here, verified against the leihbackend codebase on 2026-06-10.
 
+> **Status update (post-implementation):** the sync machinery has since been generalized into a pluggable integration system shared with other sources (e.g. WINBIAP). The generic upsert pipeline, folder layout, and how to add an integration now live in [integrations.md](integrations.md). leihbackend-specific code moved from `src/lib/server/leihbackend/` to `src/lib/server/integrations/leihbackend/`, and the trigger endpoint moved from `/api/sync/leihbackend` to `/api/sync`. The field mapping and sync algorithm described below remain accurate; treat references to old paths/routes as historical.
+
 **Scope decisions (Matteo, 2026-06-10):**
 
 1. Architecture covers Phase 1 (item sync) **and** Phase 2 (reservation forwarding); the work-package breakdown below covers **Phase 1 only**. Phase 2 gets its own breakdown when it starts.

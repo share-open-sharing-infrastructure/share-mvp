@@ -4,7 +4,7 @@ How AllerLeih keeps institutional accounts (e.g. Commons Zentrum, Mosaique) in s
 
 ## How it works
 
-`POST /api/sync/leihbackend` fetches the `item_public` view from every institution that has `isInstitution = true` and a non-empty `leihbackendUrl`, maps the records to AllerLeih `items`, and upserts/archives them under that institution's account. See `docs/leihbackend-integration-spec.md` for the full field mapping and sync algorithm.
+`POST /api/sync` runs every registered scheduled-pull integration. The leihbackend integration fetches the `item_public` view from every institution that has `isInstitution = true` and a non-empty `leihbackendUrl`, maps the records to AllerLeih `items`, and upserts/archives them under that institution's account. See `docs/integrations.md` for the overall architecture and `docs/leihbackend-integration-spec.md` for the leihbackend-specific field mapping and sync algorithm.
 
 The endpoint is unauthenticated by session (it's listed under `/api/sync` in `hooks.server.ts`'s unprotected prefixes) but requires a bearer token matching `SYNC_SECRET`.
 
@@ -28,7 +28,7 @@ Set on the institution's `users` record in the PocketBase admin dashboard:
 ## Manual trigger
 
 ```bash
-curl -X POST https://allerleih.org/api/sync/leihbackend \
+curl -X POST https://allerleih.org/api/sync \
   -H "Authorization: Bearer $SYNC_SECRET"
 ```
 
@@ -39,7 +39,7 @@ Returns `{ "summaries": [...] }` with one `SyncSummary` per institution (`fetche
 Add to the crontab (`crontab -e`) to sync every 15 minutes:
 
 ```cron
-*/15 * * * * curl -fsS -X POST https://allerleih.org/api/sync/leihbackend -H "Authorization: Bearer $SYNC_SECRET" >/dev/null
+*/15 * * * * curl -fsS -X POST https://allerleih.org/api/sync -H "Authorization: Bearer $SYNC_SECRET" >/dev/null
 ```
 
 ## Failure modes

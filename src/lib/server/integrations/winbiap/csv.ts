@@ -1,9 +1,11 @@
 import Papa from 'papaparse';
 import { ITEM_CATEGORIES } from '$lib/texts';
+import type { MappedItem } from '../core/types';
 
 export type ImportStatus = 'available' | 'unavailable' | 'unknown';
 export type RowAction = 'create' | 'update' | 'skip' | 'archive';
 
+/** One validated CSV row, before being mapped to a core `MappedItem`. */
 export interface ParsedRow {
 	externalId: string;
 	name: string;
@@ -17,6 +19,7 @@ export interface ParsedRow {
 	image: string;
 }
 
+/** A row's preview classification (or validation error) for display in the import UI. */
 export interface RowResult {
 	rowIndex: number;
 	externalId: string;
@@ -26,19 +29,21 @@ export interface RowResult {
 	data?: ParsedRow;
 }
 
-export interface ArchiveRow {
-	id: string;
-	externalId: string;
-	name: string;
-	action: 'archive';
+/** A valid CSV row mapped to a core item, carrying its source row number and any warnings. */
+export interface MappedRow {
+	rowIndex: number;
+	item: MappedItem;
+	warnings: string[];
 }
 
-export interface PreviewSummary {
-	create: number;
-	update: number;
-	archive: number;
-	skip: number;
-	errors: number;
+/** Result of parsing, validating, and mapping an uploaded CSV. */
+export interface ParseAndMapResult {
+	/** Valid rows mapped to core items, in file order. */
+	mappedRows: MappedRow[];
+	/** Invalid rows (with their validation errors), for display. */
+	rowErrors: RowResult[];
+	/** Total data rows in the file (excluding the header). */
+	totalRows: number;
 }
 
 const MAX_FILE_SIZE_BYTES = 1_000_000;
@@ -134,10 +139,7 @@ export function parseCsv(csvText: string): {
 	return { rows: result.data };
 }
 
-export function validateFileLimits(
-	text: string,
-	rowCount: number
-): string | null {
+export function validateFileLimits(text: string, rowCount: number): string | null {
 	if (new TextEncoder().encode(text).length > MAX_FILE_SIZE_BYTES) {
 		return 'Die Datei ist zu groß (max. 1 MB).';
 	}
@@ -147,22 +149,59 @@ export function validateFileLimits(
 	return null;
 }
 
-export function buildPreviewRows(
-	parsedRows: ParsedRow[],
-	existingExternalIds: Set<string>,
-	seenInFile: Set<string>
-): RowResult[] {
-	return parsedRows.map((row, i) => {
-		const isDuplicate = seenInFile.has(row.externalId);
-		const action = existingExternalIds.has(row.externalId) ? 'update' : 'create';
-		const warnings = isDuplicate ? ['Doppelter externalId in der Datei – letzte Zeile gewinnt'] : [];
-		return {
-			rowIndex: i + 2, // +2 because row 1 is header, and arrays are 0-based
-			externalId: row.externalId,
-			name: row.name,
-			action,
-			errors: warnings,
-			data: row,
-		};
+/** Converts a validated CSV row into a core `MappedItem` for the given owner. */
+export function mapRowToItem(row: ParsedRow, ownerId: string): MappedItem {
+	return {
+		externalId: row.externalId,
+		name: row.name,
+		description: row.description,
+		status: row.status,
+		categories: row.categories,
+		externalUrl: row.externalUrl,
+		externalImgUrl: row.image,
+		place: row.place,
+		owner: ownerId,
+		trusteesOnly: row.trusteesOnly,
+	};
+}
+
+/**
+ * Parses, validates, and maps an uploaded WINBIAP CSV into core `MappedItem`s.
+ * Valid rows become `mappedRows` (with their source row number and any warnings,
+ * e.g. duplicate `externalId`); invalid rows become `rowErrors`.
+ *
+ * @param csvText - Raw CSV text.
+ * @param ownerId - PocketBase id of the importing institution (becomes `item.owner`).
+ */
+export function parseAndMapCsv(csvText: string, ownerId: string): ParseAndMapResult {
+	const { rows } = parseCsv(csvText);
+
+	const mappedRows: MappedRow[] = [];
+	const rowErrors: RowResult[] = [];
+	const seenExternalIds = new Set<string>();
+
+	rows.forEach((raw, i) => {
+		const rowIndex = i + 2; // +2: row 1 is the header, arrays are 0-based
+		const { parsed, errors } = parseAndValidateRow(raw);
+
+		if (errors.length > 0 || !parsed) {
+			rowErrors.push({
+				rowIndex,
+				externalId: raw['externalId'] ?? '',
+				name: raw['name'] ?? '',
+				action: 'error',
+				errors,
+			});
+			return;
+		}
+
+		const warnings = seenExternalIds.has(parsed.externalId)
+			? ['Doppelter externalId in der Datei – letzte Zeile gewinnt']
+			: [];
+		seenExternalIds.add(parsed.externalId);
+
+		mappedRows.push({ rowIndex, item: mapRowToItem(parsed, ownerId), warnings });
 	});
+
+	return { mappedRows, rowErrors, totalRows: rows.length };
 }

@@ -1,4 +1,5 @@
 import { type ItemCategory } from '$lib/texts';
+import type { MappedItem } from '../core/types';
 
 /**
  * Record shape returned by `{base}/api/collections/item_public/records`.
@@ -32,20 +33,6 @@ export interface LeihbackendItem {
 	is_protected: boolean;
 }
 
-/** Subset of `items` fields written by the leihbackend sync. */
-export interface MappedItem {
-	name: string;
-	description: string;
-	status: 'available' | 'unavailable';
-	categories: string[];
-	externalId: string;
-	externalUrl: string;
-	externalImgUrl: string;
-	place: string;
-	owner: string;
-	trusteesOnly: boolean;
-}
-
 export interface MapItemContext {
 	/** Normalized base URL of the leihbackend instance (no trailing slash). */
 	baseUrl: string;
@@ -73,7 +60,7 @@ const HTML_ENTITIES: Record<string, string> = {
 /**
  * Strips HTML tags from a leihbackend item description, decoding entities and
  * preserving paragraph breaks. Regex-based on purpose (input is trusted-ish,
- * output is rendered as plain text) — see spec WP1.
+ * output is rendered as plain text).
  */
 export function stripHtml(html: string): string {
 	if (!html) return '';
@@ -97,59 +84,34 @@ export function stripHtml(html: string): string {
 }
 
 /**
- * Ordered keyword → category lookup table for `mapCategory()`. Order matters:
- * more specific keywords (e.g. "spielzeug") must precede broader ones (e.g. "spiel")
- * that would otherwise match first. Exported so per-instance overrides can extend it later.
+ * Direct mapping from leihbackend's fixed category enum to AllerLeih's category list.
+ * Unmapped values (e.g. from a new leihbackend instance with different categories)
+ * fall back to 'Sonstiges'. Exported for future per-instance overrides.
  */
-export const CATEGORY_KEYWORDS: Array<[string, ItemCategory]> = [
-	['werkzeug', 'Werkzeug und Garten'],
-	['garten', 'Werkzeug und Garten'],
-	['bohr', 'Werkzeug und Garten'],
-	['küche', 'Küche'],
-	['koch', 'Küche'],
-	['spielzeug', 'Für Kinder'],
-	['kind', 'Für Kinder'],
-	['baby', 'Für Kinder'],
-	['spiel', 'Spiele'],
-	['sport', 'Freizeit und Sport'],
-	['freizeit', 'Freizeit und Sport'],
-	['fitness', 'Freizeit und Sport'],
-	['camping', 'Reisen und Outdoor'],
-	['outdoor', 'Reisen und Outdoor'],
-	['reise', 'Reisen und Outdoor'],
-	['zelt', 'Reisen und Outdoor'],
-	['elektro', 'Elektronik'],
-	['computer', 'Elektronik'],
-	['musik', 'Ton und Licht'],
-	['licht', 'Ton und Licht'],
-	['ton', 'Ton und Licht'],
-	['audio', 'Ton und Licht'],
-	['beamer', 'Ton und Licht'],
-	['buch', 'Bücher'],
-	['büch', 'Bücher'],
-];
+export const CATEGORY_MAP: Record<string, ItemCategory> = {
+	freizeit: 'Freizeit und Sport',
+	garten: 'Werkzeug und Garten',
+	haushalt: 'Sonstiges',
+	heimwerken: 'Werkzeug und Garten',
+	kinder: 'Für Kinder',
+	küche: 'Küche',
+	sonstige: 'Sonstiges',
+};
 
-/** Maximum number of categories an AllerLeih item can have, per spec. */
+/** Maximum number of categories an AllerLeih item can have. */
 const MAX_CATEGORIES = 3;
 
-/** Maps leihbackend `category` tags to AllerLeih's fixed category list, falling back to 'Sonstiges'. */
+/** Maps leihbackend category tags to AllerLeih's fixed category list, falling back to 'Sonstiges'. */
 export function mapCategory(categories: string[] | undefined | null): string[] {
-	const mapped = new Set<string>();
+	const mapped = [
+		...new Set(
+			(categories ?? [])
+				.map((c) => CATEGORY_MAP[c.toLowerCase().trim()])
+				.filter((c): c is ItemCategory => c !== undefined)
+		),
+	].slice(0, MAX_CATEGORIES);
 
-	for (const category of categories ?? []) {
-		const normalized = category?.toLowerCase().trim();
-		if (!normalized) continue;
-
-		for (const [keyword, target] of CATEGORY_KEYWORDS) {
-			if (normalized.includes(keyword)) {
-				mapped.add(target);
-				break;
-			}
-		}
-	}
-
-	if (mapped.size === 0) return ['Sonstiges'];
-	return [...mapped].slice(0, MAX_CATEGORIES);
+	return mapped.length > 0 ? mapped : ['Sonstiges'];
 }
 
 const MAX_DESCRIPTION_LENGTH = 4000;
@@ -179,17 +141,17 @@ function buildExternalUrl(src: LeihbackendItem, template?: string): string {
 }
 
 /** Maps a single `item_public` record to AllerLeih `items` fields, per spec §3.1. */
-export function mapItem(src: LeihbackendItem, ctx: MapItemContext): MappedItem {
+export function mapItem(leihbackendItem: LeihbackendItem, itemContext: MapItemContext): MappedItem {
 	return {
-		externalId: src.id,
-		name: src.name.trim().slice(0, MAX_NAME_LENGTH),
-		description: buildDescription(src),
-		status: src.status === 'instock' ? 'available' : 'unavailable',
-		categories: mapCategory(src.category),
-		externalImgUrl: src.images?.[0] ? `${ctx.baseUrl}/api/files/item/${src.id}/${src.images[0]}` : '',
-		externalUrl: buildExternalUrl(src, ctx.urlTemplate),
-		place: ctx.city ?? '',
-		owner: ctx.ownerId,
+		externalId: leihbackendItem.id,
+		name: leihbackendItem.name.trim().slice(0, MAX_NAME_LENGTH),
+		description: buildDescription(leihbackendItem),
+		status: leihbackendItem.status === 'instock' ? 'available' : 'unavailable',
+		categories: mapCategory(leihbackendItem.category),
+		externalImgUrl: leihbackendItem.images?.[0] ? `${itemContext.baseUrl}/api/files/item/${leihbackendItem.id}/${leihbackendItem.images[0]}` : '',
+		externalUrl: buildExternalUrl(leihbackendItem, itemContext.urlTemplate),
+		place: itemContext.city ?? '',
+		owner: itemContext.ownerId,
 		trusteesOnly: false,
 	};
 }

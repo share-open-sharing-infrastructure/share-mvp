@@ -2,7 +2,8 @@ import { json, error } from '@sveltejs/kit';
 import { timingSafeEqual } from 'node:crypto';
 import type { RequestHandler } from './$types';
 import { SYNC_SECRET, PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD } from '$env/static/private';
-import { getSuperuserClient, syncAll } from '$lib/server/leihbackend/sync';
+import { getSuperuserClient } from '$lib/server/integrations/core/pocketbase';
+import { syncAll } from '$lib/server/integrations/registry';
 
 function isAuthorized(request: Request): boolean {
 	const header = request.headers.get('authorization') ?? '';
@@ -15,7 +16,7 @@ function isAuthorized(request: Request): boolean {
 	return timingSafeEqual(headerBuf, expectedBuf);
 }
 
-/** Triggers a leihbackend sync for all configured institutions. Called by an Uberspace cron job every 15 min. */
+/** Triggers a sync for all configured integrations. Can be called by a cron job every X min depending on freshness requirements. */
 export const POST: RequestHandler = async ({ request }) => {
 	if (!SYNC_SECRET || !PB_SUPERUSER_EMAIL || !PB_SUPERUSER_PASSWORD) {
 		error(503, 'Sync is not configured.');

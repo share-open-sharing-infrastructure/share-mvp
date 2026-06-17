@@ -36,7 +36,7 @@ Auth runs as a two-handle sequence in `src/hooks.server.ts` on every request:
 2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list:
    - `/auth/*`, `/search`, `/items`, `/users`, `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`, `/api/sync`
 
-   `/api/sync/*` protects itself via a bearer token (`SYNC_SECRET`) instead of session auth.
+   `/api/sync` protects itself via a bearer token (`SYNC_SECRET`) instead of session auth.
 
 For client-side PocketBase WebSocket subscriptions (live chat), the auth token is passed from the server to the client via `page.data.token`, since the httpOnly cookie is not accessible to browser JS.
 
@@ -49,7 +49,7 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 | Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/logout` | No |
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
-| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync/leihbackend` | Varies |
+| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync` | Varies |
 | Static | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/sitemap.xml` | No |
 
 All mutations go through SvelteKit **form actions** (`action="?/actionName"`). There is no REST API layer between the frontend and PocketBase — server load functions fetch data, form actions write it.
@@ -85,7 +85,7 @@ All mutations go through SvelteKit **form actions** (`action="?/actionName"`). T
 | OpenRouteService (ORS) | Server → ORS | Travel time matrix (`/api/travel-times/*`) | Supports foot, bicycle, car; coordinates never sent to browser |
 | Mistral AI | Server → Mistral | Item photo analysis (`/api/analyze-item`) | pixtral-12b-2409 vision model; server-side only |
 | Web Push (VAPID) | Server → Push service | Push notifications | Per-device subscriptions stored in `push_subscriptions`; stale subscriptions auto-removed on HTTP 410/404 |
-| leihbackend (partner Leihladen instances) | Server → leihbackend | Sync partner item catalogues into `items` (`POST /api/sync/leihbackend`) | Polled by an Uberspace cron every 15 min; reads each institution's `item_public` view, upserts/archives items owned by that institution's account |
+| leihbackend (partner Leihladen instances) | Server → leihbackend | Sync partner item catalogues into `items` (via `POST /api/sync`) | Polled by an Uberspace cron every 15 min; reads each institution's `item_public` view, upserts/archives items owned by that institution's account. One of several pluggable integrations — see [integrations.md](integrations.md) |
 
 ---
 

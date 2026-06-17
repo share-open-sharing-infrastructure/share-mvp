@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { stripHtml, mapCategory, mapItem, type LeihbackendItem } from './mapping';
+import { stripHtml, mapCategory, mapItem, CATEGORY_MAP, type LeihbackendItem } from './mapping';
 
 function makeItem(overrides: Partial<LeihbackendItem> = {}): LeihbackendItem {
 	return {
@@ -11,7 +11,7 @@ function makeItem(overrides: Partial<LeihbackendItem> = {}): LeihbackendItem {
 		deposit: 0,
 		images: [],
 		synonyms: '',
-		category: ['Werkzeug'],
+		category: ['Heimwerken'],
 		brand: '',
 		model: '',
 		packaging: '',
@@ -61,58 +61,15 @@ describe('stripHtml', () => {
 });
 
 describe('mapCategory', () => {
-	it('maps werkzeug/garten/bohr keywords', () => {
-		expect(mapCategory(['Werkzeug'])).toEqual(['Werkzeug und Garten']);
-		expect(mapCategory(['Gartenbedarf'])).toEqual(['Werkzeug und Garten']);
-		expect(mapCategory(['Bohrmaschinen'])).toEqual(['Werkzeug und Garten']);
+	it('covers all entries in CATEGORY_MAP', () => {
+		for (const [key, value] of Object.entries(CATEGORY_MAP)) {
+			expect(mapCategory([key])).toEqual([value]);
+		}
 	});
 
-	it('maps küche/koch keywords', () => {
-		expect(mapCategory(['Küche'])).toEqual(['Küche']);
-		expect(mapCategory(['Kochen'])).toEqual(['Küche']);
-	});
-
-	it('maps spielzeug für kinder to Für Kinder, not Spiele', () => {
-		expect(mapCategory(['Spielzeug für Kinder'])).toEqual(['Für Kinder']);
-	});
-
-	it('maps generic spiel to Spiele', () => {
-		expect(mapCategory(['Gesellschaftsspiele'])).toEqual(['Spiele']);
-	});
-
-	it('maps kind/baby keywords to Für Kinder', () => {
-		expect(mapCategory(['Kinderwagen'])).toEqual(['Für Kinder']);
-		expect(mapCategory(['Babyausstattung'])).toEqual(['Für Kinder']);
-	});
-
-	it('maps sport/freizeit/fitness keywords', () => {
-		expect(mapCategory(['Sportgeräte'])).toEqual(['Freizeit und Sport']);
+	it('is case-insensitive', () => {
 		expect(mapCategory(['Freizeit'])).toEqual(['Freizeit und Sport']);
-		expect(mapCategory(['Fitnessgeräte'])).toEqual(['Freizeit und Sport']);
-	});
-
-	it('maps camping/outdoor/reise/zelt keywords', () => {
-		expect(mapCategory(['Camping'])).toEqual(['Reisen und Outdoor']);
-		expect(mapCategory(['Outdoor-Ausrüstung'])).toEqual(['Reisen und Outdoor']);
-		expect(mapCategory(['Reisegepäck'])).toEqual(['Reisen und Outdoor']);
-		expect(mapCategory(['Zelte'])).toEqual(['Reisen und Outdoor']);
-	});
-
-	it('maps elektro/computer keywords', () => {
-		expect(mapCategory(['Elektrogeräte'])).toEqual(['Elektronik']);
-		expect(mapCategory(['Computer & Zubehör'])).toEqual(['Elektronik']);
-	});
-
-	it('maps musik/licht/ton/audio/beamer keywords', () => {
-		expect(mapCategory(['Musikinstrumente'])).toEqual(['Ton und Licht']);
-		expect(mapCategory(['Lichttechnik'])).toEqual(['Ton und Licht']);
-		expect(mapCategory(['Tontechnik'])).toEqual(['Ton und Licht']);
-		expect(mapCategory(['Audiogeräte'])).toEqual(['Ton und Licht']);
-		expect(mapCategory(['Beamer'])).toEqual(['Ton und Licht']);
-	});
-
-	it('maps buch keyword', () => {
-		expect(mapCategory(['Bücher & Hörbücher'])).toEqual(['Bücher']);
+		expect(mapCategory(['KINDER'])).toEqual(['Für Kinder']);
 	});
 
 	it('falls back to Sonstiges for unknown, empty, or missing categories', () => {
@@ -123,17 +80,12 @@ describe('mapCategory', () => {
 		expect(mapCategory(null)).toEqual(['Sonstiges']);
 	});
 
-	it('is case-insensitive', () => {
-		expect(mapCategory(['WERKZEUG'])).toEqual(['Werkzeug und Garten']);
-	});
-
-	it('maps multiple tags to deduplicated categories, capped at 3', () => {
-		expect(mapCategory(['Haushalt', 'Garten'])).toEqual(['Werkzeug und Garten']);
-		expect(mapCategory(['Werkzeug', 'Bohrmaschinen', 'Gartenbedarf'])).toEqual(['Werkzeug und Garten']);
-		expect(mapCategory(['Werkzeug', 'Küche', 'Musik', 'Camping'])).toEqual([
-			'Werkzeug und Garten',
+	it('maps multiple tags, deduplicates, and caps at 3', () => {
+		expect(mapCategory(['Garten', 'Heimwerken'])).toEqual(['Werkzeug und Garten']);
+		expect(mapCategory(['Freizeit', 'Kinder', 'Küche', 'Garten'])).toEqual([
+			'Freizeit und Sport',
+			'Für Kinder',
 			'Küche',
-			'Ton und Licht',
 		]);
 	});
 });
@@ -247,7 +199,7 @@ describe('mapItem', () => {
 	});
 
 	it('maps category via mapCategory', () => {
-		const mapped = mapItem(makeItem({ category: ['Werkzeug'] }), ctx);
+		const mapped = mapItem(makeItem({ category: ['Heimwerken'] }), ctx);
 		expect(mapped.categories).toEqual(['Werkzeug und Garten']);
 	});
 });

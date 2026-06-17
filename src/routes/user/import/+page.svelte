@@ -47,6 +47,7 @@
 		if (action === 'update') return 'Update';
 		if (action === 'archive') return 'Archivieren';
 		if (action === 'error') return 'Fehler';
+		if (action === 'skip') return 'Unverändert';
 		return action;
 	};
 </script>
@@ -215,7 +216,7 @@
 				</Alert>
 				{#if form.rowErrors && form.rowErrors.length > 0}
 					<ul class="text-xs text-accent-700 font-mono space-y-0.5 list-disc list-inside">
-						{#each form.rowErrors as e}
+						{#each form.rowErrors as e, i (i)}
 							<li>{e}</li>
 						{/each}
 					</ul>

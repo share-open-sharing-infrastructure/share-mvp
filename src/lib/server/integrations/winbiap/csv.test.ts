@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-	parseAndValidateRow,
-	parseCsv,
-	validateFileLimits,
-	buildPreviewRows,
-} from './importUtils';
+import { parseAndValidateRow, parseCsv, validateFileLimits, parseAndMapCsv } from './csv';
 
 describe('parseAndValidateRow', () => {
 	const baseRow = {
@@ -46,9 +41,7 @@ describe('parseAndValidateRow', () => {
 	});
 
 	it('accepts up to 3 valid categories separated by semicolons', () => {
-		const { parsed, errors } = parseAndValidateRow(
-			{ ...baseRow, categories: 'Bücher;Spiele;Elektronik' }
-		);
+		const { parsed, errors } = parseAndValidateRow({ ...baseRow, categories: 'Bücher;Spiele;Elektronik' });
 		expect(errors).toHaveLength(0);
 		expect(parsed!.categories).toEqual(['Bücher', 'Spiele', 'Elektronik']);
 	});
@@ -65,9 +58,7 @@ describe('parseAndValidateRow', () => {
 	});
 
 	it('defaults status to "unknown" when externalUrl is set and status is empty', () => {
-		const { parsed, errors } = parseAndValidateRow(
-			{ ...baseRow, status: '', externalUrl: 'https://example.com/item/1' }
-		);
+		const { parsed, errors } = parseAndValidateRow({ ...baseRow, status: '', externalUrl: 'https://example.com/item/1' });
 		expect(errors).toHaveLength(0);
 		expect(parsed!.status).toBe('unknown');
 	});
@@ -123,31 +114,43 @@ describe('validateFileLimits', () => {
 	});
 });
 
-describe('buildPreviewRows', () => {
-	const rows = [
-		{ externalId: 'A1', name: 'Item A', description: '', place: '', categories: [], externalUrl: '', status: 'available' as const, trusteesOnly: false, image: '' },
-		{ externalId: 'B2', name: 'Item B', description: '', place: '', categories: [], externalUrl: '', status: 'available' as const, trusteesOnly: false, image: '' },
-	];
+describe('parseAndMapCsv', () => {
+	const header = 'externalId,name,description,place,categories,externalUrl,status,image,trusteesOnly';
 
-	it('marks rows as create when externalId not in existing set', () => {
-		const result = buildPreviewRows(rows, new Set(), new Set());
-		expect(result[0].action).toBe('create');
-		expect(result[1].action).toBe('create');
+	it('maps valid rows to core items owned by the institution', () => {
+		const csv = `${header}\nABC-001,Bohrmaschine,Stark,Lager,Werkzeug und Garten,,available,https://img/1.jpg,false`;
+		const { mappedRows, rowErrors, totalRows } = parseAndMapCsv(csv, 'inst1');
+
+		expect(totalRows).toBe(1);
+		expect(rowErrors).toHaveLength(0);
+		expect(mappedRows).toHaveLength(1);
+		expect(mappedRows[0].rowIndex).toBe(2);
+		expect(mappedRows[0].item).toMatchObject({
+			externalId: 'ABC-001',
+			name: 'Bohrmaschine',
+			owner: 'inst1',
+			externalImgUrl: 'https://img/1.jpg', // image column → externalImgUrl
+			categories: ['Werkzeug und Garten'],
+		});
 	});
 
-	it('marks rows as update when externalId is in existing set', () => {
-		const result = buildPreviewRows(rows, new Set(['A1']), new Set());
-		expect(result[0].action).toBe('update');
-		expect(result[1].action).toBe('create');
+	it('collects invalid rows as rowErrors with their source line number', () => {
+		const csv = `${header}\n,Ohne ID,desc,,,,available,,false`;
+		const { mappedRows, rowErrors } = parseAndMapCsv(csv, 'inst1');
+
+		expect(mappedRows).toHaveLength(0);
+		expect(rowErrors).toHaveLength(1);
+		expect(rowErrors[0].rowIndex).toBe(2);
+		expect(rowErrors[0].action).toBe('error');
+		expect(rowErrors[0].errors.join(' ')).toContain('externalId');
 	});
 
-	it('flags duplicate externalIds in the file with a warning', () => {
-		const duplicateRows = [
-			...rows,
-			{ externalId: 'A1', name: 'Item A dupe', description: '', place: '', categories: [], externalUrl: '', status: 'available' as const, trusteesOnly: false, image: '' },
-		];
-		const result = buildPreviewRows(duplicateRows, new Set(), new Set(['A1']));
-		const dupeRow = result.find((r) => r.externalId === 'A1');
-		expect(dupeRow?.errors.some((e) => e.includes('Doppelter'))).toBe(true);
+	it('warns on duplicate externalId within the file', () => {
+		const csv = `${header}\nABC-001,Erste,,,,,,,\nABC-001,Zweite,,,,,,,`;
+		const { mappedRows } = parseAndMapCsv(csv, 'inst1');
+
+		expect(mappedRows).toHaveLength(2);
+		expect(mappedRows[0].warnings).toHaveLength(0);
+		expect(mappedRows[1].warnings.join(' ')).toContain('Doppelter');
 	});
 });
