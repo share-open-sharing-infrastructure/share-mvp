@@ -19,10 +19,10 @@ export async function getSuperuserClient(): Promise<PocketBase> {
 		return cachedSuperuserClient;
 	}
 
-	const client = new PocketBase(PUBLIC_PB_URL);
-	await client.collection('_superusers').authWithPassword(PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD);
-	cachedSuperuserClient = client;
-	return client;
+	const newSuperuserClient = new PocketBase(PUBLIC_PB_URL);
+	await newSuperuserClient.collection('_superusers').authWithPassword(PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD);
+	cachedSuperuserClient = newSuperuserClient;
+	return newSuperuserClient;
 }
 
 /**

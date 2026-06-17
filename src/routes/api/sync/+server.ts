@@ -26,14 +26,14 @@ export const POST: RequestHandler = async ({ request }) => {
 		error(401, 'Unauthorized');
 	}
 
-	let pb;
+	let superuserPocketBaseClient;
 	try {
-		pb = await getSuperuserClient();
+		superuserPocketBaseClient = await getSuperuserClient();
 	} catch {
 		error(503, 'Sync unavailable: superuser authentication failed.');
 	}
 
-	const summaries = await runAllIntegrations(pb);
+	const summaries = await runAllIntegrations(superuserPocketBaseClient);
 
 	for (const summary of summaries) {
 		const line =

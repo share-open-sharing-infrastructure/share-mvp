@@ -15,14 +15,14 @@ export const pullIntegrations: PullIntegration[] = [leihbackendIntegration];
  * summaries. A failure in one integration is isolated to a single error summary so the
  * others still run.
  *
- * @param pb - Authenticated PocketBase superuser client.
+ * @param pocketBaseClient - Authenticated PocketBase superuser client.
  * @returns One `SyncSummary` per synced institution across all integrations.
  */
-export async function runAllIntegrations(pb: PocketBase): Promise<SyncSummary[]> {
+export async function runAllIntegrations(pocketBaseClient: PocketBase): Promise<SyncSummary[]> {
 	const summaries: SyncSummary[] = [];
 	for (const integration of pullIntegrations) {
 		try {
-			summaries.push(...(await integration.syncAll(pb)));
+			summaries.push(...(await integration.syncAll(pocketBaseClient)));
 		} catch (err) {
 			summaries.push(makeSummary(`(${integration.id})`, [pbErrorMessage(err)]));
 		}
