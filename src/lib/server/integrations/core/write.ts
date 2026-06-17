@@ -1,8 +1,29 @@
 import type PocketBase from 'pocketbase';
 import { archiveDescription, pbErrorMessage } from '$lib/server/itemArchive';
-import { noRetry, type DiffResult, type ExistingItem, type RetryWrapper, type WriteResult } from './types';
+import {
+	noRetry,
+	SYNCED_FIELDS,
+	type DiffResult,
+	type ExistingItem,
+	type MappedItem,
+	type RetryWrapper,
+	type WriteResult,
+} from './types';
 
 const delay = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+/**
+ * Projects a `MappedItem` to just the synced content fields for an update — deliberately
+ * omitting `owner` (never changes) and `trusteesOnly` (institution/admin-curated). This lets a
+ * status-only refresh touch only `status` without resetting `trusteesOnly`. Creates still write
+ * the full item.
+ */
+function syncedFieldsOf(item: MappedItem): Pick<MappedItem, (typeof SYNCED_FIELDS)[number]> {
+	return Object.fromEntries(SYNCED_FIELDS.map((field) => [field, item[field]])) as Pick<
+		MappedItem,
+		(typeof SYNCED_FIELDS)[number]
+	>;
+}
 
 // Stays under PocketBase's default *:create rate limit of 20/5s.
 const UPDATE_BATCH = 50;
@@ -64,7 +85,7 @@ export async function applyDiff(pb: PocketBase, diff: DiffResult, retry: RetryWr
 	const errors: string[] = [];
 
 	const updateResult = await sendBatched(pb, diff.toUpdate, UPDATE_BATCH, UPDATE_PAUSE_MS,
-		(batch, { id, data }) => batch.collection('items').update(id, data), retry);
+		(batch, { id, data }) => batch.collection('items').update(id, syncedFieldsOf(data)), retry);
 	errors.push(...updateResult.errors.map((e) => `update batch: ${e}`));
 
 	const createResult = await sendBatched(pb, diff.toCreate, CREATE_BATCH, CREATE_PAUSE_MS,

@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import { PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD } from '$env/static/private';
-import { SYNCED_FIELDS, type ExistingItem } from './types';
+import { SYNCED_FIELDS, type ExistingItem, type SyncInstitution } from './types';
 
 /** PocketBase `fields` projection for an `ExistingItem`: the synced fields plus the keys. */
 const EXISTING_ITEM_FIELDS = ['id', 'externalId', ...SYNCED_FIELDS].join(',');
@@ -58,5 +58,26 @@ export async function loadExistingItems(pb: PocketBase, ownerId: string): Promis
 	return pb.collection('items').getFullList<ExistingItem>({
 		filter: `owner = "${ownerId}" && externalId != ""`,
 		fields: EXISTING_ITEM_FIELDS,
+	});
+}
+
+/**
+ * Finds the institutions configured for source sync: `isInstitution = true` with a non-empty
+ * base URL (`leihbackendUrl`). Used by both the full pull and the per-item refresh; concrete
+ * integrations decide which of the returned institutions/items they own.
+ *
+ * @param pb - PocketBase client.
+ * @param institutionId - Optional: restrict the result to this single institution's id.
+ * @returns Matching institutions (empty if `institutionId` is given but not found/configured).
+ */
+export async function findSyncInstitutions(pb: PocketBase, institutionId?: string): Promise<SyncInstitution[]> {
+	const baseFilter = 'isInstitution = true && leihbackendUrl != ""';
+	// Parameterize the dynamic id — it arrives from a query param (never string-interpolate it).
+	const filter = institutionId
+		? pb.filter(`${baseFilter} && id = {:id}`, { id: institutionId })
+		: baseFilter;
+	return pb.collection('users').getFullList<SyncInstitution>({
+		filter,
+		fields: 'id,username,city,leihbackendUrl,leihbackendItemUrlTemplate',
 	});
 }

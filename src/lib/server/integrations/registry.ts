@@ -1,14 +1,26 @@
 import type PocketBase from 'pocketbase';
 import { pbErrorMessage } from '$lib/server/itemArchive';
+import { findSyncInstitutions, withAuthRetry } from './core/pocketbase';
+import { refreshInstitutions } from './core/refresh';
 import { makeSummary } from './core/sync';
-import type { PullIntegration, SyncSummary } from './core/types';
-import { leihbackendIntegration } from './leihbackend';
+import type { PullIntegration, RefreshIntegration, SyncSummary } from './core/types';
+import { leihbackendIntegration, leihbackendRefreshIntegration } from './leihbackend';
+import { winbiapRefreshIntegration } from './winbiap';
 
 /**
  * All scheduled-pull integrations. To add one, implement a `PullIntegration`
  * in its own folder and append it here — see docs/integrations.md.
  */
 export const pullIntegrations: PullIntegration[] = [leihbackendIntegration];
+
+/**
+ * All per-item refresh integrations, tried in order via `claimsItem` when routing each stored
+ * item. More specific integrations come first; leihbackend is the catch-all default and stays last.
+ */
+export const refreshIntegrations: RefreshIntegration[] = [
+	winbiapRefreshIntegration,
+	leihbackendRefreshIntegration,
+];
 
 /**
  * Runs every registered scheduled-pull integration and flattens their per-institution
@@ -28,4 +40,30 @@ export async function runAllIntegrations(pocketBaseClient: PocketBase): Promise<
 		}
 	}
 	return summaries;
+}
+
+/**
+ * Refreshes already-stored external items per item, routing each to the `RefreshIntegration`
+ * that claims it. Discovers institutions once (shared, by base URL) and re-fetches the current
+ * state of each stored item — updating changed ones and archiving those the source no longer has.
+ *
+ * @param pocketBaseClient - Authenticated PocketBase superuser client.
+ * @param institutionId - Optional: refresh only this institution (else all configured ones).
+ * @returns One `SyncSummary` per refreshed institution.
+ */
+export async function refreshAllIntegrations(
+	pocketBaseClient: PocketBase,
+	institutionId?: string,
+): Promise<SyncSummary[]> {
+	const institutions = await withAuthRetry(pocketBaseClient, () =>
+		findSyncInstitutions(pocketBaseClient, institutionId),
+	);
+
+	if (institutionId && institutions.length === 0) {
+		return [makeSummary(`(${institutionId})`, ['Institution not found or not configured for sync.'])];
+	}
+
+	return refreshInstitutions(pocketBaseClient, institutions, refreshIntegrations, (op) =>
+		withAuthRetry(pocketBaseClient, op),
+	);
 }

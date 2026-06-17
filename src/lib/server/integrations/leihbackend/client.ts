@@ -76,3 +76,36 @@ export async function fetchAllItems(
 
 	return items;
 }
+
+/**
+ * Fetches a single `item_public` record by its leihbackend id.
+ * Returns `null` if the record no longer exists (HTTP 404). Throws `LeihbackendFetchError`
+ * on any other non-2xx response, network error, or timeout (treated as a transient failure).
+ */
+export async function fetchItemById(
+	baseUrl: string,
+	id: string,
+	fetchFn: typeof fetch = fetch
+): Promise<LeihbackendItem | null> {
+	const base = normalizeBaseUrl(baseUrl);
+	const url = `${base}/api/collections/item_public/records/${encodeURIComponent(id)}`;
+
+	let response: Response;
+	try {
+		response = await fetchFn(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+	} catch (err) {
+		throw new LeihbackendFetchError(`Request to ${url} failed: ${(err as Error).message}`, base, {
+			cause: err,
+		});
+	}
+
+	if (response.status === 404) return null;
+
+	if (!response.ok) {
+		throw new LeihbackendFetchError(`Unexpected status ${response.status} from ${url}`, base, {
+			status: response.status,
+		});
+	}
+
+	return (await response.json()) as LeihbackendItem;
+}

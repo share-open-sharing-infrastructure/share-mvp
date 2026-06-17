@@ -86,6 +86,19 @@ describe('applyDiff', () => {
 		});
 	});
 
+	it('writes only synced content fields on update — never owner/trusteesOnly', async () => {
+		const { pb, batches } = makeMockPb();
+		const diff: DiffResult = { ...emptyDiff(), toUpdate: [{ id: 'u1', data: mappedItem('rec-u1') }] };
+
+		await applyDiff(pb, diff);
+
+		const updateOp = batches.flat().find((o) => o.id === 'u1');
+		expect(updateOp?.data).toMatchObject({ name: 'Item rec-u1', status: 'available' });
+		expect(updateOp?.data).not.toHaveProperty('owner');
+		expect(updateOp?.data).not.toHaveProperty('trusteesOnly');
+		expect(updateOp?.data).not.toHaveProperty('externalId');
+	});
+
 	it('splits a phase into multiple batches beyond the batch size', async () => {
 		vi.useFakeTimers();
 		const { pb, batches } = makeMockPb();

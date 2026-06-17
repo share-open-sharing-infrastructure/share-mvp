@@ -34,6 +34,52 @@ curl -X POST https://allerleih.org/api/sync \
 
 Returns `{ "summaries": [...] }` with one `SyncSummary` per institution (`fetched`, `created`, `updated`, `archived`, `skipped`, `errors`, `durationMs`).
 
+## Per-item refresh (`POST /api/refresh`)
+
+A lighter operation that **keeps already-imported items up to date** without a full catalogue
+re-pull. It loads each institution's stored external items and re-fetches **each one** from its
+source, then updates changed items and archives those the source no longer has. It **never
+creates** items. Same bearer-secret auth as `/api/sync`:
+
+```bash
+# Refresh every configured institution
+curl -X POST https://allerleih.org/api/refresh \
+  -H "Authorization: Bearer $SYNC_SECRET"
+
+# Refresh a single institution by its users-record id
+curl -X POST "https://allerleih.org/api/refresh?institution=<institutionId>" \
+  -H "Authorization: Bearer $SYNC_SECRET"
+```
+
+An unknown or unconfigured `institution` id returns a single `SyncSummary` carrying an error
+(and writes nothing).
+
+- **Sources & routing:** each stored item is routed by its `externalUrl`/`externalId` — a
+  `/webopac/` URL or a `118$…` id is a **WINBIAP** item (status-only refresh via the WebOPAC
+  `Job=Search` API), everything else is a **leihbackend** item (all fields re-mapped via per-record
+  fetch).
+- **Gone vs transient:** an item the source no longer returns is archived (`unavailable` +
+  `[Nicht mehr im Bestand] ` prefix); a transient fetch error leaves the item untouched.
+- **Circuit-breaker:** if ≥50% of an institution's per-item fetches error (likely a source
+  outage), that institution is **aborted with zero writes** so the catalogue isn't mass-archived.
+
+### WINBIAP refresh prerequisites
+
+- The institution's `users.leihbackendUrl` holds its **WebOPAC base** (e.g.
+  `https://rblg.stadt.lueneburg.de/webopac`); refresh calls `{base}/service/cataloguedata.aspx`.
+- Items must carry the full `{libraryId}${Mediennummer}` barcode as `externalId` (e.g. `118$60449822`).
+- Only `status` is refreshed for WINBIAP items (name/description/`trusteesOnly` from the CSV import
+  are preserved). Status comes from the catalogue record's exemplar `StatusId`s (1 = available).
+
+### Cron job
+
+```cron
+# Full pull (leihbackend) — every 15 min
+*/15 * * * * curl -fsS -X POST https://allerleih.org/api/sync -H "Authorization: Bearer $SYNC_SECRET" >/dev/null
+# Per-item refresh (e.g. WINBIAP) — hourly; WINBIAP fetches are paced, so allow time
+0 * * * * curl -fsS -X POST https://allerleih.org/api/refresh -H "Authorization: Bearer $SYNC_SECRET" >/dev/null
+```
+
 ## Cron job (Uberspace)
 
 Add to the crontab (`crontab -e`) to sync every 15 minutes:

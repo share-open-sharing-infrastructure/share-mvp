@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fetchAllItems, normalizeBaseUrl, LeihbackendFetchError } from './client';
+import { fetchAllItems, fetchItemById, normalizeBaseUrl, LeihbackendFetchError } from './client';
 import type { LeihbackendItem } from './mapping';
 
 function makeItem(id: string): LeihbackendItem {
@@ -127,5 +127,41 @@ describe('fetchAllItems', () => {
 		});
 
 		await expect(fetchAllItems('https://allerlei.uber.space', fetchFn)).rejects.toThrow(LeihbackendFetchError);
+	});
+});
+
+describe('fetchItemById', () => {
+	it('fetches a single record by id from the normalized base URL', async () => {
+		const fetchFn = vi.fn().mockResolvedValue(jsonResponse(makeItem('rec1')));
+
+		const item = await fetchItemById('https://allerlei.uber.space/', 'rec1', fetchFn);
+
+		expect(item?.id).toBe('rec1');
+		expect(fetchFn).toHaveBeenCalledWith(
+			'https://allerlei.uber.space/api/collections/item_public/records/rec1',
+			expect.anything()
+		);
+	});
+
+	it('returns null on a 404 (record gone)', async () => {
+		const fetchFn = vi.fn().mockResolvedValue(jsonResponse({}, false, 404));
+
+		await expect(fetchItemById('https://allerlei.uber.space', 'rec1', fetchFn)).resolves.toBeNull();
+	});
+
+	it('throws LeihbackendFetchError on other non-2xx responses', async () => {
+		const fetchFn = vi.fn().mockResolvedValue(jsonResponse({}, false, 500));
+
+		await expect(fetchItemById('https://allerlei.uber.space', 'rec1', fetchFn)).rejects.toThrow(
+			LeihbackendFetchError
+		);
+	});
+
+	it('throws LeihbackendFetchError on a network error', async () => {
+		const fetchFn = vi.fn().mockRejectedValue(new TypeError('fetch failed'));
+
+		await expect(fetchItemById('https://allerlei.uber.space', 'rec1', fetchFn)).rejects.toThrow(
+			LeihbackendFetchError
+		);
 	});
 });

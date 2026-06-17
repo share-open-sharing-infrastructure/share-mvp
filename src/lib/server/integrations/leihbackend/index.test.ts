@@ -1,14 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { LeihbackendItem } from './mapping';
 
-const { fetchAllItems } = vi.hoisted(() => ({ fetchAllItems: vi.fn() }));
+const { fetchAllItems, fetchItemById } = vi.hoisted(() => ({ fetchAllItems: vi.fn(), fetchItemById: vi.fn() }));
 
 vi.mock('./client', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('./client')>();
-	return { ...actual, fetchAllItems };
+	return { ...actual, fetchAllItems, fetchItemById };
 });
 
-import { leihbackendIntegration, findLeihbackendInstitutions, fetchAndMapItems, type LeihbackendInstitution } from './index';
+import { leihbackendIntegration, leihbackendRefreshIntegration, fetchAndMapItems } from './index';
+import type { ExistingItem, SyncInstitution } from '../core/types';
 
 function makeRemoteItem(overrides: Partial<LeihbackendItem> = {}): LeihbackendItem {
 	return {
@@ -33,7 +34,7 @@ function makeRemoteItem(overrides: Partial<LeihbackendItem> = {}): LeihbackendIt
 	};
 }
 
-const institution: LeihbackendInstitution = {
+const institution: SyncInstitution = {
 	id: 'inst1',
 	username: 'commons-zentrum',
 	city: 'Lüneburg',
@@ -65,19 +66,6 @@ function makeMockPb(users: unknown[] = [], items: unknown[] = []) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-});
-
-describe('findLeihbackendInstitutions', () => {
-	it('filters on isInstitution and a configured leihbackendUrl', async () => {
-		const { pb, usersGetFullList } = makeMockPb([institution]);
-
-		const result = await findLeihbackendInstitutions(pb);
-
-		expect(usersGetFullList).toHaveBeenCalledWith(
-			expect.objectContaining({ filter: 'isInstitution = true && leihbackendUrl != ""' })
-		);
-		expect(result).toEqual([institution]);
-	});
 });
 
 describe('fetchAndMapItems', () => {
@@ -114,5 +102,43 @@ describe('leihbackendIntegration.syncAll', () => {
 
 	it('has the expected id', () => {
 		expect(leihbackendIntegration.id).toBe('leihbackend');
+	});
+});
+
+describe('leihbackendRefreshIntegration', () => {
+	const existing: ExistingItem = {
+		id: 'pb-rec1',
+		externalId: 'rec1',
+		name: 'old name',
+		description: 'old',
+		status: 'unavailable',
+		categories: [],
+		externalImgUrl: '',
+		externalUrl: '',
+		place: 'Lüneburg',
+	};
+
+	it('claims any item (catch-all default)', () => {
+		expect(leihbackendRefreshIntegration.claimsItem(existing)).toBe(true);
+	});
+
+	it('re-maps all fields on a hit (found)', async () => {
+		fetchItemById.mockResolvedValue(makeRemoteItem({ id: 'rec1', name: 'fresh name', status: 'instock' }));
+
+		const outcome = await leihbackendRefreshIntegration.fetchOne(institution, existing);
+
+		expect(fetchItemById).toHaveBeenCalledWith('https://allerlei.uber.space', 'rec1');
+		expect(outcome.kind).toBe('found');
+		if (outcome.kind === 'found') {
+			expect(outcome.item).toMatchObject({ externalId: 'rec1', name: 'fresh name', status: 'available' });
+		}
+	});
+
+	it('reports gone when the record is a 404 (null)', async () => {
+		fetchItemById.mockResolvedValue(null);
+
+		const outcome = await leihbackendRefreshIntegration.fetchOne(institution, existing);
+
+		expect(outcome.kind).toBe('gone');
 	});
 });

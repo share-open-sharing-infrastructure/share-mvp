@@ -19,6 +19,7 @@ const unprotectedPrefix = [
 	'/api/redirect',
 	'/api/diagnostics',
 	'/api/sync',
+	'/api/refresh',
 ];
 
 export const authentication: Handle = async ({ event, resolve }) => {

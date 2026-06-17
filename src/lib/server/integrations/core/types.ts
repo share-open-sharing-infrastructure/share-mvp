@@ -43,6 +43,17 @@ export interface Institution {
 	city?: string;
 }
 
+/**
+ * A `users` record configured for source sync, as returned by `findSyncInstitutions`.
+ * `leihbackendUrl` is the (interim) base URL field shared by all integrations — it will be
+ * replaced by a dedicated `sync_config` collection in the future.
+ */
+export interface SyncInstitution extends Institution {
+	leihbackendUrl: string;
+	/** leihbackend-specific deep-link template; ignored by other integrations. */
+	leihbackendItemUrlTemplate?: string;
+}
+
 /** Per-sync counts and errors returned for one institution (or one error context). */
 export interface SyncSummary {
 	institution: string;
@@ -95,4 +106,32 @@ export interface PullIntegration {
 	readonly id: string;
 	/** Discovers this integration's institutions and syncs each, isolating per-institution failures. */
 	syncAll(pb: PocketBase): Promise<SyncSummary[]>;
+}
+
+/**
+ * Outcome of refreshing one already-stored item against its source.
+ * `gone` ⇒ the source no longer has it (archive it). `error` ⇒ a transient failure
+ * (leave the item untouched; it counts toward the per-institution circuit-breaker).
+ */
+export type RefreshOutcome =
+	| { kind: 'found'; item: MappedItem }
+	| { kind: 'gone' }
+	| { kind: 'error'; message: string };
+
+/**
+ * Registry-facing contract for an integration that refreshes already-stored items
+ * one at a time (e.g. WINBIAP WebOPAC, leihbackend per-record). Unlike `PullIntegration`,
+ * discovery is shared by the refresh flow; an integration only claims the items it owns
+ * (detected from the stored record) and fetches their current state.
+ */
+export interface RefreshIntegration {
+	/** Stable identifier, e.g. 'winbiap'. */
+	readonly id: string;
+	/** True if this integration owns `item` (detected from its `externalUrl`/`externalId`). */
+	claimsItem(item: ExistingItem): boolean;
+	/** Fetches the current state of one stored item from the source. */
+	fetchOne(institution: Institution, item: ExistingItem): Promise<RefreshOutcome>;
+	/** Optional pause (ms) the refresh loop waits after each of this integration's fetches, to
+	 *  spare a fragile source from a burst of per-item requests. Defaults to none. */
+	readonly pauseMsBetweenFetches?: number;
 }

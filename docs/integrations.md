@@ -25,9 +25,33 @@ Everything after `MappedItem[]` — comparing against the database, deciding wha
 | Ingestion trigger | Source → `MappedItem` | Status |
 |---|---|---|
 | **Scheduled pull** | leihbackend HTTP `item_public` view | implemented (`leihbackend/`) |
-| **Manual file push** | WINBIAP CSV upload | implemented (`winbiap/`, used by the import route) |
-| **Scheduled pull** | WINBIAP HTTP API | planned (not built) |
+| **Manual file push** | WINBIAP CSV upload | implemented (`winbiap/csv.ts`, used by the import route) |
+| **Per-item refresh** | leihbackend per-record + WINBIAP WebOPAC search | implemented (`/api/refresh`, see below) |
 | **In-time / pull-on-search** | — | reserved (not built) |
+
+### Refresh: a second, lighter pipeline
+
+Alongside the full sync there is a **per-item refresh** for keeping already-imported items
+up to date when a full re-pull isn't practical (the WINBIAP motivation). Instead of fetching a
+whole catalogue, it loads the institution's stored items and re-fetches **each one** from its
+source:
+
+```
+existing items ──▶ per item: claimsItem → fetchOne ──▶ found | gone | error
+                                                          ▼
+                              diffItems(found-items, resolved) ──▶ applyDiff (update + archive; never create)
+```
+
+- **found & changed** → update. **gone** (source no longer has it) → archive (`unavailable`).
+  **error** (transient) → leave untouched.
+- A per-institution **circuit-breaker** aborts with zero writes if ≥50% of fetches error
+  (so a source outage can't mass-archive the catalogue).
+- Each stored item is routed to the `RefreshIntegration` whose `claimsItem(item)` returns true
+  (detected from `externalUrl`/`externalId`), so leihbackend and WINBIAP items in the same
+  institution are each handled correctly.
+- Discovery is shared (`findSyncInstitutions` in `core/pocketbase.ts`). `POST /api/refresh` refreshes
+  every configured institution; `POST /api/refresh?institution=<id>` refreshes just one (an unknown
+  id returns a single error summary, zero writes).
 
 ---
 
@@ -36,14 +60,16 @@ Everything after `MappedItem[]` — comparing against the database, deciding wha
 ```
 src/lib/server/integrations/
 ├── core/            # generic, integration-agnostic upsert machinery
-│   ├── types.ts     # MappedItem, ExistingItem, Institution, SyncSummary, DiffResult, WriteResult, PullIntegration, RetryWrapper
-│   ├── pocketbase.ts# getSuperuserClient, withAuthRetry, loadExistingItems
+│   ├── types.ts     # MappedItem, ExistingItem, Institution, SyncInstitution, SyncSummary, DiffResult, WriteResult, PullIntegration, RefreshIntegration, RetryWrapper
+│   ├── pocketbase.ts# getSuperuserClient, withAuthRetry, loadExistingItems, findSyncInstitutions
 │   ├── diff.ts      # diffItems (pure)
-│   ├── write.ts     # applyDiff (batched create/update/archive)
-│   └── sync.ts      # syncInstitution, syncInstitutions, makeSummary
-├── registry.ts      # all active integrations listed and called from here
-├── leihbackend/     # concrete scheduled-pull integration (worked example)
-└── winbiap/         # concrete CSV mapping, consumed by the import route
+│   ├── write.ts     # applyDiff (batched create/update/archive; update writes only synced fields)
+│   ├── sync.ts      # syncInstitution, syncInstitutions, makeSummary (full sync)
+│   └── refresh.ts   # refreshInstitution, refreshInstitutions (per-item refresh + circuit-breaker)
+├── syncEndpoint.ts  # makeSyncHandler — shared bearer-auth handler for /api/sync and /api/refresh
+├── registry.ts      # all active integrations listed and called from here (pull + refresh)
+├── leihbackend/     # scheduled-pull + refresh integration (HTTP item_public + per-record)
+└── winbiap/         # CSV mapping (import route) + WebOPAC client for refresh
 ```
 
 The **core never imports a concrete integration.** Concrete integrations import core. The **registry** is the only place that knows the full list of integrations.
@@ -78,9 +104,22 @@ The **core never imports a concrete integration.** Concrete integrations import 
 
 ## Triggering & operations
 
-`POST /api/sync` runs every registered scheduled-pull integration. It is session-unauthenticated but requires `Authorization: Bearer $SYNC_SECRET`, and is driven by a cron job. See [operations/leihbackend-sync.md](operations/leihbackend-sync.md) for env vars, the cron line, and failure modes.
+`POST /api/sync` runs every registered scheduled-pull integration (full catalogue pull).
+`POST /api/refresh` runs the per-item refresh over every institution's already-stored items.
+Both are session-unauthenticated but require `Authorization: Bearer $SYNC_SECRET` (same shared
+handler, `syncEndpoint.ts`) and are driven by cron jobs. See
+[operations/leihbackend-sync.md](operations/leihbackend-sync.md) for env vars, cron lines, and
+failure modes.
 
 The WINBIAP CSV import is triggered by an institution uploading a file at `/user/import`; it runs the same core diff + write in-request.
+
+> **Shared base-URL field (interim):** institution discovery currently keys on `users.leihbackendUrl`,
+> which doubles as the generic base URL. A WINBIAP institution therefore puts its WebOPAC base
+> (e.g. `https://rblg.stadt.lueneburg.de/webopac`) in `leihbackendUrl`, and refresh detects WINBIAP
+> items by their `externalUrl` (`/webopac/`) or `externalId` (`118$…`). Because the field is shared,
+> `POST /api/sync` would also pick up a WINBIAP institution and fail fetching `item_public` (isolated,
+> zero writes) — don't run the full sync for WINBIAP-only institutions. A future `sync_config`
+> collection will replace this overloading.
 
 ---
 
