@@ -1,13 +1,16 @@
 import { error, fail } from '@sveltejs/kit';
+import type PocketBase from 'pocketbase';
 import {
 	parseCsv,
 	validateFileLimits,
 	parseAndMapCsv,
+	type MappedRow,
 	type RowResult,
 } from '$lib/server/integrations/winbiap/csv';
 import { loadExistingItems } from '$lib/server/integrations/core/pocketbase';
 import { diffItems } from '$lib/server/integrations/core/diff';
 import { applyDiff } from '$lib/server/integrations/core/write';
+import type { DiffResult } from '$lib/server/integrations/core/types';
 
 export async function load({ locals }) {
 	if (!locals.user?.isInstitution) {
@@ -16,9 +19,37 @@ export async function load({ locals }) {
 	return {};
 }
 
+/** Returns the institution's owner id, or `null` if the caller is not an institutional account. */
+function institutionOwnerId(locals: App.Locals): string | null {
+	return locals.user?.isInstitution ? locals.user.id : null;
+}
+
+interface CsvDiff {
+	mappedRows: MappedRow[];
+	rowErrors: RowResult[];
+	totalRows: number;
+	diff: DiffResult;
+}
+
+/**
+ * Parses + maps a CSV and diffs it against the institution's current items — the shared
+ * orchestration behind both the `preview` and `apply` actions. Lets a failed item load
+ * propagate (rather than silently treating every row as a create), so callers can abort.
+ */
+async function buildCsvDiff(pb: PocketBase, csvText: string, ownerId: string): Promise<CsvDiff> {
+	const { mappedRows, rowErrors, totalRows } = parseAndMapCsv(csvText, ownerId);
+	const existingItems = await loadExistingItems(pb, ownerId);
+	const diff = diffItems(
+		mappedRows.map((r) => r.item),
+		existingItems
+	);
+	return { mappedRows, rowErrors, totalRows, diff };
+}
+
 export const actions = {
 	preview: async ({ locals, request }) => {
-		if (!locals.user?.isInstitution) {
+		const ownerId = institutionOwnerId(locals);
+		if (!ownerId) {
 			return fail(403, { error: true, message: 'Keine Berechtigung.' });
 		}
 
@@ -45,27 +76,22 @@ export const actions = {
 			return fail(400, { error: true, message: limitError });
 		}
 
-		const ownerId = locals.user.id;
-		const { mappedRows, rowErrors, totalRows } = parseAndMapCsv(csvText, ownerId);
-
-		// Diff the mapped items against the institution's current items.
-		let existingItems;
+		let mappedRows, rowErrors, totalRows, diff;
 		try {
-			existingItems = await loadExistingItems(locals.pb, ownerId);
+			({ mappedRows, rowErrors, totalRows, diff } = await buildCsvDiff(locals.pb, csvText, ownerId));
 		} catch {
-			existingItems = []; // proceed without existing data — everything is treated as create
+			return fail(503, {
+				error: true,
+				message: 'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+			});
 		}
-		const diff = diffItems(
-			mappedRows.map((r) => r.item),
-			existingItems
-		);
 
 		// Derive the per-row action from which diff list each item landed in.
 		const createIds = new Set(diff.toCreate.map((i) => i.externalId));
 		const updateIds = new Set(diff.toUpdate.map((u) => u.data.externalId));
 		const previewRows: RowResult[] = mappedRows.map(({ rowIndex, item, warnings }) => ({
 			rowIndex,
-			externalId: item.externalId ?? '',
+			externalId: item.externalId,
 			name: item.name,
 			action: createIds.has(item.externalId)
 				? 'create'
@@ -104,7 +130,8 @@ export const actions = {
 	},
 
 	apply: async ({ locals, request }) => {
-		if (!locals.user?.isInstitution) {
+		const ownerId = institutionOwnerId(locals);
+		if (!ownerId) {
 			return fail(403, { error: true, message: 'Keine Berechtigung.' });
 		}
 
@@ -120,20 +147,15 @@ export const actions = {
 			return fail(400, { error: true, message: parseError });
 		}
 
-		const ownerId = locals.user.id;
-		const { mappedRows, rowErrors } = parseAndMapCsv(csvText, ownerId);
-
-		let existingItems;
+		let rowErrors, diff;
 		try {
-			existingItems = await loadExistingItems(locals.pb, ownerId);
+			({ rowErrors, diff } = await buildCsvDiff(locals.pb, csvText, ownerId));
 		} catch {
-			existingItems = [];
+			return fail(503, {
+				error: true,
+				message: 'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+			});
 		}
-
-		const diff = diffItems(
-			mappedRows.map((r) => r.item),
-			existingItems
-		);
 
 		// User-session client: never re-authenticate as superuser (default identity retry).
 		const writes = await applyDiff(locals.pb, diff);

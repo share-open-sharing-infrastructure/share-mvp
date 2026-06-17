@@ -40,7 +40,7 @@ src/lib/server/integrations/
 │   ├── diff.ts      # diffItems (pure)
 │   ├── write.ts     # applyDiff (batched create/update/archive)
 │   └── sync.ts      # syncInstitution, syncInstitutions, makeSummary
-├── registry.ts      # pullIntegrations[] + syncAll() — the composition root
+├── registry.ts      # pullIntegrations[] + runAllIntegrations() — the composition root
 ├── leihbackend/     # concrete scheduled-pull integration (worked example)
 └── winbiap/         # concrete CSV mapping, consumed by the import route
 ```

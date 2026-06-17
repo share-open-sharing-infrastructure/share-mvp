@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { getSuperuserClient } = vi.hoisted(() => ({ getSuperuserClient: vi.fn() }));
-const { syncAll } = vi.hoisted(() => ({ syncAll: vi.fn() }));
+const { runAllIntegrations } = vi.hoisted(() => ({ runAllIntegrations: vi.fn() }));
 
 vi.mock('$lib/server/integrations/core/pocketbase', () => ({ getSuperuserClient }));
-vi.mock('$lib/server/integrations/registry', () => ({ syncAll }));
+vi.mock('$lib/server/integrations/registry', () => ({ runAllIntegrations }));
 
 import { POST } from './+server';
 import { SYNC_SECRET } from '$env/static/private';
@@ -22,14 +22,14 @@ beforeEach(() => {
 describe('POST /api/sync', () => {
 	it('returns 401 when the Authorization header is missing', async () => {
 		await expect(POST({ request: makeRequest() } as never)).rejects.toMatchObject({ status: 401 });
-		expect(syncAll).not.toHaveBeenCalled();
+		expect(runAllIntegrations).not.toHaveBeenCalled();
 	});
 
 	it('returns 401 when the Authorization header is wrong', async () => {
 		await expect(POST({ request: makeRequest('Bearer wrong-secret') } as never)).rejects.toMatchObject({
 			status: 401,
 		});
-		expect(syncAll).not.toHaveBeenCalled();
+		expect(runAllIntegrations).not.toHaveBeenCalled();
 	});
 
 	it('returns 503 if the superuser client cannot authenticate', async () => {
@@ -40,9 +40,9 @@ describe('POST /api/sync', () => {
 		});
 	});
 
-	it('runs syncAll and returns the summaries on success', async () => {
+	it('runs runAllIntegrations and returns the summaries on success', async () => {
 		getSuperuserClient.mockResolvedValue({});
-		syncAll.mockResolvedValue([
+		runAllIntegrations.mockResolvedValue([
 			{
 				institution: 'commons-zentrum',
 				fetched: 1,
@@ -58,7 +58,7 @@ describe('POST /api/sync', () => {
 		const response = await POST({ request: makeRequest(`Bearer ${SYNC_SECRET}`) } as never);
 		const body = await response.json();
 
-		expect(syncAll).toHaveBeenCalledTimes(1);
+		expect(runAllIntegrations).toHaveBeenCalledTimes(1);
 		expect(body.summaries).toHaveLength(1);
 		expect(body.summaries[0].institution).toBe('commons-zentrum');
 	});
@@ -73,7 +73,7 @@ describe('POST /api/sync - missing configuration', () => {
 			PB_SUPERUSER_PASSWORD: '',
 		}));
 		vi.doMock('$lib/server/integrations/core/pocketbase', () => ({ getSuperuserClient: vi.fn() }));
-		vi.doMock('$lib/server/integrations/registry', () => ({ syncAll: vi.fn() }));
+		vi.doMock('$lib/server/integrations/registry', () => ({ runAllIntegrations: vi.fn() }));
 
 		const { POST: postWithMissingEnv } = await import('./+server');
 

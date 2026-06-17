@@ -1,7 +1,10 @@
 import PocketBase from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
 import { PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD } from '$env/static/private';
-import type { ExistingItem } from './types';
+import { SYNCED_FIELDS, type ExistingItem } from './types';
+
+/** PocketBase `fields` projection for an `ExistingItem`: the synced fields plus the keys. */
+const EXISTING_ITEM_FIELDS = ['id', 'externalId', ...SYNCED_FIELDS].join(',');
 
 let cachedSuperuserClient: PocketBase | null = null;
 
@@ -54,6 +57,6 @@ export async function withAuthRetry<T>(pb: PocketBase, operation: () => Promise<
 export async function loadExistingItems(pb: PocketBase, ownerId: string): Promise<ExistingItem[]> {
 	return pb.collection('items').getFullList<ExistingItem>({
 		filter: `owner = "${ownerId}" && externalId != ""`,
-		fields: 'id,externalId,name,description,status,categories,externalImgUrl,externalUrl,place',
+		fields: EXISTING_ITEM_FIELDS,
 	});
 }

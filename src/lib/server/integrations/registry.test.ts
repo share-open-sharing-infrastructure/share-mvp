@@ -7,7 +7,7 @@ vi.mock('./leihbackend', () => ({
 	leihbackendIntegration: { id: 'leihbackend', syncAll: syncAllMock },
 }));
 
-import { syncAll, pullIntegrations } from './registry';
+import { runAllIntegrations, pullIntegrations } from './registry';
 
 const pb = {} as never;
 
@@ -34,11 +34,11 @@ describe('pullIntegrations', () => {
 	});
 });
 
-describe('syncAll', () => {
+describe('runAllIntegrations', () => {
 	it("flattens each integration's per-institution summaries", async () => {
 		syncAllMock.mockResolvedValue([summary('commons-zentrum'), summary('mosaique')]);
 
-		const summaries = await syncAll(pb);
+		const summaries = await runAllIntegrations(pb);
 
 		expect(syncAllMock).toHaveBeenCalledWith(pb);
 		expect(summaries.map((s) => s.institution)).toEqual(['commons-zentrum', 'mosaique']);
@@ -47,7 +47,7 @@ describe('syncAll', () => {
 	it('isolates a throwing integration into a single error summary', async () => {
 		syncAllMock.mockRejectedValue(new Error('discovery failed'));
 
-		const summaries = await syncAll(pb);
+		const summaries = await runAllIntegrations(pb);
 
 		expect(summaries).toHaveLength(1);
 		expect(summaries[0].institution).toBe('(leihbackend)');

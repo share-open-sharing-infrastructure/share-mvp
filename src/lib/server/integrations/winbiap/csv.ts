@@ -49,15 +49,20 @@ export interface ParseAndMapResult {
 const MAX_FILE_SIZE_BYTES = 1_000_000;
 const MAX_ROWS = 5_000;
 
-function normalizeStatus(raw: string | undefined, externalUrl: string): ImportStatus {
+function normalizeStatus(
+	raw: string | undefined,
+	externalUrl: string
+): { status: ImportStatus; error?: string } {
 	if (!raw || raw.trim() === '') {
-		return externalUrl ? 'unknown' : 'available';
+		return { status: externalUrl ? 'unknown' : 'available' };
 	}
 	const s = raw.trim().toLowerCase();
-	if (s === 'available') return 'available';
-	if (s === 'unavailable') return 'unavailable';
-	if (s === 'unknown') return 'unknown';
-	return null as unknown as ImportStatus; // signals validation error
+	if (s === 'available' || s === 'unavailable' || s === 'unknown') {
+		return { status: s };
+	}
+	// Placeholder status alongside the error (mirrors normalizeCategories); the caller
+	// discards the parsed row whenever any error is present.
+	return { status: 'unknown', error: `Ungültiger status-Wert: "${raw}"` };
 }
 
 function normalizeCategories(raw: string | undefined): { categories: string[]; error?: string } {
@@ -104,9 +109,8 @@ export function parseAndValidateRow(
 	const { categories, error: catError } = normalizeCategories(row['categories']?.toString());
 	if (catError) errors.push(catError);
 
-	const rawStatus = row['status']?.toString();
-	const status = normalizeStatus(rawStatus, externalUrl);
-	if (status === null) errors.push(`Ungültiger status-Wert: "${rawStatus}"`);
+	const { status, error: statusError } = normalizeStatus(row['status']?.toString(), externalUrl);
+	if (statusError) errors.push(statusError);
 
 	const trusteesOnly = normalizeBool(row['trusteesOnly']?.toString());
 	const image = row['image']?.toString().trim() ?? '';

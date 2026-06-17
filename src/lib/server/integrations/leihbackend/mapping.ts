@@ -140,6 +140,13 @@ function buildExternalUrl(src: LeihbackendItem, template?: string): string {
 	return template.replace(/\{id\}/g, src.id).replace(/\{iid\}/g, String(src.iid));
 }
 
+/** Builds the item's cover image URL from its first image, or '' if it has none. */
+function buildImageUrl(src: LeihbackendItem, baseUrl: string): string {
+	const firstImage = src.images?.[0];
+	if (!firstImage) return '';
+	return `${baseUrl}/api/files/item/${src.id}/${firstImage}`;
+}
+
 /** Maps a single `item_public` record to AllerLeih `items` fields, per spec §3.1. */
 export function mapItem(leihbackendItem: LeihbackendItem, itemContext: MapItemContext): MappedItem {
 	return {
@@ -148,7 +155,7 @@ export function mapItem(leihbackendItem: LeihbackendItem, itemContext: MapItemCo
 		description: buildDescription(leihbackendItem),
 		status: leihbackendItem.status === 'instock' ? 'available' : 'unavailable',
 		categories: mapCategory(leihbackendItem.category),
-		externalImgUrl: leihbackendItem.images?.[0] ? `${itemContext.baseUrl}/api/files/item/${leihbackendItem.id}/${leihbackendItem.images[0]}` : '',
+		externalImgUrl: buildImageUrl(leihbackendItem, itemContext.baseUrl),
 		externalUrl: buildExternalUrl(leihbackendItem, itemContext.urlTemplate),
 		place: itemContext.city ?? '',
 		owner: itemContext.ownerId,

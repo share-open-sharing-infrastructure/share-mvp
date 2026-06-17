@@ -18,7 +18,7 @@ export const pullIntegrations: PullIntegration[] = [leihbackendIntegration];
  * @param pb - Authenticated PocketBase superuser client.
  * @returns One `SyncSummary` per synced institution across all integrations.
  */
-export async function syncAll(pb: PocketBase): Promise<SyncSummary[]> {
+export async function runAllIntegrations(pb: PocketBase): Promise<SyncSummary[]> {
 	const summaries: SyncSummary[] = [];
 	for (const integration of pullIntegrations) {
 		try {

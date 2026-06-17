@@ -1,5 +1,5 @@
 import { DESCRIPTION_PREFIX } from '$lib/server/itemArchive';
-import type { DiffResult, ExistingItem, MappedItem } from './types';
+import { SYNCED_FIELDS, type DiffResult, type ExistingItem, type MappedItem } from './types';
 
 /**
  * Returns true if `left` and `right` contain the same category strings (order-independent).
@@ -16,18 +16,16 @@ function sameCategories(left: string[] | undefined, right: string[] | undefined)
 
 /**
  * Returns true if any synced field on `existingRecord` differs from `mappedItem`.
- * Category comparison is order-independent via `sameCategories`.
+ * Iterates `SYNCED_FIELDS` so the comparison stays in sync with the canonical field list;
+ * `categories` is compared order-independently via `sameCategories`.
  */
 function hasChanged(existingRecord: ExistingItem, mappedItem: MappedItem): boolean {
-	return (
-		existingRecord.name !== mappedItem.name ||
-		existingRecord.description !== mappedItem.description ||
-		existingRecord.status !== mappedItem.status ||
-		existingRecord.externalImgUrl !== mappedItem.externalImgUrl ||
-		existingRecord.externalUrl !== mappedItem.externalUrl ||
-		existingRecord.place !== mappedItem.place ||
-		!sameCategories(existingRecord.categories, mappedItem.categories)
-	);
+	return SYNCED_FIELDS.some((field) => {
+		if (field === 'categories') {
+			return !sameCategories(existingRecord.categories, mappedItem.categories);
+		}
+		return existingRecord[field] !== mappedItem[field];
+	});
 }
 
 /**
@@ -61,7 +59,9 @@ export function diffItems(mappedItems: MappedItem[], existingRecords: ExistingIt
 	}
 
 	const toArchive = existingRecords.filter((record) => {
-		if (externalIdsInSource.has(record.externalId)) return false;
+		// loadExistingItems only returns records with a non-empty externalId; the guard
+		// keeps the type honest against ExistingItem's optional key.
+		if (record.externalId && externalIdsInSource.has(record.externalId)) return false;
 		const alreadyArchived =
 			record.status === 'unavailable' && record.description.startsWith(DESCRIPTION_PREFIX);
 		if (alreadyArchived) {

@@ -2,22 +2,36 @@ import type PocketBase from 'pocketbase';
 import { type Item } from '$lib/types/models';
 
 /**
+ * Canonical list of the item fields an integration syncs. Single source of truth: the
+ * change-detection comparison (`diffItems`) and the PocketBase field projection
+ * (`loadExistingItems`) are both derived from this array, so adding a synced field here
+ * is enough — there is no second place to keep in lockstep. See docs/integrations.md.
+ */
+export const SYNCED_FIELDS = [
+	'name',
+	'description',
+	'status',
+	'categories',
+	'externalUrl',
+	'externalImgUrl',
+	'place',
+] as const;
+
+export type SyncedField = (typeof SYNCED_FIELDS)[number];
+
+/**
  * The fields an integration produces for one item. A subset of the full `Item` type —
  * everything an ingestion source must supply for the generic upsert core to write it.
- * `externalId` is the upsert key (unique per owner); see docs/integrations.md.
+ * `externalId` is the upsert key: required and unique per owner (overrides `Item`'s
+ * optional field); see docs/integrations.md.
  */
 export type MappedItem = Pick<
 	Item,
-	'name' | 'description' | 'status' | 'categories' | 'externalId' |
-	'externalUrl' | 'externalImgUrl' | 'place' | 'owner' | 'trusteesOnly'
->;
+	SyncedField | 'owner' | 'trusteesOnly'
+> & { externalId: string };
 
 /** Subset of `items` fields loaded from PocketBase for change detection and archive decisions. */
-export type ExistingItem = Pick<
-	Item,
-	'id' | 'name' | 'description' | 'status' | 'categories' |
-	'externalId' | 'externalUrl' | 'externalImgUrl' | 'place'
->;
+export type ExistingItem = Pick<Item, SyncedField | 'id' | 'externalId'>;
 
 /**
  * Generic, integration-agnostic description of an item owner.

@@ -6,6 +6,7 @@ const delay = (milliseconds: number) => new Promise((resolve) => setTimeout(reso
 
 // Stays under PocketBase's default *:create rate limit of 20/5s.
 const UPDATE_BATCH = 50;
+const UPDATE_PAUSE_MS = 300;
 const CREATE_BATCH = 15;
 const CREATE_PAUSE_MS = 5500;
 
@@ -62,7 +63,7 @@ async function sendBatched<T>(
 export async function applyDiff(pb: PocketBase, diff: DiffResult, retry: RetryWrapper = noRetry): Promise<WriteResult> {
 	const errors: string[] = [];
 
-	const updateResult = await sendBatched(pb, diff.toUpdate, UPDATE_BATCH, 300,
+	const updateResult = await sendBatched(pb, diff.toUpdate, UPDATE_BATCH, UPDATE_PAUSE_MS,
 		(batch, { id, data }) => batch.collection('items').update(id, data), retry);
 	errors.push(...updateResult.errors.map((e) => `update batch: ${e}`));
 
@@ -70,7 +71,7 @@ export async function applyDiff(pb: PocketBase, diff: DiffResult, retry: RetryWr
 		(batch, item) => batch.collection('items').create(item), retry);
 	errors.push(...createResult.errors.map((e) => `create batch: ${e}`));
 
-	const archiveResult = await sendBatched(pb, diff.toArchive, UPDATE_BATCH, 300,
+	const archiveResult = await sendBatched(pb, diff.toArchive, UPDATE_BATCH, UPDATE_PAUSE_MS,
 		(batch, item: ExistingItem) => batch.collection('items').update(item.id, {
 			status: 'unavailable',
 			description: archiveDescription(item.description),

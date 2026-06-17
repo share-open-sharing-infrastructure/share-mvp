@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { RequestHandler } from './$types';
 import { SYNC_SECRET, PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD } from '$env/static/private';
 import { getSuperuserClient } from '$lib/server/integrations/core/pocketbase';
-import { syncAll } from '$lib/server/integrations/registry';
+import { runAllIntegrations } from '$lib/server/integrations/registry';
 
 function isAuthorized(request: Request): boolean {
 	const header = request.headers.get('authorization') ?? '';
@@ -33,7 +33,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		error(503, 'Sync unavailable: superuser authentication failed.');
 	}
 
-	const summaries = await syncAll(pb);
+	const summaries = await runAllIntegrations(pb);
 
 	for (const summary of summaries) {
 		const line =
