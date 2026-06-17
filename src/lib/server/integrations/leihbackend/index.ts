@@ -28,9 +28,10 @@ async function findLeihbackendInstitutions(pb: PocketBase): Promise<LeihbackendI
  * Throws on network or API failure (the sync then aborts with zero writes for that institution).
  */
 async function fetchAndMapItems(institution: LeihbackendInstitution): Promise<MappedItem[]> {
-	const remoteFeed = await fetchAllItems(institution.leihbackendUrl);
+	const baseUrl = normalizeBaseUrl(institution.leihbackendUrl);
+	const remoteFeed = await fetchAllItems(baseUrl);
 	const mappingContext = {
-		baseUrl: normalizeBaseUrl(institution.leihbackendUrl),
+		baseUrl,
 		ownerId: institution.id,
 		city: institution.city,
 		urlTemplate: institution.leihbackendItemUrlTemplate,

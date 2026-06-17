@@ -153,4 +153,17 @@ describe('parseAndMapCsv', () => {
 		expect(mappedRows[0].warnings).toHaveLength(0);
 		expect(mappedRows[1].warnings.join(' ')).toContain('Doppelter');
 	});
+
+	it('returns no parseError for a clean file', () => {
+		const csv = `${header}\nABC-001,Bohrmaschine,Stark,Lager,Werkzeug und Garten,,available,,false`;
+		const { parseError } = parseAndMapCsv(csv, 'inst1');
+		expect(parseError).toBeUndefined();
+	});
+
+	it('surfaces a fatal parse error and maps no rows for a malformed file', () => {
+		const csv = `${header}\n"ABC-001,Bohrmaschine,Stark`;
+		const { parseError, mappedRows } = parseAndMapCsv(csv, 'inst1');
+		expect(parseError).toBeTruthy();
+		expect(mappedRows).toHaveLength(0);
+	});
 });

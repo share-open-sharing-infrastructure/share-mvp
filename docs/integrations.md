@@ -11,8 +11,9 @@ How AllerLeih ingests item catalogues from partner systems (libraries, Leihläde
 Every integration, regardless of source, converges on a single pipeline:
 
 ```
-source data ──(integration mapping)──▶ MappedItem[] ──▶ diffItems ──▶ applyDiff ──▶ PocketBase `items`
+source data ── (1) integration mapping ──▶ (2) MappedItem[] ──▶ (3) diffItems ──▶ (4) applyDiff ──▶ (5) PocketBase `items`
 ```
+*Read: Whatever source data is (1) mapped to the internal Item data model of share/AllerLeih as (2) an array. A (3) difference is computed (for each item, check if it needs to be created, updated, skipped or archived). The diff is (4) applied by creating or updating existing items (5) in the connected PocketBase instance of share/AllerLeih.*
 
 What differs between integrations is only:
 
@@ -40,7 +41,7 @@ src/lib/server/integrations/
 │   ├── diff.ts      # diffItems (pure)
 │   ├── write.ts     # applyDiff (batched create/update/archive)
 │   └── sync.ts      # syncInstitution, syncInstitutions, makeSummary
-├── registry.ts      # pullIntegrations[] + runAllIntegrations() — the composition root
+├── registry.ts      # all active integrations listed and called from here
 ├── leihbackend/     # concrete scheduled-pull integration (worked example)
 └── winbiap/         # concrete CSV mapping, consumed by the import route
 ```

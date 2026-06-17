@@ -26,7 +26,6 @@ export interface RowResult {
 	name: string;
 	action: RowAction | 'error';
 	errors: string[];
-	data?: ParsedRow;
 }
 
 /** A valid CSV row mapped to a core item, carrying its source row number and any warnings. */
@@ -44,6 +43,8 @@ export interface ParseAndMapResult {
 	rowErrors: RowResult[];
 	/** Total data rows in the file (excluding the header). */
 	totalRows: number;
+	/** Fatal CSV parse error (malformed delimiter/quotes), if any; `mappedRows` is empty when set. */
+	parseError?: string;
 }
 
 const MAX_FILE_SIZE_BYTES = 1_000_000;
@@ -178,7 +179,10 @@ export function mapRowToItem(row: ParsedRow, ownerId: string): MappedItem {
  * @param ownerId - PocketBase id of the importing institution (becomes `item.owner`).
  */
 export function parseAndMapCsv(csvText: string, ownerId: string): ParseAndMapResult {
-	const { rows } = parseCsv(csvText);
+	const { rows, error: parseError } = parseCsv(csvText);
+	if (parseError) {
+		return { mappedRows: [], rowErrors: [], totalRows: 0, parseError };
+	}
 
 	const mappedRows: MappedRow[] = [];
 	const rowErrors: RowResult[] = [];
