@@ -1,4 +1,5 @@
 import { error, fail, type ActionFailure } from '@sveltejs/kit';
+import { SYNC_SECRET } from '$env/static/private';
 import type PocketBase from 'pocketbase';
 import {
 	validateFileLimits,
@@ -179,4 +180,23 @@ export const actions = {
 			rowErrors: writes.errors,
 		};
 	},
+	refresh: async ({ locals, fetch }) => {
+		const ownerId = institutionOwnerId(locals);
+
+		try {
+			console.log('Triggering refresh for institution', ownerId);
+			const res = await fetch(`/api/refresh?institution=${ownerId}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'authorization': 'Bearer ' + SYNC_SECRET
+				}
+			});
+			if (res.ok) {
+				console.log('Refresh successful');
+			}
+		} catch {
+			console.error('Refresh failed');
+		}
+	}
 };

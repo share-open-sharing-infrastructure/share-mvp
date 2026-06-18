@@ -64,6 +64,13 @@
 	</div>
 </div>
 
+<form method="POST" action="?/refresh" 
+	use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }} 
+	class="px-4 mx-auto max-w-7xl justify-center flex">	
+	<Button type="submit">Alle Gegenstände synchronisieren</Button>
+</form>
+
+
 <main class="max-w-3xl mx-auto px-4 py-8 space-y-6 relative">
 	{#if submitting}
 		<div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-sand/80 rounded-lg gap-3">
