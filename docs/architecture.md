@@ -9,7 +9,7 @@ System-level overview of AllerLeih: tech stack, request flow, authentication, ro
 ```mermaid
 graph TD
     Browser["Browser (SvelteKit SPA + PWA)"]
-    SK["SvelteKit Node server (Uberspace shared hosting)"]
+    SK["SvelteKit Node server"]
     PB["PocketBase (SQLite + Auth + Realtime)"]
     ORS["OpenRouteService API (geocoding + travel times\nGermany only)"]
     Mistral["Mistral AI (pixtral-12b-2409 vision)\nitem photo analysis"]
@@ -33,8 +33,7 @@ Auth runs as a two-handle sequence in `src/hooks.server.ts` on every request:
 
 1. **`authentication`** — creates a per-request PocketBase instance, restores auth state from the httpOnly cookie, calls `authRefresh()` to extend the session, and sets `event.locals.user` (null if not logged in).
 
-2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list:
-   - `/auth/*`, `/search`, `/items`, `/users`, `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`, `/api/sync`
+2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list as defined in `hooks.server.ts`.
 
    `/api/sync` protects itself via a bearer token (`SYNC_SECRET`) instead of session auth.
 
@@ -54,11 +53,10 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 
 All mutations go through SvelteKit **form actions** (`action="?/actionName"`). There is no REST API layer between the frontend and PocketBase — server load functions fetch data, form actions write it.
 
----
 
 ## AI Integration
 
-### Current: Mistral Vision — Item Photo Analysis (`/api/analyze-item`)
+### Mistral Vision — Item Photo Analysis (`/api/analyze-item`)
 
 - **Trigger:** User uploads photos in `/user/items/bulk-add` (bulk import flow for institutions and power users)
 - **Model:** `pixtral-12b-2409` (multimodal vision)
@@ -68,15 +66,6 @@ All mutations go through SvelteKit **form actions** (`action="?/actionName"`). T
 - **Rate limiting:** In-memory per-user limit of 300 requests/hour — resets on server restart, not safe for multi-instance deployments
 - **Data residency:** Mistral processes data in France under EU law; this is disclosed in the bulk upload UI
 
-### Potential Extension Points
-
-- AI-enhanced search (e.g. user asks "What do I need to drill build a treehouse?" and AI suggests relevant items)
-- Auto-categorisation during single-item upload (currently bulk-only)
-- CSV import quality checks and enrichment for institutional partners
-- ...
-
----
-
 ## External API Boundaries
 
 | Service | Direction | Purpose | Notes |
@@ -85,11 +74,10 @@ All mutations go through SvelteKit **form actions** (`action="?/actionName"`). T
 | OpenRouteService (ORS) | Server → ORS | Travel time matrix (`/api/travel-times/*`) | Supports foot, bicycle, car; coordinates never sent to browser |
 | Mistral AI | Server → Mistral | Item photo analysis (`/api/analyze-item`) | pixtral-12b-2409 vision model; server-side only |
 | Web Push (VAPID) | Server → Push service | Push notifications | Per-device subscriptions stored in `push_subscriptions`; stale subscriptions auto-removed on HTTP 410/404 |
-| leihbackend (partner Leihladen instances) | Server → leihbackend | Sync partner item catalogues into `items` (via `POST /api/sync`) | Polled by an Uberspace cron every 15 min; reads each institution's `item_public` view, upserts/archives items owned by that institution's account. One of several pluggable integrations — see [integrations.md](integrations.md) |
+| partner lending software instances | Server → partner software | Sync partner item catalogues into `items` (via `POST /api/sync` or `POST /api/refresh`) | Polled by a cronjob every X min; reads each institution's items and upserts/archives items owned by that institution's account. See [integrations.md](integrations.md) for details |
 
----
 
-## Deployment Pipeline
+## Current Deployment Pipeline for "AllerLeih" (proof-of-concept instance)
 
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
 - **Deploy trigger:** push to `main` → GitHub Actions (`.github/workflows/deploy-to-uberspace.yaml`) → `npm ci && npm run build` → `rsync` to Uberspace
@@ -100,11 +88,9 @@ All mutations go through SvelteKit **form actions** (`action="?/actionName"`). T
 
 **CI on pull requests:** Vitest runs with coverage (json + lcov) on every PR to `main` via `.github/workflows/vitest.yaml`. Coverage is posted as a PR comment via `davelosert/vitest-coverage-report-action`. The build step also catches TypeScript and Svelte compilation errors before merging.
 
----
-
 ## Real-time Architecture
 
-AllerLeih uses PocketBase's built-in WebSocket subscriptions for live chat in the conversations view. The utility function `setupPocketBaseSubscription()` in `src/lib/utils/utils.ts` wraps this pattern:
+AllerLeih uses PocketBase's built-in WebSocket subscriptions e.g. for live chat in the conversations view. The utility function `setupPocketBaseSubscription()` in `src/lib/utils/utils.ts` wraps this pattern:
 
 - Takes a collection name, optional record ID (`'*'` to subscribe to all records), and a callback
 - Returns an unsubscribe function suitable for `$effect()` cleanup in Svelte 5

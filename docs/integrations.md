@@ -1,19 +1,18 @@
 # Integrations
 
-How AllerLeih ingests item catalogues from partner systems (libraries, Leihläden, other lending software) — and how to add a new one.
+**How AllerLeih ingests item catalogues from partner systems (libraries, Leihläden, other lending software) — and how to add a new one.**
 
 **Audience:** reviewers who want to understand the ingestion flow, and contributors who want to connect their *own* lending software. If you maintain a specific integration, also read its folder's source; this document covers the shared machinery.
 
----
 
 ## Mental model
 
 Every integration, regardless of source, converges on a single pipeline:
 
 ```
-source data ── (1) integration mapping ──▶ (2) MappedItem[] ──▶ (3) diffItems ──▶ (4) applyDiff ──▶ (5) PocketBase `items`
+source data ──▶ (1) integration mapping ──▶ (2) MappedItem[] ──▶ (3) diffItems ──▶ (4) applyDiff ──▶ (5) PocketBase `items`
 ```
-*Read: Whatever source data is (1) mapped to the internal Item data model of share/AllerLeih as (2) an array. A (3) difference is computed (for each item, check if it needs to be created, updated, skipped or archived). The diff is (4) applied by creating or updating existing items (5) in the connected PocketBase instance of share/AllerLeih.*
+*Read: Whatever source data polled is (1) mapped to the internal Item data model of share/AllerLeih and converted to (2) an array of type MappedItem. A (3) difference is computed (for each item, check if it needs to be created, updated, skipped or archived). The diff is (4) applied by creating or updating existing items (5) in the connected PocketBase instance of share/AllerLeih.*
 
 What differs between integrations is only:
 
@@ -32,9 +31,8 @@ Everything after `MappedItem[]` — comparing against the database, deciding wha
 ### Refresh: a second, lighter pipeline
 
 Alongside the full sync there is a **per-item refresh** for keeping already-imported items
-up to date when a full re-pull isn't practical (the WINBIAP motivation). Instead of fetching a
-whole catalogue, it loads the institution's stored items and re-fetches **each one** from its
-source:
+up to date when a full re-pull isn't practical (because e.g. the data source is not well-maintained or responsive). Instead of fetching a
+whole catalogue, it loads the institution's stored items and re-fetches **each one** from its source:
 
 ```
 existing items ──▶ per item: claimsItem → fetchOne ──▶ found | gone | error
@@ -53,28 +51,26 @@ existing items ──▶ per item: claimsItem → fetchOne ──▶ found | gon
   every configured institution; `POST /api/refresh?institution=<id>` refreshes just one (an unknown
   id returns a single error summary, zero writes).
 
----
 
 ## Code layout
 
 ```
 src/lib/server/integrations/
 ├── core/            # generic, integration-agnostic upsert machinery
-│   ├── types.ts     # MappedItem, ExistingItem, Institution, SyncInstitution, SyncSummary, DiffResult, WriteResult, PullIntegration, RefreshIntegration, RetryWrapper
-│   ├── pocketbase.ts# getSuperuserClient, withAuthRetry, loadExistingItems, findSyncInstitutions
-│   ├── diff.ts      # diffItems (pure)
-│   ├── write.ts     # applyDiff (batched create/update/archive; update writes only synced fields)
-│   ├── sync.ts      # syncInstitution, syncInstitutions, makeSummary (full sync)
-│   └── refresh.ts   # refreshInstitution, refreshInstitutions (per-item refresh + circuit-breaker)
-├── syncEndpoint.ts  # makeSyncHandler — shared bearer-auth handler for /api/sync and /api/refresh
+│   ├── types.ts     # Types/Interfaces used in the integrations
+│   ├── pocketbase.ts# PocketBase-specific functions
+│   ├── diff.ts      # To compute the difference between source and target
+│   ├── write.ts     # To apply the difference set
+│   ├── sync.ts      # Responsible for full-sync
+│   └── refresh.ts   # Responsible for refreshing existing items 
+├── syncEndpoint.ts  # shared bearer-auth handler for /api/sync and /api/refresh
 ├── registry.ts      # all active integrations listed and called from here (pull + refresh)
-├── leihbackend/     # scheduled-pull + refresh integration (HTTP item_public + per-record)
-└── winbiap/         # CSV mapping (import route) + WebOPAC client for refresh
+├── leihbackend/     # leihbackend-specific integration code
+└── winbiap/         # winbiap-specific integration code
 ```
 
-The **core never imports a concrete integration.** Concrete integrations import core. The **registry** is the only place that knows the full list of integrations.
+The **core never imports a concrete integration.** Concrete integrations import the core. The **registry** is the only place that knows the full list of integrations, an integration.
 
----
 
 ## What the core guarantees
 
@@ -108,7 +104,7 @@ The **core never imports a concrete integration.** Concrete integrations import 
 `POST /api/refresh` runs the per-item refresh over every institution's already-stored items.
 Both are session-unauthenticated but require `Authorization: Bearer $SYNC_SECRET` (same shared
 handler, `syncEndpoint.ts`) and are driven by cron jobs. See
-[operations/leihbackend-sync.md](operations/leihbackend-sync.md) for env vars, cron lines, and
+[operations/integration-sync.md](operations/integration-sync.md) for env vars, cron lines, and
 failure modes.
 
 The WINBIAP CSV import is triggered by an institution uploading a file at `/user/import`; it runs the same core diff + write in-request.
@@ -134,7 +130,6 @@ Use [`leihbackend/`](../src/lib/server/integrations/leihbackend/) as the worked 
 5. **Export a `PullIntegration`** whose `syncAll` composes `syncInstitutions(pb, institutions, fetchItems, retry)`. For superuser-driven pulls, pass `(op) => withAuthRetry(pb, op)` as the retry wrapper.
 6. **Register it** by appending to `pullIntegrations` in [`registry.ts`](../src/lib/server/integrations/registry.ts). This is the only existing file you touch.
 7. **Add tests** for the mapping (pure), the discovery filter, and an integration-level `syncAll`. The core is already covered, so you only test your source-specific pieces.
-8. **Add a `CODEOWNERS` entry** for your folder so changes route to you for review.
 
 > **Note on test file names:** never prefix a test with `+` (SvelteKit reserves `+`-files for routes and the build will reject `+…test.ts`). Co-locate tests as `mapping.test.ts`, `index.test.ts`, etc.
 
