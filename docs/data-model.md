@@ -24,7 +24,6 @@ erDiagram
         bool telegramVisibleToTrustedOnly
         string signalLink
         bool signalVisibleToTrustedOnly
-        json geolocation "GeoPoint lat/lon"
         string preferredTransportMode "foot|bicycle|car"
         bool hasOnboarded
         string inviteCode
@@ -35,6 +34,14 @@ erDiagram
     }
 
     USER 1 to zero or more USER: "trusts"
+
+    USER_GEOLOCATION{
+        string id PK
+        User user FK "owner only — unique"
+        json geolocation "GeoPoint lat/lon"
+    }
+
+    USER 1 to zero or one USER_GEOLOCATION: "location (private)"
 
     ITEM{
         string id PK
@@ -167,17 +174,21 @@ erDiagram
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
 ```
 
+## user_geolocations
+
+Coordinates are **not** stored on `users` — they live in a separate `user_geolocations` collection so they can be locked to the owner. All API rules (`listRule`/`viewRule`/`createRule`/`updateRule`/`deleteRule`) are `@request.auth.id = user`, so a user can only ever read/write **their own** row; no account can query another user's coordinates. The `users` collection no longer has a `geolocation` field at all. Travel-time computation reads coordinates with backend privileges via the `/api/travel-times` hook (see below).
+
 ## items_public View
 
-`items_public` is a read-only PocketBase SQL view — not a writeable collection. It joins `items` with `users` to provide trust-filtered, privacy-safe flat rows for the search feature.
+`items_public` is a read-only PocketBase SQL view — not a writeable collection. It joins `items` with `users` (and `user_geolocations` for the location flag) to provide trust-filtered, privacy-safe flat rows for the search feature.
 
-**Key privacy guarantee:** raw `geolocation` coordinates are never included. The view exposes only `ownerHasLocation` (0 or 1), computed via a SQL expression. Travel times are calculated server-side via OpenRouteService and surfaced to the client without exposing coordinates.
+**Key privacy guarantee:** raw coordinates are never included. Coordinates live only in the owner-only `user_geolocations` collection; the view exposes just `ownerHasLocation` (0 or 1). Travel times are computed in the backend `/api/travel-times` hook, which reads coordinates server-side and returns only **bucketed minutes** — coordinates never reach the client.
 
 | Field | Source | Notes |
 |---|---|---|
 | id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns |
 | userId, username, trusts, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner |
-| ownerHasLocation | SQL expression | 1 if geolocation ≠ (0,0), else 0 |
+| ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 
 ## Impact Research: `counterfactual`
 
