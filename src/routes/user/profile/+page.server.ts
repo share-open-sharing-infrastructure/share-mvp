@@ -2,6 +2,7 @@ import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { texts } from '$lib/texts';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { upsertUserGeolocation } from '$lib/server/geolocation';
+import { upsertOwnContact, getOwnContact } from '$lib/server/contacts';
 
 export async function load({ locals, url }) {
 	// Fetch directly so the profile page always has fresh data regardless of
@@ -16,11 +17,13 @@ export async function load({ locals, url }) {
 	}
 
 	const inviteUrl = `${url.origin}/invite/${inviteCode}`;
+	const contact = await getOwnContact(locals.pb, locals.user.id);
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl,
 		currentUser,
+		contact,
 	};
 }
 
@@ -72,56 +75,35 @@ export const actions = {
 			updateData['city'] = city.trim();
 		}
 
-		// Handle Telegram username
+		// Handle contact fields → owner-only user_contacts collection (not users)
+		const contact = {
+			telegramUsername: '',
+			signalLink: '',
+			telegramVisibleToTrustedOnly: formData?.get('telegramVisibleToTrustedOnly') === 'on',
+			signalVisibleToTrustedOnly: formData?.get('signalVisibleToTrustedOnly') === 'on',
+		};
+
 		const telegramUsername = formData?.get('telegramUsername')?.toString();
-		if (telegramUsername) {
-			const trimmedTelegram = telegramUsername.trim();
-			if (trimmedTelegram !== '') {
-				// Strip @ prefix if provided
-				const cleanedTelegram = trimmedTelegram.startsWith('@')
-					? trimmedTelegram.slice(1)
-					: trimmedTelegram;
-
-				// Validate Telegram username (alphanumeric and underscore only, 5-32 chars)
-				if (!/^[a-zA-Z0-9_]{5,32}$/.test(cleanedTelegram)) {
-					return {
-						error: true,
-						message: texts.errors.invalidTelegramUsername,
-					};
-				}
-				updateData['telegramUsername'] = cleanedTelegram;
-			} else {
-				updateData['telegramUsername'] = null;
+		if (telegramUsername && telegramUsername.trim() !== '') {
+			const cleanedTelegram = telegramUsername.trim().startsWith('@')
+				? telegramUsername.trim().slice(1)
+				: telegramUsername.trim();
+			// Validate Telegram username (alphanumeric and underscore only, 5-32 chars)
+			if (!/^[a-zA-Z0-9_]{5,32}$/.test(cleanedTelegram)) {
+				return { error: true, message: texts.errors.invalidTelegramUsername };
 			}
+			contact.telegramUsername = cleanedTelegram;
 		}
 
-		// Handle Telegram visibility toggle
-		const telegramVisibleToTrustedOnly =
-			formData?.get('telegramVisibleToTrustedOnly') === 'on';
-		updateData['telegramVisibleToTrustedOnly'] = telegramVisibleToTrustedOnly;
-
-		// Handle Signal link
 		const signalLink = formData?.get('signalLink')?.toString();
-		if (signalLink) {
+		if (signalLink && signalLink.trim() !== '') {
 			const trimmedSignal = signalLink.trim();
-			if (trimmedSignal !== '') {
-				// Validate Signal link format (should contain signal.me or similar)
-				if (!trimmedSignal.includes('signal.me')) {
-					return {
-						error: true,
-						message: texts.errors.invalidSignalLink,
-					};
-				}
-				updateData['signalLink'] = trimmedSignal;
-			} else {
-				updateData['signalLink'] = null;
+			// Validate Signal link format (should contain signal.me or similar)
+			if (!trimmedSignal.includes('signal.me')) {
+				return { error: true, message: texts.errors.invalidSignalLink };
 			}
+			contact.signalLink = trimmedSignal;
 		}
-
-		// Handle Signal visibility toggle
-		const signalVisibleToTrustedOnly =
-			formData?.get('signalVisibleToTrustedOnly') === 'on';
-		updateData['signalVisibleToTrustedOnly'] = signalVisibleToTrustedOnly;
 
 		// Handle geolocation → owner-only user_geolocations collection
 		// (undefined = leave unchanged; only set when a geocode suggestion was picked).
@@ -157,6 +139,7 @@ export const actions = {
 
 		try {
 			const hasUserUpdate = Object.keys(updateData).length > 0 || hasProfileImage;
+			await upsertOwnContact(locals.pb, locals.user.id, contact);
 			if (hasUserUpdate || geo !== undefined) {
 				if (hasUserUpdate) {
 					// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields

@@ -10,42 +10,24 @@
 	import telegramLogo from '$lib/images/telegram-logo.svg';
 	import signalLogo from '$lib/images/Signal-Logo-White.svg';
 
-	let { chatPartner, conversation, PB_URL, onDelete, loggedInUserIsItemOwner = false, currentUser } : {
+	let { chatPartner, conversation, PB_URL, onDelete, loggedInUserIsItemOwner = false, partnerContact } : {
 		chatPartner: User;
 		conversation: Conversation;
 		PB_URL: string;
 		onDelete?: () => void;
 		loggedInUserIsItemOwner?: boolean;
-		currentUser: User;
+		partnerContact: { telegramUsername: string | null; telegramHidden: boolean; signalLink: string | null; signalHidden: boolean };
 	} = $props();
 
-	const isUserTrusted = $derived(chatPartner.trusts?.includes(currentUser.id) ?? false);
+	// Visibility (trusted-only handling) is resolved server-side by the /api/contact
+	// hook; here we just render what the partner is allowed to see.
+	const telegramAvailable = $derived(!!partnerContact?.telegramUsername);
+	const telegramHidden = $derived(!!partnerContact?.telegramHidden);
+	const signalAvailable = $derived(!!partnerContact?.signalLink);
+	const signalHidden = $derived(!!partnerContact?.signalHidden);
 
-	const telegramAvailable = $derived(
-		!!(chatPartner.telegramUsername &&
-			chatPartner.telegramUsername.trim() !== '' &&
-			(!chatPartner.telegramVisibleToTrustedOnly || isUserTrusted))
-	);
-	const telegramHidden = $derived(
-		!!(chatPartner.telegramUsername &&
-			chatPartner.telegramUsername.trim() !== '' &&
-			chatPartner.telegramVisibleToTrustedOnly &&
-			!isUserTrusted)
-	);
-	const signalAvailable = $derived(
-		!!(chatPartner.signalLink &&
-			chatPartner.signalLink.trim() !== '' &&
-			(!chatPartner.signalVisibleToTrustedOnly || isUserTrusted))
-	);
-	const signalHidden = $derived(
-		!!(chatPartner.signalLink &&
-			chatPartner.signalLink.trim() !== '' &&
-			chatPartner.signalVisibleToTrustedOnly &&
-			!isUserTrusted)
-	);
-
-	const telegramLink = $derived(telegramAvailable ? `https://t.me/${chatPartner.telegramUsername}` : null);
-	const signalLink = $derived(signalAvailable ? (chatPartner.signalLink ?? null) : null);
+	const telegramLink = $derived(telegramAvailable ? `https://t.me/${partnerContact.telegramUsername}` : null);
+	const signalLink = $derived(signalAvailable ? partnerContact.signalLink : null);
 
 	const showMessengerSection = $derived(telegramAvailable || telegramHidden || signalAvailable || signalHidden);
 

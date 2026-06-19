@@ -6,6 +6,7 @@ import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { getUserGeolocation, upsertUserGeolocation } from '$lib/server/geolocation';
+import { getOwnContact, upsertOwnContact } from '$lib/server/contacts';
 
 export async function load({ locals, url }) {
 	let inviteCode = locals.user.inviteCode as string | undefined;
@@ -16,6 +17,7 @@ export async function load({ locals, url }) {
 
 	const users = await locals.pb.collection('users').getFullList<User>();
 	const geolocation = await getUserGeolocation(locals.pb, locals.user.id);
+	const contact = await getOwnContact(locals.pb, locals.user.id);
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
@@ -24,6 +26,7 @@ export async function load({ locals, url }) {
 		users,
 		trustIds: (locals.user.trusts as string[]) ?? [],
 		geolocation,
+		contact,
 	};
 }
 
@@ -127,7 +130,12 @@ export const actions = {
 	complete: async ({ locals, request }) => {
 		const formData = await request.formData();
 
-		const updateData: Record<string, any> = { hasOnboarded: true };
+		const contact = {
+			telegramUsername: '',
+			signalLink: '',
+			telegramVisibleToTrustedOnly: formData.get('telegramVisibleToTrustedOnly') === 'on',
+			signalVisibleToTrustedOnly: formData.get('signalVisibleToTrustedOnly') === 'on',
+		};
 
 		const telegramUsername = formData.get('telegramUsername')?.toString();
 		if (telegramUsername !== undefined) {
@@ -137,12 +145,9 @@ export const actions = {
 				if (!/^[a-zA-Z0-9_]{5,32}$/.test(cleaned)) {
 					return fail(400, { error: true, message: texts.errors.invalidTelegramUsername });
 				}
-				updateData['telegramUsername'] = cleaned;
+				contact.telegramUsername = cleaned;
 			}
 		}
-
-		updateData['telegramVisibleToTrustedOnly'] =
-			formData.get('telegramVisibleToTrustedOnly') === 'on';
 
 		const signalLink = formData.get('signalLink')?.toString();
 		if (signalLink !== undefined) {
@@ -151,15 +156,13 @@ export const actions = {
 				if (!trimmed.includes('signal.me')) {
 					return fail(400, { error: true, message: texts.errors.invalidSignalLink });
 				}
-				updateData['signalLink'] = trimmed;
+				contact.signalLink = trimmed;
 			}
 		}
 
-		updateData['signalVisibleToTrustedOnly'] =
-			formData.get('signalVisibleToTrustedOnly') === 'on';
-
 		try {
-			await locals.pb.collection('users').update(locals.user.id, updateData);
+			await locals.pb.collection('users').update(locals.user.id, { hasOnboarded: true });
+			await upsertOwnContact(locals.pb, locals.user.id, contact);
 			return { success: true };
 		} catch {
 			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
