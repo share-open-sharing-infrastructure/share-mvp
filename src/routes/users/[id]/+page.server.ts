@@ -28,7 +28,22 @@ export async function load({ params, locals }) {
 	const currentUser = locals.user;
 	const isOwnProfile = currentUser?.id === profileUser.id;
 	const viewerTrustsProfile = currentUser?.trusts?.includes(profileUser.id) ?? false;
-	const profileTrustsViewer = currentUser ? (profileUser.trusts?.includes(currentUser.id) ?? false) : false;
+	// Does the profile owner trust the viewer? Resolved server-side so the owner's
+	// full trusts list never leaves the server (users_public no longer exposes it).
+	let profileTrustsViewer = false;
+	if (currentUser) {
+		try {
+			await locals.pb
+				.collection('users')
+				.getFirstListItem(
+					locals.pb.filter('id = {:pid} && trusts.id ?= {:vid}', { pid: profileUser.id, vid: currentUser.id }),
+					{ fields: 'id' }
+				);
+			profileTrustsViewer = true;
+		} catch {
+			profileTrustsViewer = false;
+		}
+	}
 
 	const publicItems = allItems.filter((item) => !item.trusteesOnly);
 	const trustedItemsAll = allItems.filter((item) => item.trusteesOnly);
