@@ -63,6 +63,7 @@ classDiagram
 ## Item
 
 - `trusteesOnly` is `true` when the item owner wants to lend this item only to users they have explicitly trusted; otherwise `false`.
+- Visibility of `trusteesOnly` items is enforced at the **data layer**, not just the UI: the public `items_public` view masks their content (name/description/images → `NULL`) for everyone, the base `items` collection returns the full record only to the owner and trusted users, and the search view `items_searchable` returns trustees-only rows only to the owner and trusted users. See [data-model.md](data-model.md).
 - `status` reflects current availability: `available`, `unavailable` (actively on loan), or `unknown`.
 - `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`.
 
