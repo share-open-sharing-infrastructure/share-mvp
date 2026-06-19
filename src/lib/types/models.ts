@@ -202,7 +202,6 @@ export interface ItemPublic extends PocketBaseEntity {
 	/** joined user fields */
     userId: UserId;
 	username: string;
-	trusts: string[]; 
 	isInstitution: boolean;
 	bio: string;
 	verified: boolean;

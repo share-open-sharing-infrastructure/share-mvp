@@ -50,6 +50,29 @@ export async function load({ params, locals }) {
 	// Owner is never in their own trusts array, so isOwnProfile must be checked separately
 	const trustedItems = (profileTrustsViewer || isOwnProfile) ? trustedItemsAll : null;
 
+	// items_public masks trustees-only items (name/image/description are NULL). The owner
+	// and trusted viewers may see full details, read here from the trust-gated base `items`.
+	if (trustedItems && trustedItems.length > 0) {
+		try {
+			const full = await locals.pb.collection('items').getFullList({
+				filter: locals.pb.filter('owner = {:ownerId} && trusteesOnly = true', { ownerId: profileUser.id }),
+				fields: 'id,name,image,externalImgUrl,externalUrl,description',
+			});
+			const byId = new Map(full.map((f) => [f.id, f] as const));
+			for (const item of trustedItems) {
+				const f = byId.get(item.id);
+				if (!f) continue;
+				item.name = f.name;
+				item.image = f.image;
+				item.externalImgUrl = f.externalImgUrl;
+				item.externalUrl = f.externalUrl;
+				item.description = f.description;
+			}
+		} catch (err) {
+			console.error('Failed to load trusted item details', err);
+		}
+	}
+
 	// Strip fields that must not reach the client: sensitive data and fields not used by this page.
 	const fieldsToStrip = [
 		'email', 'trusts', 'geolocation', 'inviteCode', 'invitedBy',

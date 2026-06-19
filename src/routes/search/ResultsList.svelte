@@ -10,13 +10,11 @@
 		PB_IMG_URL,
 		travelTimes = {},
 		transportMode = 'bicycle',
-		currentUserId,
 	}: {
 		filteredItemList: ItemPublic[];
 		PB_IMG_URL: string;
 		travelTimes: Record<string, number | null>;
 		transportMode?: TransportMode;
-		currentUserId?: string;
 	} = $props();
 </script>
 
@@ -30,7 +28,6 @@
 				: undefined}
 			travelMinutes={travelTimes[item.userId]}
 			{transportMode}
-			{currentUserId}
 		/>
 	{/each}
 </Gallery>
