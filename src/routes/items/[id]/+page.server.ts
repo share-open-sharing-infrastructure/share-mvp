@@ -215,8 +215,17 @@ export const actions = {
 			targetConversationId = conversation.id;
 
 			const requesterName = locals.user.username ?? locals.user.name ?? texts.pages.itemDetail.unknownRequester;
-			const itemName = itemRecord.name ?? texts.pages.itemDetail.unknownItem;
-			const notificationBody = texts.notifications.newRequest(requesterName, itemName);
+			// items_public masks trustees-only item names; the requester is authorized
+			// (the conversation was just created), so read the real name from base items.
+			let itemName = itemRecord.name;
+			if (!itemName) {
+				try {
+					itemName = (await locals.pb.collection('items').getOne(params.id, { fields: 'name' })).name;
+				} catch {
+					// fall back to the generic label below
+				}
+			}
+			const notificationBody = texts.notifications.newRequest(requesterName, itemName ?? texts.pages.itemDetail.unknownItem);
 			const conversationUrl = `/conversations/${targetConversationId}`;
 
 			await createNotification(locals.pb, itemOwnerId, locals.user.id, 'new_request', targetConversationId, notificationBody);
