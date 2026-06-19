@@ -61,6 +61,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 |---|---|---|
 | `GET /api/invite/{code}` | public | Resolves an invite code to `{ id, username }` only, so guests can follow `/invite/<code>` without the public user view exposing every code |
 | `POST /api/travel-times` | required | Reads owner coordinates from the owner-only `user_geolocations` collection, calls ORS, and returns only bucketed minutes (coordinates never leave the backend). The SvelteKit `/api/travel-times/{item,search}` endpoints relay to this hook. |
+| `GET /api/contact/{userId}` | required | Returns a user's telegram/signal handles for the caller, honouring the per-handle "visible to trusted only" flags + trust at the data layer (handles live in the owner-only `user_contacts` collection). |
 
 ---
 

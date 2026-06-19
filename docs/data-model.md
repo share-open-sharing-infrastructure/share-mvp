@@ -20,10 +20,6 @@ erDiagram
         bool isInstitution
         string profileImage
         string bio
-        string telegramUsername
-        bool telegramVisibleToTrustedOnly
-        string signalLink
-        bool signalVisibleToTrustedOnly
         string preferredTransportMode "foot|bicycle|car"
         bool hasOnboarded
         string inviteCode
@@ -42,6 +38,17 @@ erDiagram
     }
 
     USER 1 to zero or one USER_GEOLOCATION: "location (private)"
+
+    USER_CONTACT{
+        string id PK
+        User user FK "owner only — unique"
+        string telegramUsername
+        string signalLink
+        bool telegramVisibleToTrustedOnly
+        bool signalVisibleToTrustedOnly
+    }
+
+    USER 1 to zero or one USER_CONTACT: "contact handles (private)"
 
     ITEM{
         string id PK
@@ -177,6 +184,10 @@ erDiagram
 ## user_geolocations
 
 Coordinates are **not** stored on `users` — they live in a separate `user_geolocations` collection so they can be locked to the owner. All API rules (`listRule`/`viewRule`/`createRule`/`updateRule`/`deleteRule`) are `@request.auth.id = user`, so a user can only ever read/write **their own** row; no account can query another user's coordinates. The `users` collection no longer has a `geolocation` field at all. Travel-time computation reads coordinates with backend privileges via the `/api/travel-times` hook (see below).
+
+## user_contacts
+
+Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
 
 ## items_public View
 
