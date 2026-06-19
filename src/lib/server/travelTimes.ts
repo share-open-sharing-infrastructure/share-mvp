@@ -1,134 +1,6 @@
-import { ORS_API_KEY } from '$env/static/private';
-import type { Item, OwnerLocation } from '$lib/types/models';
+import type PocketBase from 'pocketbase';
 
 export type TransportMode = 'foot' | 'bicycle' | 'car';
-
-const ORS_PROFILE: Record<TransportMode, string> = {
-	foot: 'foot-walking',
-	bicycle: 'cycling-regular',
-	car: 'driving-car',
-};
-
-const ORS_TIMEOUT_MS = 8_000;
-// Log a warning when ORS takes longer than this — indicates degraded performance before a full timeout
-const ORS_SLOW_THRESHOLD_MS = 5_000;
-
-function isNullIsland(geo: { lon: number; lat: number } | undefined | null) {
-	return !geo || (geo.lon === 0 && geo.lat === 0);
-}
-
-/** Extracts unique owner locations from a list of items, skipping owners with no valid geolocation. */
-export function extractOwnerLocations(items: Item[]): OwnerLocation[] {
-	const seen = new Map<string, OwnerLocation>();
-	for (const item of items) {
-		const owner = item.expand?.owner;
-		if (!owner?.id || seen.has(owner.id)) continue;
-		const geo = owner.geolocation as { lon: number; lat: number } | undefined;
-		if (!isNullIsland(geo)) {
-			seen.set(owner.id, { id: owner.id, lon: geo!.lon, lat: geo!.lat });
-		}
-	}
-	return Array.from(seen.values());
-}
-
-/** Calls the ORS matrix API and returns raw travel durations in seconds, one per owner.
- * We have 500 requests per day on our free plan, use them wisely!
-*/
-async function fetchDurationsFromOrs(
-	userLocation: { lon: number; lat: number },
-	transportMode: TransportMode,
-	owners: OwnerLocation[]
-): Promise<number[]> {
-	const locations = [
-		[userLocation.lon, userLocation.lat],
-		...owners.map((o) => [o.lon, o.lat]),
-	];
-
-	const requestStart = Date.now();
-	let response: Response;
-	try {
-		response = await fetch(
-			`https://api.openrouteservice.org/v2/matrix/${ORS_PROFILE[transportMode]}`,
-			{
-				signal: AbortSignal.timeout(ORS_TIMEOUT_MS),
-				method: 'POST',
-				headers: {
-					Accept: 'application/json',
-					Authorization: ORS_API_KEY ?? '',
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					locations,
-					sources: [0],
-					destinations: owners.map((_, i) => i + 1),
-					metrics: ['duration'],
-				}),
-			}
-		);
-	} catch (err) {
-		// Covers both network failures and AbortSignal timeout (TimeoutError)
-		console.error('[TRAVEL_DIAG]', JSON.stringify({
-			event: 'ors_error',
-			transport_mode: transportMode,
-			owner_count: owners.length,
-			duration_ms: Date.now() - requestStart,
-			error: err instanceof Error ? err.message : String(err),
-		}));
-		return [];
-	}
-
-	const durationMs = Date.now() - requestStart;
-
-	if (!response.ok) {
-		const responseBody = await response.text().catch(() => '');
-		console.error('[TRAVEL_DIAG]', JSON.stringify({
-			event: 'ors_error',
-			transport_mode: transportMode,
-			owner_count: owners.length,
-			duration_ms: durationMs,
-			status: response.status,
-			body: responseBody.slice(0, 200),
-		}));
-		return [];
-	}
-
-	if (durationMs > ORS_SLOW_THRESHOLD_MS) {
-		console.warn('[TRAVEL_DIAG]', JSON.stringify({
-			event: 'ors_slow',
-			transport_mode: transportMode,
-			owner_count: owners.length,
-			duration_ms: durationMs,
-		}));
-	}
-
-	const data = await response.json();
-	return data.durations?.[0] ?? [];
-}
-
-/**
- * Rounds minutes to a 5-minute bucket to prevent triangulation of user locations.
- * Returns the upper bound of each bucket, with 35 as the sentinel for >30 min.
- *   <5 min → 5 | 5-10 → 10 | 10-15 → 15 | 15-20 → 20 | 20-25 → 25 | 25-30 → 30 | >30 → 35
- */
-function bucketize(minutes: number): number {
-	if (minutes < 5) return 5;
-	if (minutes < 10) return 10;
-	if (minutes < 15) return 15;
-	if (minutes < 20) return 20;
-	if (minutes < 25) return 25;
-	if (minutes < 30) return 30;
-	return 35;
-}
-
-/** Maps raw ORS durations (seconds) to an owner ID → bucketed travel minutes record. */
-function mapDurationsToOwners(owners: OwnerLocation[], durations: number[]): Record<string, number> {
-	const result: Record<string, number> = {};
-	owners.forEach((owner, i) => {
-		const seconds = durations[i];
-		if (seconds != null) result[owner.id] = bucketize(Math.round(seconds / 60));
-	});
-	return result;
-}
 
 // ---------------------------------------------------------------------------
 // Server-side cache
@@ -139,19 +11,14 @@ const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 type CacheEntry = { result: Record<string, number>; expiresAt: number };
 const travelTimesCache = new Map<string, CacheEntry>();
 
-/**
- * Builds a stable cache key from the user location (rounded to ~110 m),
- * transport mode, and the sorted set of owner IDs.
- */
 function buildCacheKey(
 	userLocation: { lon: number; lat: number },
 	transportMode: TransportMode,
-	owners: OwnerLocation[]
+	ownerIds: string[]
 ): string {
 	const lat = userLocation.lat.toFixed(3);
 	const lon = userLocation.lon.toFixed(3);
-	const ownerIds = owners.map((o) => o.id).sort().join(',');
-	return `${lat}:${lon}:${transportMode}:${ownerIds}`;
+	return `${lat}:${lon}:${transportMode}:${[...ownerIds].sort().join(',')}`;
 }
 
 function getCached(key: string): Record<string, number> | null {
@@ -171,27 +38,32 @@ function setCached(key: string, result: Record<string, number>) {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a map of owner ID → travel minutes from `userLocation` to the given owners.
- * Results are cached server-side for 10 minutes per (location, mode, owner set).
+ * Returns a map of owner ID → bucketed travel minutes from `userLocation`.
+ * Coordinate lookup + ORS call happen in the backend `/api/travel-times` hook
+ * so owner coordinates never reach this server or the client. Cached 10 min.
  */
 export async function getTravelTimesForOwners(
+	pb: PocketBase,
 	userLocation: { lon: number; lat: number },
 	transportMode: TransportMode,
-	owners: OwnerLocation[]
+	ownerIds: string[]
 ): Promise<Record<string, number>> {
-	if (owners.length === 0) return {};
+	if (ownerIds.length === 0) return {};
 
-	const cacheKey = buildCacheKey(userLocation, transportMode, owners);
+	const cacheKey = buildCacheKey(userLocation, transportMode, ownerIds);
 	const cached = getCached(cacheKey);
 	if (cached) return cached;
 
 	try {
-		const durations = await fetchDurationsFromOrs(userLocation, transportMode, owners);
-		const result = mapDurationsToOwners(owners, durations);
-		setCached(cacheKey, result);
-		return result;
+		const result = await pb.send<Record<string, number>>('/api/travel-times', {
+			method: 'POST',
+			body: { transportMode, userLocation, ownerIds },
+		});
+		const safe = result ?? {};
+		setCached(cacheKey, safe);
+		return safe;
 	} catch (err) {
-		console.error('ORS fetch failed:', err);
+		console.error('Travel-times hook failed:', err);
 		return {};
 	}
 }

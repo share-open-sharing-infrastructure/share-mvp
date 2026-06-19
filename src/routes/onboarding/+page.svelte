@@ -70,7 +70,7 @@
 			<StepLocation
 				onNext={next}
 				initialCity={data.currentUser.city}
-				initialGeolocation={data.currentUser.geolocation?.lon || data.currentUser.geolocation?.lat ? data.currentUser.geolocation : null}
+				initialGeolocation={data.geolocation}
 			/>
 		{:else if step === 6}
 			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />

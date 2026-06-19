@@ -1,6 +1,7 @@
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { texts } from '$lib/texts';
 import { generateInviteSlug } from '$lib/inviteSlug';
+import { upsertUserGeolocation } from '$lib/server/geolocation';
 
 export async function load({ locals, url }) {
 	// Fetch directly so the profile page always has fresh data regardless of
@@ -122,18 +123,20 @@ export const actions = {
 			formData?.get('signalVisibleToTrustedOnly') === 'on';
 		updateData['signalVisibleToTrustedOnly'] = signalVisibleToTrustedOnly;
 
-		// Handle geolocation (only set when user explicitly selected a geocode suggestion)
+		// Handle geolocation → owner-only user_geolocations collection
+		// (undefined = leave unchanged; only set when a geocode suggestion was picked).
+		let geo: { lon: number; lat: number } | null | undefined;
 		const geoLon = formData?.get('geolocation_lon')?.toString();
 		const geoLat = formData?.get('geolocation_lat')?.toString();
 		if (geoLon && geoLat) {
 			const lon = parseFloat(geoLon);
 			const lat = parseFloat(geoLat);
 			if (!isNaN(lon) && !isNaN(lat)) {
-				updateData['geolocation'] = { lon, lat };
+				geo = { lon, lat };
 			}
 		} else if (city === ''){
 			// If city is cleared, also clear geolocation
-			updateData['geolocation'] = null;
+			geo = null;
 		}
 
 		// Handle preferred transport mode
@@ -153,21 +156,27 @@ export const actions = {
 		const hasProfileImage = profileImageFile instanceof File && profileImageFile.size > 0;
 
 		try {
-			if (Object.keys(updateData).length > 0 || hasProfileImage) {
-				// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields
-				for (const [key, value] of Object.entries(updateData)) {
-					if (value === null) {
-						pbFormData.append(key, '');
-					} else if (typeof value === 'object') {
-						pbFormData.append(key, JSON.stringify(value));
-					} else {
-						pbFormData.append(key, String(value));
+			const hasUserUpdate = Object.keys(updateData).length > 0 || hasProfileImage;
+			if (hasUserUpdate || geo !== undefined) {
+				if (hasUserUpdate) {
+					// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields
+					for (const [key, value] of Object.entries(updateData)) {
+						if (value === null) {
+							pbFormData.append(key, '');
+						} else if (typeof value === 'object') {
+							pbFormData.append(key, JSON.stringify(value));
+						} else {
+							pbFormData.append(key, String(value));
+						}
 					}
+					if (hasProfileImage) {
+						pbFormData.append('profileImage', profileImageFile as File);
+					}
+					await locals.pb.collection('users').update(locals.user.id, pbFormData);
 				}
-				if (hasProfileImage) {
-					pbFormData.append('profileImage', profileImageFile as File);
+				if (geo !== undefined) {
+					await upsertUserGeolocation(locals.pb, locals.user.id, geo);
 				}
-				await locals.pb.collection('users').update(locals.user.id, pbFormData);
 				return {
 					success: true,
 					message: texts.success.dataUpdated,

@@ -5,6 +5,7 @@ import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
 import { generateInviteSlug } from '$lib/inviteSlug';
+import { getUserGeolocation, upsertUserGeolocation } from '$lib/server/geolocation';
 
 export async function load({ locals, url }) {
 	let inviteCode = locals.user.inviteCode as string | undefined;
@@ -14,6 +15,7 @@ export async function load({ locals, url }) {
 	}
 
 	const users = await locals.pb.collection('users').getFullList<User>();
+	const geolocation = await getUserGeolocation(locals.pb, locals.user.id);
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
@@ -21,6 +23,7 @@ export async function load({ locals, url }) {
 		username: locals.user.username as string,
 		users,
 		trustIds: (locals.user.trusts as string[]) ?? [],
+		geolocation,
 	};
 }
 
@@ -35,20 +38,22 @@ export const actions = {
 			updateData['city'] = city.trim();
 		}
 
+		let geo: { lon: number; lat: number } | null | undefined;
 		const geoLon = formData.get('geolocation_lon')?.toString();
 		const geoLat = formData.get('geolocation_lat')?.toString();
 		if (geoLon && geoLat) {
 			const lon = parseFloat(geoLon);
 			const lat = parseFloat(geoLat);
 			if (!isNaN(lon) && !isNaN(lat)) {
-				updateData['geolocation'] = { lon, lat };
+				geo = { lon, lat };
 			}
 		} else if (city === '') {
-			updateData['geolocation'] = null;
+			geo = null;
 		}
 
 		try {
 			await locals.pb.collection('users').update(locals.user.id, updateData);
+			if (geo !== undefined) await upsertUserGeolocation(locals.pb, locals.user.id, geo);
 			return { success: true };
 		} catch {
 			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
