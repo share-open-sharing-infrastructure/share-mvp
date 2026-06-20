@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { invalidate } from '$app/navigation';
+	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { enhance } from '$app/forms';
@@ -53,10 +55,15 @@
 							// Fire-and-forget: navigation proceeds immediately while the server
 							// marks the notification as read in the background. SvelteKit's
 							// client-side routing does not cancel in-flight fetches on navigate.
+							// Once it resolves, resync the badge — the destination load may not
+							// mark it read itself (e.g. trust_added/invite_accepted -> /users/[id]),
+							// so afterNavigate's invalidate could otherwise race this write (#376).
 							if (!notification.read) {
 								const fd = new FormData();
 								fd.append('id', notification.id);
-								fetch('?/markRead', { method: 'POST', body: fd });
+								fetch('?/markRead', { method: 'POST', body: fd })
+									.then(() => invalidate(NOTIFICATIONS_DEP))
+									.catch(() => {});
 							}
 						}}
 					>

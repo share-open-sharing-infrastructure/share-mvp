@@ -6,10 +6,11 @@
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
 	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
+	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { beforeNavigate, afterNavigate } from '$app/navigation';
+	import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
 	import { dev } from '$app/environment';
 	import { fade } from 'svelte/transition';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
@@ -22,7 +23,16 @@
 
 	let isNavigating = $state(false);
 	beforeNavigate(() => { isNavigating = true; });
-	afterNavigate(() => { isNavigating = false; });
+	afterNavigate(() => {
+		isNavigating = false;
+		// Resync the badge after every navigation (issue #376): a destination load can
+		// mark notifications read server-side, and realtime may miss it. afterNavigate
+		// runs after that destination load has committed, so the re-fetch reflects it.
+		// (Paths that mark read via a fire-and-forget request instead of in the load —
+		// see notifications/+page.svelte — resync separately when that request resolves.)
+		// Don't filter by navigation type: in-app navigations here report type 'enter'.
+		invalidate(NOTIFICATIONS_DEP);
+	});
 
 	// svelte-ignore state_referenced_locally
 	let unreadCount = $state(data.unreadNotificationCount ?? 0);
