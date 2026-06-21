@@ -12,6 +12,29 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
 	return output;
 }
 
+/**
+ * Pure decision for the layout's push re-registration effect: given the current
+ * logged-in user id, the id this device last registered a subscription for, and
+ * whether notification permission is granted, returns whether to (re-)register
+ * now and the id to remember next.
+ *
+ * Resetting to `undefined` on logout (no current user) re-arms registration for
+ * the next login — including a re-login by the SAME user, whose subscription was
+ * torn down on logout. Without this reset a same-tab same-user logout→login is
+ * left with no push subscription.
+ */
+export function nextPushRegistration(
+	currentUserId: string | undefined,
+	lastRegisteredUserId: string | undefined,
+	permissionGranted: boolean
+): { register: boolean; lastRegisteredUserId: string | undefined } {
+	if (!currentUserId) return { register: false, lastRegisteredUserId: undefined };
+	if (currentUserId !== lastRegisteredUserId && permissionGranted) {
+		return { register: true, lastRegisteredUserId: currentUserId };
+	}
+	return { register: false, lastRegisteredUserId };
+}
+
 /** Sets up the Web Push subscription and registers it with the server.
  *  Called either silently (permission already granted) or after the user
  *  taps "Aktivieren" (satisfying the user-gesture requirement). */
@@ -74,11 +97,23 @@ export async function teardownPushSubscription(): Promise<void> {
 
 		await subscription.unsubscribe();
 
-		await fetch('/api/push-subscribe', {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ endpoint: subscription.endpoint }),
-		});
+		// Bound the server round-trip: callers (e.g. logout) await this, and a slow
+		// or hanging connection must not stall them. The local unsubscribe above has
+		// already detached this device, so aborting the DELETE doesn't weaken the
+		// guarantee — the server record is also cleaned up lazily on the next push
+		// (410 Gone) if this request never lands.
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 4000);
+		try {
+			await fetch('/api/push-subscribe', {
+				method: 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ endpoint: subscription.endpoint }),
+				signal: controller.signal,
+			});
+		} finally {
+			clearTimeout(timeout);
+		}
 	} catch (err) {
 		console.error('Push unsubscription failed:', err);
 	}
