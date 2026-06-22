@@ -3,6 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
 import type { Item } from '$lib/types/models';
+import { deleteConversation } from '../../conversations/[conversationId]/conversation.server';
 
 export async function load({ locals, url }) {
 	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
@@ -155,8 +156,12 @@ export const actions = {
 					.collection('conversations')
 					.getFullList({ filter: locals.pb.filter('requestedItem = {:itemId}', { itemId }) });
 
+				// Use deleteConversation (not a bare conversations.delete) so the
+				// notifications referencing each conversation are cleaned up too —
+				// otherwise the other party is left with dead-link notifications
+				// pointing at a now-missing conversation.
 				for (const conversation of conversations) {
-					await locals.pb.collection('conversations').delete(conversation.id);
+					await deleteConversation(locals.pb, conversation.id);
 				}
 
 				await locals.pb.collection('items').delete(itemId);
