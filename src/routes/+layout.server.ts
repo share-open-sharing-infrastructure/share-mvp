@@ -1,4 +1,9 @@
+import { NOTIFICATIONS_DEP } from '$lib/constants';
+
 export const load = async (event) => {
+	// Lets invalidate(NOTIFICATIONS_DEP) re-fetch just the unread count (issue #376).
+	event.depends(NOTIFICATIONS_DEP);
+
 	const currentUser = event.locals.user;
 
 	let unreadNotificationCount = 0;
