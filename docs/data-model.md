@@ -20,11 +20,6 @@ erDiagram
         bool isInstitution
         string profileImage
         string bio
-        string telegramUsername
-        bool telegramVisibleToTrustedOnly
-        string signalLink
-        bool signalVisibleToTrustedOnly
-        json geolocation "GeoPoint lat/lon"
         string preferredTransportMode "foot|bicycle|car"
         bool hasOnboarded
         string inviteCode
@@ -35,6 +30,25 @@ erDiagram
     }
 
     USER 1 to zero or more USER: "trusts"
+
+    USER_GEOLOCATION{
+        string id PK
+        User user FK "owner only — unique"
+        json geolocation "GeoPoint lat/lon"
+    }
+
+    USER 1 to zero or one USER_GEOLOCATION: "location (private)"
+
+    USER_CONTACT{
+        string id PK
+        User user FK "owner only — unique"
+        string telegramUsername
+        string signalLink
+        bool telegramVisibleToTrustedOnly
+        bool signalVisibleToTrustedOnly
+    }
+
+    USER 1 to zero or one USER_CONTACT: "contact handles (private)"
 
     ITEM{
         string id PK
@@ -167,17 +181,39 @@ erDiagram
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
 ```
 
-## items_public View
+## user_geolocations
 
-`items_public` is a read-only PocketBase SQL view — not a writeable collection. It joins `items` with `users` to provide trust-filtered, privacy-safe flat rows for the search feature.
+Coordinates are **not** stored on `users` — they live in a separate `user_geolocations` collection so they can be locked to the owner. All API rules (`listRule`/`viewRule`/`createRule`/`updateRule`/`deleteRule`) are `@request.auth.id = user`, so a user can only ever read/write **their own** row; no account can query another user's coordinates. The `users` collection no longer has a `geolocation` field at all. Travel-time computation reads coordinates with backend privileges via the `/api/travel-times` hook (see below).
 
-**Key privacy guarantee:** raw `geolocation` coordinates are never included. The view exposes only `ownerHasLocation` (0 or 1), computed via a SQL expression. Travel times are calculated server-side via OpenRouteService and surfaced to the client without exposing coordinates.
+## user_contacts
+
+Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
+
+## items_public and items_searchable Views
+
+Two read-only PocketBase SQL views expose `items` joined with `users` (and `user_geolocations` for the location flag) as flat, privacy-safe rows. Neither exposes the owner's `trusts` list, and neither includes raw coordinates — they expose only `ownerHasLocation` (0 or 1); travel times are computed in the backend `/api/travel-times` hook, which returns only **bucketed minutes** so coordinates never reach the client.
+
+### `items_public` — public, content-masked
+
+Fully public (`listRule`/`viewRule` are open). For **trustees-only** items the content columns (`name`, `image`, `externalImgUrl`, `externalUrl`, `description`) are masked to `NULL`; only metadata (`categories`, `status`, owner, `trusteesOnly`) stays visible — so the *existence* of a trustees-only item can be shown without leaking its details. The profile and item-detail pages read from this view and, for the owner and trusted viewers, fetch the unmasked details from the base `items` collection (trust rule below).
+
+### `items_searchable` — trust-filtered, unmasked
+
+Used by the search page. Its row-level rule
+`trusteesOnly = false || (@request.auth.id != "" && (@request.auth.id = userId || userId.trusts.id ?= @request.auth.id))`
+returns public items to everyone, and trustees-only items only to the owner and to users the owner trusts. Content is **not** masked here, because rows a viewer may not see are filtered out entirely. The owner's `trusts` list is only traversed inside the rule, never returned as a column.
 
 | Field | Source | Notes |
 |---|---|---|
-| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns |
-| userId, username, trusts, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner |
-| ownerHasLocation | SQL expression | 1 if geolocation ≠ (0,0), else 0 |
+| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (masked to `NULL` for trustees-only items in `items_public`) |
+| userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (`trusts` is **not** exposed) |
+| ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
+
+### Base `items` trust rule
+
+The base `items` collection's `listRule`/`viewRule` are
+`@request.auth.id != "" && (trusteesOnly = false || @request.auth.id = owner || owner.trusts.id ?= @request.auth.id)`,
+so a trustees-only item's full record is readable only by the owner and trusted users. The profile and item-detail pages use this to un-mask details for trusted viewers.
 
 ## Impact Research: `counterfactual`
 

@@ -167,7 +167,6 @@
 			PB_IMG_URL={data.PB_IMG_URL}
 			{travelTimes}
 			transportMode={transportMode ?? undefined}
-			currentUserId={data.currentUser?.id}
 		/>
 	{/if}
 

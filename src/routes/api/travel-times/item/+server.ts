@@ -36,29 +36,24 @@ export async function POST({ request, locals }) {
 		error(400, 'Invalid user location');
 	}
 
-	let ownerGeo: { lon: number; lat: number } | null = null;
 	let ownerId: string | null = null;
-
 	try {
-		const item = await locals.pb.collection('items').getOne(itemId, { expand: 'owner' });
-		ownerId = item.expand?.owner?.id ?? null;
-		const geo = item.expand?.owner?.geolocation as { lon: number; lat: number } | undefined;
-		if (geo && !(geo.lon === 0 && geo.lat === 0)) {
-			ownerGeo = geo;
-		}
+		const item = await locals.pb.collection('items').getOne(itemId);
+		ownerId = (item.owner as string) ?? null;
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
 		error(e.status === 404 ? 404 : 500, 'Item not found');
 	}
 
-	if (!ownerGeo || !ownerId) {
+	if (!ownerId) {
 		return json({ minutes: null });
 	}
 
 	const result = await getTravelTimesForOwners(
+		locals.pb,
 		userLocation as { lon: number; lat: number },
 		transportMode as TransportMode,
-		[{ id: ownerId, lon: ownerGeo.lon, lat: ownerGeo.lat }]
+		[ownerId]
 	);
 
 	return json({ minutes: result[ownerId] ?? null });

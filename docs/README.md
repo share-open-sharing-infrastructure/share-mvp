@@ -4,7 +4,7 @@ Documentation for [AllerLeih](https://github.com/share-open-sharing-infrastructu
 
 - [architecture.md](architecture.md) — system overview: tech stack, deployment pipeline, auth flow, AI integrations, and external API boundaries. **Start here.**
 - [domain-model.md](domain-model.md) — conceptual model: class diagrams, lending workflow state machine, trust model, and institutional partner model.
-- [data-model.md](data-model.md) — ER diagram mapping directly onto PocketBase collections and the `items_public` SQL view.
+- [data-model.md](data-model.md) — ER diagram mapping directly onto PocketBase collections and the `items_public` / `items_searchable` SQL views.
 - [best-practices.md](best-practices.md) — SvelteKit form patterns and Svelte 5 reactivity conventions used throughout the codebase.
 - [testing-strategy.md](testing-strategy.md) — testing approach (Vitest unit tests), CI integration, and example patterns.
 - [text-management.md](text-management.md) — centralized German UI string system (`src/lib/texts.ts`) and full category reference.

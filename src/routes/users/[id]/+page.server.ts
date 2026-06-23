@@ -28,12 +28,50 @@ export async function load({ params, locals }) {
 	const currentUser = locals.user;
 	const isOwnProfile = currentUser?.id === profileUser.id;
 	const viewerTrustsProfile = currentUser?.trusts?.includes(profileUser.id) ?? false;
-	const profileTrustsViewer = currentUser ? (profileUser.trusts?.includes(currentUser.id) ?? false) : false;
+	// Does the profile owner trust the viewer? Resolved server-side so the owner's
+	// full trusts list never leaves the server (users_public no longer exposes it).
+	let profileTrustsViewer = false;
+	if (currentUser) {
+		try {
+			await locals.pb
+				.collection('users')
+				.getFirstListItem(
+					locals.pb.filter('id = {:pid} && trusts.id ?= {:vid}', { pid: profileUser.id, vid: currentUser.id }),
+					{ fields: 'id' }
+				);
+			profileTrustsViewer = true;
+		} catch {
+			profileTrustsViewer = false;
+		}
+	}
 
 	const publicItems = allItems.filter((item) => !item.trusteesOnly);
 	const trustedItemsAll = allItems.filter((item) => item.trusteesOnly);
 	// Owner is never in their own trusts array, so isOwnProfile must be checked separately
 	const trustedItems = (profileTrustsViewer || isOwnProfile) ? trustedItemsAll : null;
+
+	// items_public masks trustees-only items (name/image/description are NULL). The owner
+	// and trusted viewers may see full details, read here from the trust-gated base `items`.
+	if (trustedItems && trustedItems.length > 0) {
+		try {
+			const full = await locals.pb.collection('items').getFullList({
+				filter: locals.pb.filter('owner = {:ownerId} && trusteesOnly = true', { ownerId: profileUser.id }),
+				fields: 'id,name,image,externalImgUrl,externalUrl,description',
+			});
+			const byId = new Map(full.map((f) => [f.id, f] as const));
+			for (const item of trustedItems) {
+				const f = byId.get(item.id);
+				if (!f) continue;
+				item.name = f.name;
+				item.image = f.image;
+				item.externalImgUrl = f.externalImgUrl;
+				item.externalUrl = f.externalUrl;
+				item.description = f.description;
+			}
+		} catch (err) {
+			console.error('Failed to load trusted item details', err);
+		}
+	}
 
 	// Strip fields that must not reach the client: sensitive data and fields not used by this page.
 	const fieldsToStrip = [

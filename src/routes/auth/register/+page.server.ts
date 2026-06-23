@@ -1,6 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { texts } from '$lib/texts';
-import type { User } from '$lib/types/models';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import {
 	validateRegistrationForm,
@@ -23,9 +22,10 @@ export async function load({ locals, url }) {
 	}
 
 	try {
-		const inviter = await locals.pb
-			.collection('users_public')
-			.getFirstListItem<User>(locals.pb.filter('inviteCode = {:code}', { code: inviteCode }));
+		const inviter = await locals.pb.send<{ id: string; username: string }>(
+			`/api/invite/${encodeURIComponent(inviteCode)}`,
+			{ method: 'GET' }
+		);
 		return { inviter: { id: inviter.id, username: inviter.username }, inviteCode };
 	} catch {
 		return { inviter: null, inviteCode };

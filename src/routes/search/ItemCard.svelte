@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ItemPublic } from '$lib/types/models';
 	import { Card } from 'flowbite-svelte';
-	import { UserCircleOutline, HeartSolid, HomeOutline } from 'flowbite-svelte-icons';
+	import { UserCircleOutline, HomeOutline } from 'flowbite-svelte-icons';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -19,7 +19,6 @@
 		/** Travel time in minutes. undefined = not yet fetched, null = owner has no location */
 		travelMinutes?: number | null;
 		transportMode?: TransportMode;
-		currentUserId?: string;
 	}
 	let {
 		item,
@@ -28,12 +27,8 @@
 		profileView = false,
 		travelMinutes,
 		transportMode = 'bicycle',
-		currentUserId,
 	}: Props = $props();
 
-	const isTrusted = $derived(
-		!!currentUserId && !!item.trusts.includes(currentUserId)
-	);
 	const isInstitution = $derived(!!item.isInstitution);
 	const hasRealImage = $derived(!!imgUrl);
 	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
@@ -97,9 +92,7 @@
 						e.preventDefault();
 						goto(resolve('/users/[id]', { id: item.userId ?? '' }));
 					}}
-					class="relative inline-flex items-center rounded-full border hover:cursor-pointer pl-1 pr-2 py-0.5 {isTrusted
-						? 'bg-green-50/90 text-green-800 border-green-300 hover:bg-green-100/90'
-						: 'bg-white/90 text-tinte-700 border-tinte-300 hover:bg-tinte-50/90'}"
+					class="relative inline-flex items-center rounded-full border hover:cursor-pointer pl-1 pr-2 py-0.5 bg-white/90 text-tinte-700 border-tinte-300 hover:bg-tinte-50/90"
 				>
 					{#if ownerImgUrl}
 						<img src={ownerImgUrl} alt="" class="h-6 w-6 rounded-full object-cover" />
@@ -112,9 +105,6 @@
 					<div class="absolute top-0 -right-1.5 flex flex-col gap-0.1 items-center">
 						{#if item.verified}
 							<VerifiedIcon class="h-3.5 w-3.5" />
-						{/if}
-						{#if isTrusted}
-							<HeartSolid class="h-3.5 w-3.5 text-green-500 bg-white rounded-full" />
 						{/if}
 					</div>
 				</button>

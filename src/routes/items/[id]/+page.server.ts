@@ -17,14 +17,46 @@ export async function load({ params, locals }) {
 
 	const currentUserId = locals.user?.id ?? null;
 	const isAuthenticated = locals.pb.authStore.isValid;
-	const ownerTrusts: string[] = item.trusts ?? [];
-	const isTrustRestricted =
-		item.trusteesOnly && isAuthenticated && !ownerTrusts.includes(currentUserId);
 	const isOwnItem = currentUserId === item.userId;
 	const viewerTrustsOwner = locals.user?.trusts?.includes(item.userId) ?? false;
 
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
-	const ownerTrustsViewer = currentUserId ? ownerTrusts.includes(currentUserId) : false;
+	// Resolved server-side so the owner's trusts list never reaches the client
+	// (items_public no longer exposes it).
+	let ownerTrustsViewer = false;
+	if (currentUserId && !isOwnItem) {
+		try {
+			await locals.pb
+				.collection('users')
+				.getFirstListItem(
+					locals.pb.filter('id = {:oid} && trusts.id ?= {:vid}', { oid: item.userId, vid: currentUserId }),
+					{ fields: 'id' }
+				);
+			ownerTrustsViewer = true;
+		} catch {
+			ownerTrustsViewer = false;
+		}
+	}
+
+	const isTrustRestricted =
+		item.trusteesOnly && isAuthenticated && !isOwnItem && !ownerTrustsViewer;
+
+	// items_public masks trustees-only items (name/image/description are NULL). The owner
+	// and trusted viewers may see full details, read here from the trust-gated base `items`.
+	if (item.trusteesOnly && (isOwnItem || ownerTrustsViewer)) {
+		try {
+			const full = await locals.pb.collection('items').getOne(item.id, {
+				fields: 'id,name,image,externalImgUrl,externalUrl,description',
+			});
+			item.name = full.name;
+			item.image = full.image;
+			item.externalImgUrl = full.externalImgUrl;
+			item.externalUrl = full.externalUrl;
+			item.description = full.description;
+		} catch (err) {
+			console.error('Failed to load trusted item details', err);
+		}
+	}
 
 	// Find an in-progress conversation for this viewer + item so the CTA can link
 	// to it instead of creating a duplicate. We exclude rejected/completed states
@@ -183,8 +215,17 @@ export const actions = {
 			targetConversationId = conversation.id;
 
 			const requesterName = locals.user.username ?? locals.user.name ?? texts.pages.itemDetail.unknownRequester;
-			const itemName = itemRecord.name ?? texts.pages.itemDetail.unknownItem;
-			const notificationBody = texts.notifications.newRequest(requesterName, itemName);
+			// items_public masks trustees-only item names; the requester is authorized
+			// (the conversation was just created), so read the real name from base items.
+			let itemName = itemRecord.name;
+			if (!itemName) {
+				try {
+					itemName = (await locals.pb.collection('items').getOne(params.id, { fields: 'name' })).name;
+				} catch {
+					// fall back to the generic label below
+				}
+			}
+			const notificationBody = texts.notifications.newRequest(requesterName, itemName ?? texts.pages.itemDetail.unknownItem);
 			const conversationUrl = `/conversations/${targetConversationId}`;
 
 			await createNotification(locals.pb, itemOwnerId, locals.user.id, 'new_request', targetConversationId, notificationBody);

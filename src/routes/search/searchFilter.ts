@@ -65,12 +65,13 @@ export function parseSearchParameters(url: URL): SearchParameters {
 }
 
 /**
- * Builds the complete PocketBase filter string for the `items_public` view by combining all
- * active search constraints (name, owner, categories, trust, availability, owner type) with `&&`.
+ * Builds the complete PocketBase filter string for the `items_searchable` view by combining all
+ * active search constraints (name, owner, categories, availability, owner type) with `&&`.
+ * Trust-based visibility is enforced by the view's own rule, not here.
  * All field references are validated at compile time via `col()` against `ItemPublic`.
  * @param params the parsed search parameters produced by `parseSearchParameters`
  * @param userId the id of the logged-in user, or `undefined` if unauthenticated; used to exclude
- *   the user's own items and to apply trust-based visibility rules
+ *   the user's own items from results
  * @returns a PocketBase filter string, or `undefined` if no constraints are active
  */
 export function buildItemFilter(params: SearchParameters, userId?: string): string | undefined {
@@ -84,10 +85,9 @@ export function buildItemFilter(params: SearchParameters, userId?: string): stri
 			? `(${params.selectedCategories.map((c) => `${validateFilterField('categories')} ~ '${escapeCategoryValue(c)}'`).join(params.op === 'and' ? ' && ' : ' || ')})`
 			: null;
 
-	const trustFilter = userId
-		? `(${validateFilterField('trusteesOnly')} = false || ${validateFilterField('trusts')} ~ "${userId}")`
-		: `${validateFilterField('trusteesOnly')} = false`;
-
+	// Trust visibility is enforced by the `items_searchable` view's rule (public items
+	// for everyone; trustees-only items only for the owner and users they trust), so no
+	// trust filter is applied here.
 	const availabilityFilter = params.onlyAvailable ? `${validateFilterField('status')} != 'unavailable'` : null;
 
 	const institutionFilter =
@@ -98,7 +98,7 @@ export function buildItemFilter(params: SearchParameters, userId?: string): stri
 				: null;
 
 	return (
-		[nameFilter, ownerFilter, categoryFilter, trustFilter, availabilityFilter, institutionFilter]
+		[nameFilter, ownerFilter, categoryFilter, availabilityFilter, institutionFilter]
 			.filter(Boolean)
 			.join(' && ') || undefined
 	);

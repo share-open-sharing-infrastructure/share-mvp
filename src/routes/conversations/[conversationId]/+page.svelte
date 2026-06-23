@@ -142,7 +142,7 @@
 	PB_URL={PUBLIC_PB_URL}
 	onDelete={() => (deleteConversationModal = true)}
 	{loggedInUserIsItemOwner}
-	currentUser={data.currentUser}
+	partnerContact={data.partnerContact}
 />
 
 <LendingStatusBar
