@@ -23,10 +23,14 @@ function mockFilter(raw: string, params?: Record<string, unknown>): string {
 	return result;
 }
 
-function makeMockPb(collectionImpl: (name: string) => object): PocketBase {
+function makeMockPb(
+	collectionImpl: (name: string) => object,
+	sendImpl?: (...args: unknown[]) => unknown
+): PocketBase {
 	return {
 		collection: vi.fn((name: string) => collectionImpl(name)),
-		filter: vi.fn(mockFilter)
+		filter: vi.fn(mockFilter),
+		send: vi.fn(sendImpl)
 	} as unknown as PocketBase;
 }
 
@@ -162,16 +166,16 @@ describe('resolveInviter', () => {
 	});
 
 	it('returns the user when invite code matches', async () => {
-		const mockGetFirstListItem = vi.fn().mockResolvedValue(stubUser);
-		const pb = makeMockPb(() => ({ getFirstListItem: mockGetFirstListItem }));
+		const mockSend = vi.fn().mockResolvedValue({ id: 'u1', username: 'inviter' });
+		const pb = makeMockPb(() => ({}), mockSend);
 		const result = await resolveInviter(pb, 'valid-code');
-		expect(result).toEqual(stubUser);
-		expect(mockGetFirstListItem).toHaveBeenCalledWith("inviteCode = 'valid-code'");
+		expect(result).toEqual({ id: 'u1', username: 'inviter' });
+		expect(mockSend).toHaveBeenCalledWith('/api/invite/valid-code', { method: 'GET' });
 	});
 
 	it('returns null when invite code is not found', async () => {
-		const mockGetFirstListItem = vi.fn().mockRejectedValue(new Error('not found'));
-		const pb = makeMockPb(() => ({ getFirstListItem: mockGetFirstListItem }));
+		const mockSend = vi.fn().mockRejectedValue(new Error('not found'));
+		const pb = makeMockPb(() => ({}), mockSend);
 		expect(await resolveInviter(pb, 'bad-code')).toBeNull();
 	});
 });

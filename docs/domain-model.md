@@ -58,11 +58,12 @@ classDiagram
 ## User entity
 
 - A user can "trust" 0 to n other users. Building on this, they can select some of their items to only be visible to their "trustees".
-- **Trust is explicit and 1-hop only.** If A trusts B and B trusts C, A does **not** automatically gain visibility of C's trustees-only items. The trust check reads directly from `item.expand.owner.trusts[]` — there is no transitive or graph-based trust resolution.
+- **Trust is explicit and 1-hop only.** If A trusts B and B trusts C, A does **not** automatically gain visibility of C's trustees-only items. The trust check is based on the item owner's `trusts` list — there is no transitive or graph-based trust resolution.
 
 ## Item
 
 - `trusteesOnly` is `true` when the item owner wants to lend this item only to users they have explicitly trusted; otherwise `false`.
+- Visibility of `trusteesOnly` items is enforced at the **data layer**, not just the UI: the public `items_public` view masks their content (name/description/images → `NULL`) for everyone, the base `items` collection returns the full record only to the owner and trusted users, and the search view `items_searchable` returns trustees-only rows only to the owner and trusted users. See [data-model.md](data-model.md).
 - `status` reflects current availability: `available`, `unavailable` (actively on loan), or `unknown`.
 - `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`.
 
@@ -93,7 +94,7 @@ stateDiagram-v2
 
 | Transition | Triggered by | Side effects |
 |---|---|---|
-| → pending | Requester | Creates `Conversation` record |
+| → pending | Requester | Creates `Conversation` record. A request for a `trusteesOnly` item is only allowed if the requester is the owner or is in the owner's `trusts` — enforced by the `conversations` create rule (data layer), not just the UI. |
 | pending → accepted | Owner | Sets item `status = unavailable`; auto-rejects all other `pending` conversations for the same item; sends `request_accepted` notification |
 | pending → rejected | Owner | Sends `request_rejected` notification |
 | accepted → active | Owner | Sends `handover_confirmed` notification |

@@ -133,9 +133,9 @@
 						fieldName="telegramUsername"
 						label={texts.messenger.telegramUsername}
 						placeholder={texts.messenger.telegramUsernamePlaceholder}
-						value={data.currentUser.telegramUsername ?? ''}
+						value={data.contact.telegramUsername ?? ''}
 						visibilityToggleName="telegramVisibleToTrustedOnly"
-						visibilityToggleChecked={data.currentUser.telegramVisibleToTrustedOnly ?? true}
+						visibilityToggleChecked={data.contact.telegramVisibleToTrustedOnly ?? true}
 						tooltipId="telegram-tooltip"
 						tooltipTitle={texts.messenger.telegramTooltipTitle}
 						tooltipText={texts.messenger.telegramTooltipText}
@@ -144,9 +144,9 @@
 						fieldName="signalLink"
 						label={texts.messenger.signalLink}
 						placeholder={texts.messenger.signalLinkPlaceholder}
-						value={data.currentUser.signalLink ?? ''}
+						value={data.contact.signalLink ?? ''}
 						visibilityToggleName="signalVisibleToTrustedOnly"
-						visibilityToggleChecked={data.currentUser.signalVisibleToTrustedOnly ?? true}
+						visibilityToggleChecked={data.contact.signalVisibleToTrustedOnly ?? true}
 						tooltipId="signal-tooltip"
 						tooltipTitle={texts.messenger.signalTooltipTitle}
 						tooltipText={texts.messenger.signalTooltipText}

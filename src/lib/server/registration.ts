@@ -69,12 +69,13 @@ export function validateRegistrationForm(data: FormData): ValidationResult {
 // Invite code lookup
 // ---------------------------------------------------------------------------
 
-export async function resolveInviter(pb: PocketBase, inviteCode: string | null): Promise<User | null> {
+export async function resolveInviter(
+	pb: PocketBase,
+	inviteCode: string | null
+): Promise<{ id: string; username: string } | null> {
 	if (!inviteCode) return null;
 	try {
-		return await pb
-			.collection('users_public')
-			.getFirstListItem<User>(pb.filter('inviteCode = {:code}', { code: inviteCode }));
+		return await pb.send(`/api/invite/${encodeURIComponent(inviteCode)}`, { method: 'GET' });
 	} catch {
 		return null;
 	}
@@ -152,7 +153,7 @@ export async function signUpForNewsletter(email: string, username: string): Prom
 	}
 }
 
-export async function handleInviterRelationship(pb: PocketBase, newUser: User, inviter: User): Promise<void> {
+export async function handleInviterRelationship(pb: PocketBase, newUser: User, inviter: { id: string }): Promise<void> {
 	try {
 		await pb.collection('users').update(newUser.id, { trusts: [inviter.id] });
 	} catch (error) {

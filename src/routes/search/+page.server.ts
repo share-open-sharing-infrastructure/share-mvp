@@ -19,7 +19,7 @@ export async function load({ locals, url }) {
 
 	let result: ListResult<ItemPublic> = { page: 1, perPage: fetchPerPage, totalItems: 0, totalPages: 0, items: [] };
 	try {
-		result = await locals.pb.collection('items_public').getList<ItemPublic>(fetchPage, fetchPerPage, {
+		result = await locals.pb.collection('items_searchable').getList<ItemPublic>(fetchPage, fetchPerPage, {
 			sort: fetchSort,
 			filter,
 		});
