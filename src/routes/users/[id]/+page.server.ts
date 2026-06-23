@@ -51,17 +51,22 @@ export async function load({ params, locals }) {
 	const trustedItems = (profileTrustsViewer || isOwnProfile) ? trustedItemsAll : null;
 
 	// items_public masks trustees-only items (name/image/description are NULL). The owner
-	// and trusted viewers may see full details, read here from the trust-gated base `items`.
+	// and trusted viewers may see full details, read here from the trust-filtered
+	// `items_searchable` view. We must take the image (and its `collectionId`) from that
+	// view too: the file URL is built from `collectionId`, and items_public masks the
+	// image to NULL, so a URL pointing at items_public 404s. items_searchable exposes the
+	// un-masked file (same view search uses), so its file URL resolves in the browser.
 	if (trustedItems && trustedItems.length > 0) {
 		try {
-			const full = await locals.pb.collection('items').getFullList({
-				filter: locals.pb.filter('owner = {:ownerId} && trusteesOnly = true', { ownerId: profileUser.id }),
-				fields: 'id,name,image,externalImgUrl,externalUrl,description',
+			const full = await locals.pb.collection('items_searchable').getFullList({
+				filter: locals.pb.filter('userId = {:ownerId} && trusteesOnly = true', { ownerId: profileUser.id }),
+				fields: 'id,collectionId,name,image,externalImgUrl,externalUrl,description',
 			});
 			const byId = new Map(full.map((f) => [f.id, f] as const));
 			for (const item of trustedItems) {
 				const f = byId.get(item.id);
 				if (!f) continue;
+				item.collectionId = f.collectionId;
 				item.name = f.name;
 				item.image = f.image;
 				item.externalImgUrl = f.externalImgUrl;
