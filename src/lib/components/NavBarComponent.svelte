@@ -119,6 +119,11 @@
 					class="hover:text-accent hover:bg-transparent"
 					>{texts.nav.myProfile}</DropdownItem
 				>
+				<DropdownItem
+					href={resolve('/user/groups')}
+					class="hover:text-accent hover:bg-transparent"
+					>{texts.nav.groups}</DropdownItem
+				>
 				{#if currentUser?.isInstitution}
 					<DropdownItem
 						href={resolve('/user/import')}
