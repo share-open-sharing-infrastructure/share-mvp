@@ -16,7 +16,7 @@ classDiagram
         +string email
         +string city
         +bool isInstitution
-        +trusts UserId[]
+        +UserId[] trusts
     }
     User --> User : trusts
 
@@ -53,6 +53,20 @@ classDiagram
     Conversation "1" --> "n" Message
     Conversation "0...*" --> "2" User
     Conversation "1" --> "1" Item
+
+    class Group{
+        +string name
+        +string description
+        +User owner
+    }
+    User "1" <-- "n" Group : manages
+    class GroupMember{
+        +Group group
+        +User user
+    }
+    Group "1" <-- "n" GroupMember : has
+    User "1" <-- "n" GroupMember : member of
+    Item "n" --> "m" Group : shared with
 ```
 
 ## User entity
@@ -62,10 +76,36 @@ classDiagram
 
 ## Item
 
-- `trusteesOnly` is `true` when the item owner wants to lend this item only to users they have explicitly trusted; otherwise `false`.
-- Visibility of `trusteesOnly` items is enforced at the **data layer**, not just the UI: the public `items_public` view masks their content (name/description/images → `NULL`) for everyone, the base `items` collection returns the full record only to the owner and trusted users, and the search view `items_searchable` returns trustees-only rows only to the owner and trusted users. See [data-model.md](data-model.md).
+- An item has **two independent audience controls**: `trusteesOnly` (visible to
+  the owner's trusted contacts) and `groups` (visible to the members of the
+  selected groups). An item is **public only when `trusteesOnly = false` AND it is
+  shared with no group**; otherwise its audience is the union of whichever
+  channels are on. "Group-only" sharing (`trusteesOnly = false` + a group)
+  deliberately excludes the general trust list. See [groups.md](groups.md).
+- Visibility is enforced at the **data layer**, not just the UI: the public
+  `items_public` view masks the content (name/description/images → `NULL`) of any
+  *restricted* item (trustees-only **or** group-shared); the base `items`
+  collection and the search view `items_searchable` return a restricted item only
+  to the owner, the owner's trustees (when `trusteesOnly`), and members of an
+  attached group. See [data-model.md](data-model.md).
 - `status` reflects current availability: `available`, `unavailable` (actively on loan), or `unknown`.
 - `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`.
+
+## Groups
+
+- A **group** is a named circle managed solely by the user who created it (its
+  `owner`); there is no separate admin role, and any user can create groups.
+- Membership lives in `group_members` (the owner is implicit, not a row).
+  Members are added by the owner directly or by following a **`group_invites`**
+  link (random token, optional expiry and usage cap; joining requires login).
+- Groups **extend** the trust model rather than replacing it — an item can be
+  shared with trustees, with groups, with both, or neither (public). A trustee who
+  is also a group member simply sees the item via the group.
+- Lifecycle is handled by cascade + a safeguard hook: deleting a group makes
+  group-only items fall back to **private** (never public); deleting an owner's
+  account removes their groups, memberships and invites. A conversation
+  participant keeps access to *that conversation's* item even after leaving the
+  group, without the item leaking back into search/profile. See [groups.md](groups.md).
 
 ## Conversation
 
@@ -94,7 +134,7 @@ stateDiagram-v2
 
 | Transition | Triggered by | Side effects |
 |---|---|---|
-| → pending | Requester | Creates `Conversation` record. A request for a `trusteesOnly` item is only allowed if the requester is the owner or is in the owner's `trusts` — enforced by the `conversations` create rule (data layer), not just the UI. |
+| → pending | Requester | Creates `Conversation` record. A request is only allowed for an item the requester may actually see — public, their own, an item whose owner trusts them, or an item shared with a group they belong to — enforced by the `conversations` create rule (data layer), not just the UI. |
 | pending → accepted | Owner | Sets item `status = unavailable`; auto-rejects all other `pending` conversations for the same item; sends `request_accepted` notification |
 | pending → rejected | Owner | Sends `request_rejected` notification |
 | accepted → active | Owner | Sends `handover_confirmed` notification |
