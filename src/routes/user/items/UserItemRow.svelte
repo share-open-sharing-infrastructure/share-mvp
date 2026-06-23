@@ -4,14 +4,17 @@
 	import ItemModal from './ItemModal.svelte';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 	import { resolve } from '$app/paths';
+	import type { ActionData } from './$types';
 
 	interface Props {
 		item: Item;
 		PB_URL: string;
+		groups?: { id: string; name: string }[];
+		form?: ActionData;
 		selected: boolean;
 		onselectedchange: (v: boolean) => void;
 	}
-	let { item, PB_URL, selected, onselectedchange }: Props = $props();
+	let { item, PB_URL, groups = [], form, selected, onselectedchange }: Props = $props();
 
 	let showEditModal = $state(false);
 	// svelte-ignore state_referenced_locally
@@ -137,5 +140,7 @@
 	bind:isVisible={showEditModal}
 	type="edit"
 	editingItem={item}
+	{groups}
+	{form}
 	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories ?? []) ?? ''}
 />
