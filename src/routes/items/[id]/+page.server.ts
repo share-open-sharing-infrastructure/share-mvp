@@ -38,12 +38,15 @@ export async function load({ params, locals }) {
 		}
 	}
 
-	const isTrustRestricted =
-		item.trusteesOnly && isAuthenticated && !isOwnItem && !ownerTrustsViewer;
-
-	// items_public masks trustees-only items (name/image/description are NULL). The owner
-	// and trusted viewers may see full details, read here from the trust-gated base `items`.
-	if (item.trusteesOnly && (isOwnItem || ownerTrustsViewer)) {
+	// items_public masks RESTRICTED items (trustees-only OR shared with a group):
+	// name/image/description come back NULL. The owner, trusted viewers and members
+	// of an attached group may see full details. The base `items` rule permits the
+	// read only for those, so a successful privileged fetch is itself the
+	// authorization signal — covering trust AND group access without re-deriving
+	// either here. (We key off the mask, not trusteesOnly, so group-only items work.)
+	const wasMasked = item.name == null;
+	let viewerHasFullAccess = !wasMasked; // unmasked == public == visible to everyone
+	if (wasMasked && currentUserId) {
 		try {
 			const full = await locals.pb.collection('items').getOne(item.id, {
 				fields: 'id,name,image,externalImgUrl,externalUrl,description',
@@ -53,10 +56,13 @@ export async function load({ params, locals }) {
 			item.externalImgUrl = full.externalImgUrl;
 			item.externalUrl = full.externalUrl;
 			item.description = full.description;
-		} catch (err) {
-			console.error('Failed to load trusted item details', err);
+			viewerHasFullAccess = true;
+		} catch {
+			// No access (or not logged in) -> details stay masked.
 		}
 	}
+
+	const isTrustRestricted = wasMasked && isAuthenticated && !viewerHasFullAccess;
 
 	// Find an in-progress conversation for this viewer + item so the CTA can link
 	// to it instead of creating a duplicate. We exclude rejected/completed states
@@ -66,7 +72,10 @@ export async function load({ params, locals }) {
 	if (currentUserId && !isOwnItem) {
 		try {
 			const conv = await locals.pb.collection('conversations').getFirstListItem(
-				`requester="${currentUserId}" && requestedItem="${item.id}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				locals.pb.filter(
+					'requester={:uid} && requestedItem={:iid} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+					{ uid: currentUserId, iid: item.id }
+				),
 				{ sort: '-created', fields: 'id,lendingStatus' }
 			);
 			existingConversation = { id: conv.id, lendingStatus: conv.lendingStatus };
