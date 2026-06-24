@@ -67,15 +67,15 @@
 	let isSubmitting: boolean = $state(false);
 	let chatWindow: HTMLDivElement;
 
+	function scrollToBottom(smooth = true) {
+		if (!chatWindow) return;
+		chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+	}
+
 	// Scroll chat window to bottom when messages change
 	$effect(() => {
 		if (messages && messages.length > 0 && chatWindow) {
-			setTimeout(() => {
-				chatWindow.scrollTo({
-					top: chatWindow.scrollHeight,
-					behavior: 'smooth',
-				});
-			}, 0);
+			setTimeout(() => scrollToBottom(true), 0);
 		}
 	});
 
@@ -84,6 +84,26 @@
 	let pb: PocketBase | undefined = $state();
 	onMount(() => {
 		pb = getClientPB();
+
+		// Keep the newest messages in view when the visual viewport changes height — e.g.
+		// when the mobile keyboard opens and the layout shrinks the chat container. The
+		// container is resized by the layout's own resize handler, which runs in the same
+		// event; scrolling synchronously here would target the pre-resize height (a no-op)
+		// and leave the latest messages hidden below the raised input bar. Defer with rAF
+		// so we scroll after the resize + reflow, then once more after the open/close
+		// animation settles.
+		const vv = window.visualViewport;
+		let settleTimer: ReturnType<typeof setTimeout>;
+		const keepAtBottom = () => {
+			requestAnimationFrame(() => scrollToBottom(false));
+			clearTimeout(settleTimer);
+			settleTimer = setTimeout(() => scrollToBottom(false), 150);
+		};
+		vv?.addEventListener('resize', keepAtBottom);
+		return () => {
+			vv?.removeEventListener('resize', keepAtBottom);
+			clearTimeout(settleTimer);
+		};
 	});
 
 	// Handle incoming real-time message events
