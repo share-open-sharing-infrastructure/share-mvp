@@ -64,10 +64,10 @@ describe('getUserGroups', () => {
 		const { owned, member } = await getUserGroups(pb, 'me');
 
 		expect(owned).toEqual([
-			{ id: 'g1', name: 'Nord', description: 'd', owner: 'me', isOwner: true, memberCount: 2 },
+			{ id: 'g1', name: 'Nord', description: 'd', owner: 'me', isOwner: true, isPublic: false, memberCount: 2 },
 		]);
 		expect(member).toEqual([
-			{ id: 'g2', name: 'Süd', description: undefined, owner: 'other', isOwner: false, memberCount: 1 },
+			{ id: 'g2', name: 'Süd', description: undefined, owner: 'other', isOwner: false, isPublic: false, memberCount: 1 },
 		]);
 	});
 
@@ -97,8 +97,8 @@ describe('getAttachableGroups', () => {
 		const res = await getAttachableGroups(pb, 'me');
 
 		expect(res).toEqual([
-			{ id: 'g2', name: 'Alpha' },
-			{ id: 'g1', name: 'Zebra' },
+			{ id: 'g2', name: 'Alpha', isPublic: false },
+			{ id: 'g1', name: 'Zebra', isPublic: false },
 		]);
 	});
 

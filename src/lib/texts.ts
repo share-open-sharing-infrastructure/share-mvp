@@ -45,6 +45,7 @@ export const texts = {
 		myProfile: 'Mein Profil',
 		social: 'Vertraute',
 		groups: 'Gruppen',
+		network: 'Mein Netzwerk',
 		logout: 'Logout',
 		about: 'Über uns',
 		imprint: 'Impressum',
@@ -211,12 +212,17 @@ export const texts = {
 		manage: 'Verwalten',
 		members: 'Mitglieder',
 		noMembers: 'Diese Gruppe hat noch keine Mitglieder. Teile den Einladungslink, um Leute hinzuzufügen.',
-		addMember: 'Mitglied hinzufügen',
-		addMemberPlaceholder: 'Nutzername eingeben',
 		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
 		cannotAddSelf: 'Du verwaltest die Gruppe bereits.',
 		removeMember: 'Entfernen',
+		adminBadge: 'Verwalter:in',
+		cannotRemoveAdmin:
+			'Verwalter:innen können nicht entfernt werden. Um die Gruppe aufzulösen, lösche sie als Verwalter:in.',
+		you: '(du)',
+		memberView: 'Du bist Mitglied dieser Gruppe.',
 		activeLendingBadge: 'aktive Leihe',
+		activeLendingExplain:
+			'„Aktive Leihe" heißt: diese Person hat aktuell einen deiner Gegenstände ausgeliehen.',
 		removeMemberConfirm: (name: string) => `${name} wirklich aus der Gruppe entfernen?`,
 		activeLendingWarning: (name: string) =>
 			`Achtung: ${name} hat aktuell noch einen deiner Gegenstände ausgeliehen. Die laufende Leihe bleibt bestehen, aber nach dem Entfernen besteht kein Gruppenzugriff mehr.`,
@@ -238,7 +244,7 @@ export const texts = {
 		inviteUsage: (uses: number, max: number) =>
 			max > 0 ? `${uses} von ${max} Nutzungen` : `${uses} Beitritte über diesen Link`,
 		// Item modal
-		itemTrusteesLabel: 'Für Vertraute sichtbar',
+		itemTrusteesLabel: 'Nur für Vertraute sichtbar',
 		trustInfoTitle: 'Vertrauensfunktion',
 		trustInfoBody:
 			'Wenn aktiv, sehen deine vertrauten Kontakte diesen Gegenstand. Du kannst ihn zusätzlich oder stattdessen mit Gruppen teilen.',
@@ -246,9 +252,32 @@ export const texts = {
 		inviteUntil: 'bis',
 		itemShareTitle: 'Für diese Gruppen sichtbar',
 		itemShareHint: 'Mitglieder der angekreuzten Gruppen dürfen diesen Gegenstand sehen – unabhängig von deinen Vertrauten.',
+		itemPublicGroupWarning:
+			'Achtung: Eine angekreuzte Gruppe ist öffentlich – dann kann jede angemeldete Person ihr beitreten und diesen Gegenstand sehen.',
+		itemGroupIndicator: (names: string) => `Sichtbar für Gruppen: ${names}`,
+		itemGroupIndicatorGeneric: 'Für bestimmte Gruppen sichtbar',
 		itemPublicHint: 'Aktuell öffentlich sichtbar. Aktiviere „Für Vertraute sichtbar" oder kreuze eine Gruppe an, um den Gegenstand einzuschränken.',
 		noGroupsForItem: 'Du bist in keiner Gruppe. Erstelle zuerst eine Gruppe, um Dinge mit ihr zu teilen.',
 		goToGroups: 'Zu meinen Gruppen',
+		// Public / self-join groups
+		publicToggle: 'Öffentliche Gruppe',
+		publicToggleHint:
+			'Jede angemeldete Person kann diese Gruppe finden und ihr ohne Einladung beitreten – und sieht damit alle Gegenstände, die Mitglieder mit dieser Gruppe teilen (auch die anderer Mitglieder).',
+		publicConfirm:
+			'Diese Gruppe öffentlich machen? Danach kann jede angemeldete Person beitreten und alle Gegenstände sehen, die Mitglieder mit dieser Gruppe teilen – einschließlich der Gegenstände anderer Mitglieder.',
+		publicBadge: 'Öffentlich',
+		joinPublic: 'Gruppe beitreten',
+		joinPublicTitle: 'Öffentliche Gruppe',
+		joinPublicIntro: (name: string) => `Du kannst der Gruppe „${name}" beitreten.`,
+		joinedPublic: (name: string) => `Du bist der Gruppe „${name}" beigetreten.`,
+		shareText: (name: string) => `Tritt der Gruppe „${name}" auf AllerLeih bei: `,
+		shareGroupButton: 'Einladung teilen',
+		publicLinkTitle: 'Öffentlicher Link',
+		publicLinkIntro:
+			'Diese Gruppe ist öffentlich. Jede angemeldete Person kann über diesen Link beitreten – ganz ohne Einladung.',
+		// Add-member search
+		addMemberSearchPlaceholder: 'Nutzername suchen…',
+		addMemberNoResults: 'Keine passenden Nutzer:innen gefunden.',
 		// Join flow
 		joinTitle: 'Gruppeneinladung',
 		joinInvitedTo: (name: string) => `Du wurdest eingeladen, der Gruppe „${name}" beizutreten.`,
@@ -592,21 +621,17 @@ export const texts = {
 			doesNotTrustYou: 'Diese Person vertraut dir (noch) nicht.',
 			trustsThisUser: 'Du vertraust diesem Account',
 			doesNotTrustThisUser: 'Du vertraust diesem Account (noch) nicht.',
-			publicItems: 'Öffentliche Gegenstände',
-			trustedItems: 'Nur für Vertraute',
-			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
-			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
 			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
 			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
 			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',
 			noItemsInCategory: 'Keine Gegenstände in dieser Kategorie.',
-			lockedCard: 'Nur für Vertraute',
+			lockedCard: 'Nur für Vertraute oder Gruppen',
 			moreLockedItems: (n: number) => `+${n} weitere Artikel`,
-			lockedTooltipTitle: 'Nur für Vertraute sichtbar',
-			lockedTooltipBody: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Vertraue ihr über den Schalter oben auf dieser Seite – vielleicht vertraut sie dir dann auch!',
-			lockedTooltipBodyGuest: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Melde dich an und vertraue dieser Person, um Zugang zu erhalten.',
+			lockedTooltipTitle: 'Nur für Vertraute oder bestimmte Gruppen sichtbar',
+			lockedTooltipBody: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut, oder an Mitglieder bestimmter Gruppen. Vertraue ihr über den Schalter oben auf dieser Seite – vielleicht vertraut sie dir dann auch!',
+			lockedTooltipBodyGuest: 'Diese Person verleiht manche Gegenstände nur an vertraute Personen oder an Mitglieder bestimmter Gruppen. Melde dich an und vertraue dieser Person, um Zugang zu erhalten.',
 		},
 	},
 

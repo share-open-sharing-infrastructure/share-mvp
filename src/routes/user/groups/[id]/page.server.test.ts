@@ -60,7 +60,22 @@ describe('manage group — addMember', () => {
 		});
 		const res = await actions.addMember({ locals, params, request: req({ username: 'bob' }) } as never);
 		expect(res).toMatchObject({ success: true });
-		expect(create).toHaveBeenCalledWith({ group: 'g1', user: 'u2' });
+		expect(create).toHaveBeenCalledWith({ group: 'g1', user: 'u2', role: 'member' });
+	});
+
+	it('adds by a resolved userId (from the search dropdown) without a username lookup', async () => {
+		const create = vi.fn().mockResolvedValue({ id: 'm1' });
+		const getOne = vi.fn().mockResolvedValue({ id: 'u2' });
+		const getFirstListItem = vi.fn();
+		const locals = makeLocals({
+			users: { getOne, getFirstListItem },
+			group_members: { create },
+		});
+		const res = await actions.addMember({ locals, params, request: req({ userId: 'u2' }) } as never);
+		expect(res).toMatchObject({ success: true });
+		expect(getOne).toHaveBeenCalledWith('u2', { fields: 'id' });
+		expect(getFirstListItem).not.toHaveBeenCalled();
+		expect(create).toHaveBeenCalledWith({ group: 'g1', user: 'u2', role: 'member' });
 	});
 
 	it('is idempotent: a duplicate (already-member) create still reports success', async () => {
@@ -107,6 +122,20 @@ describe('manage group — removeMember', () => {
 		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
 		expect(res).toMatchObject({ success: true });
 		expect(del).toHaveBeenCalledWith('m1');
+	});
+
+	it('refuses to remove an admin membership (the owner must delete the group)', async () => {
+		const del = vi.fn();
+		const locals = makeLocals({
+			group_members: {
+				getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', role: 'admin' }),
+				delete: del,
+			},
+		});
+		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
+		expect(r(res).status).toBe(400);
+		expect(r(res).data).toMatchObject({ message: texts.groups.cannotRemoveAdmin });
+		expect(del).not.toHaveBeenCalled();
 	});
 });
 
@@ -173,9 +202,11 @@ describe('manage group — deleteGroup', () => {
 });
 
 describe('manage group — load', () => {
-	it('redirects a non-owner away from the manage page', async () => {
+	it('redirects a non-owner who is also not a member away from the page', async () => {
 		const locals = makeLocals({
 			groups: { getOne: vi.fn().mockResolvedValue({ id: 'g1', name: 'X', owner: 'someone-else' }) },
+			// roster does not include ME -> not a member -> redirect
+			group_members: { getFullList: vi.fn().mockResolvedValue([{ id: 'm9', user: 'other' }]) },
 		});
 		await expect(load({ locals, params, url: new URL('http://x/user/groups/g1') } as never)).rejects.toMatchObject({
 			status: 303,
@@ -183,18 +214,43 @@ describe('manage group — load', () => {
 		});
 	});
 
+	it('lets a member view the page read-only (isOwner false, no invite, no candidates)', async () => {
+		const locals = makeLocals({
+			groups: { getOne: vi.fn().mockResolvedValue({ id: 'g1', name: 'X', owner: 'someone-else', description: 'Hallo' }) },
+			group_members: {
+				getFullList: vi.fn().mockResolvedValue([
+					{ id: 'm1', user: 'someone-else', role: 'admin', expand: { user: { id: 'someone-else', username: 'Chef' } } },
+					{ id: 'm2', user: ME, role: 'member', expand: { user: { id: ME, username: 'Me' } } },
+				]),
+			},
+		});
+		const res = await load({ locals, params, url: new URL('http://x/user/groups/g1') } as never);
+		expect(res.isOwner).toBe(false);
+		expect(res.invite).toBeNull();
+		expect(res.candidateUsers).toEqual([]);
+		// a member sees the FULL roster (fix #2/#12), not just their own row
+		expect(res.members).toHaveLength(2);
+		expect(res.members.map((m) => m.userId).sort()).toEqual(['me', 'someone-else']);
+		// admin (the owner) sorts before member; current user is flagged "(du)" via currentUserId
+		expect(res.members[0].role).toBe('admin');
+		expect(res.currentUserId).toBe(ME);
+		expect(res.group.description).toBe('Hallo');
+	});
+
 	it('flags members who currently have an active lending of the owner items', async () => {
 		const locals = makeLocals({
 			groups: { getOne: vi.fn().mockResolvedValue({ id: 'g1', name: 'Nord', owner: ME, description: '' }) },
 			group_members: {
 				getFullList: vi.fn().mockResolvedValue([
-					{ id: 'm1', user: 'u2', expand: { user: { id: 'u2', username: 'Bob' } } },
-					{ id: 'm2', user: 'u3', expand: { user: { id: 'u3', username: 'Ann' } } },
+					{ id: 'm0', user: ME, role: 'admin', expand: { user: { id: ME, username: 'Me' } } },
+					{ id: 'm1', user: 'u2', role: 'member', expand: { user: { id: 'u2', username: 'Bob' } } },
+					{ id: 'm2', user: 'u3', role: 'member', expand: { user: { id: 'u3', username: 'Ann' } } },
 				]),
 			},
 			conversations: {
 				getFullList: vi.fn().mockResolvedValue([{ requester: 'u2', lendingStatus: 'active' }]),
 			},
+			users: { getFullList: vi.fn().mockResolvedValue([{ id: 'u4', username: 'New' }]) },
 			group_invites: { getFirstListItem: vi.fn().mockRejectedValue({ status: 404 }) },
 		});
 
@@ -204,5 +260,7 @@ describe('manage group — load', () => {
 		expect(bob?.hasActiveLending).toBe(true);
 		expect(ann?.hasActiveLending).toBe(false);
 		expect(res.invite).toBeNull();
+		expect(res.isOwner).toBe(true);
+		expect(res.candidateUsers).toEqual([{ id: 'u4', username: 'New' }]);
 	});
 });

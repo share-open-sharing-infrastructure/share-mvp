@@ -11,6 +11,7 @@ export interface GroupSummary {
 	owner: UserId;
 	memberCount: number;
 	isOwner: boolean;
+	isPublic: boolean;
 }
 
 /**
@@ -30,16 +31,20 @@ async function loadOwnedAndMember(
 			.getFullList<GroupMember>({ filter: pb.filter('user = {:uid}', { uid: userId }), expand: 'group' }),
 	]);
 
+	// The owner is now stored as an `admin` group_members row too, so the
+	// membership query also returns groups the user owns. Keep those out of the
+	// "member" bucket (they belong in "owned") by filtering on the group owner.
 	const memberGroups = memberships
 		.map((m) => m.expand?.group as Group | undefined)
-		.filter((g): g is Group => !!g);
+		.filter((g): g is Group => !!g && g.owner !== userId);
 
 	return { ownedGroups, memberGroups };
 }
 
 /**
  * Load the groups a user owns and the groups they are a member of, each with a
- * member count. Member counts exclude the owner (members live in group_members).
+ * member count. The owner is stored as an `admin` group_members row, so the
+ * member count includes the owner (no +1 needed).
  */
 export async function getUserGroups(
 	pb: PocketBase,
@@ -58,6 +63,7 @@ export async function getUserGroups(
 		description: g.description,
 		owner: g.owner,
 		isOwner,
+		isPublic: !!g.isPublic,
 		memberCount: counts.get(g.id) ?? 0,
 	});
 
@@ -75,10 +81,11 @@ export async function getUserGroups(
 export async function getAttachableGroups(
 	pb: PocketBase,
 	userId: UserId
-): Promise<{ id: string; name: string }[]> {
+): Promise<{ id: string; name: string; isPublic: boolean }[]> {
 	const { ownedGroups, memberGroups } = await loadOwnedAndMember(pb, userId);
-	const byId = new Map<string, { id: string; name: string }>();
-	for (const g of [...ownedGroups, ...memberGroups]) byId.set(g.id, { id: g.id, name: g.name });
+	const byId = new Map<string, { id: string; name: string; isPublic: boolean }>();
+	for (const g of [...ownedGroups, ...memberGroups])
+		byId.set(g.id, { id: g.id, name: g.name, isPublic: !!g.isPublic });
 	return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 

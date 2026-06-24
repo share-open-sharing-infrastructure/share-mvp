@@ -43,11 +43,16 @@
 		{:else}
 			{#each data.owned as g (g.id)}
 				<a href={resolve(`/user/groups/${g.id}`)} class="block">
-					<Card class="flex-row items-center justify-between p-4 hover:shadow-md transition">
+					<Card class="w-full max-w-none flex-row items-center justify-between p-4 hover:shadow-md transition">
 						<div class="flex items-center gap-3">
 							<UsersGroupOutline class="h-6 w-6 text-accent" />
 							<div>
-								<p class="font-semibold text-tinte-900">{g.name}</p>
+								<p class="font-semibold text-tinte-900">
+									{g.name}
+									{#if g.isPublic}
+										<span class="ms-1 inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-800 dark:bg-primary-900 dark:text-primary-200">{texts.groups.publicBadge}</span>
+									{/if}
+								</p>
 								<p class="text-xs text-tinte-400">{texts.groups.memberCount(g.memberCount)}</p>
 							</div>
 						</div>
@@ -67,14 +72,19 @@
 			<p class="text-sm text-tinte-400">{texts.groups.noMemberGroups}</p>
 		{:else}
 			{#each data.member as g (g.id)}
-				<Card class="flex-row items-center justify-between p-4">
-					<div class="flex items-center gap-3">
+				<Card class="w-full max-w-none flex-row items-center justify-between p-4">
+					<a href={resolve(`/user/groups/${g.id}`)} class="flex flex-1 items-center gap-3 hover:underline">
 						<UsersGroupOutline class="h-6 w-6 text-tinte-400" />
 						<div>
-							<p class="font-semibold text-tinte-900">{g.name}</p>
+							<p class="font-semibold text-tinte-900">
+								{g.name}
+								{#if g.isPublic}
+									<span class="ms-1 inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-800 dark:bg-primary-900 dark:text-primary-200">{texts.groups.publicBadge}</span>
+								{/if}
+							</p>
 							<p class="text-xs text-tinte-400">{texts.groups.memberCount(g.memberCount)}</p>
 						</div>
-					</div>
+					</a>
 					<form method="POST" action="?/leave" use:enhance>
 						<input type="hidden" name="groupId" value={g.id} />
 						<Button
@@ -117,12 +127,14 @@
 				oninput={clearValidity}
 			/>
 		</Label>
-		<Label class="space-y-2">
+		<Label class="space-y-2 block w-full">
 			<span>{texts.groups.descriptionLabel}</span>
-			<Textarea name="description" placeholder={texts.groups.descriptionPlaceholder} class="h-24" />
+			<Textarea name="description" placeholder={texts.groups.descriptionPlaceholder} class="h-24 w-full" />
 		</Label>
-		<Button type="submit" class="bg-primary-200 hover:bg-primary min-button">
-			{texts.groups.create}
-		</Button>
+		<div class="flex justify-end">
+			<Button type="submit" class="bg-primary-200 hover:bg-primary min-button">
+				{texts.groups.create}
+			</Button>
+		</div>
 	</form>
 </Modal>

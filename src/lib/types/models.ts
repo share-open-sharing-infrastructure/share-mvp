@@ -236,11 +236,20 @@ export interface Group extends PocketBaseEntity {
 
 	/** Foreign key: the user who owns and manages the group */
 	owner: UserId;
+
+	/**
+	 * Public groups can be read (name + description) by anyone and joined without
+	 * an invite (self-join). Private (default) groups are invite-only.
+	 */
+	isPublic?: boolean;
 }
 
 /**
- * Join-table row: one membership of a user in a group. The owner is NOT stored
- * here (it lives on Group.owner) — this holds the invited members only.
+ * Join-table row: one membership of a user in a group. The owner is ALSO stored
+ * here, as a row with role `admin`; invited / self-joined members have role
+ * `member`. Unique per (group, user). (Group.owner stays the source of truth for
+ * ownership; this admin row is what the roster, the member count and the items
+ * visibility rule match against.)
  */
 export interface GroupMember extends PocketBaseEntity {
 	/** Foreign key: the group */
@@ -248,6 +257,12 @@ export interface GroupMember extends PocketBaseEntity {
 
 	/** Foreign key: the member */
 	user: UserId;
+
+	/**
+	 * Role in the group. The owner is stored as a member with role `admin`;
+	 * invited/self-joined members are `member`. Groundwork for co-admins.
+	 */
+	role?: 'admin' | 'member';
 }
 
 /**

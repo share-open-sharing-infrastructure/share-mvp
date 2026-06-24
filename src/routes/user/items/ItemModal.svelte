@@ -31,7 +31,7 @@
 		imgUrl?: string;
 		previewUrl?: string;
 		lastUrl?: string;
-		groups?: { id: string; name: string }[];
+		groups?: { id: string; name: string; isPublic?: boolean }[];
 		form?: ActionData;
 	}
 
@@ -74,6 +74,12 @@
 	// Trustees and groups are independent audiences; an item is public only when
 	// neither is set.
 	let isPublic = $derived(!trusteesOn && selectedGroups.length === 0);
+
+	// A selected PUBLIC group means anyone can self-join and thus see this item —
+	// warn the owner so sharing into a public group is a conscious choice.
+	let anyPublicGroupSelected = $derived(
+		groups.some((g) => g.isPublic && selectedGroups.includes(g.id))
+	);
 
 	function handleCategoryChange(e: Event) {
 		const cb = e.target as HTMLInputElement;
@@ -259,9 +265,15 @@
 								onchange={(e) => toggleGroup(g.id, (e.target as HTMLInputElement).checked)}
 							/>
 							{g.name}
+							{#if g.isPublic}
+								<span class="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-800 dark:bg-primary-900 dark:text-primary-200">{texts.groups.publicBadge}</span>
+							{/if}
 						</Label>
 					{/each}
 				</div>
+				{#if anyPublicGroupSelected}
+					<p class="text-xs font-medium text-danger">{texts.groups.itemPublicGroupWarning}</p>
+				{/if}
 			{/if}
 		</div>
 
