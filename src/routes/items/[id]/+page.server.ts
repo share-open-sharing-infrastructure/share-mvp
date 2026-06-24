@@ -42,12 +42,17 @@ export async function load({ params, locals }) {
 		item.trusteesOnly && isAuthenticated && !isOwnItem && !ownerTrustsViewer;
 
 	// items_public masks trustees-only items (name/image/description are NULL). The owner
-	// and trusted viewers may see full details, read here from the trust-gated base `items`.
+	// and trusted viewers may see full details, read here from the trust-filtered
+	// `items_searchable` view. We must take the image (and its `collectionId`) from that
+	// view too: the file URL is built from `collectionId`, and items_public masks the
+	// image to NULL, so a URL pointing at items_public 404s. items_searchable exposes the
+	// un-masked file (same view search uses), so its file URL resolves in the browser.
 	if (item.trusteesOnly && (isOwnItem || ownerTrustsViewer)) {
 		try {
-			const full = await locals.pb.collection('items').getOne(item.id, {
-				fields: 'id,name,image,externalImgUrl,externalUrl,description',
+			const full = await locals.pb.collection('items_searchable').getOne(item.id, {
+				fields: 'collectionId,name,image,externalImgUrl,externalUrl,description',
 			});
+			item.collectionId = full.collectionId;
 			item.name = full.name;
 			item.image = full.image;
 			item.externalImgUrl = full.externalImgUrl;
