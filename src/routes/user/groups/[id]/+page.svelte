@@ -69,7 +69,18 @@
 		<!-- Group details -->
 		<section class="space-y-3">
 			<h1 class="text-2xl font-bold text-tinte-900">{data.group.name}</h1>
-			<form method="POST" action="?/updateGroup" class="space-y-4" use:enhance>
+			<form
+				method="POST"
+				action="?/updateGroup"
+				class="space-y-4"
+				use:enhance={() => async ({ update }) => {
+					// Don't reset the form on success: a native form reset flips the
+					// `isPublic` toggle (bound to `makePublic`) back to its initial value,
+					// even though the server already saved the new value. Re-running load
+					// via invalidateAll still refreshes data.group.isPublic.
+					await update({ reset: false });
+				}}
+			>
 				<Label class="space-y-2">
 					<span>{texts.groups.nameLabel}</span>
 					<Input
