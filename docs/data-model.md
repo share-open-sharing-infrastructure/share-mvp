@@ -74,6 +74,7 @@ erDiagram
         string id PK
         string name
         string description
+        bool isPublic "public groups: world-readable + self-join"
         User owner FK "cascadeDelete — owner's groups die with the account"
         date created
         date updated
@@ -86,6 +87,7 @@ erDiagram
         string id PK
         Group group FK "cascadeDelete"
         User user FK "cascadeDelete"
+        string role "admin|member (owner stored as admin)"
         date created
     }
 
@@ -249,8 +251,9 @@ row-level rule
 returns public items to everyone, and restricted items only to the owner, the
 owner's trustees (when `trusteesOnly`), and members of an attached group. Content
 is **not** masked here, because rows a viewer may not see are filtered out
-entirely. The `groups` column is excluded from the response (it is only traversed
-inside the rule), and the owner's `trusts` list is never returned. Note this view
+entirely. The `groups` column **is** part of the view's `SELECT` (so the rule can
+traverse the membership back-relation); search/profile/sitemap callers simply
+ignore it, and the owner's `trusts` list is never selected. Note this view
 carries **no** conversation clause (below), so conversation access never leaks an
 item into search/profile/sitemap.
 
@@ -274,15 +277,26 @@ this rule to un-mask details for viewers who may see the item.
 
 ### Groups collections & lifecycle
 
-`groups`, `group_members` and `group_invites` are owner-managed: their rules let
-only the group `owner` create/update/delete and list invites/members (a member
-can read the group and remove their own membership). Invites are resolved and
-consumed through the elevated `GET/POST /api/group-invite/{token}` hooks, so they
-are never publicly enumerable. Deleting a group cascades to its memberships and
-invites; `items.groups` has `cascadeDelete = false`, so the reference is merely
-dropped from the item — and an `onRecordDelete` hook first flips any now-group-less,
-non-trustees item to `trusteesOnly = true` so it falls back to **private**, never
-public. See [groups.md](groups.md).
+`groups`, `group_members` and `group_invites` are owner-managed, with two
+member-facing relaxations:
+
+- **`group_members.role`** (`admin` | `member`): the owner is stored as an `admin`
+  member row — created by an `onRecordAfterCreateSuccess('groups')` hook and
+  backfilled for existing groups. The roster (list/view) is readable by the owner
+  **or any member** (so members see each other and counts are right); `updateRule`
+  is owner-only (groundwork for promoting members to admin); `deleteRule` lets a
+  member leave or the owner remove someone, but the owner's own `admin` row can't be
+  "left" (delete the group instead).
+- **`groups.isPublic`**: a public group is world-readable (name + description) and
+  self-joinable — `group_members.createRule` permits `group.isPublic = true &&
+  @request.auth.id = user` (add only yourself). Private groups stay invite-only.
+
+Invites are resolved and consumed through the elevated `GET/POST
+/api/group-invite/{token}` hooks, so they are never publicly enumerable. Deleting a
+group cascades to its memberships and invites; `items.groups` has `cascadeDelete =
+false`, so the reference is merely dropped from the item — and an `onRecordDelete`
+hook first flips any now-group-less, non-trustees item to `trusteesOnly = true` so
+it falls back to **private**, never public. See [groups.md](groups.md).
 
 ## Impact Research: `counterfactual`
 

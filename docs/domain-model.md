@@ -27,6 +27,7 @@ classDiagram
         +string place
         +User owner
         +bool trusteesOnly
+        +Group[] groups
         +string[] categories
         +string status
         +string externalId
@@ -57,12 +58,14 @@ classDiagram
     class Group{
         +string name
         +string description
+        +bool isPublic
         +User owner
     }
     User "1" <-- "n" Group : manages
     class GroupMember{
         +Group group
         +User user
+        +string role
     }
     Group "1" <-- "n" GroupMember : has
     User "1" <-- "n" GroupMember : member of
@@ -93,19 +96,23 @@ classDiagram
 
 ## Groups
 
-- A **group** is a named circle managed solely by the user who created it (its
-  `owner`); there is no separate admin role, and any user can create groups.
-- Membership lives in `group_members` (the owner is implicit, not a row).
-  Members are added by the owner directly or by following a **`group_invites`**
+- A **group** is a named circle managed by the user who created it (its `owner`);
+  any user can create groups. Each membership has a `role` (`admin` | `member`) —
+  the owner is an `admin` member, which lays the groundwork for co-admins (the
+  promotion UI is future work). A group can be **public** (`isPublic`): world-
+  readable and self-joinable without an invite.
+- Membership lives in `group_members` (the owner is stored here too, as an `admin`
+  row). Members are added by the owner directly, by self-joining a public group, or
+  by following a **`group_invites`**
   link (random token, optional expiry and usage cap; joining requires login).
 - Groups **extend** the trust model rather than replacing it — an item can be
   shared with trustees, with groups, with both, or neither (public). A trustee who
   is also a group member simply sees the item via the group.
 - Lifecycle is handled by cascade + a safeguard hook: deleting a group makes
   group-only items fall back to **private** (never public); deleting an owner's
-  account removes their groups, memberships and invites. A conversation
-  participant keeps access to *that conversation's* item even after leaving the
-  group, without the item leaking back into search/profile. See [groups.md](groups.md).
+  account removes their groups, memberships and invites. The **requester** of a
+  conversation keeps access to *that conversation's* item even after being removed
+  from the group, without the item leaking back into search/profile. See [groups.md](groups.md).
 
 ## Conversation
 
