@@ -13,6 +13,7 @@
 		name: string;
 		description: string;
 		categories: string[];
+		groups: string[];
 		trusteesOnly: boolean;
 		status: DraftStatus;
 	};
@@ -21,10 +22,17 @@
 		drafts: ItemDraft[];
 		submitting: boolean;
 		allAnalyzed: boolean;
+		attachableGroups?: { id: string; name: string; isPublic?: boolean }[];
 		onBack: () => void;
 	}
 
-	let { drafts = $bindable(), submitting = $bindable(), allAnalyzed, onBack }: Props = $props();
+	let {
+		drafts = $bindable(),
+		submitting = $bindable(),
+		allAnalyzed,
+		attachableGroups = [],
+		onBack
+	}: Props = $props();
 
 	let uploadError = $state<string | null>(null);
 
@@ -40,6 +48,16 @@
 		} else if (current.length < 3) {
 			drafts[draftIndex] = { ...drafts[draftIndex], categories: [...current, cat] };
 		}
+	}
+
+	function toggleGroup(draftIndex: number, groupId: string) {
+		const current = drafts[draftIndex].groups;
+		drafts[draftIndex] = {
+			...drafts[draftIndex],
+			groups: current.includes(groupId)
+				? current.filter((g) => g !== groupId)
+				: [...current, groupId],
+		};
 	}
 
 	function autoresize(node: HTMLTextAreaElement, value?: string) {
@@ -82,6 +100,7 @@
 			formData.set(`name_${i}`, drafts[i].name);
 			formData.set(`description_${i}`, drafts[i].description);
 			formData.set(`categories_${i}`, JSON.stringify(drafts[i].categories));
+			formData.set(`groups_${i}`, JSON.stringify(drafts[i].groups));
 		}
 		formData.set('count', String(drafts.length));
 			for (let i = 0; i < drafts.length; i++) {
@@ -163,6 +182,29 @@
 								onchange={() => { drafts[i] = { ...drafts[i], trusteesOnly: !drafts[i].trusteesOnly }; }}
 							>{texts.ui.trustedOnly}</Toggle>
 						</Label>
+
+						{#if attachableGroups.length > 0}
+							<div class="space-y-1">
+								<span class="text-xs font-medium">{texts.groups.itemShareTitle}</span>
+								<div class="flex flex-wrap gap-x-3 gap-y-1.5">
+									{#each attachableGroups as g (g.id)}
+										<Label class="flex cursor-pointer items-center gap-1 font-normal text-xs">
+											<Checkbox
+												checked={draft.groups.includes(g.id)}
+												onchange={() => toggleGroup(i, g.id)}
+											/>
+											{g.name}
+											{#if g.isPublic}
+												<span class="inline-flex items-center rounded-full bg-primary-100 px-1.5 py-0.5 text-[10px] text-primary-800 dark:bg-primary-900 dark:text-primary-200">{texts.groups.publicBadge}</span>
+											{/if}
+										</Label>
+									{/each}
+								</div>
+								{#if attachableGroups.some((g) => g.isPublic && draft.groups.includes(g.id))}
+									<p class="text-xs font-medium text-danger">{texts.groups.itemPublicGroupWarning}</p>
+								{/if}
+							</div>
+						{/if}
 					{/if}
 				</div>
 
