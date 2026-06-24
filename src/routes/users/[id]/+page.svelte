@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
+	import { displayName } from '$lib/utils/utils';
 	import ProfileHeader from './ProfileHeader.svelte';
 	import TrustSection from './TrustSection.svelte';
 	import ItemsSection from './ItemsSection.svelte';
 
 	const { data } = $props();
+
+	const profileName = $derived(displayName(data.profileUser));
 
 	const isOwnProfile = $derived(data.isOwnProfile);
 	const viewerTrustsProfile = $derived(data.viewerTrustsProfile);
@@ -17,50 +20,62 @@
 	);
 
 	const activeSinceDate = $derived(
-		new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' })
-			.format(new Date(data.profileUser.created))
+		data.profileUser.created
+			? new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' })
+					.format(new Date(data.profileUser.created))
+			: ''
 	);
 </script>
 
 <svelte:head>
-	<title>{texts.seo.userProfile(data.profileUser.username)}</title>
-	<meta name="description" content={texts.seo.userProfileDescription(data.profileUser.username)} />
-	<meta property="og:title" content={texts.seo.userProfile(data.profileUser.username)} />
-	<meta property="og:description" content={texts.seo.userProfileDescription(data.profileUser.username)} />
+	<title>{texts.seo.userProfile(profileName)}</title>
+	<meta name="description" content={texts.seo.userProfileDescription(profileName)} />
+	<meta property="og:title" content={texts.seo.userProfile(profileName)} />
+	<meta property="og:description" content={texts.seo.userProfileDescription(profileName)} />
 	<meta property="og:type" content="website" />
 </svelte:head>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">
-	<ProfileHeader
-		username={data.profileUser.username}
-		{profileImageUrl}
-		verified={data.profileUser.verified}
-		isInstitution={data.profileUser.isInstitution}
-		{activeSinceDate}
-	/>
-
-	{#if data.profileUser.bio}
-		<div class="space-y-1">
-			<h2 class="text-sm font-semibold text-tinte-500 dark:text-tinte-400 uppercase tracking-wide">
-				{data.profileUser.isInstitution ? texts.pages.profile.bioLabelInstitution : texts.pages.profile.bioLabel}
-			</h2>
-			<p class="text-tinte-700 dark:text-tinte-300 whitespace-pre-wrap">
-				{data.profileUser.bio}
+	{#if data.isDeleted}
+		<!-- Tombstone for a deleted (anonymized) account -->
+		<div class="text-center py-16 space-y-3">
+			<h1 class="text-2xl font-bold text-tinte-700 dark:text-tinte-200">{profileName}</h1>
+			<p class="text-tinte-500 dark:text-tinte-400 max-w-md mx-auto">
+				{texts.account.deletedProfileNotice}
 			</p>
 		</div>
-	{/if}
+	{:else}
+		<ProfileHeader
+			username={profileName}
+			{profileImageUrl}
+			verified={data.profileUser.verified}
+			isInstitution={data.profileUser.isInstitution}
+			{activeSinceDate}
+		/>
 
-	{#if !isOwnProfile && data.loggedIn}
-		<TrustSection {profileTrustsViewer} {viewerTrustsProfile} />
-	{/if}
+		{#if data.profileUser.bio}
+			<div class="space-y-1">
+				<h2 class="text-sm font-semibold text-tinte-500 dark:text-tinte-400 uppercase tracking-wide">
+					{data.profileUser.isInstitution ? texts.pages.profile.bioLabelInstitution : texts.pages.profile.bioLabel}
+				</h2>
+				<p class="text-tinte-700 dark:text-tinte-300 whitespace-pre-wrap">
+					{data.profileUser.bio}
+				</p>
+			</div>
+		{/if}
 
-	<ItemsSection
-		publicItems={data.publicItems}
-		trustedItems={data.trustedItems}
-		hiddenItemsCount={data.hiddenItemsCount}
-		hiddenCategories={data.hiddenCategories}
-		{profileImageUrl}
-		pbImgUrl={data.PB_IMG_URL}
-		loggedIn={data.loggedIn}
-	/>
+		{#if !isOwnProfile && data.loggedIn}
+			<TrustSection {profileTrustsViewer} {viewerTrustsProfile} />
+		{/if}
+
+		<ItemsSection
+			publicItems={data.publicItems}
+			trustedItems={data.trustedItems}
+			hiddenItemsCount={data.hiddenItemsCount}
+			hiddenCategories={data.hiddenCategories}
+			{profileImageUrl}
+			pbImgUrl={data.PB_IMG_URL}
+			loggedIn={data.loggedIn}
+		/>
+	{/if}
 </div>

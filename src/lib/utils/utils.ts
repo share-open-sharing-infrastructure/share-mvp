@@ -1,3 +1,29 @@
+import { texts } from '$lib/texts';
+
+/**
+ * The anonymized username a deleted account gets on the backend (`deleted-<15-char id>`).
+ * Keep in sync with anonymizeAccount() in allerleih-backend/pb_hooks/services/account.js.
+ */
+const DELETED_USERNAME_RE = /^deleted-[a-z0-9]{15}$/;
+
+/**
+ * Display name for a user, masking deleted/anonymized accounts to "Gelöschtes Konto".
+ * Never render `user.username` directly — always pass the user object through this helper.
+ *
+ * Masks when the `deleted` flag is set, OR when the username matches the backend's
+ * placeholder shape. The latter is a safety net for records loaded from a source that
+ * doesn't expose `deleted` (e.g. a view that omits the column), so the raw `deleted-<id>`
+ * placeholder can never leak to the UI even if the flag is missing.
+ */
+export function displayName(
+	user: { username?: string; deleted?: boolean } | null | undefined
+): string {
+	if (!user || user.deleted || (user.username && DELETED_USERNAME_RE.test(user.username))) {
+		return texts.account.deletedAccountName;
+	}
+	return user.username ?? texts.account.deletedAccountName;
+}
+
 export function formatTimestamp(
 	timestamp: string,
 	includeYear: boolean = false

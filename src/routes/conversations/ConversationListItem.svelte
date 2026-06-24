@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { texts } from '$lib/texts';
+	import { displayName } from '$lib/utils/utils';
 
 	let { conversation, currentUser, PB_IMG_URL, activeTab } = $props();
 
@@ -70,7 +71,7 @@
 				{conversation.expand.requestedItem.name}
 			</p>
 			<p class="text-xs text-tinte-400 dark:text-tinte-500 truncate leading-tight mt-0.5">
-				{activeTab === 'borrowing' ? 'von' : 'an'} {otherUser.username}
+				{activeTab === 'borrowing' ? 'von' : 'an'} {displayName(otherUser)}
 			</p>
 			{#if lendingStatusLabel}
 				<span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium mt-0.5

@@ -12,9 +12,12 @@ export const ITEM_CATEGORIES = [
 ] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
+/** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
+const APP_NAME = 'AllerLeih';
+
 export const texts = {
 	names: {
-		app: 'AllerLeih',
+		app: APP_NAME,
 		mainContactMail: 'kontakt@allerleih.org',
 	},
 
@@ -653,6 +656,56 @@ export const texts = {
 			title: 'Eine ganz kurze Umfrage',
 			explanation: 'Wir wollen verstehen, was dich zum Teilen motiviert. Deine Antwort hilft uns, AllerLeih besser zu machen und Fördermittel zu beantragen. Die Antwort bleibt vollständig anonym! Du kannst die Umfrage auch überspringen.'
 		}
+	},
+
+	// Account management, data export and deletion (GDPR)
+	account: {
+		/** Masked display name for deleted/anonymized accounts. */
+		deletedAccountName: 'Gelöschtes Konto',
+		pageTitle: 'Konto & Datenschutz',
+		pageIntro:
+			'Hier kannst du eine Kopie deiner Daten herunterladen oder dein Konto endgültig löschen.',
+		// Profile-page entry point
+		manageLink: 'Konto & Datenschutz',
+		// Data export (Art. 15 / 20)
+		export: {
+			title: 'Meine Daten exportieren',
+			description:
+				'Lade eine maschinenlesbare Kopie (JSON) aller Daten herunter, die wir über dich speichern – Profil, Gegenstände, Gespräche, Nachrichten und mehr.',
+			button: 'Daten herunterladen',
+			preparing: 'Daten werden vorbereitet …',
+			error: 'Export fehlgeschlagen. Bitte versuche es später erneut.',
+		},
+		// Account deletion (Art. 17)
+		delete: {
+			title: 'Konto löschen',
+			description:
+				'Dein Konto und deine persönlichen Daten werden gelöscht. Aus rechtlichen Gründen (z. B. zur Klärung von Streitfällen) bewahren wir deine E-Mail-Adresse und deinen Namen für eine begrenzte Zeit in geschützter Form auf, bevor auch diese endgültig entfernt werden. Bereits ausgetauschte Nachrichten bleiben bei deinem jeweiligen Gegenüber erhalten, dort jedoch anonymisiert als „Gelöschtes Konto".',
+			warning: 'Diese Aktion kann nicht rückgängig gemacht werden.',
+			confirmPhrase: 'LÖSCHEN',
+			confirmPhraseLabel: 'Tippe LÖSCHEN, um zu bestätigen',
+			passwordLabel: 'Passwort zur Bestätigung',
+			passwordPlaceholder: 'Dein aktuelles Passwort',
+			openButton: 'Konto löschen',
+			confirmButton: 'Mein Konto endgültig löschen',
+			cancelButton: 'Abbrechen',
+			// Error/blocked states
+			wrongPassword: 'Falsches Passwort.',
+			activeLoansBlocked:
+				'Du hast noch offene Ausleihen. Bitte schließe diese ab (Übergabe bzw. Rückgabe bestätigen), bevor du dein Konto löschst.',
+			genericError: 'Löschung fehlgeschlagen. Bitte versuche es später erneut.',
+		},
+		// Goodbye page after successful deletion
+		deleted: {
+			title: 'Auf Wiedersehen!',
+			body: `Dein Konto und deine persönlichen Daten wurden gelöscht. Danke, dass du Teil von ${APP_NAME} warst.`,
+			secondary: 'Du bist jederzeit willkommen, falls du irgendwann zurückkommen möchtest.',
+			backHome: 'Zur Startseite',
+		},
+		// Shown on the public profile of a deleted account
+		deletedProfileNotice: 'Dieses Konto wurde gelöscht. Die zugehörigen Daten sind nicht mehr verfügbar.',
+		// Guard when trying to trust a deleted account
+		cannotTrustDeleted: 'Dieses Konto wurde gelöscht und kann nicht als vertrauenswürdig markiert werden.',
 	},
 
 	// Notifications

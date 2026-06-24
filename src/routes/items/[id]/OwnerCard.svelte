@@ -2,6 +2,7 @@
 	import { UserCircleOutline, HomeOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import { displayName } from '$lib/utils/utils';
 	import type { UserPublic } from '$lib/types/models';
 
 	interface Props {
@@ -19,7 +20,6 @@
 	const cardTitle = $derived(
 		isInstitution ? texts.pages.itemDetail.institutionCardTitle : texts.pages.itemDetail.ownerCardTitle
 	);
-	console.log(owner.created);
 	const registeredSince = $derived(
 		new Date(owner.created).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
 	);
@@ -54,7 +54,7 @@
 					href={resolve('/users/[id]', { id: owner.id })}
 					class="font-semibold text-tinte-900 dark:text-white hover:text-primary hover:underline"
 				>
-					{owner.username}
+					{displayName(owner)}
 				</a>
 				<!-- Email verification -->
 				{#if owner.verified}

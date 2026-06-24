@@ -15,6 +15,26 @@ export async function load({ params, locals }) {
 		error(e.status === 404 ? 404 : 500, 'User not found');
 	}
 
+	// Deleted (anonymized) account: render a minimal tombstone. Skip all item and
+	// trust-graph queries — there is nothing left to show.
+	if (profileUser.deleted) {
+		// The row is already anonymized (empty bio/profileImage, placeholder username),
+		// so it's safe to pass through; the page renders only a tombstone.
+		return {
+			profileUser,
+			isDeleted: true,
+			publicItems: [],
+			trustedItems: null,
+			hiddenItemsCount: 0,
+			hiddenCategories: [],
+			isOwnProfile: false,
+			loggedIn: !!locals.user,
+			viewerTrustsProfile: false,
+			profileTrustsViewer: false,
+			PB_IMG_URL: PUBLIC_PB_URL,
+		};
+	}
+
 	let allItems: Item[] = [];
 	try {
 		allItems = await locals.pb.collection('items_public').getFullList({
@@ -106,6 +126,14 @@ export const actions = {
 	addTrust: async ({ params, locals }) => {
 		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
 		if (params.id === locals.user.id) return fail(400, { message: texts.errors.noPermission });
+
+		// Cannot trust a deleted (anonymized) account.
+		try {
+			const target = await locals.pb.collection('users_public').getOne(params.id);
+			if (target.deleted) return fail(400, { message: texts.account.cannotTrustDeleted });
+		} catch {
+			return fail(404, { message: texts.errors.noPermission });
+		}
 
 		const profileUserId = params.id;
 		const updatedTrusts = [...(locals.user.trusts || []), profileUserId];

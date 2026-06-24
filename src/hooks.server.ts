@@ -10,6 +10,7 @@ const unprotectedPrefix = [
 	'/auth/login',
 	'/auth/register',
 	'/auth/reset',
+	'/auth/account-deleted',
 	'/search',
 	'/items',
 	'/users',
@@ -30,7 +31,16 @@ export const authentication: Handle = async ({ event, resolve }) => {
 	try {
 		if (event.locals.pb.authStore.isValid) {
 			await event.locals.pb.collection('users').authRefresh();
-			event.locals.user = event.locals.pb.authStore.record;
+			const record = event.locals.pb.authStore.record;
+			// Defense-in-depth: a deleted (anonymized) account must never be treated as
+			// logged in, even if a stale cookie survives. The backend also rejects auth
+			// for these accounts (see allerleih-backend/pb_hooks/account.pb.js).
+			if (record?.deleted) {
+				event.locals.pb.authStore.clear();
+				event.locals.user = null;
+			} else {
+				event.locals.user = record;
+			}
 		} else {
 			event.locals.user = null;
 		}

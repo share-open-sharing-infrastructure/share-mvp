@@ -8,6 +8,7 @@
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { displayName } from '$lib/utils/utils';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -101,7 +102,7 @@
 					{:else}
 						<UserCircleOutline class="h-6 w-6 inline" />
 					{/if}
-					<span class="font-medium text-xs max-w-20 truncate ml-1">{item.username ?? 'Unknown'}</span>
+					<span class="font-medium text-xs max-w-20 truncate ml-1">{displayName({ username: item.username })}</span>
 					<div class="absolute top-0 -right-1.5 flex flex-col gap-0.1 items-center">
 						{#if item.verified}
 							<VerifiedIcon class="h-3.5 w-3.5" />

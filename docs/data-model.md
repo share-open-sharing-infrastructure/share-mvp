@@ -189,6 +189,42 @@ Coordinates are **not** stored on `users` — they live in a separate `user_geol
 
 Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
 
+## Account deletion (`deleted` / `deletedAt`, `deleted_accounts`)
+
+Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place**:
+
+**Phase 1 — deactivate** (`DELETE /api/account`, backend hook with superuser access):
+- The live `users` row is kept but anonymized: `username` → `deleted-<id>`, `email` →
+  `deleted-<id>@deleted.invalid`, profile fields/`trusts[]`/`inviteCode` cleared, password
+  randomized, and `deleted = true` + `deletedAt` set. `deleted` is also exposed on the
+  `users_public` view so the public profile can mask the name.
+- Personal-only data is **hard-deleted**: `user_contacts`, `user_geolocations`,
+  `push_subscriptions`, and the user's own `notifications`. The user is removed from every
+  other user's `trusts[]`, and `invitedBy` referencing them is nulled.
+- `items`: those never requested are hard-deleted. An item still referenced by a conversation
+  **cannot** be deleted (`conversations.requestedItem` is a *required* relation) — it is kept
+  (set to `unavailable`) so the counterparty's loan history resolves. The `items_public` /
+  `items_searchable` views exclude rows whose owner is `deleted`, so a deleted account's
+  listings disappear from search/catalogue while existing conversations still show the item.
+- Shared/audit data is **retained**, de-identified to "Gelöschtes Konto": `messages`,
+  `conversations` (the counterparty keeps a coherent history; the lending paper trail stays
+  intact), and `term_acceptances` (legal-obligation exception, Art. 17(3)).
+- Before scrubbing, the original `email` + `username` are copied into **`deleted_accounts`**
+  (relation `user`, `email`, `username`, `deletedAt`). All its access rules are `null`
+  (superuser-only) so the retained identifiers never reach the client or any view. They exist
+  for dispute resolution (Art. 17(3)(e)) within the retention window documented in the privacy
+  statement.
+- Deletion is refused while any of the user's conversations is `accepted` / `active` /
+  `return_requested` (open loan).
+
+**Phase 2 — purge** (not yet implemented): a scheduled job uses `deletedAt` to finally remove
+`deleted_accounts` rows and the anonymized `users` rows after the retention window; the same
+routine will drive auto-deletion of long-inactive accounts.
+
+Login for a `deleted` account is blocked by an `onRecordAuthRequest` hook and, defensively, in
+`hooks.server.ts`. In the app, **never render `user.username` directly** — use `displayName()`
+(`$lib/utils/utils.ts`), which masks deleted accounts.
+
 ## items_public and items_searchable Views
 
 Two read-only PocketBase SQL views expose `items` joined with `users` (and `user_geolocations` for the location flag) as flat, privacy-safe rows. Neither exposes the owner's `trusts` list, and neither includes raw coordinates — they expose only `ownerHasLocation` (0 or 1); travel times are computed in the backend `/api/travel-times` hook, which returns only **bucketed minutes** so coordinates never reach the client.

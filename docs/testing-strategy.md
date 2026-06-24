@@ -91,6 +91,52 @@ describe('page name, e.g. Conversation Page', () => {
         });
 ```
 
+## Local test data (seeding)
+
+For manual testing and PR review you can populate a running PocketBase with deterministic
+data using the seed runner in [`scripts/seed.js`](/scripts/seed.js). Data is organised into
+named **scenarios** (one file per feature) under [`scripts/seed/scenarios/`](/scripts/seed/scenarios/),
+with shared connection/teardown/factory helpers in [`scripts/seed/lib.js`](/scripts/seed/lib.js).
+
+It is safe to run: it authenticates as a PocketBase **superuser** and only ever touches its
+own records — every seed user is created on the `@seed.test` email domain, and re-running
+first tears down the previous seed data (so it's idempotent). It never affects production.
+
+### Prerequisites
+- A running PocketBase instance (default `http://127.0.0.1:8090`).
+- A superuser. On a fresh DB create one with
+  `./pocketbase superuser create admin@example.com <password>` (in the `allerleih-backend` repo).
+
+### Usage
+
+```powershell
+# PowerShell — set credentials for the current session, then run a scenario
+$env:PB_SUPERUSER_EMAIL = "admin@example.com"
+$env:PB_SUPERUSER_PASSWORD = "<password>"
+npm run seed -- account-deletion
+```
+
+```bash
+# Git Bash / macOS / Linux
+PB_SUPERUSER_EMAIL=admin@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- account-deletion
+```
+
+- `npm run seed` with no argument **lists** the available scenarios.
+- Optional env var `PB_URL` overrides the PocketBase URL.
+- Seed users all share the password `password123` (the runner prints the logins + a
+  walkthrough on success).
+
+### Adding a scenario
+
+Create `scripts/seed/scenarios/<your-feature>.js` exporting:
+- `description` — a one-line summary (shown by the runner),
+- `async run(pb)` — builds the data via the factories from `../lib.js`
+  (`createUser`, `createItem`, `createMessage`, `createConversation`, `setTrust`) and
+  optionally returns a summary string to print.
+
+The runner discovers the file automatically; no registration needed. Run scenarios one at a
+time — `teardown()` clears all `@seed.test` data before the chosen scenario runs.
+
 ## CI Integration
 
 Tests run automatically on every pull request to `main` via GitHub Actions (`.github/workflows/vitest.yaml`). Coverage is reported as a PR comment via `davelosert/vitest-coverage-report-action` (json + lcov artifacts are also uploaded for download). The build step (`npm run build`) runs in the same workflow, catching TypeScript and Svelte compilation errors before merging.
