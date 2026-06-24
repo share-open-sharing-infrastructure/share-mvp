@@ -117,6 +117,15 @@ export interface User extends PocketBaseEntity {
 	 * Institutions: address, opening hours, website, lending modalities.
 	 */
 	bio?: string;
+
+	/**
+	 * Set when the user has deleted their account (phase 1 "deactivate"). The row is
+	 * anonymized in place; login is blocked and the UI shows "Gelöschtes Konto".
+	 */
+	deleted?: boolean;
+
+	/** ISO datetime the account was deleted/anonymized (drives the future purge job). */
+	deletedAt?: string;
 }
 
 export interface UserPublic extends PocketBaseEntity {
@@ -127,6 +136,8 @@ export interface UserPublic extends PocketBaseEntity {
 	profileImage: string | null;
 	telegramVisibleToTrustedOnly: boolean;
 	signalVisibleToTrustedOnly: boolean;
+	/** True if this account has been deleted/anonymized — used to mask the username. */
+	deleted?: boolean;
 }
 
 // --- ITEM ---

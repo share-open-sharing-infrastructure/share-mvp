@@ -653,6 +653,51 @@ export const texts = {
 		}
 	},
 
+	// Account management, data export and deletion (GDPR)
+	account: {
+		/** Masked display name for deleted/anonymized accounts. */
+		deletedAccountName: 'Gelöschtes Konto',
+		pageTitle: 'Konto & Datenschutz',
+		pageIntro:
+			'Hier kannst du eine Kopie deiner Daten herunterladen oder dein Konto endgültig löschen.',
+		// Profile-page entry point
+		manageLink: 'Konto & Datenschutz',
+		// Data export (Art. 15 / 20)
+		export: {
+			title: 'Meine Daten exportieren',
+			description:
+				'Lade eine maschinenlesbare Kopie (JSON) aller Daten herunter, die wir über dich speichern – Profil, Gegenstände, Gespräche, Nachrichten und mehr.',
+			button: 'Daten herunterladen',
+			preparing: 'Daten werden vorbereitet …',
+			error: 'Export fehlgeschlagen. Bitte versuche es später erneut.',
+		},
+		// Account deletion (Art. 17)
+		delete: {
+			title: 'Konto löschen',
+			description:
+				'Dein Konto und deine persönlichen Daten werden gelöscht. Aus rechtlichen Gründen (z. B. zur Klärung von Streitfällen) bewahren wir deine E-Mail-Adresse und deinen Namen für eine begrenzte Zeit in geschützter Form auf, bevor auch diese endgültig entfernt werden. Bereits ausgetauschte Nachrichten bleiben bei deinem jeweiligen Gegenüber erhalten, dort jedoch anonymisiert als „Gelöschtes Konto".',
+			warning: 'Diese Aktion kann nicht rückgängig gemacht werden.',
+			confirmPhrase: 'LÖSCHEN',
+			confirmPhraseLabel: 'Tippe LÖSCHEN, um zu bestätigen',
+			passwordLabel: 'Passwort zur Bestätigung',
+			passwordPlaceholder: 'Dein aktuelles Passwort',
+			openButton: 'Konto löschen',
+			confirmButton: 'Mein Konto endgültig löschen',
+			cancelButton: 'Abbrechen',
+			// Error/blocked states
+			wrongPassword: 'Falsches Passwort.',
+			activeLoansBlocked:
+				'Du hast noch offene Ausleihen. Bitte schließe diese ab (Übergabe bzw. Rückgabe bestätigen), bevor du dein Konto löschst.',
+			genericError: 'Löschung fehlgeschlagen. Bitte versuche es später erneut.',
+		},
+		// Goodbye page after successful deletion
+		deleted: {
+			title: 'Dein Konto wurde gelöscht',
+			body: 'Schade, dass du gehst. Deine persönlichen Daten wurden gelöscht. Danke, dass du Teil von AllerLeih warst.',
+			backHome: 'Zur Startseite',
+		},
+	},
+
 	// Notifications
 	notifications: {
 		title: 'Benachrichtigungen',

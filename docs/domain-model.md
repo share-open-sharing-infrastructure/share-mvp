@@ -120,3 +120,9 @@ Institutions (public libraries, lending shops, tool libraries) are regular `User
 - When active terms exist for an institution, borrowers are redirected to `/items/[id]/terms` and must accept before a conversation can be created
 - Acceptance is recorded in `TermAcceptance` with a full snapshot of the terms body, ensuring a legally robust audit trail even when terms are later updated
 - When an institution updates their terms, a new `LendingTerms` record is created with `active = true`; the old record remains for historical acceptances
+
+**Account deletion & anonymization**
+- A user can delete their own account (GDPR Art. 17) from `/user/account`; deletion is refused while a loan is still open (`accepted`/`active`/`return_requested`)
+- Deletion is *anonymize-in-place*: the `User` record is kept but its PII is scrubbed and `deleted` is set, so shared `Conversation`/`Message` history and `TermAcceptance` audit records stay referentially intact and render as "Gelöschtes Konto" to the counterparty
+- Personal-only data (contacts, geolocation, push subscriptions, owned `Item`s, own notifications) is hard-deleted; the user is removed from every other user's `trusts[]`
+- The original email + username are retained in a restricted `deleted_accounts` record for the dispute-resolution window, then purged by a future scheduled job (see [data-model.md](data-model.md))

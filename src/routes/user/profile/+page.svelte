@@ -201,4 +201,13 @@
 	<NotificationSettings />
 
 	<InviteLink inviteUrl={data.inviteUrl} />
+
+	<div class="max-w-2xl mx-auto px-4 pb-8">
+		<a
+			href={resolve('/user/account')}
+			class="block text-center text-sm font-medium text-tinte-600 dark:text-tinte-400 underline hover:text-primary"
+		>
+			{texts.account.manageLink}
+		</a>
+	</div>
 </main>

@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
+	import { displayName } from '$lib/utils/utils';
 	import ProfileHeader from './ProfileHeader.svelte';
 	import TrustSection from './TrustSection.svelte';
 	import ItemsSection from './ItemsSection.svelte';
 
 	const { data } = $props();
+
+	const profileName = $derived(displayName(data.profileUser));
 
 	const isOwnProfile = $derived(data.isOwnProfile);
 	const viewerTrustsProfile = $derived(data.viewerTrustsProfile);
@@ -23,16 +26,16 @@
 </script>
 
 <svelte:head>
-	<title>{texts.seo.userProfile(data.profileUser.username)}</title>
-	<meta name="description" content={texts.seo.userProfileDescription(data.profileUser.username)} />
-	<meta property="og:title" content={texts.seo.userProfile(data.profileUser.username)} />
-	<meta property="og:description" content={texts.seo.userProfileDescription(data.profileUser.username)} />
+	<title>{texts.seo.userProfile(profileName)}</title>
+	<meta name="description" content={texts.seo.userProfileDescription(profileName)} />
+	<meta property="og:title" content={texts.seo.userProfile(profileName)} />
+	<meta property="og:description" content={texts.seo.userProfileDescription(profileName)} />
 	<meta property="og:type" content="website" />
 </svelte:head>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">
 	<ProfileHeader
-		username={data.profileUser.username}
+		username={profileName}
 		{profileImageUrl}
 		verified={data.profileUser.verified}
 		isInstitution={data.profileUser.isInstitution}
