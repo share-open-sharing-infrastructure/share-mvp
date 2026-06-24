@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
+	import { page } from '$app/state';
 	import ProfileHeader from './ProfileHeader.svelte';
 	import TrustSection from './TrustSection.svelte';
 	import ItemsSection from './ItemsSection.svelte';
@@ -20,6 +21,8 @@
 		new Intl.DateTimeFormat('de-DE', { month: 'long', year: 'numeric' })
 			.format(new Date(data.profileUser.created))
 	);
+
+	const shareUrl = $derived(`${page.url.origin}/users/${data.profileUser.id}`);
 </script>
 
 <svelte:head>
@@ -37,6 +40,7 @@
 		verified={data.profileUser.verified}
 		isInstitution={data.profileUser.isInstitution}
 		{activeSinceDate}
+		{shareUrl}
 	/>
 
 	{#if data.profileUser.bio}

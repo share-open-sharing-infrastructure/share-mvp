@@ -18,6 +18,12 @@ export const texts = {
 		mainContactMail: 'kontakt@allerleih.org',
 	},
 
+	// Share / "Teilen" buttons (items, profiles)
+	share: {
+		button: 'Teilen',
+		linkCopied: 'Link kopiert!',
+	},
+
 	// Authentication
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',

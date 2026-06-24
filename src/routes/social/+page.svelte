@@ -14,7 +14,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import InviteShareButton from '$lib/components/InviteShareButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 
 	const { data } = $props();
 
@@ -105,7 +105,14 @@
 				value={data.inviteUrl}
 				class="flex-1 px-3 py-2 bg-tinte-100 border border-tinte-200 rounded-lg text-sm text-tinte-600 cursor-default dark:bg-tinte-700 dark:border-tinte-600 dark:text-tinte-400 truncate"
 			/>
-			<InviteShareButton inviteUrl={data.inviteUrl} username={data.username} />
+			<ShareButton
+				url={data.inviteUrl}
+				shareText={texts.pages.invite.shareText(data.username)}
+				label={texts.pages.invite.shareButton}
+				copiedLabel={texts.pages.invite.linkCopied}
+				icon={UserAddOutline}
+				class="gap-2 min-button w-full bg-primary-300 hover:bg-primary whitespace-nowrap"
+			/>
 		</div>
 	</div>
 </div>
