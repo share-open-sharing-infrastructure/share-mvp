@@ -209,6 +209,11 @@ returns public items to everyone, and trustees-only items only to the owner and 
 | userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (`trusts` is **not** exposed) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 
+> **A view returns only the columns in its `viewQuery` SELECT — nothing else.** The TS
+> `ItemPublic` type extends `PocketBaseEntity`, so it *declares* `id`, `created` and `updated`,
+> but only the columns above are actually populated. When you need a new column, update the `viewQuery` in `allerleih-backend`
+> first; see that repo's README ("Writing migrations").
+
 ### Base `items` trust rule
 
 The base `items` collection's `listRule`/`viewRule` are

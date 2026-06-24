@@ -66,6 +66,8 @@ These prevent the most common bugs/security issues here — follow them without 
 |---|---|
 | System architecture, routes, auth flow, external APIs | `docs/architecture.md` |
 | Collection schemas + `*_public` view SQL | `docs/data-model.md` |
+| The `/search` page: params, filter building, pagination, which view it reads | `docs/search-discovery.md` |
+| Schema/view migrations (separate repo) | `allerleih-backend` README → "Writing migrations" |
 | Domain relationships / lending lifecycle | `docs/domain-model.md` |
 | Form / CRUD patterns & conventions | `docs/best-practices.md` |
 | Writing tests + PocketBase mocks | `docs/testing-strategy.md` |
