@@ -87,7 +87,19 @@
 		{/if}
 		{#if loggedIn}
 			<NavLi href={resolve('/conversations')}>{texts.nav.requests}</NavLi>
-			<NavLi href={resolve('/social')}>{texts.nav.social}</NavLi>
+
+			<NavLi class="cursor-pointer">
+				{texts.nav.network}
+				<ChevronDownOutline class="text-primary-800 inline h-5 w-5 dark:text-white" />
+			</NavLi>
+			<Dropdown simple class="w-44">
+				<DropdownItem href={resolve('/social')} class="hover:text-accent hover:bg-transparent">
+					{texts.nav.social}
+				</DropdownItem>
+				<DropdownItem href={resolve('/user/groups')} class="hover:text-accent hover:bg-transparent">
+					{texts.nav.groups}
+				</DropdownItem>
+			</Dropdown>
 
 			<NavLi href={resolve('/notifications')} class="relative">
 				<span class="relative inline-flex items-center gap-1">
@@ -118,11 +130,6 @@
 					href={resolve('/user/profile')}
 					class="hover:text-accent hover:bg-transparent"
 					>{texts.nav.myProfile}</DropdownItem
-				>
-				<DropdownItem
-					href={resolve('/user/groups')}
-					class="hover:text-accent hover:bg-transparent"
-					>{texts.nav.groups}</DropdownItem
 				>
 				{#if currentUser?.isInstitution}
 					<DropdownItem
