@@ -4,7 +4,12 @@
 	import { Button } from 'flowbite-svelte';
 	import { UserAddOutline, CheckOutline } from 'flowbite-svelte-icons';
 
-	let { inviteUrl, username }: { inviteUrl: string; username: string } = $props();
+	let {
+		inviteUrl,
+		username = '',
+		shareText: customShareText,
+		label
+	}: { inviteUrl: string; username?: string; shareText?: string; label?: string } = $props();
 
 	let copied = $state(false);
 
@@ -12,7 +17,7 @@
 	// so the user can pick any app (WhatsApp, Signal, …). Falls back to clipboard copy
 	// on browsers that don't support navigator.share (most desktop browsers).
 	async function share() {
-		const shareText = texts.pages.invite.shareText(username);
+		const shareText = customShareText ?? texts.pages.invite.shareText(username);
 		if (browser && navigator.share) {
 			try {
 				await navigator.share({ title: 'AllerLeih', text: shareText, url: inviteUrl });
@@ -39,6 +44,6 @@
 		{texts.pages.invite.linkCopied}
 	{:else}
 		<UserAddOutline class="h-4 w-4" />
-		{texts.pages.invite.shareButton}
+		{label ?? texts.pages.invite.shareButton}
 	{/if}
 </Button>

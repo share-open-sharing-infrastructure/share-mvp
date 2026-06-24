@@ -65,27 +65,30 @@ export async function load({ params, locals }) {
 		}
 	}
 
-	const publicItems = allItems.filter((item) => !item.trusteesOnly);
-	const trustedItemsAll = allItems.filter((item) => item.trusteesOnly);
-	// Owner is never in their own trusts array, so isOwnProfile must be checked separately
-	const trustedItems = (profileTrustsViewer || isOwnProfile) ? trustedItemsAll : null;
+	// items_public masks RESTRICTED items (trustees-only OR group-shared): their
+	// name comes back NULL. Unmasked rows are public.
+	const publicItems = allItems.filter((item) => item.name != null);
+	const restrictedAll = allItems.filter((item) => item.name == null);
 
-	// items_public masks trustees-only items (name/image/description are NULL). The owner
-	// and trusted viewers may see full details, read here from the trust-filtered
-	// `items_searchable` view. We must take the image (and its `collectionId`) from that
-	// view too: the file URL is built from `collectionId`, and items_public masks the
-	// image to NULL, so a URL pointing at items_public 404s. items_searchable exposes the
-	// un-masked file (same view search uses), so its file URL resolves in the browser.
-	if (trustedItems && trustedItems.length > 0) {
+	// Reveal the restricted ones THIS viewer may actually read: owner/trusted get
+	// their trustees items, group members get items shared with a group they're in.
+	// We read from `items_searchable` (NOT base `items`): its rule grants only the
+	// real audience (trust + group), so it deliberately EXCLUDES items the viewer
+	// can merely see via an existing conversation — those must not surface on the
+	// profile. The masked list is then filtered to these and un-masked. We also pull
+	// `collectionId` so the image file URL resolves (items_public masks the image to
+	// NULL, so a URL built from that row would 404).
+	let trustedItems: typeof restrictedAll | null = null;
+	if (restrictedAll.length > 0 && currentUser) {
 		try {
 			const full = await locals.pb.collection('items_searchable').getFullList({
-				filter: locals.pb.filter('userId = {:ownerId} && trusteesOnly = true', { ownerId: profileUser.id }),
+				filter: locals.pb.filter('userId = {:ownerId}', { ownerId: profileUser.id }),
 				fields: 'id,collectionId,name,image,externalImgUrl,externalUrl,description',
 			});
 			const byId = new Map(full.map((f) => [f.id, f] as const));
-			for (const item of trustedItems) {
-				const f = byId.get(item.id);
-				if (!f) continue;
+			const accessible = restrictedAll.filter((item) => byId.has(item.id));
+			for (const item of accessible) {
+				const f = byId.get(item.id)!;
 				item.collectionId = f.collectionId;
 				item.name = f.name;
 				item.image = f.image;
@@ -93,6 +96,7 @@ export async function load({ params, locals }) {
 				item.externalUrl = f.externalUrl;
 				item.description = f.description;
 			}
+			if (accessible.length > 0) trustedItems = accessible;
 		} catch (err) {
 			console.error('Failed to load trusted item details', err);
 		}
@@ -112,8 +116,8 @@ export async function load({ params, locals }) {
 		profileUser,
 		publicItems,
 		trustedItems,
-		hiddenItemsCount: trustedItems === null ? trustedItemsAll.length : 0,
-		hiddenCategories: trustedItems === null ? trustedItemsAll.flatMap((i) => i.categories ?? []) : [],
+		hiddenItemsCount: trustedItems === null ? restrictedAll.length : 0,
+		hiddenCategories: trustedItems === null ? restrictedAll.flatMap((i) => i.categories ?? []) : [],
 		isOwnProfile,
 		loggedIn: !!currentUser,
 		viewerTrustsProfile,

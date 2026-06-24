@@ -62,7 +62,7 @@ src/
 ├── lib/
 │   ├── components/             # Reusable Svelte components
 │   ├── server/                 # Server-only helpers: itemFilters, notifications, registration,
-│   │                           #   lendingTerms, pushSubscriptions, travelTimes
+│   │                           #   lendingTerms, pushSubscriptions, travelTimes, groups (owned/member + counts)
 │   ├── types/models.ts         # TS interfaces for all PocketBase collections + public views
 │   ├── utils/                  # utils.ts (formatTimestamp, setupPocketBaseSubscription),
 │   │                           #   imageUtils (compressImage), categoryPlaceholder, pushSubscription (client)
@@ -83,9 +83,10 @@ src/
     ├── notifications/          # in-app notification list
     ├── search/                 # browse/search items (logs queries to `searches`)
     ├── social/                 # trust network management
-    ├── user/                   # current user's profile, items, bulk import
+    ├── groups/                 # group join pages: join/[token] (invite), [id] (public self-join)
+    ├── user/                   # current user's profile, items, bulk import, groups (user/groups)
     ├── users/[id]/             # other users' public profiles
-    ├── misc/                   # static pages (about, contact, imprint)
+    ├── misc/                   # static/legal pages (about, contact, guide, imprint, newsletter, privacy, tos)
     └── sitemap.xml/            # generated sitemap
 docs/                           # Architecture docs — read before structural changes (see below)
 ```
@@ -185,8 +186,13 @@ SQL, and ER/class diagrams):
 
 | Collection | Purpose / key fields |
 |---|---|
-| `users` | `username`, `email`, `city`, `trusts[]`, `geolocation` (GeoPoint), `preferredTransportMode`, telegram/signal contacts (+ `*VisibleToTrustedOnly`), `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio`, `deleted` / `deletedAt` (account-deletion flag — see below) |
-| `items` | `name`, `description`, `image` (file), `place`, `owner` (FK), `trusteesOnly`, `status`, `categories[]`; institution-only `externalId` / `externalUrl` / `externalImgUrl` |
+| `users` | `username`, `email`, `city`, `trusts[]`, `preferredTransportMode`, `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio`, `deleted` / `deletedAt` (account-deletion flag — see below). (Geolocation + messenger contacts were moved off `users` into the owner-only collections below.) |
+| `user_geolocations` | owner-only: `user` (FK), coordinates (GeoPoint). Raw coordinates never exposed via public views. |
+| `user_contacts` | owner-only: `user` (FK), telegram/signal handles (+ `*VisibleToTrustedOnly` flags) |
+| `items` | `name`, `description`, `image` (file), `place`, `owner` (FK), `trusteesOnly`, `groups[]` (FK, shared-with groups), `status`, `categories[]`; institution-only `externalId` / `externalUrl` / `externalImgUrl` |
+| `groups` | `name`, `description`, `owner` (FK), `isPublic` (public ⇒ world-readable + self-join). See [docs/groups.md](../docs/groups.md) |
+| `group_members` | join table: `group` (FK), `user` (FK), `role` (`admin`\|`member`; owner stored as `admin`); unique `(group,user)` |
+| `group_invites` | `group` (FK), `token`, `expiresAt?`, `maxUses` (0=∞), `uses`, `createdBy`; resolved via elevated `/api/group-invite/{token}` hooks |
 | `conversations` | `requester`, `itemOwner`, `requestedItem`, `messages[]`, `readByRequester`, `readByOwner`, `lendingStatus`, `counterfactual` |
 | `messages` | `messageContent`, `from` (FK), `to` (FK) |
 | `notifications` | `recipient`, `sender`, `type`, `relatedId`, `body` (German text), `read` |
@@ -287,6 +293,7 @@ update the corresponding section here in the same change so the file never drift
 - [docs/best-practices.md](../docs/best-practices.md) — CRUD form patterns and conventions
 - [docs/data-model.md](../docs/data-model.md) — collection schemas + public-view SQL
 - [docs/domain-model.md](../docs/domain-model.md) — class diagrams and domain relationships
+- [docs/groups.md](../docs/groups.md) — groups feature: roles, public/self-join, visibility model
 - [docs/testing-strategy.md](../docs/testing-strategy.md) — testing approach + mock examples
 - [docs/text-management.md](../docs/text-management.md) — UI string organization
 - [docs/operations/](../docs/operations/) — operational runbooks (e.g. institutional onboarding)
