@@ -15,6 +15,26 @@ export async function load({ params, locals }) {
 		error(e.status === 404 ? 404 : 500, 'User not found');
 	}
 
+	// Deleted (anonymized) account: render a minimal tombstone. Skip all item and
+	// trust-graph queries — there is nothing left to show.
+	if (profileUser.deleted) {
+		// The row is already anonymized (empty bio/profileImage, placeholder username),
+		// so it's safe to pass through; the page renders only a tombstone.
+		return {
+			profileUser,
+			isDeleted: true,
+			publicItems: [],
+			trustedItems: null,
+			hiddenItemsCount: 0,
+			hiddenCategories: [],
+			isOwnProfile: false,
+			loggedIn: !!locals.user,
+			viewerTrustsProfile: false,
+			profileTrustsViewer: false,
+			PB_IMG_URL: PUBLIC_PB_URL,
+		};
+	}
+
 	let allItems: Item[] = [];
 	try {
 		allItems = await locals.pb.collection('items_public').getFullList({
@@ -55,18 +75,21 @@ export async function load({ params, locals }) {
 	// We read from `items_searchable` (NOT base `items`): its rule grants only the
 	// real audience (trust + group), so it deliberately EXCLUDES items the viewer
 	// can merely see via an existing conversation — those must not surface on the
-	// profile. The masked list is then filtered to these and un-masked.
+	// profile. The masked list is then filtered to these and un-masked. We also pull
+	// `collectionId` so the image file URL resolves (items_public masks the image to
+	// NULL, so a URL built from that row would 404).
 	let trustedItems: typeof restrictedAll | null = null;
 	if (restrictedAll.length > 0 && currentUser) {
 		try {
 			const full = await locals.pb.collection('items_searchable').getFullList({
 				filter: locals.pb.filter('userId = {:ownerId}', { ownerId: profileUser.id }),
-				fields: 'id,name,image,externalImgUrl,externalUrl,description',
+				fields: 'id,collectionId,name,image,externalImgUrl,externalUrl,description',
 			});
 			const byId = new Map(full.map((f) => [f.id, f] as const));
 			const accessible = restrictedAll.filter((item) => byId.has(item.id));
 			for (const item of accessible) {
 				const f = byId.get(item.id)!;
+				item.collectionId = f.collectionId;
 				item.name = f.name;
 				item.image = f.image;
 				item.externalImgUrl = f.externalImgUrl;
@@ -107,6 +130,14 @@ export const actions = {
 	addTrust: async ({ params, locals }) => {
 		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
 		if (params.id === locals.user.id) return fail(400, { message: texts.errors.noPermission });
+
+		// Cannot trust a deleted (anonymized) account.
+		try {
+			const target = await locals.pb.collection('users_public').getOne(params.id);
+			if (target.deleted) return fail(400, { message: texts.account.cannotTrustDeleted });
+		} catch {
+			return fail(404, { message: texts.errors.noPermission });
+		}
 
 		const profileUserId = params.id;
 		const updatedTrusts = [...(locals.user.trusts || []), profileUserId];

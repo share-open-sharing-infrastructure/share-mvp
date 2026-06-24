@@ -9,7 +9,10 @@ export async function load({ locals, url }) {
 	let users: User[] = [];
 
 	try {
-		users = await locals.pb.collection('users').getFullList();
+		// Exclude deleted (anonymized) accounts so they can't be found/added as trustees.
+		users = await locals.pb.collection('users').getFullList({
+			filter: locals.pb.filter('deleted != true'),
+		});
 	} catch (error: Error | any) {
 		console.error(error.message ? error.message : error);
 	}
@@ -53,6 +56,14 @@ export const actions = {
 		const formData = await request.formData();
 		const newTrusteeId = formData.get('trusteeId') as string;
 		const newTrusteeUsername = formData.get('trusteeUsername') as string | null;
+
+		// Cannot trust a deleted (anonymized) account.
+		try {
+			const target = await locals.pb.collection('users_public').getOne(newTrusteeId);
+			if (target.deleted) return fail(400, { fail: true, message: texts.account.cannotTrustDeleted });
+		} catch {
+			return fail(404, { fail: true, message: texts.errors.somethingWentWrong });
+		}
 
 		try {
 			await locals.pb.collection('users').update(locals.user.id, {

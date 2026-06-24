@@ -44,13 +44,17 @@ export async function load({ params, locals }) {
 	// read only for those, so a successful privileged fetch is itself the
 	// authorization signal — covering trust AND group access without re-deriving
 	// either here. (We key off the mask, not trusteesOnly, so group-only items work.)
+	// We read full fields from the trust/group-filtered `items_searchable` view —
+	// incl. `collectionId` and the un-masked `image` — so the image file URL resolves
+	// (a URL built from the items_public row would 404, since its image is NULL).
 	const wasMasked = item.name == null;
 	let viewerHasFullAccess = !wasMasked; // unmasked == public == visible to everyone
 	if (wasMasked && currentUserId) {
 		try {
-			const full = await locals.pb.collection('items').getOne(item.id, {
-				fields: 'id,name,image,externalImgUrl,externalUrl,description',
+			const full = await locals.pb.collection('items_searchable').getOne(item.id, {
+				fields: 'collectionId,name,image,externalImgUrl,externalUrl,description',
 			});
+			item.collectionId = full.collectionId;
 			item.name = full.name;
 			item.image = full.image;
 			item.externalImgUrl = full.externalImgUrl;
@@ -121,7 +125,7 @@ export async function load({ params, locals }) {
 		viewerTrustsOwner,
 		ownerTrustsViewer,
 		ownerItemCount,
-		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
+		preferredTransportMode: locals.user?.preferredTransportMode || 'bicycle',
 		existingConversation,
 		requiresTermsAcceptance,
 		ownerHasLocation: !!item.ownerHasLocation,

@@ -31,6 +31,12 @@ npm run format     # Prettier
 npm run test       # Vitest in WATCH mode
 npx vitest run                       # run all tests once (CI-style)
 npx vitest run src/path/to/file.test.ts  # run a single test file
+
+# Seed a running PocketBase with deterministic test data. Scenarios live in
+# scripts/seed/scenarios/ (one file per feature); shared helpers in scripts/seed/lib.js.
+# Idempotent; only touches its own `@seed.test` records. Requires superuser creds.
+npm run seed                                   # lists available scenarios
+PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- account-deletion
 ```
 
 ## Environment variables
@@ -180,7 +186,7 @@ SQL, and ER/class diagrams):
 
 | Collection | Purpose / key fields |
 |---|---|
-| `users` | `username`, `email`, `city`, `trusts[]`, `preferredTransportMode`, `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio`. (Geolocation + messenger contacts were moved off `users` into the owner-only collections below.) |
+| `users` | `username`, `email`, `city`, `trusts[]`, `preferredTransportMode`, `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio`, `deleted` / `deletedAt` (account-deletion flag — see below). (Geolocation + messenger contacts were moved off `users` into the owner-only collections below.) |
 | `user_geolocations` | owner-only: `user` (FK), coordinates (GeoPoint). Raw coordinates never exposed via public views. |
 | `user_contacts` | owner-only: `user` (FK), telegram/signal handles (+ `*VisibleToTrustedOnly` flags) |
 | `items` | `name`, `description`, `image` (file), `place`, `owner` (FK), `trusteesOnly`, `groups[]` (FK, shared-with groups), `status`, `categories[]`; institution-only `externalId` / `externalUrl` / `externalImgUrl` |
@@ -193,6 +199,7 @@ SQL, and ER/class diagrams):
 | `lending_terms` | versioned institutional terms of use: `owner`, `version`, `title`, `body`, `effectiveFrom`, `active`, `minAge` |
 | `term_acceptances` | acceptance audit trail: `user`, `terms` (FK), `acceptedAt`, `confirmedAdult`, plus snapshots of the terms text/version |
 | `push_subscriptions` | `user` (FK), `endpoint`, `p256dh`, `auth` |
+| `deleted_accounts` | restricted audit store written on account deletion: `user` (FK), `email`, `username`, `deletedAt` — **superuser-only access rules**, holds retained identifiers for the dispute-resolution window |
 | `outbound_clicks` | analytics for `/api/redirect`: `destination`, `source_page`, `item` |
 | `searches` | search-query analytics: `query`, `categories` |
 | `feedback` | `feedbackMessage`, `route`, `device`, `viewportSize`, `browser`, `browserVersion` |
@@ -211,8 +218,33 @@ SQL, and ER/class diagrams):
 
 Unprotected path prefixes (`unprotectedPrefix` in `hooks.server.ts`): `/auth/login`,
 `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`, `/misc`, `/invite`,
-`/sitemap.xml`, `/api/redirect`, `/api/diagnostics`. Everything else — including `/` (home)
-— requires authentication.
+`/sitemap.xml`, `/api/redirect`, `/api/diagnostics`, `/auth/account-deleted`. Everything else —
+including `/` (home) — requires authentication.
+
+## Account deletion & GDPR
+
+Self-service account deletion (Art. 17) and data export (Art. 15/20) live at `/user/account`
+(linked from the profile page). The heavy lifting runs in the **backend PocketBase hooks**
+(`allerleih-backend/pb_hooks/account.pb.js` + `services/account.js`), which have superuser
+`$app` access — required to edit other users' records during anonymization:
+
+- `DELETE /api/account` (body `{ password }`) — re-auth, refuses if a loan is still open
+  (`accepted`/`active`/`return_requested`), then in a transaction: copies `email`+`username`
+  into the restricted `deleted_accounts` collection, hard-deletes personal-only data
+  (contacts, geolocation, push subs, own notifications, and items nobody requested — items
+  referenced by a conversation are kept as `unavailable` since `requestedItem` is required),
+  removes the user from every other user's `trusts[]`, and anonymizes the live `users` row in
+  place (placeholder
+  `username`/`email`, `deleted=true`, random password). Shared/audit data (messages,
+  conversations, `term_acceptances`) is **retained** and resolves to "Gelöschtes Konto".
+- `GET /api/account/export` — machine-readable JSON of all the caller's data; proxied to the
+  browser as a download by `src/routes/user/account/export/+server.ts`.
+- `onRecordAuthRequest` (users) blocks login for `deleted=true` accounts; `hooks.server.ts`
+  enforces the same defensively.
+
+Deleted users' names are masked everywhere via `displayName()` in `$lib/utils/utils.ts` —
+**never render `user.username` directly** for a user that might be deleted. A future "phase 2"
+purge job (not yet built) uses `deletedAt` to finally remove the retained identifiers.
 
 ## Push notifications
 
