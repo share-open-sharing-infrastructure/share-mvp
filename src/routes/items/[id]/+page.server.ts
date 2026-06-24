@@ -117,7 +117,7 @@ export async function load({ params, locals }) {
 		viewerTrustsOwner,
 		ownerTrustsViewer,
 		ownerItemCount,
-		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
+		preferredTransportMode: locals.user?.preferredTransportMode || 'bicycle',
 		existingConversation,
 		requiresTermsAcceptance,
 		ownerHasLocation: !!item.ownerHasLocation,
