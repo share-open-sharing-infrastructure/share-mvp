@@ -12,9 +12,12 @@ export const ITEM_CATEGORIES = [
 ] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
+/** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
+const APP_NAME = 'AllerLeih';
+
 export const texts = {
 	names: {
-		app: 'AllerLeih',
+		app: APP_NAME,
 		mainContactMail: 'kontakt@allerleih.org',
 	},
 
@@ -692,10 +695,15 @@ export const texts = {
 		},
 		// Goodbye page after successful deletion
 		deleted: {
-			title: 'Dein Konto wurde gelöscht',
-			body: 'Schade, dass du gehst. Deine persönlichen Daten wurden gelöscht. Danke, dass du Teil von AllerLeih warst.',
+			title: 'Auf Wiedersehen!',
+			body: `Dein Konto und deine persönlichen Daten wurden gelöscht. Danke, dass du Teil von ${APP_NAME} warst.`,
+			secondary: 'Du bist jederzeit willkommen, falls du irgendwann zurückkommen möchtest.',
 			backHome: 'Zur Startseite',
 		},
+		// Shown on the public profile of a deleted account
+		deletedProfileNotice: 'Dieses Konto wurde gelöscht. Die zugehörigen Daten sind nicht mehr verfügbar.',
+		// Guard when trying to trust a deleted account
+		cannotTrustDeleted: 'Dieses Konto wurde gelöscht und kann nicht als vertrauenswürdig markiert werden.',
 	},
 
 	// Notifications

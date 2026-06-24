@@ -15,7 +15,10 @@ export async function load({ locals, url }) {
 		await locals.pb.collection('users').update(locals.user.id, { inviteCode });
 	}
 
-	const users = await locals.pb.collection('users').getFullList<User>();
+	// Exclude deleted (anonymized) accounts from the trustee picker.
+	const users = await locals.pb.collection('users').getFullList<User>({
+		filter: locals.pb.filter('deleted != true'),
+	});
 	const geolocation = await getUserGeolocation(locals.pb, locals.user.id);
 	const contact = await getOwnContact(locals.pb, locals.user.id);
 

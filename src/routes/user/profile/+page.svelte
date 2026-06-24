@@ -203,11 +203,21 @@
 	<InviteLink inviteUrl={data.inviteUrl} />
 
 	<div class="max-w-2xl mx-auto px-4 pb-8">
-		<a
-			href={resolve('/user/account')}
-			class="block text-center text-sm font-medium text-tinte-600 dark:text-tinte-400 underline hover:text-primary"
-		>
-			{texts.account.manageLink}
-		</a>
+		<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+			<div>
+				<h2 class="text-lg font-semibold text-tinte-900 dark:text-white">
+					{texts.account.manageLink}
+				</h2>
+				<p class="mt-1 text-sm text-tinte-600 dark:text-tinte-400">
+					{texts.account.pageIntro}
+				</p>
+			</div>
+			<a
+				href={resolve('/user/account')}
+				class="shrink-0 inline-flex items-center justify-center py-2.5 px-5 min-button bg-primary-200 hover:bg-primary text-white font-semibold rounded-xl transition-opacity"
+			>
+				{texts.account.manageLink}
+			</a>
+		</div>
 	</div>
 </main>

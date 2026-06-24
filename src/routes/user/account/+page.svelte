@@ -37,10 +37,6 @@
 			<p class="mt-2 text-sm text-tinte-600 dark:text-tinte-400">{texts.account.pageIntro}</p>
 		</div>
 
-		{#if form?.error}
-			<CustomAlert type="error" message={form.message} />
-		{/if}
-
 		<!-- Data export (Art. 15 / 20) -->
 		<section class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6">
 			<h2 class="text-lg font-semibold text-tinte-900 dark:text-white">{texts.account.export.title}</h2>
@@ -77,17 +73,24 @@
 		use:enhance={() => {
 			isDeleting = true;
 			return async ({ update }) => {
-				await update();
+				// keep the typed values on error so the user only fixes the password
+				await update({ reset: false });
 				isDeleting = false;
 			};
 		}}
 		class="space-y-4"
+		autocomplete="off"
 	>
+
 		<p class="text-sm text-tinte-700 dark:text-tinte-300">{texts.account.delete.description}</p>
+
+		{#if form?.error}
+			<CustomAlert type="error" message={form.message} />
+		{/if}
 
 		<div>
 			<Label for="confirmText" class="mb-1">{texts.account.delete.confirmPhraseLabel}</Label>
-			<Input id="confirmText" bind:value={confirmText} autocomplete="off" />
+			<Input id="confirmText" name="confirmPhrase" bind:value={confirmText} autocomplete="off" />
 		</div>
 
 		<div>
@@ -98,7 +101,7 @@
 				type="password"
 				bind:value={password}
 				placeholder={texts.account.delete.passwordPlaceholder}
-				autocomplete="current-password"
+				autocomplete="new-password"
 			/>
 		</div>
 
