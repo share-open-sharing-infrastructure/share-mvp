@@ -7,7 +7,7 @@
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
 	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
-	import { setupPushSubscription } from '$lib/utils/pushSubscription';
+	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
@@ -59,6 +59,22 @@
 		syncClientPBAuth(data.pbAuthToken ?? null, data.currentUser ?? null);
 	});
 
+	// Register/refresh this device's push subscription whenever the logged-in user
+	// changes. Login is a client-side navigation that does NOT remount this layout,
+	// so an onMount-only registration would miss it — leaving the user without a
+	// subscription until a hard reload (a regression once logout tears the previous
+	// subscription down). The tracked id makes this fire once per user, not on every
+	// invalidateAll().
+	let _pushUserId: string | undefined = undefined;
+	$effect(() => {
+		const granted = 'Notification' in window && Notification.permission === 'granted';
+		// Reads data.currentUser?.id reactively; the helper re-arms on logout (uid
+		// undefined) so a subsequent login of any user — incl. the same one — re-registers.
+		const decision = nextPushRegistration(data.currentUser?.id, _pushUserId, granted);
+		_pushUserId = decision.lastRegisteredUserId;
+		if (decision.register) setupPushSubscription();
+	});
+
 	onMount(() => {
 		// Capture Chrome/Edge's install prompt before it shows the mini-infobar
 		window.addEventListener('beforeinstallprompt', (e) => {
@@ -66,17 +82,11 @@
 			installPromptEvent = e as BeforeInstallPromptEvent;
 		});
 
-		// If push permission was already granted on a previous session, re-register
-		// the subscription silently (covers cleared browser data / new device scenarios)
-		if (data.currentUser && 'Notification' in window && Notification.permission === 'granted') {
-			setupPushSubscription();
-		}
-
-		// Set up once at mount rather than in $effect — $effect's cleanup/re-run cycle
-		// tears down and re-creates the subscription on every invalidateAll(), which
-		// causes PocketBase to auto-cancel concurrent getList requests.
-		// Login/logout are full-page navigations in SvelteKit, so remounting handles
-		// user changes correctly without needing $effect reactivity here.
+		// The realtime notification subscription below is set up once at mount, not in
+		// an $effect: an $effect's cleanup/re-run cycle would tear it down and recreate
+		// it on every invalidateAll(), making PocketBase auto-cancel concurrent getList
+		// requests. (Push re-registration is handled by the navigation-reactive $effect
+		// above, because login is a client-side navigation that does not remount here.)
 		const userId = data.currentUser?.id;
 		if (!userId) return;
 

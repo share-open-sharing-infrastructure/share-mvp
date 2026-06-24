@@ -18,6 +18,7 @@
 	import { page } from '$app/state';
 	import { BellOutline, ChevronDownOutline, ChevronRightOutline, GlobeOutline, UserCircleOutline } from 'flowbite-svelte-icons';
 	import FeedbackButton from './FeedbackButton.svelte';
+	import { teardownPushSubscription } from '$lib/utils/pushSubscription';
 
 	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
 		loggedIn: boolean;
@@ -32,6 +33,11 @@
 	);
 
 	async function logout(): Promise<void> {
+		// Detach this device's push subscription while still authenticated, so the
+		// next user on this device does not keep receiving the previous user's
+		// notifications. Must run before the auth store is cleared below.
+		await teardownPushSubscription();
+
 		await fetch('/auth/logout', {
 			method: 'POST',
 		});
