@@ -10,7 +10,7 @@
 		UserAddOutline
 	} from 'flowbite-svelte-icons';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import InviteShareButton from '$lib/components/InviteShareButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 	import type { PageData, ActionData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -140,8 +140,8 @@
 				<Card class="p-4 space-y-3 w-full max-w-none">
 					<Input type="text" readonly value={data.invite.url} class="w-full text-xs" />
 					<div class="flex flex-col sm:flex-row gap-2">
-						<InviteShareButton
-							inviteUrl={data.invite.url}
+						<ShareButton
+							url={data.invite.url}
 							shareText={texts.groups.shareText(data.group.name)}
 							label={texts.groups.shareGroupButton}
 						/>
