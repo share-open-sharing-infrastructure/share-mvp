@@ -96,6 +96,12 @@ export function buildCreateUserPayload(
 		passwordConfirm: fields.password,
 		username: fields.username,
 		inviteCode: newInviteCode,
+		// Legal consent (Issue #399) is NOT set here: the version cache fields are
+		// server-only (not client-writable). The backend `legal.pb.js` users-create
+		// hook stamps the active versions onto the new record and writes the matching
+		// audit records — the registration form's required consent checkbox is what
+		// authorises that. Keeping it server-side means a client can't pre-set bogus
+		// versions to dodge a future re-consent prompt (review #1).
 	};
 	if (inviterId) {
 		payload.invitedBy = inviterId;

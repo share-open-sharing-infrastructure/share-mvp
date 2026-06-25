@@ -62,7 +62,9 @@ src/
 ├── lib/
 │   ├── components/             # Reusable Svelte components
 │   ├── server/                 # Server-only helpers: itemFilters, notifications, registration,
-│   │                           #   lendingTerms, pushSubscriptions, travelTimes, groups (owned/member + counts)
+│   │                           #   lendingTerms, legal (gate cmp), legalDocs (DB reads), pushSubscriptions, travelTimes, groups
+│   ├── legal/                  # just the LegalDocType type now — text + versions live in the
+│   │                           #   `legal_documents` DB collection, read via $lib/server/legalDocs
 │   ├── types/models.ts         # TS interfaces for all PocketBase collections + public views
 │   ├── utils/                  # utils.ts (formatTimestamp, setupPocketBaseSubscription),
 │   │                           #   imageUtils (compressImage), categoryPlaceholder, pushSubscription (client)
@@ -80,6 +82,7 @@ src/
     ├── invite/[slug]/          # invite-link landing (sets invitedBy on register)
     ├── conversations/[conversationId]/  # messaging + lending lifecycle
     ├── items/[id]/             # item detail view
+    ├── legal/                  # ToS/privacy re-consent gate: accept (+ decline) and locked pages
     ├── notifications/          # in-app notification list
     ├── search/                 # browse/search items (logs queries to `searches`)
     ├── social/                 # trust network management
@@ -186,7 +189,7 @@ SQL, and ER/class diagrams):
 
 | Collection | Purpose / key fields |
 |---|---|
-| `users` | `username`, `email`, `city`, `trusts[]`, `preferredTransportMode`, `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio`, `deleted` / `deletedAt` (account-deletion flag — see below). (Geolocation + messenger contacts were moved off `users` into the owner-only collections below.) |
+| `users` | `username`, `email`, `city`, `trusts[]`, `preferredTransportMode`, `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio`, `deleted` / `deletedAt` (account-deletion flag — see below), `tosAcceptedVersion` / `privacyAcceptedVersion` / `legalLocked` (platform legal-consent state, see `user_legal_acceptances`). (Geolocation + messenger contacts were moved off `users` into the owner-only collections below.) |
 | `user_geolocations` | owner-only: `user` (FK), coordinates (GeoPoint). Raw coordinates never exposed via public views. |
 | `user_contacts` | owner-only: `user` (FK), telegram/signal handles (+ `*VisibleToTrustedOnly` flags) |
 | `items` | `name`, `description`, `image` (file), `place`, `owner` (FK), `trusteesOnly`, `groups[]` (FK, shared-with groups), `status`, `categories[]`; institution-only `externalId` / `externalUrl` / `externalImgUrl` |
@@ -198,6 +201,8 @@ SQL, and ER/class diagrams):
 | `notifications` | `recipient`, `sender`, `type`, `relatedId`, `body` (German text), `read` |
 | `lending_terms` | versioned institutional terms of use: `owner`, `version`, `title`, `body`, `effectiveFrom`, `active`, `minAge` |
 | `term_acceptances` | acceptance audit trail: `user`, `terms` (FK), `acceptedAt`, `confirmedAdult`, plus snapshots of the terms text/version |
+| `legal_documents` | platform ToS/privacy text + versions (Issue #399, single source of truth): `docType` (`tos`\|`privacy`), `version`, `title`, `effectiveDate`, `body` (HTML), `active`. Active row world-readable; create/update/delete admin-only (operator edits in PB admin). One active row per docType. |
+| `user_legal_acceptances` | immutable consent audit trail (Issue #399): `user` (FK, cascade), `docType`, `version`, `decision` (`accepted`\|`declined`), `acceptedAt`, `bodySnapshot`, `userIp`, `userAgent`. **`createRule = null`** — written only by the `legal.pb.js` hooks (superuser), never the client. |
 | `push_subscriptions` | `user` (FK), `endpoint`, `p256dh`, `auth` |
 | `deleted_accounts` | restricted audit store written on account deletion: `user` (FK), `email`, `username`, `deletedAt` — **superuser-only access rules**, holds retained identifiers for the dispute-resolution window |
 | `outbound_clicks` | analytics for `/api/redirect`: `destination`, `source_page`, `item` |
@@ -214,7 +219,8 @@ SQL, and ER/class diagrams):
 `src/hooks.server.ts` runs `sequence(authentication, authorization)` on every request:
 
 - **Authentication** — loads PocketBase auth from cookies, refreshes the token, sets `locals.user`
-- **Authorization** — redirects unauthenticated users to `/auth/login` (preserving `redirectTo`)
+- **Authorization** — redirects unauthenticated users to `/auth/login` (preserving `redirectTo`),
+  then applies the legal-consent gate (below)
 
 Unprotected path prefixes (`unprotectedPrefix` in `hooks.server.ts`): `/auth/login`,
 `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`, `/misc`, `/invite`,
@@ -245,6 +251,24 @@ Self-service account deletion (Art. 17) and data export (Art. 15/20) live at `/u
 Deleted users' names are masked everywhere via `displayName()` in `$lib/utils/utils.ts` —
 **never render `user.username` directly** for a user that might be deleted. A future "phase 2"
 purge job (not yet built) uses `deletedAt` to finally remove the retained identifiers.
+
+**Legal-consent gate** (Issue #399): the legal **text + current version of each document live in the
+`legal_documents` PocketBase collection** (not hard-coded), editable by an operator in the PB admin —
+read server-side via `$lib/server/legalDocs` (`getActiveLegalDocs` / `getActiveLegalVersions`, the
+latter cached ~60s for the hot path). A logged-in user whose `tosAcceptedVersion`/`privacyAcceptedVersion`
+cache doesn't match the active versions is redirected to `/legal/accept`; one who declined (`legalLocked`)
+to `/legal/locked`. Gate-exempt prefixes (`legalGateExempt`): `/legal`, `/auth`, `/misc`,
+`/api/diagnostics`, `/api/redirect`.
+
+Consent state is **server-authoritative** — none of it is client-writable (review-hardened): the version
+cache + `legalLocked` are excluded from the users `updateRule`, and `user_legal_acceptances` has
+`createRule = null`. The accept/decline flows therefore call the backend hooks `POST /api/legal/accept`
+and `/api/legal/decline` (in `allerleih-backend/pb_hooks/legal.pb.js`, superuser context): they snapshot
+the body from the active `legal_documents` row, write the immutable audit record, refresh the version
+cache, and (accept) clear the lock — atomically. A locked user self-recovers by accepting on `/legal/accept`
+(the locked page links there); an admin can also clear `legalLocked` in the PB admin UI. The backend also
+enforces the lock at the data layer (a locked user's record mutations are rejected) and stamps
+registration-time consent on user create. `$lib/server/legal` is now pure (gate comparison only, no writes).
 
 ## Push notifications
 

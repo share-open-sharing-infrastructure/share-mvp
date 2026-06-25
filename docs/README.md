@@ -10,6 +10,7 @@ Documentation for [AllerLeih](https://github.com/share-open-sharing-infrastructu
 - [testing-strategy.md](testing-strategy.md) — testing approach (Vitest unit tests), CI integration, and example patterns.
 - [text-management.md](text-management.md) — centralized German UI string system (`src/lib/texts.ts`) and full category reference.
 - [operations/onboarding-institutional-partner.md](operations/onboarding-institutional-partner.md) — step-by-step checklist for onboarding a new institutional partner (library, lending shop).
+- [operations/updating-legal-documents.md](operations/updating-legal-documents.md) — how an operator edits the ToS / privacy text and publishes a new version that triggers re-consent (Issue #399).
 
 **Key source files:**
 - `src/lib/types/models.ts` — canonical TypeScript types for all PocketBase collections

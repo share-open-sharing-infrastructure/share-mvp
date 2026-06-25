@@ -25,11 +25,38 @@ erDiagram
         string inviteCode
         string invitedBy FK
         User[] trusts FK
+        string tosAcceptedVersion "legal-consent cache (Issue #399) — server-only"
+        string privacyAcceptedVersion "legal-consent cache — server-only"
+        bool legalLocked "decline lock — set/cleared only by backend hooks"
         date created
         date updated
     }
 
     USER 1 to zero or more USER: "trusts"
+
+    USER_LEGAL_ACCEPTANCE{
+        string id PK
+        User user FK
+        string docType "tos|privacy"
+        string version
+        string decision "accepted|declined"
+        date acceptedAt
+        string bodySnapshot "rendered document at decision time"
+        string userIp
+        string userAgent
+    }
+
+    USER 1 to zero or more USER_LEGAL_ACCEPTANCE: "ToS/privacy consent audit (immutable)"
+
+    LEGAL_DOCUMENT{
+        string id PK
+        string docType "tos|privacy"
+        string version
+        string title
+        string effectiveDate
+        string body "HTML — operator-managed; snapshotted on consent"
+        bool active "exactly one active row per docType"
+    }
 
     USER_GEOLOCATION{
         string id PK
@@ -262,6 +289,39 @@ routine will drive auto-deletion of long-inactive accounts.
 Login for a `deleted` account is blocked by an `onRecordAuthRequest` hook and, defensively, in
 `hooks.server.ts`. In the app, **never render `user.username` directly** — use `displayName()`
 (`$lib/utils/utils.ts`), which masks deleted accounts.
+
+## Platform legal consent (`legal_documents`, `user_legal_acceptances`)
+
+Issue #399. The platform's ToS and privacy statement are versioned **in the database**, not in
+code — so an operator can edit them in the PocketBase admin without a deploy (AllerLeih is meant
+to be self-hostable).
+
+- **`legal_documents`** — source of truth for each document's text + current version
+  (`docType`, `version`, `title`, `effectiveDate`, `body` HTML, `active`). Rules: `listRule` /
+  `viewRule` = `active = true` (the active row is world-readable, so unauthenticated `/misc/tos`
+  and `/misc/privacy` can render it); `createRule` / `updateRule` / `deleteRule` = `null`
+  (admin-only — the operator edits in the dashboard). A partial unique index
+  (`(docType) WHERE active = 1`) guarantees exactly one active row per type. **Publishing a new
+  version** = deactivate the current row and insert a new `active` row with a higher `version`;
+  the next request re-gates everyone whose accepted version no longer matches.
+- **`user_legal_acceptances`** — immutable audit trail (one row per decision). `createRule = null`
+  and `update`/`deleteRule = null`: rows are written **only** by the backend `legal.pb.js` hooks
+  in superuser context, never by a client. `version` + `bodySnapshot` are copied server-side from
+  the active `legal_documents` row, and `acceptedAt` / `userIp` / `userAgent` are server-stamped,
+  so the trail cannot be forged. The `user` relation cascade-deletes with the user.
+
+The consent state on `users` (`tosAcceptedVersion`, `privacyAcceptedVersion`, `legalLocked`) is
+**server-only**: all three are excluded from the users `updateRule`, so a client cannot bypass the
+consent gate or self-clear a lock. All transitions go through `POST /api/legal/accept` and
+`/api/legal/decline` (transactional, superuser). A declined account is `legalLocked` and is blocked
+from mutating data both in the SvelteKit gate (`hooks.server.ts`) and at the PocketBase layer
+(record-request guards, plus an explicit check on the mutating `group-invite/join` route; the
+user's own exit/data-rights routes — account deletion + export — are intentionally left
+reachable). Accepting the current terms clears the lock in the same transaction. See
+[domain-model.md](domain-model.md) for the flow.
+
+> Note: registration (and any operator/admin-created user) is treated as consent to the active
+> versions — the `users` create hook stamps the version cache and writes the acceptance records.
 
 ## items_public and items_searchable Views
 
