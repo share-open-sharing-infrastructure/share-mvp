@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Gallery } from 'flowbite-svelte';
+	import { itemImageUrl } from '$lib/utils/utils';
 	import ItemCard from './ItemCard.svelte';
 	import type { ItemPublic } from '$lib/types/models';
 
@@ -22,7 +23,7 @@
 	{#each filteredItemList as item (item.id)}
 		<ItemCard
 			{item}
-			imgUrl={item.image ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}` : (item.externalImgUrl ?? '')}
+			imgUrl={itemImageUrl(PB_IMG_URL, item) ?? ''}
 			ownerImgUrl={item.profileImage
 				? `${PB_IMG_URL}api/files/users/${item.userId}/${item.profileImage}`
 				: undefined}
