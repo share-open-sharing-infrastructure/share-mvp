@@ -140,3 +140,67 @@ time — `teardown()` clears all `@seed.test` data before the chosen scenario ru
 ## CI Integration
 
 Tests run automatically on every pull request to `main` via GitHub Actions (`.github/workflows/vitest.yaml`). Coverage is reported as a PR comment via `davelosert/vitest-coverage-report-action` (json + lcov artifacts are also uploaded for download). The build step (`npm run build`) runs in the same workflow, catching TypeScript and Svelte compilation errors before merging.
+
+## Testing over HTTPS locally (secure-context features)
+
+Some browser APIs only work in a **secure context** — HTTPS or `localhost`. The most common
+case is the native share sheet (`navigator.share`, used by
+[`ShareButton.svelte`](/src/lib/components/ShareButton.svelte)): on a phone reaching the dev
+server over a plain `http://192.168.x.x` LAN address, `navigator.share` and
+`navigator.clipboard` are undefined, so the share button silently falls back to copying the
+link. To exercise the real native-share behaviour you need to serve the dev server over HTTPS.
+
+We use [`vite-plugin-mkcert`](https://github.com/liuweiGL/vite-plugin-mkcert) for this. It is
+already wired into [`vite.config.ts`](/vite.config.ts):
+
+```ts
+import mkcert from 'vite-plugin-mkcert';
+
+export default defineConfig({
+	plugins: [tailwindcss(), sveltekit(), mkcert()],
+	server: { host: true } // expose on the LAN so a phone can reach it
+});
+```
+
+### Usage
+
+1. `npm run dev` — on first run mkcert generates and installs a local CA, then the dev server
+   restarts and serves over `https://`.
+2. Note the **Network** URL Vite prints (e.g. `https://192.168.1.42:5173`) and open it on the
+   phone (same Wi-Fi). Accept the certificate warning — the device doesn't trust the local CA,
+   which is fine for manual testing.
+3. With a secure context, `navigator.share` is now defined, so the share button opens the
+   real native share sheet instead of the copy-link fallback.
+
+### Required workaround: `__BUNDLED_DEV__` define
+
+Vite 8.0.x has a bug ([vitejs/vite#22419](https://github.com/vitejs/vite/issues/22419)) where
+a dev-server restart — exactly what mkcert triggers to install its cert — causes Vite to serve
+`/@vite/client` with two build-time constants left **unreplaced**. The browser then throws:
+
+```
+Uncaught (in promise) ReferenceError: __BUNDLED_DEV__ is not defined
+```
+
+This aborts the Vite client before any app code hydrates, so the whole page goes dead (no
+interactivity at all — not just the share button). The fix is already applied in
+[`vite.config.ts`](/vite.config.ts): we define the leaked constants explicitly.
+
+```ts
+define: {
+	__BUNDLED_DEV__: 'false',
+	__SERVER_FORWARD_CONSOLE__: 'false'
+},
+```
+
+Both default to `false` in normal dev, and the identifiers are Vite-internal (they never
+appear in app code), so this is safe for the production build too. **Remove this block once
+Vite ships a fix and we bump the dependency past it.**
+
+### Troubleshooting
+
+- **Still seeing `__BUNDLED_DEV__ is not defined`** after the fix is present: restart
+  `npm run dev` and hard-reload the page so the stale `/@vite/client` isn't served from cache.
+- **Page still dead on the phone**: this is a PWA with a service worker
+  ([`src/service-worker.ts`](/src/service-worker.ts)) that can cache the old client. Clear the
+  site's data / unregister the service worker on the device, then reload.
