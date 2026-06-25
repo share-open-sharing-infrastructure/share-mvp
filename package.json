@@ -14,7 +14,8 @@
 		"lint": "eslint . --ext .ts,.svelte,.js",
 		"lint:fix": "eslint . --ext .ts,.svelte,.js --fix",
 		"format": "prettier --write .",
-		"test": "vitest"
+		"test": "vitest",
+		"seed": "node scripts/seed.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.1",

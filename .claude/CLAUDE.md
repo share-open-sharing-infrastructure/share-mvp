@@ -31,6 +31,12 @@ npm run format     # Prettier
 npm run test       # Vitest in WATCH mode
 npx vitest run                       # run all tests once (CI-style)
 npx vitest run src/path/to/file.test.ts  # run a single test file
+
+# Seed a running PocketBase with deterministic test data. Scenarios live in
+# scripts/seed/scenarios/ (one file per feature); shared helpers in scripts/seed/lib.js.
+# Idempotent; only touches its own `@seed.test` records. Requires superuser creds.
+npm run seed                                   # lists available scenarios
+PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- account-deletion
 ```
 
 ## Environment variables
@@ -56,7 +62,7 @@ src/
 ├── lib/
 │   ├── components/             # Reusable Svelte components
 │   ├── server/                 # Server-only helpers: itemFilters, notifications, registration,
-│   │                           #   lendingTerms, pushSubscriptions, travelTimes
+│   │                           #   lendingTerms, pushSubscriptions, travelTimes, groups (owned/member + counts)
 │   ├── types/models.ts         # TS interfaces for all PocketBase collections + public views
 │   ├── utils/                  # utils.ts (formatTimestamp, setupPocketBaseSubscription),
 │   │                           #   imageUtils (compressImage), categoryPlaceholder, pushSubscription (client)
@@ -77,9 +83,10 @@ src/
     ├── notifications/          # in-app notification list
     ├── search/                 # browse/search items (logs queries to `searches`)
     ├── social/                 # trust network management
-    ├── user/                   # current user's profile, items, bulk import
+    ├── groups/                 # group join pages: join/[token] (invite), [id] (public self-join)
+    ├── user/                   # current user's profile, items, bulk import, groups (user/groups)
     ├── users/[id]/             # other users' public profiles
-    ├── misc/                   # static pages (about, contact, imprint)
+    ├── misc/                   # static/legal pages (about, contact, guide, imprint, newsletter, privacy, tos)
     └── sitemap.xml/            # generated sitemap
 docs/                           # Architecture docs — read before structural changes (see below)
 ```
@@ -179,14 +186,20 @@ SQL, and ER/class diagrams):
 
 | Collection | Purpose / key fields |
 |---|---|
-| `users` | `username`, `email`, `city`, `trusts[]`, `geolocation` (GeoPoint), `preferredTransportMode`, telegram/signal contacts (+ `*VisibleToTrustedOnly`), `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio` |
-| `items` | `name`, `description`, `image` (file), `place`, `owner` (FK), `trusteesOnly`, `status`, `categories[]`; institution-only `externalId` / `externalUrl` / `externalImgUrl` |
+| `users` | `username`, `email`, `city`, `trusts[]`, `preferredTransportMode`, `inviteCode`, `invitedBy`, `hasOnboarded`, `verified`, `isInstitution`, `profileImage`, `bio`, `deleted` / `deletedAt` (account-deletion flag — see below). (Geolocation + messenger contacts were moved off `users` into the owner-only collections below.) |
+| `user_geolocations` | owner-only: `user` (FK), coordinates (GeoPoint). Raw coordinates never exposed via public views. |
+| `user_contacts` | owner-only: `user` (FK), telegram/signal handles (+ `*VisibleToTrustedOnly` flags) |
+| `items` | `name`, `description`, `image` (file), `place`, `owner` (FK), `trusteesOnly`, `groups[]` (FK, shared-with groups), `status`, `categories[]`; institution-only `externalId` / `externalUrl` / `externalImgUrl` |
+| `groups` | `name`, `description`, `owner` (FK), `isPublic` (public ⇒ world-readable + self-join). See [docs/groups.md](../docs/groups.md) |
+| `group_members` | join table: `group` (FK), `user` (FK), `role` (`admin`\|`member`; owner stored as `admin`); unique `(group,user)` |
+| `group_invites` | `group` (FK), `token`, `expiresAt?`, `maxUses` (0=∞), `uses`, `createdBy`; resolved via elevated `/api/group-invite/{token}` hooks |
 | `conversations` | `requester`, `itemOwner`, `requestedItem`, `messages[]`, `readByRequester`, `readByOwner`, `lendingStatus`, `counterfactual` |
 | `messages` | `messageContent`, `from` (FK), `to` (FK) |
 | `notifications` | `recipient`, `sender`, `type`, `relatedId`, `body` (German text), `read` |
 | `lending_terms` | versioned institutional terms of use: `owner`, `version`, `title`, `body`, `effectiveFrom`, `active`, `minAge` |
 | `term_acceptances` | acceptance audit trail: `user`, `terms` (FK), `acceptedAt`, `confirmedAdult`, plus snapshots of the terms text/version |
 | `push_subscriptions` | `user` (FK), `endpoint`, `p256dh`, `auth` |
+| `deleted_accounts` | restricted audit store written on account deletion: `user` (FK), `email`, `username`, `deletedAt` — **superuser-only access rules**, holds retained identifiers for the dispute-resolution window |
 | `outbound_clicks` | analytics for `/api/redirect`: `destination`, `source_page`, `item` |
 | `searches` | search-query analytics: `query`, `categories` |
 | `feedback` | `feedbackMessage`, `route`, `device`, `viewportSize`, `browser`, `browserVersion` |
@@ -205,8 +218,33 @@ SQL, and ER/class diagrams):
 
 Unprotected path prefixes (`unprotectedPrefix` in `hooks.server.ts`): `/auth/login`,
 `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`, `/misc`, `/invite`,
-`/sitemap.xml`, `/api/redirect`, `/api/diagnostics`. Everything else — including `/` (home)
-— requires authentication.
+`/sitemap.xml`, `/api/redirect`, `/api/diagnostics`, `/auth/account-deleted`. Everything else —
+including `/` (home) — requires authentication.
+
+## Account deletion & GDPR
+
+Self-service account deletion (Art. 17) and data export (Art. 15/20) live at `/user/account`
+(linked from the profile page). The heavy lifting runs in the **backend PocketBase hooks**
+(`allerleih-backend/pb_hooks/account.pb.js` + `services/account.js`), which have superuser
+`$app` access — required to edit other users' records during anonymization:
+
+- `DELETE /api/account` (body `{ password }`) — re-auth, refuses if a loan is still open
+  (`accepted`/`active`/`return_requested`), then in a transaction: copies `email`+`username`
+  into the restricted `deleted_accounts` collection, hard-deletes personal-only data
+  (contacts, geolocation, push subs, own notifications, and items nobody requested — items
+  referenced by a conversation are kept as `unavailable` since `requestedItem` is required),
+  removes the user from every other user's `trusts[]`, and anonymizes the live `users` row in
+  place (placeholder
+  `username`/`email`, `deleted=true`, random password). Shared/audit data (messages,
+  conversations, `term_acceptances`) is **retained** and resolves to "Gelöschtes Konto".
+- `GET /api/account/export` — machine-readable JSON of all the caller's data; proxied to the
+  browser as a download by `src/routes/user/account/export/+server.ts`.
+- `onRecordAuthRequest` (users) blocks login for `deleted=true` accounts; `hooks.server.ts`
+  enforces the same defensively.
+
+Deleted users' names are masked everywhere via `displayName()` in `$lib/utils/utils.ts` —
+**never render `user.username` directly** for a user that might be deleted. A future "phase 2"
+purge job (not yet built) uses `deletedAt` to finally remove the retained identifiers.
 
 ## Push notifications
 
@@ -255,6 +293,7 @@ update the corresponding section here in the same change so the file never drift
 - [docs/best-practices.md](../docs/best-practices.md) — CRUD form patterns and conventions
 - [docs/data-model.md](../docs/data-model.md) — collection schemas + public-view SQL
 - [docs/domain-model.md](../docs/domain-model.md) — class diagrams and domain relationships
+- [docs/groups.md](../docs/groups.md) — groups feature: roles, public/self-join, visibility model
 - [docs/testing-strategy.md](../docs/testing-strategy.md) — testing approach + mock examples
 - [docs/text-management.md](../docs/text-management.md) — UI string organization
 - [docs/operations/](../docs/operations/) — operational runbooks (e.g. institutional onboarding)

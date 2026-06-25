@@ -10,6 +10,7 @@
 		name: string;
 		description: string;
 		categories: string[];
+		groups: string[];
 		trusteesOnly: boolean;
 		status: DraftStatus;
 	};
@@ -34,6 +35,7 @@
 				name: '',
 				description: '',
 				categories: [],
+				groups: [],
 				trusteesOnly: true,
 				status: 'pending' as DraftStatus,
 			}));

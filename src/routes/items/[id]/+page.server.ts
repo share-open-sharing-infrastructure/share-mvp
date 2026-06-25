@@ -38,16 +38,18 @@ export async function load({ params, locals }) {
 		}
 	}
 
-	const isTrustRestricted =
-		item.trusteesOnly && isAuthenticated && !isOwnItem && !ownerTrustsViewer;
-
-	// items_public masks trustees-only items (name/image/description are NULL). The owner
-	// and trusted viewers may see full details, read here from the trust-filtered
-	// `items_searchable` view. We must take the image (and its `collectionId`) from that
-	// view too: the file URL is built from `collectionId`, and items_public masks the
-	// image to NULL, so a URL pointing at items_public 404s. items_searchable exposes the
-	// un-masked file (same view search uses), so its file URL resolves in the browser.
-	if (item.trusteesOnly && (isOwnItem || ownerTrustsViewer)) {
+	// items_public masks RESTRICTED items (trustees-only OR shared with a group):
+	// name/image/description come back NULL. The owner, trusted viewers and members
+	// of an attached group may see full details. The base `items` rule permits the
+	// read only for those, so a successful privileged fetch is itself the
+	// authorization signal — covering trust AND group access without re-deriving
+	// either here. (We key off the mask, not trusteesOnly, so group-only items work.)
+	// We read full fields from the trust/group-filtered `items_searchable` view —
+	// incl. `collectionId` and the un-masked `image` — so the image file URL resolves
+	// (a URL built from the items_public row would 404, since its image is NULL).
+	const wasMasked = item.name == null;
+	let viewerHasFullAccess = !wasMasked; // unmasked == public == visible to everyone
+	if (wasMasked && currentUserId) {
 		try {
 			const full = await locals.pb.collection('items_searchable').getOne(item.id, {
 				fields: 'collectionId,name,image,externalImgUrl,externalUrl,description',
@@ -58,10 +60,13 @@ export async function load({ params, locals }) {
 			item.externalImgUrl = full.externalImgUrl;
 			item.externalUrl = full.externalUrl;
 			item.description = full.description;
-		} catch (err) {
-			console.error('Failed to load trusted item details', err);
+			viewerHasFullAccess = true;
+		} catch {
+			// No access (or not logged in) -> details stay masked.
 		}
 	}
+
+	const isTrustRestricted = wasMasked && isAuthenticated && !viewerHasFullAccess;
 
 	// Find an in-progress conversation for this viewer + item so the CTA can link
 	// to it instead of creating a duplicate. We exclude rejected/completed states
@@ -71,7 +76,10 @@ export async function load({ params, locals }) {
 	if (currentUserId && !isOwnItem) {
 		try {
 			const conv = await locals.pb.collection('conversations').getFirstListItem(
-				`requester="${currentUserId}" && requestedItem="${item.id}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				locals.pb.filter(
+					'requester={:uid} && requestedItem={:iid} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+					{ uid: currentUserId, iid: item.id }
+				),
 				{ sort: '-created', fields: 'id,lendingStatus' }
 			);
 			existingConversation = { id: conv.id, lendingStatus: conv.lendingStatus };
@@ -117,7 +125,7 @@ export async function load({ params, locals }) {
 		viewerTrustsOwner,
 		ownerTrustsViewer,
 		ownerItemCount,
-		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
+		preferredTransportMode: locals.user?.preferredTransportMode || 'bicycle',
 		existingConversation,
 		requiresTermsAcceptance,
 		ownerHasLocation: !!item.ownerHasLocation,

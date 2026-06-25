@@ -17,8 +17,12 @@ export const GET: RequestHandler = async ({ locals }) => {
 	const today = new Date().toISOString().split('T')[0];
 
 	const [items, users] = await Promise.all([
+		// Use items_searchable, not base items: for an anonymous crawler its rule
+		// yields exactly the public items (base items requires auth -> would be
+		// empty), and it carries no conversation clause, so conversation-scoped
+		// items never leak into the sitemap.
 		locals.pb
-			.collection('items')
+			.collection('items_searchable')
 			.getFullList({ fields: 'id,updated', filter: 'status = "available"' }),
 		locals.pb.collection('users').getFullList({ fields: 'id,updated' }),
 	]);

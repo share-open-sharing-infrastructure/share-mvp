@@ -22,6 +22,13 @@ export async function load({ locals, url }) {
 		result = await locals.pb.collection('items_searchable').getList<ItemPublic>(fetchPage, fetchPerPage, {
 			sort: fetchSort,
 			filter,
+			// Explicit allowlist: the view carries an `items.groups` column purely so
+			// its row-level rule can traverse group membership; it must NOT be returned
+			// to clients (it would disclose to a viewing member the IDs of other groups
+			// an item is shared with). PocketBase can't hide a single view column, so we
+			// exclude it at the query layer.
+			fields:
+				'id,name,image,externalImgUrl,externalUrl,description,trusteesOnly,status,collectionId,categories,updated,userId,username,isInstitution,bio,verified,profileImage,userCreated,ownerHasLocation',
 		});
 	} catch (error) {
 		console.error('Error fetching items:', error);

@@ -5,6 +5,7 @@
 	import { HeartSolid } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { itemImageUrl } from '$lib/utils/utils';
 	import type { ItemPublic, UserPublic } from '$lib/types/models';
 	import ItemImage from './ItemImage.svelte';
 	import ItemTravelTime from './ItemTravelTime.svelte';
@@ -31,11 +32,7 @@
 
 	const shareUrl = $derived(`${page.url.origin}/items/${item.id}`);
 
-	const imageUrl = $derived(
-		item.image
-			? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
-			: (item.externalImgUrl ?? null)
-	);
+	const imageUrl = $derived(itemImageUrl(data.PB_IMG_URL, item));
 
 	const ownerImageUrl = $derived(
 		owner.profileImage
@@ -53,9 +50,7 @@
 				)
 	);
 	const seoImage = $derived(
-		item.image
-			? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
-			: 'https://allerleih.org/og-invite.png'
+		itemImageUrl(data.PB_IMG_URL, item) ?? 'https://allerleih.org/og-invite.png'
 	);
 </script>
 
