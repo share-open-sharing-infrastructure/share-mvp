@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { displayName } from '$lib/utils/utils';
 	import ProfileHeader from './ProfileHeader.svelte';
+	import { page } from '$app/state';
 	import TrustSection from './TrustSection.svelte';
 	import ItemsSection from './ItemsSection.svelte';
+	import {displayName} from '$lib/utils/utils';
 
 	const { data } = $props();
 
@@ -25,6 +26,8 @@
 					.format(new Date(data.profileUser.created))
 			: ''
 	);
+
+	const shareUrl = $derived(`${page.url.origin}/users/${data.profileUser.id}`);
 </script>
 
 <svelte:head>
@@ -36,22 +39,14 @@
 </svelte:head>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">
-	{#if data.isDeleted}
-		<!-- Tombstone for a deleted (anonymized) account -->
-		<div class="text-center py-16 space-y-3">
-			<h1 class="text-2xl font-bold text-tinte-700 dark:text-tinte-200">{profileName}</h1>
-			<p class="text-tinte-500 dark:text-tinte-400 max-w-md mx-auto">
-				{texts.account.deletedProfileNotice}
-			</p>
-		</div>
-	{:else}
-		<ProfileHeader
-			username={profileName}
-			{profileImageUrl}
-			verified={data.profileUser.verified}
-			isInstitution={data.profileUser.isInstitution}
-			{activeSinceDate}
-		/>
+	<ProfileHeader
+		username={data.profileUser.username}
+		{profileImageUrl}
+		verified={data.profileUser.verified}
+		isInstitution={data.profileUser.isInstitution}
+		{activeSinceDate}
+		{shareUrl}
+	/>
 
 		{#if data.profileUser.bio}
 			<div class="space-y-1">
@@ -77,5 +72,4 @@
 			pbImgUrl={data.PB_IMG_URL}
 			loggedIn={data.loggedIn}
 		/>
-	{/if}
 </div>

@@ -2,6 +2,7 @@
 	import { UserCircleOutline, HomeOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 
 	interface Props {
 		username: string;
@@ -9,9 +10,10 @@
 		verified?: boolean;
 		isInstitution?: boolean;
 		activeSinceDate: string;
+		shareUrl: string;
 	}
 
-	const { username, profileImageUrl, verified, isInstitution, activeSinceDate }: Props = $props();
+	const { username, profileImageUrl, verified, isInstitution, activeSinceDate, shareUrl }: Props = $props();
 </script>
 
 <div class="flex items-center gap-6">
@@ -29,6 +31,7 @@
 			<h1 class="text-2xl font-bold text-tinte-900 dark:text-white">
 				{username}
 			</h1>
+			<ShareButton url={shareUrl} title={`@${username}`} />
 		</div>
 		{#if verified}
 			<p class="flex items-center gap-1 text-sm text-green-600 font-medium">
