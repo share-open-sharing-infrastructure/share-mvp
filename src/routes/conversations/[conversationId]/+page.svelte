@@ -3,6 +3,7 @@
 	import type PocketBase from 'pocketbase';
 	import type { RecordSubscription } from 'pocketbase';
 	import { onMount, untrack } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { getClientPB } from '$lib/client-pb';
 
@@ -147,7 +148,17 @@
 	$effect(() => {
 		if (!pb) return;
 		const id = untrack(() => data.conversation.id);
-		const cleanup = setupPocketBaseSubscription(pb, 'conversations', id, handleConversationEvent);
+		const cleanup = setupPocketBaseSubscription(
+			pb,
+			'conversations',
+			id,
+			handleConversationEvent,
+			// Messages sent while the stream was down (e.g. the phone was asleep)
+			// aren't replayed by realtime — refetch the conversation on reconnect
+			// so the missing messages appear. Fixes the "doesn't update for one
+			// party" symptom in #435.
+			() => invalidateAll()
+		);
 		return cleanup;
 	});
 </script>

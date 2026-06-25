@@ -175,8 +175,15 @@ with `compressImage()` from `$lib/utils/imageUtils`. Items may instead carry an
 
 ### Real-time subscriptions
 
-Use `setupPocketBaseSubscription()` from `$lib/utils/utils` for client-side PocketBase
-realtime (e.g. live chat). It returns an unsubscribe function suitable for `$effect` cleanup.
+Use `subscribeRealtime()` from `$lib/client-pb` (or its thin wrapper
+`setupPocketBaseSubscription()` in `$lib/utils/utils`) for client-side PocketBase realtime
+(e.g. live chat). Both return an unsubscribe function suitable for `$effect`/`onMount`
+cleanup. Do **not** call `pb.collection(x).subscribe()` directly — the resilient layer adds
+retry on connect failure (the SDK gives up permanently on a first-attempt
+"Invalid realtime client" 400) and re-establishes subscriptions after a network drop or a
+mobile tab background-freeze (which silently kills the SSE stream without an error event).
+Pass an optional `onReconnect` callback to refetch state that may have changed while the
+stream was down — live events are not replayed (issue #435).
 
 ## Data model
 

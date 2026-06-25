@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import ConversationList from './ConversationList.svelte';
-	import { getClientPB } from '$lib/client-pb';
+	import { getClientPB, subscribeRealtime } from '$lib/client-pb';
 	import { page } from '$app/state';
+	import { invalidateAll } from '$app/navigation';
 	import { onMount, untrack } from 'svelte';
 	import type { Conversation } from '$lib/types/models';
 
@@ -95,31 +96,36 @@
 	onMount(() => {
 		const pb = getClientPB();
 
-		pb.collection('conversations').subscribe('*', async (e) => {
-			if (e.action === 'update') {
-				conversations = conversations.map((c) =>
-					c.id === e.record.id
-						? { ...c, readByOwner: e.record.readByOwner, readByRequester: e.record.readByRequester }
-						: c
-				);
-			} else if (e.action === 'create') {
-				if (conversations.some((c) => c.id === e.record.id)) return;
-				try {
-					// Subscription events don't include expanded relations — fetch the full record.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					const full: any = await pb.collection('conversations').getOne(e.record.id, {
-						expand: 'requester,itemOwner,requestedItem'
-					});
-					conversations = [...conversations, full];
-				} catch {
-					// Record may have been deleted before we could fetch it — ignore silently.
+		// Resilient subscription: retries a failed connect and re-establishes itself
+		// after a network drop / mobile background-freeze. See #435.
+		return subscribeRealtime({
+			collection: 'conversations',
+			topic: '*',
+			handler: async (e) => {
+				if (e.action === 'update') {
+					conversations = conversations.map((c) =>
+						c.id === e.record.id
+							? { ...c, readByOwner: e.record.readByOwner, readByRequester: e.record.readByRequester }
+							: c
+					);
+				} else if (e.action === 'create') {
+					if (conversations.some((c) => c.id === e.record.id)) return;
+					try {
+						// Subscription events don't include expanded relations — fetch the full record.
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						const full: any = await pb.collection('conversations').getOne(e.record.id, {
+							expand: 'requester,itemOwner,requestedItem'
+						});
+						conversations = [...conversations, full];
+					} catch {
+						// Record may have been deleted before we could fetch it — ignore silently.
+					}
 				}
-			}
+			},
+			// Conversations created/updated while the stream was down won't replay —
+			// refetch the list so the sidebar is correct after reconnecting.
+			onReconnect: () => invalidateAll()
 		});
-
-		return () => {
-			pb.collection('conversations').unsubscribe('*');
-		};
 	});
 </script>
 

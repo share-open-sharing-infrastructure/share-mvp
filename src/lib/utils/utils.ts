@@ -72,38 +72,37 @@ export function formatTimestamp(
 	return returnString;
 }
 
-import PocketBase from 'pocketbase';
+import type PocketBase from 'pocketbase';
 import type { RecordSubscription } from 'pocketbase';
+import { subscribeRealtime } from '$lib/client-pb';
 
 /**
  * Sets up a PocketBase real-time subscription for the respective collection and record, and unsubscribes on cleanup.
- * @param pocketBaseInstance A PocketBase instance to subscribe to
+ *
+ * Delegates to {@link subscribeRealtime}, which adds retry-on-connect-failure and
+ * automatic recovery when the network returns or the tab is foregrounded again
+ * (mobile browsers silently freeze the SSE stream when backgrounded — issue #435).
+ *
+ * @param _pocketBaseInstance Ignored — the shared singleton from getClientPB() is
+ *   always used so all subscriptions multiplex over one EventSource. Kept in the
+ *   signature for backwards compatibility with existing call sites.
  * @param collectionName The collection name to subscribe to
  * @param recordId The record ID to subscribe to, defaults to '*' (all records in the collection)
  * @param eventHandler A callback function to handle incoming subscription events
- * TODO: Check if this needs to be done client-side, maybe it's better to do server-side? Would that work?
+ * @param onReconnect Optional callback run after the stream reconnects — use it to
+ *   refetch state that may have changed while the connection was down.
  */
 export function setupPocketBaseSubscription(
-	pocketBaseInstance: PocketBase,
+	_pocketBaseInstance: PocketBase | undefined,
 	collectionName: string,
 	recordId: string = '*',
-	eventHandler: (event: RecordSubscription<unknown>) => void
+	eventHandler: (event: RecordSubscription<unknown>) => void,
+	onReconnect?: () => void
 ) {
-	// Subscribe to some collection's and record's events
-	pocketBaseInstance
-		?.collection(collectionName)
-		.subscribe(recordId, eventHandler)
-		.catch((error) => {
-			console.error(`Failed to subscribe to ${collectionName}:`, error);
-		});
-
-	// Cleanup: unsubscribe when chat partner changes or component unmounts
-	return (): void => {
-		pocketBaseInstance
-			?.collection(collectionName)
-			.unsubscribe(recordId)
-			.catch((error) => {
-				console.error(`Failed to unsubscribe from ${collectionName}:`, error);
-			});
-	};
+	return subscribeRealtime({
+		collection: collectionName,
+		topic: recordId,
+		handler: eventHandler,
+		onReconnect
+	});
 }
