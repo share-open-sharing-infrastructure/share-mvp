@@ -26,18 +26,51 @@
 
 	let outerEl: HTMLDivElement | undefined = $state();
 
-	// Set the height of the chat container to fill the viewport below the navbar, and update on resize
+	// Lock the document while a conversation route is mounted so the page itself can
+	// never scroll: the chat is a fixed-height app shell, and a scrollable document is
+	// what let the mobile keyboard scroll the whole page down (revealing the footer)
+	// instead of just reflowing the chat. The footer and the root <main> padding still
+	// exist in flow but are simply clipped below the fold. Scoped here (rather than in
+	// the root layout) via mount/unmount, the same pattern modals use for scroll-locking.
+	$effect(() => {
+		const html = document.documentElement;
+		const body = document.body;
+		const prevHtml = html.style.overflow;
+		const prevBody = body.style.overflow;
+		html.style.overflow = 'hidden';
+		body.style.overflow = 'hidden';
+		return () => {
+			html.style.overflow = prevHtml;
+			body.style.overflow = prevBody;
+		};
+	});
+
+	// Size the chat container to fill the *visual* viewport below the navbar.
+	// Using visualViewport.height (rather than 100dvh) means the on-screen mobile
+	// keyboard shrinks the container: the message list (flex-1) absorbs the shrink
+	// and the input bar rides up just above the keyboard, matching native chat apps.
+	// The scroll-lock above keeps the page itself from scrolling, so the keyboard only
+	// reflows this container.
 	$effect(() => {
 		if (!outerEl) return;
 
+		const vv = window.visualViewport;
+
 		const update = () => {
 			const top = outerEl!.getBoundingClientRect().top + window.scrollY;
-			outerEl!.style.height = `calc(100dvh - ${top}px)`;
+			const viewportHeight = vv ? vv.height : window.innerHeight;
+			outerEl!.style.height = `${viewportHeight - top}px`;
 		};
 
 		update();
 		window.addEventListener('resize', update);
-		return () => window.removeEventListener('resize', update);
+		vv?.addEventListener('resize', update);
+		vv?.addEventListener('scroll', update);
+		return () => {
+			window.removeEventListener('resize', update);
+			vv?.removeEventListener('resize', update);
+			vv?.removeEventListener('scroll', update);
+		};
 	});
 
 	// Local mutable copy so realtime updates can clear the unread dots.

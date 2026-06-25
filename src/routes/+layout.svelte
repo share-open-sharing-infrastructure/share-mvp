@@ -142,7 +142,7 @@
 		</div>
 	{/if}
 
-	<main class="flex-1 py-8">
+	<main class="flex-1 py-2 sm:py-8">
 		<!--
 			Dev-only workaround. SvelteKit 2 + Svelte 5 in `vite dev` intermittently
 			fails to remove the previous route's DOM from {@render children()} when

@@ -7,6 +7,10 @@
 		chatPartner,
 		isSubmitting = $bindable(),
 		messageText = $bindable(),
+	}: {
+		chatPartner: { id: string };
+		isSubmitting: boolean;
+		messageText: string;
 	} = $props();
 </script>
 
@@ -35,9 +39,13 @@
 		autofocus={true}
 		bind:value={messageText}
 	/>
+	<!-- preventDefault on mousedown keeps focus in the input so tapping send doesn't blur
+	     it and close/reopen the mobile keyboard — making a tap behave just like Enter.
+	     The click still fires and submits the form. -->
 	<button
 		type="submit"
 		disabled={isSubmitting}
+		onmousedown={(e) => e.preventDefault()}
 		class="flex items-center justify-center w-9 h-9 rounded-full bg-primary-400 text-white hover:bg-primary hover:cursor-pointer disabled:opacity-50 transition-colors shrink-0"
 	>
 		<PaperPlaneSolid class="w-4 h-4" />
