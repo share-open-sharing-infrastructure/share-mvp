@@ -6,21 +6,17 @@ import type { ListResult } from 'pocketbase';
 export async function load({ locals, url }) {
 	// 1. Parse search parameters from URL
 	const searchParameters = parseSearchParameters(url) as SearchParameters;
-	// If user hasn't queried anything, shows only a few random items
-	const isRandomResultSet = (!searchParameters.query && searchParameters.selectedCategories.length === 0) ? true : false;
+	const hasQuery = !!searchParameters.query || searchParameters.selectedCategories.length > 0;
 
 	// 2. Build PocketBase filter
 	const filter = buildItemFilter(searchParameters, locals.user?.id);
 
-	// 3. Fetch items — random sample when no query, paginated results otherwise
-	const fetchPage = isRandomResultSet ? 1 : searchParameters.page;
-	const fetchPerPage = isRandomResultSet ? 8 : searchParameters.perPage;
-	const fetchSort = isRandomResultSet ? '@random' : '-updated';
-
-	let result: ListResult<ItemPublic> = { page: 1, perPage: fetchPerPage, totalItems: 0, totalPages: 0, items: [] };
+	// 3. Fetch paginated items, newest listings first (by creation date, so edits don't
+	//    resurface old items). Empty-query browsing shows the same newest-first catalogue.
+	let result: ListResult<ItemPublic> = { page: 1, perPage: searchParameters.perPage, totalItems: 0, totalPages: 0, items: [] };
 	try {
-		result = await locals.pb.collection('items_searchable').getList<ItemPublic>(fetchPage, fetchPerPage, {
-			sort: fetchSort,
+		result = await locals.pb.collection('items_searchable').getList<ItemPublic>(searchParameters.page, searchParameters.perPage, {
+			sort: '-created',
 			filter,
 			// Explicit allowlist: the view carries an `items.groups` column purely so
 			// its row-level rule can traverse group membership; it must NOT be returned
@@ -34,8 +30,8 @@ export async function load({ locals, url }) {
 		console.error('Error fetching items:', error);
 	}
 
-	// 4. Log search queries (fire-and-forget)
-	if (!isRandomResultSet) {
+	// 4. Log search queries (fire-and-forget) — skip blank default browsing
+	if (hasQuery) {
 		void locals.pb.collection('searches').create({
 			query: searchParameters.query,
 			categories: searchParameters.selectedCategories.join(','),
@@ -51,11 +47,10 @@ export async function load({ locals, url }) {
 		onlyAvailable: searchParameters.onlyAvailable,
 		ownerType: searchParameters.ownerType,
 		currentUser: locals.user ?? null,
-		page: isRandomResultSet ? 1 : result.page,
+		page: result.page,
 		perPage: result.perPage,
 		totalItems: result.totalItems,
-		totalPages: isRandomResultSet ? 0 : result.totalPages,
-		isRandom: isRandomResultSet,
+		totalPages: result.totalPages,
 	};
 }
 
