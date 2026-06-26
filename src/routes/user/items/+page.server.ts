@@ -4,6 +4,22 @@ import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
 import type { Item } from '$lib/types/models';
 import { deleteConversation } from '../../conversations/[conversationId]/conversation.server';
+import { getAttachableGroups } from '$lib/server/groups';
+
+/**
+ * Keep only the submitted group ids the user is actually allowed to attach
+ * (groups they own or are a member of), so a tampered form can't share an item
+ * with arbitrary groups.
+ */
+async function sanitizeGroups(
+	pb: App.Locals['pb'],
+	userId: string,
+	submitted: string[]
+): Promise<string[]> {
+	if (submitted.length === 0) return [];
+	const allowed = new Set((await getAttachableGroups(pb, userId)).map((g) => g.id));
+	return submitted.filter((id) => allowed.has(id));
+}
 
 export async function load({ locals, url }) {
 	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
@@ -24,9 +40,12 @@ export async function load({ locals, url }) {
 		}) as Promise<{ items: Item[]; totalItems: number; totalPages: number }>,
 	]);
 
+	const attachableGroups = await getAttachableGroups(locals.pb, locals.user.id);
+
 	return {
 		user,
 		items: result.items,
+		attachableGroups,
 		totalItems: result.totalItems,
 		totalPages: result.totalPages,
 		currentPage: page,
@@ -86,6 +105,13 @@ export const actions = {
 		const createCategories = (formData.getAll('categories') as string[]).filter((c) =>
 			ITEM_CATEGORIES.includes(c as ItemCategory)
 		);
+		const trusteesOnly = formData.get('trusteesOnly') === 'on';
+		// Trustees and groups are independent audiences — save groups regardless.
+		const createGroups = await sanitizeGroups(
+			locals.pb,
+			locals.user.id,
+			formData.getAll('groups') as string[]
+		);
 
 		try {
 			await locals.pb.collection('items').create({
@@ -94,7 +120,8 @@ export const actions = {
 				place: formData.get('itemPlace'),
 				image: formData.get('itemImage'),
 				owner: locals.user.id,
-				trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
+				trusteesOnly,
+				groups: createGroups,
 				status: 'available',
 				categories: createCategories,
 			});
@@ -120,13 +147,21 @@ export const actions = {
 		const updateCategories = (formData.getAll('categories') as string[]).filter((c) =>
 			ITEM_CATEGORIES.includes(c as ItemCategory)
 		);
+		const trusteesOnly = formData.get('trusteesOnly') === 'on';
+		// Trustees and groups are independent audiences — save groups regardless.
+		const updateGroups = await sanitizeGroups(
+			locals.pb,
+			locals.user.id,
+			formData.getAll('groups') as string[]
+		);
 
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {
 			name: formData.get('itemName'),
 			description: formData.get('itemDescription'),
 			place: formData.get('itemPlace'),
-			trusteesOnly: formData.get('trusteesOnly') === 'on' ? true : false,
+			trusteesOnly,
+			groups: updateGroups,
 			status: formData.get('isAvailable') === 'on' ? 'available' : 'unavailable',
 			categories: updateCategories,
 		};
@@ -208,6 +243,7 @@ export const actions = {
 		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: texts.errors.noPermission });
 
 		try {
+			// Trustees and groups are independent — only flip the trustees flag here.
 			await locals.pb.collection('items').update(itemId, { trusteesOnly: !item.trusteesOnly });
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;

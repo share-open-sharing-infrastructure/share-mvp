@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { formatTimestamp } from '$lib/utils/utils';
+	import { formatTimestamp, displayName } from '$lib/utils/utils';
 	import { TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
 	import { Tooltip } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
@@ -31,10 +31,12 @@
 
 	const showMessengerSection = $derived(telegramAvailable || telegramHidden || signalAvailable || signalHidden);
 
+	const chatPartnerName = $derived(displayName(chatPartner));
+
 	const chatPartnerAvatarUrl = $derived(
 		chatPartner.profileImage
 			? `${PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}`
-			: `https://ui-avatars.com/api/?name=${encodeURIComponent(chatPartner.username)}&background=random`
+			: `https://ui-avatars.com/api/?name=${encodeURIComponent(chatPartnerName)}&background=random`
 	);
 </script>
 
@@ -124,7 +126,7 @@
 			class="flex items-center gap-2 hover:opacity-80 transition-opacity"
 		>
 			<div class="hidden md:flex flex-col items-end">
-				<span class="text-sm font-medium">{chatPartner.username}</span>
+				<span class="text-sm font-medium">{chatPartnerName}</span>
 				<span class="text-xs text-tinte-500 dark:text-tinte-400">
 					{texts.ui.activeSince(formatTimestamp(chatPartner.created, true))}
 				</span>

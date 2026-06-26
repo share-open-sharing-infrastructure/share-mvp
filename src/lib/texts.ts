@@ -12,10 +12,19 @@ export const ITEM_CATEGORIES = [
 ] as const;
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
 
+/** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
+const APP_NAME = 'AllerLeih';
+
 export const texts = {
 	names: {
-		app: 'AllerLeih',
+		app: APP_NAME,
 		mainContactMail: 'kontakt@allerleih.org',
+	},
+
+	// Share / "Teilen" buttons (items, profiles)
+	share: {
+		button: 'Teilen',
+		linkCopied: 'Link kopiert!',
 	},
 
 	// Authentication
@@ -44,6 +53,8 @@ export const texts = {
 		myItems: 'Meine Dinge',
 		myProfile: 'Mein Profil',
 		social: 'Vertraute',
+		groups: 'Gruppen',
+		network: 'Mein Netzwerk',
 		logout: 'Logout',
 		about: 'Über uns',
 		imprint: 'Impressum',
@@ -92,6 +103,7 @@ export const texts = {
 		itemNotFound: 'Gegenstand nicht gefunden.',
 		noPermission: 'Keine Berechtigung.',
 		missingId: 'Fehlende ID.',
+		userNotFound: 'Nutzer:in nicht gefunden.',
 	},
 
 	// Success messages
@@ -190,6 +202,102 @@ export const texts = {
 		showAll: 'Alles anzeigen',
 	},
 
+	// Groups feature
+	groups: {
+		pageTitle: 'Meine Gruppen',
+		intro: 'Gruppen erweitern deine Vertrauensfunktion: Du kannst einzelne Dinge gezielt nur den Mitgliedern einer Gruppe zum Ausleihen anbieten.',
+		ownedTitle: 'Von mir verwaltete Gruppen',
+		memberTitle: 'Gruppen, in denen ich Mitglied bin',
+		noOwnedGroups: 'Du verwaltest noch keine Gruppe.',
+		noMemberGroups: 'Du bist noch in keiner Gruppe Mitglied.',
+		memberCount: (count: number) => (count === 1 ? '1 Mitglied' : `${count} Mitglieder`),
+		create: 'Gruppe erstellen',
+		createTitle: 'Neue Gruppe erstellen',
+		nameLabel: 'Name der Gruppe',
+		namePlaceholder: 'z. B. Nachbarschaft Nord',
+		nameRequired: 'Bitte gib einen Namen für die Gruppe ein.',
+		descriptionLabel: 'Beschreibung (optional)',
+		descriptionPlaceholder: 'Worum geht es in dieser Gruppe?',
+		manage: 'Verwalten',
+		members: 'Mitglieder',
+		noMembers: 'Diese Gruppe hat noch keine Mitglieder. Teile den Einladungslink, um Leute hinzuzufügen.',
+		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
+		cannotAddSelf: 'Du verwaltest die Gruppe bereits.',
+		removeMember: 'Entfernen',
+		adminBadge: 'Verwalter:in',
+		cannotRemoveAdmin:
+			'Verwalter:innen können nicht entfernt werden. Um die Gruppe aufzulösen, lösche sie als Verwalter:in.',
+		you: '(du)',
+		memberView: 'Du bist Mitglied dieser Gruppe.',
+		activeLendingBadge: 'aktive Leihe',
+		activeLendingExplain:
+			'„Aktive Leihe" heißt: diese Person hat aktuell einen deiner Gegenstände ausgeliehen.',
+		removeMemberConfirm: (name: string) => `${name} wirklich aus der Gruppe entfernen?`,
+		activeLendingWarning: (name: string) =>
+			`Achtung: ${name} hat aktuell noch einen deiner Gegenstände ausgeliehen. Die laufende Leihe bleibt bestehen, aber nach dem Entfernen besteht kein Gruppenzugriff mehr.`,
+		leave: 'Gruppe verlassen',
+		leaveConfirm: 'Möchtest du diese Gruppe wirklich verlassen?',
+		deleteGroup: 'Gruppe löschen',
+		deleteConfirm:
+			'Gruppe wirklich löschen? Dinge, die nur dieser Gruppe angeboten wurden, werden danach wieder privat (nur für deine Vertrauten sichtbar).',
+		inviteLink: 'Einladungslink',
+		inviteIntro: 'Teile diesen Link, um Personen in die Gruppe einzuladen. Beitreten kann nur, wer angemeldet ist.',
+		noInvite: 'Es gibt derzeit keinen aktiven Einladungslink.',
+		createInvite: 'Einladungslink erstellen',
+		revokeInvite: 'Link widerrufen',
+		regenerateInvite: 'Neuen Link erstellen',
+		copyLink: 'Link kopieren',
+		linkCopied: 'Link kopiert!',
+		expiresLabel: 'Gültig bis (optional)',
+		maxUsesLabel: 'Maximale Nutzungen (optional, 0 = unbegrenzt)',
+		inviteUsage: (uses: number, max: number) =>
+			max > 0 ? `${uses} von ${max} Nutzungen` : `${uses} Beitritte über diesen Link`,
+		// Item modal
+		itemTrusteesLabel: 'Nur für Vertraute sichtbar',
+		trustInfoTitle: 'Vertrauensfunktion',
+		trustInfoBody:
+			'Wenn aktiv, sehen deine vertrauten Kontakte diesen Gegenstand. Du kannst ihn zusätzlich oder stattdessen mit Gruppen teilen.',
+		trustInfoAddLink: 'Vertraute hinzufügen',
+		inviteUntil: 'bis',
+		itemShareTitle: 'Für diese Gruppen sichtbar',
+		itemShareHint: 'Mitglieder der angekreuzten Gruppen dürfen diesen Gegenstand sehen – unabhängig von deinen Vertrauten.',
+		itemPublicGroupWarning:
+			'Achtung: Eine angekreuzte Gruppe ist öffentlich – dann kann jede angemeldete Person ihr beitreten und diesen Gegenstand sehen.',
+		itemGroupIndicator: (names: string) => `Sichtbar für Gruppen: ${names}`,
+		itemGroupIndicatorGeneric: 'Für bestimmte Gruppen sichtbar',
+		itemPublicHint: 'Aktuell öffentlich sichtbar. Aktiviere „Für Vertraute sichtbar" oder kreuze eine Gruppe an, um den Gegenstand einzuschränken.',
+		noGroupsForItem: 'Du bist in keiner Gruppe. Erstelle zuerst eine Gruppe, um Dinge mit ihr zu teilen.',
+		goToGroups: 'Zu meinen Gruppen',
+		// Public / self-join groups
+		publicToggle: 'Öffentliche Gruppe',
+		publicToggleHint:
+			'Jede angemeldete Person kann diese Gruppe finden und ihr ohne Einladung beitreten – und sieht damit alle Gegenstände, die Mitglieder mit dieser Gruppe teilen (auch die anderer Mitglieder).',
+		publicConfirm:
+			'Diese Gruppe öffentlich machen? Danach kann jede angemeldete Person beitreten und alle Gegenstände sehen, die Mitglieder mit dieser Gruppe teilen – einschließlich der Gegenstände anderer Mitglieder.',
+		publicBadge: 'Öffentlich',
+		joinPublic: 'Gruppe beitreten',
+		joinPublicTitle: 'Öffentliche Gruppe',
+		joinPublicIntro: (name: string) => `Du kannst der Gruppe „${name}" beitreten.`,
+		joinedPublic: (name: string) => `Du bist der Gruppe „${name}" beigetreten.`,
+		shareText: (name: string) => `Tritt der Gruppe „${name}" auf AllerLeih bei: `,
+		shareGroupButton: 'Einladung teilen',
+		publicLinkTitle: 'Öffentlicher Link',
+		publicLinkIntro:
+			'Diese Gruppe ist öffentlich. Jede angemeldete Person kann über diesen Link beitreten – ganz ohne Einladung.',
+		// Add-member search
+		addMemberSearchPlaceholder: 'Nutzername suchen…',
+		addMemberNoResults: 'Keine passenden Nutzer:innen gefunden.',
+		// Join flow
+		joinTitle: 'Gruppeneinladung',
+		joinInvitedTo: (name: string) => `Du wurdest eingeladen, der Gruppe „${name}" beizutreten.`,
+		joinButton: 'Gruppe beitreten',
+		loginToJoin: 'Zum Beitreten anmelden',
+		joinSuccess: (name: string) => `Du bist der Gruppe „${name}" beigetreten.`,
+		joinAlready: (name: string) => `Du bist bereits Mitglied der Gruppe „${name}".`,
+		invalidInvite: 'Dieser Einladungslink ist ungültig.',
+		expiredInvite: 'Dieser Einladungslink ist abgelaufen oder wurde bereits vollständig genutzt.',
+	},
+
 	// General UI
 	ui: {
 		resultsFound: (count: number) => `${count} Dinge gefunden`,
@@ -199,6 +307,7 @@ export const texts = {
 		noChatsYet: 'Du hast noch keine Chats.',
 		startConversation: 'Starte ein Gespräch, indem du jemanden anschreibst!',
 		trustedOnly: 'Nur Vertraute',
+		itemUnavailable: 'Gegenstand nicht mehr verfügbar',
 		explainThis: 'Erkläre mir das',
 		chooseFromList: 'Wähle eine Anfrage aus der Liste links.',
 		registeredSince: 'Registriert seit:',
@@ -397,8 +506,7 @@ export const texts = {
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',
-			randomItemsHeading: 'Entdecke zufällige Gegenstände',
-			shuffleItems: 'Andere anzeigen',
+			newestItemsHeading: 'Neueste Dinge',
 			onlyAvailable: 'Nur Verfügbare',
 			ownerTypePrefix: 'Anbieter',
 			ownerTypeAll: 'Alle',
@@ -472,15 +580,17 @@ export const texts = {
 			transportModeNote: 'Wird für die Reisezeitanzeige in der Suche verwendet.',
 			deleteProfileImage: 'Foto löschen',
 			cannotUpdate: 'Daten konnten nicht aktualisiert werden. Bitte überprüfe deine Eingaben.',
-			notifications: {
-				sectionTitle: 'Benachrichtigungen',
-				description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
-				enable: 'Benachrichtigungen aktivieren',
-				enabled: 'Benachrichtigungen sind aktiviert.',
-				deactivateThisDevice: 'Für dieses Gerät deaktivieren',
-				deactivateAllDevices: 'Für alle meine Geräte deaktivieren',
-				denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
-			},
+		notifications: {
+			sectionTitle: 'Benachrichtigungen',
+			description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
+			enable: 'Benachrichtigungen aktivieren',
+			enabled: 'Benachrichtigungen sind aktiviert. Du erhälst eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
+			deactivateThisDevice: 'Für dieses Gerät deaktivieren',
+			deactivateAllDevices: 'Für alle meine Geräte deaktivieren',
+			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
+			emailToggleLabel: 'E-Mail-Benachrichtigungen',
+			emailToggleDescription: 'Erhalte eine E-Mail, wenn du neue Nachrichten oder Anfragen bekommst.',
+		},
 		},
 		invite: {
 			sectionTitle: 'Freunde einladen',
@@ -521,21 +631,17 @@ export const texts = {
 			doesNotTrustYou: 'Diese Person vertraut dir (noch) nicht.',
 			trustsThisUser: 'Du vertraust diesem Account',
 			doesNotTrustThisUser: 'Du vertraust diesem Account (noch) nicht.',
-			publicItems: 'Öffentliche Gegenstände',
-			trustedItems: 'Nur für Vertraute',
-			noPublicItems: 'Diese Person bietet noch keine Gegenstände an.',
-			notTrustedNote: 'Diese Person verleiht weitere Gegenstände nur an vertraute Nutzer.',
 			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
 			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
 			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',
 			noItemsInCategory: 'Keine Gegenstände in dieser Kategorie.',
-			lockedCard: 'Nur für Vertraute',
+			lockedCard: 'Nur für Vertraute oder Gruppen',
 			moreLockedItems: (n: number) => `+${n} weitere Artikel`,
-			lockedTooltipTitle: 'Nur für Vertraute sichtbar',
-			lockedTooltipBody: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Vertraue ihr über den Schalter oben auf dieser Seite – vielleicht vertraut sie dir dann auch!',
-			lockedTooltipBodyGuest: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut. Melde dich an und vertraue dieser Person, um Zugang zu erhalten.',
+			lockedTooltipTitle: 'Nur für Vertraute oder bestimmte Gruppen sichtbar',
+			lockedTooltipBody: 'Diese Person verleiht manche Gegenstände nur an Personen, denen sie vertraut, oder an Mitglieder bestimmter Gruppen. Vertraue ihr über den Schalter oben auf dieser Seite – vielleicht vertraut sie dir dann auch!',
+			lockedTooltipBodyGuest: 'Diese Person verleiht manche Gegenstände nur an vertraute Personen oder an Mitglieder bestimmter Gruppen. Melde dich an und vertraue dieser Person, um Zugang zu erhalten.',
 		},
 	},
 
@@ -651,6 +757,56 @@ export const texts = {
 			title: 'Eine ganz kurze Umfrage',
 			explanation: 'Wir wollen verstehen, was dich zum Teilen motiviert. Deine Antwort hilft uns, AllerLeih besser zu machen und Fördermittel zu beantragen. Die Antwort bleibt vollständig anonym! Du kannst die Umfrage auch überspringen.'
 		}
+	},
+
+	// Account management, data export and deletion (GDPR)
+	account: {
+		/** Masked display name for deleted/anonymized accounts. */
+		deletedAccountName: 'Gelöschtes Konto',
+		pageTitle: 'Konto & Datenschutz',
+		pageIntro:
+			'Hier kannst du eine Kopie deiner Daten herunterladen oder dein Konto endgültig löschen.',
+		// Profile-page entry point
+		manageLink: 'Konto & Datenschutz',
+		// Data export (Art. 15 / 20)
+		export: {
+			title: 'Meine Daten exportieren',
+			description:
+				'Lade eine maschinenlesbare Kopie (JSON) aller Daten herunter, die wir über dich speichern – Profil, Gegenstände, Gespräche, Nachrichten und mehr.',
+			button: 'Daten herunterladen',
+			preparing: 'Daten werden vorbereitet …',
+			error: 'Export fehlgeschlagen. Bitte versuche es später erneut.',
+		},
+		// Account deletion (Art. 17)
+		delete: {
+			title: 'Konto löschen',
+			description:
+				'Dein Konto und deine persönlichen Daten werden gelöscht. Aus rechtlichen Gründen (z. B. zur Klärung von Streitfällen) bewahren wir deine E-Mail-Adresse und deinen Namen für eine begrenzte Zeit in geschützter Form auf, bevor auch diese endgültig entfernt werden. Bereits ausgetauschte Nachrichten bleiben bei deinem jeweiligen Gegenüber erhalten, dort jedoch anonymisiert als „Gelöschtes Konto".',
+			warning: 'Diese Aktion kann nicht rückgängig gemacht werden.',
+			confirmPhrase: 'LÖSCHEN',
+			confirmPhraseLabel: 'Tippe LÖSCHEN, um zu bestätigen',
+			passwordLabel: 'Passwort zur Bestätigung',
+			passwordPlaceholder: 'Dein aktuelles Passwort',
+			openButton: 'Konto löschen',
+			confirmButton: 'Mein Konto endgültig löschen',
+			cancelButton: 'Abbrechen',
+			// Error/blocked states
+			wrongPassword: 'Falsches Passwort.',
+			activeLoansBlocked:
+				'Du hast noch offene Ausleihen. Bitte schließe diese ab (Übergabe bzw. Rückgabe bestätigen), bevor du dein Konto löschst.',
+			genericError: 'Löschung fehlgeschlagen. Bitte versuche es später erneut.',
+		},
+		// Goodbye page after successful deletion
+		deleted: {
+			title: 'Auf Wiedersehen!',
+			body: `Dein Konto und deine persönlichen Daten wurden gelöscht. Danke, dass du Teil von ${APP_NAME} warst.`,
+			secondary: 'Du bist jederzeit willkommen, falls du irgendwann zurückkommen möchtest.',
+			backHome: 'Zur Startseite',
+		},
+		// Shown on the public profile of a deleted account
+		deletedProfileNotice: 'Dieses Konto wurde gelöscht. Die zugehörigen Daten sind nicht mehr verfügbar.',
+		// Guard when trying to trust a deleted account
+		cannotTrustDeleted: 'Dieses Konto wurde gelöscht und kann nicht als vertrauenswürdig markiert werden.',
 	},
 
 	// Notifications

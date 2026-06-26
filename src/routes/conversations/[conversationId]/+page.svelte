@@ -9,7 +9,7 @@
 	// Other imports
 	import { Button, Modal, Input } from 'flowbite-svelte';
 	import MessageElement from './MessageElement.svelte';
-	import { setupPocketBaseSubscription } from '$lib/utils/utils';
+	import { setupPocketBaseSubscription, displayName } from '$lib/utils/utils';
 	import type { Conversation, Message } from '$lib/types/models';
 	import { texts } from '$lib/texts';
 	import ConversationHeader from './ConversationHeader.svelte';
@@ -67,15 +67,15 @@
 	let isSubmitting: boolean = $state(false);
 	let chatWindow: HTMLDivElement;
 
+	function scrollToBottom(smooth = true) {
+		if (!chatWindow) return;
+		chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+	}
+
 	// Scroll chat window to bottom when messages change
 	$effect(() => {
 		if (messages && messages.length > 0 && chatWindow) {
-			setTimeout(() => {
-				chatWindow.scrollTo({
-					top: chatWindow.scrollHeight,
-					behavior: 'smooth',
-				});
-			}, 0);
+			setTimeout(() => scrollToBottom(true), 0);
 		}
 	});
 
@@ -84,6 +84,26 @@
 	let pb: PocketBase | undefined = $state();
 	onMount(() => {
 		pb = getClientPB();
+
+		// Keep the newest messages in view when the visual viewport changes height — e.g.
+		// when the mobile keyboard opens and the layout shrinks the chat container. The
+		// container is resized by the layout's own resize handler, which runs in the same
+		// event; scrolling synchronously here would target the pre-resize height (a no-op)
+		// and leave the latest messages hidden below the raised input bar. Defer with rAF
+		// so we scroll after the resize + reflow, then once more after the open/close
+		// animation settles.
+		const vv = window.visualViewport;
+		let settleTimer: ReturnType<typeof setTimeout>;
+		const keepAtBottom = () => {
+			requestAnimationFrame(() => scrollToBottom(false));
+			clearTimeout(settleTimer);
+			settleTimer = setTimeout(() => scrollToBottom(false), 150);
+		};
+		vv?.addEventListener('resize', keepAtBottom);
+		return () => {
+			vv?.removeEventListener('resize', keepAtBottom);
+			clearTimeout(settleTimer);
+		};
 	});
 
 	// Handle incoming real-time message events
@@ -148,14 +168,14 @@
 <LendingStatusBar
 	{lendingStatus}
 	isOwner={loggedInUserIsItemOwner}
-	itemOwnerUsername={data.conversation.itemOwner.username}
+	itemOwnerUsername={displayName(data.conversation.itemOwner)}
 />
 
 <!-- Messages list -->
 <div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900">
 	{#if lendingStatus === 'pending' && messages.length === 0 && !loggedInUserIsItemOwner}
 		<p class="text-xl p-4 text-center max-w-100 mx-auto my-auto text-tinte-400 dark:text-tinte-500 italic">
-			{texts.lending.statusDescription.pending.requesterNudge(chatPartner.username, data.conversation.requestedItem.name)}
+			{texts.lending.statusDescription.pending.requesterNudge(displayName(chatPartner), data.conversation.requestedItem.name)}
 		</p>
 	{/if}
 	{#each messages as message (message.id)}

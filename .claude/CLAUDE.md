@@ -25,14 +25,22 @@ It integrates peer-2-peer-lending as well as institutional lending (either direc
 ## Key commands
 
 ```bash
-npm run dev          # dev server
-npm run build        # production build (also type-checks; runs in CI)
-npm run check        # svelte-kit sync + svelte-check (type checking)
-npm run lint         # ESLint        (lint:fix to auto-fix)
-npm run format       # Prettier
-npm run test         # Vitest WATCH mode
-npx vitest run                          # run all tests once (CI-style)
-npx vitest run src/path/to/file.test.ts # run a single test file
+npm run dev        # start dev server
+npm run build      # production build
+npm run preview    # preview production build
+npm run check      # svelte-kit sync + svelte-check (type checking)
+npm run lint       # ESLint
+npm run lint:fix   # ESLint with auto-fix
+npm run format     # Prettier
+npm run test       # Vitest in WATCH mode
+npx vitest run                       # run all tests once (CI-style)
+npx vitest run src/path/to/file.test.ts  # run a single test file
+
+# Seed a running PocketBase with deterministic test data. Scenarios live in
+# scripts/seed/scenarios/ (one file per feature); shared helpers in scripts/seed/lib.js.
+# Idempotent; only touches its own `@seed.test` records. Requires superuser creds.
+npm run seed                                   # lists available scenarios
+PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- account-deletion
 ```
 
 ## Environment variables
@@ -57,8 +65,15 @@ These prevent the most common bugs/security issues here — follow them without 
   items. Unauthenticated browsing uses the `*_public` views — never leak email, raw coordinates,
   trusted items, or trust-graph data through them.
 - **All user-facing strings go in `src/lib/texts.ts`** (+ `ITEM_CATEGORIES`), never inline.
+- **Never render `user.username` directly** for any user who might be deleted — use
+  `displayName()` from `$lib/utils/utils.ts` instead.
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
   `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
+  Authentication loads PocketBase auth from cookies and refreshes the token. Authorization
+  redirects unauthenticated users to `/auth/login` (preserving `redirectTo`). Unprotected
+  prefixes: `/auth/login`, `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`,
+  `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`,
+  `/auth/account-deleted`. Everything else — including `/` (home) — requires authentication.
 
 ## Where to look (load on demand)
 
@@ -72,6 +87,9 @@ These prevent the most common bugs/security issues here — follow them without 
 | Form / CRUD patterns & conventions | `docs/best-practices.md` |
 | Writing tests + PocketBase mocks | `docs/testing-strategy.md` |
 | UI strings / categories | `docs/text-management.md`, `src/lib/texts.ts` |
+| Groups: roles, public/self-join, visibility model | `docs/groups.md` |
+| Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
+| Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
 
 ## Project tooling (this repo's `.claude/`)
@@ -88,3 +106,17 @@ Docs in `./docs` are published to GitHub Pages. When you add/remove/rename a rou
 `/api/*` endpoint, a PocketBase collection/view, a server helper or util, or an env var,
 update the relevant doc **and** this file's guardrails/router in the same change so they
 never drift from the code.
+
+## Account deletion & GDPR
+
+Self-service deletion (Art. 17) and export (Art. 15/20) live at `/user/account`. The heavy
+lifting runs in the backend PocketBase hooks (`allerleih-backend/pb_hooks/account.pb.js` +
+`services/account.js`), which have superuser `$app` access. Key behaviors:
+
+- Refuses deletion if a loan is open (`accepted`/`active`/`return_requested`).
+- Anonymizes the `users` row in place (`deleted=true`, placeholder username/email, random
+  password); hard-deletes contacts, geolocation, push subs, and unreferenced items.
+- Shared/audit data (messages, conversations, `term_acceptances`) is **retained** and resolves
+  to "Gelöschtes Konto" via `displayName()`.
+- `GET /api/account/export` returns machine-readable JSON; proxied as a download by
+  `src/routes/user/account/export/+server.ts`.

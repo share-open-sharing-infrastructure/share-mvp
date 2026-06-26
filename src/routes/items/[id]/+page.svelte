@@ -1,14 +1,17 @@
 <script lang="ts">
 	import { Badge, Alert, Tooltip } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { HeartSolid } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { itemImageUrl } from '$lib/utils/utils';
 	import type { ItemPublic, UserPublic } from '$lib/types/models';
 	import ItemImage from './ItemImage.svelte';
 	import ItemTravelTime from './ItemTravelTime.svelte';
 	import ItemCta from './ItemCta.svelte';
 	import OwnerCard from './OwnerCard.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
 
 	const { data } = $props();
 	const item = $derived(data.item) as ItemPublic;
@@ -27,11 +30,9 @@
 	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
 	const isArchived = $derived(item.description?.startsWith('[Nicht mehr im Bestand]') ?? false);
 
-	const imageUrl = $derived(
-		item.image
-			? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
-			: (item.externalImgUrl ?? null)
-	);
+	const shareUrl = $derived(`${page.url.origin}/items/${item.id}`);
+
+	const imageUrl = $derived(itemImageUrl(data.PB_IMG_URL, item));
 
 	const ownerImageUrl = $derived(
 		owner.profileImage
@@ -49,9 +50,7 @@
 				)
 	);
 	const seoImage = $derived(
-		item.image
-			? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
-			: 'https://allerleih.org/og-invite.png'
+		itemImageUrl(data.PB_IMG_URL, item) ?? 'https://allerleih.org/og-invite.png'
 	);
 </script>
 
@@ -79,9 +78,12 @@
 	<ItemImage {imageUrl} {ownerImageUrl} {categoryPlaceholder} itemName={item.name} status={item.status} />
 
 	<!-- Item name -->
-	<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">
-		{item.name}
-	</h1>
+	<div class="flex items-center justify-between gap-3">
+		<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">
+			{item.name}
+		</h1>
+		<ShareButton url={shareUrl} title={item.name} />
+	</div>
 
 	<!-- Status + trustees-only pills -->
 	{#if item.status !== 'unknown' || item.trusteesOnly}

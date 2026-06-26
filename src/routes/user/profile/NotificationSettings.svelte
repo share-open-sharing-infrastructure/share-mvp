@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { Button } from 'flowbite-svelte';
+	import { Button, Toggle } from 'flowbite-svelte';
 	import { onMount } from 'svelte';
 	import {
 		setupPushSubscription,
 		teardownPushSubscription,
 		teardownAllPushSubscriptions,
 	} from '$lib/utils/pushSubscription';
+	import { getClientPB } from '$lib/client-pb';
+
+	let { userId }: { userId: string } = $props();
 
 	// null         → not yet read from browser; section stays hidden during SSR
 	//                and until onMount resolves the actual state.
@@ -17,6 +20,11 @@
 	// A granted permission alone does not imply an active subscription — the user
 	// may have deactivated it, or browser data may have been cleared.
 	let isPushSubscribed = $state(false);
+
+	// Email notification preference state
+	let emailNotificationsEnabled = $state(true);
+	let emailPrefsRecordId = $state<string | null>(null);
+	let emailPrefsLoaded = $state(false);
 
 	/** Reads the current browser permission and push-subscription state, then
 	 *  updates the reactive variables so the component renders correctly.
@@ -36,8 +44,32 @@
 		notifPermission = permission;
 	}
 
+	/** Loads the user's email notification preference from user_preferences collection. */
+	async function loadEmailPreference() {
+		try {
+			const pb = getClientPB();
+			const records = await pb.collection('user_preferences').getList(1, 1, {
+				filter: pb.filter('user = {:userId}', { userId }),
+			});
+			if (records.items.length > 0) {
+				const prefs = records.items[0];
+				emailPrefsRecordId = prefs.id;
+				emailNotificationsEnabled = prefs.emailNotifications !== false;
+			} else {
+				// No record = default opted-in
+				emailNotificationsEnabled = true;
+				emailPrefsRecordId = null;
+			}
+		} catch {
+			// If collection doesn't exist or request fails, default to opted-in
+			emailNotificationsEnabled = true;
+		}
+		emailPrefsLoaded = true;
+	}
+
 	onMount(() => {
 		loadNotificationState();
+		loadEmailPreference();
 	});
 
 	async function enableNotifications() {
@@ -57,6 +89,31 @@
 	async function deactivateAllNotifications() {
 		await teardownAllPushSubscriptions();
 		isPushSubscribed = false;
+	}
+
+	async function toggleEmailNotifications() {
+		const newValue = !emailNotificationsEnabled;
+		emailNotificationsEnabled = newValue;
+
+		try {
+			const pb = getClientPB();
+			if (emailPrefsRecordId) {
+				// Update existing record
+				await pb.collection('user_preferences').update(emailPrefsRecordId, {
+					emailNotifications: newValue,
+				});
+			} else {
+				// Create new record
+				const record = await pb.collection('user_preferences').create({
+					user: userId,
+					emailNotifications: newValue,
+				});
+				emailPrefsRecordId = record.id;
+			}
+		} catch {
+			// Revert on failure
+			emailNotificationsEnabled = !newValue;
+		}
 	}
 </script>
 
@@ -93,6 +150,27 @@
 				<Button class="min-button bg-primary-200 hover:bg-primary" onclick={enableNotifications}>
 					{texts.pages.profile.notifications.enable}
 				</Button>
+			{/if}
+
+			<!-- Email Notifications Toggle -->
+			{#if emailPrefsLoaded}
+				<div class="border-t border-tinte-200 dark:border-tinte-700 mt-6 pt-6">
+					<div class="flex items-center justify-between">
+						<div>
+							<p class="text-sm font-medium text-tinte-900 dark:text-white">
+								{texts.pages.profile.notifications.emailToggleLabel}
+							</p>
+							<p class="text-sm text-tinte-600 dark:text-tinte-400 mt-1">
+								{texts.pages.profile.notifications.emailToggleDescription}
+							</p>
+						</div>
+						<Toggle
+							checked={emailNotificationsEnabled}
+							onchange={toggleEmailNotifications}
+							classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
+						/>
+					</div>
+				</div>
 			{/if}
 		</div>
 	</div>

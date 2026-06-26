@@ -1,3 +1,50 @@
+import { texts } from '$lib/texts';
+
+/**
+ * The anonymized username a deleted account gets on the backend (`deleted-<15-char id>`).
+ * Keep in sync with anonymizeAccount() in allerleih-backend/pb_hooks/services/account.js.
+ */
+const DELETED_USERNAME_RE = /^deleted-[a-z0-9]{15}$/;
+
+/**
+ * Display name for a user, masking deleted/anonymized accounts to "Gelöschtes Konto".
+ * Never render `user.username` directly — always pass the user object through this helper.
+ *
+ * Masks when the `deleted` flag is set, OR when the username matches the backend's
+ * placeholder shape. The latter is a safety net for records loaded from a source that
+ * doesn't expose `deleted` (e.g. a view that omits the column), so the raw `deleted-<id>`
+ * placeholder can never leak to the UI even if the flag is missing.
+ */
+export function displayName(
+	user: { username?: string; deleted?: boolean } | null | undefined
+): string {
+	if (!user || user.deleted || (user.username && DELETED_USERNAME_RE.test(user.username))) {
+		return texts.account.deletedAccountName;
+	}
+	return user.username ?? texts.account.deletedAccountName;
+}
+
+/**
+ * Build the display URL for an item's image, falling back to its external image URL.
+ *
+ * Item file fields are served via the `items_searchable` view, NOT the record's own
+ * `collectionId`. Records read from `items_public` carry that view's id, but its `image`
+ * column is a masking expression PocketBase does not serve as a file (→ 404). In
+ * `items_searchable`, `image` is a real, trust-filtered file column: it serves public items
+ * to everyone and trustees-only items only to authorized viewers. Use this for any item
+ * loaded from a public view; base-`items` records (their own `collectionId` already resolves)
+ * don't need it.
+ */
+export function itemImageUrl(
+	pbUrl: string,
+	item: { id: string; image?: string | null; externalImgUrl?: string | null }
+): string | null {
+	if (item.image) {
+		return `${pbUrl}api/files/items_searchable/${item.id}/${item.image}`;
+	}
+	return item.externalImgUrl || null;
+}
+
 export function formatTimestamp(
 	timestamp: string,
 	includeYear: boolean = false

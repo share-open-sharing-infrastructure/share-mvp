@@ -184,6 +184,8 @@
 					<UserItemRow
 						{item}
 						PB_URL={data.PB_URL}
+						groups={data.attachableGroups}
+						{form}
 						selected={selectedIds.has(item.id)}
 						onselectedchange={(v) => updateSelection(item.id, v)}
 					/>
@@ -202,4 +204,4 @@
 </section>
 
 <!-- Add Modal -->
-<ItemModal bind:isVisible={showAddModal} type="add" {form} />
+<ItemModal bind:isVisible={showAddModal} type="add" groups={data.attachableGroups} {form} />
