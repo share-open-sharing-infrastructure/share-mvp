@@ -9,6 +9,7 @@
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
+	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 
@@ -78,7 +79,7 @@
 				</div>
 
 				<!-- Location -->
-				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+				<div id="address" class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 scroll-mt-24">
 					<label for="city" class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white">
 						{texts.ui.location}
 					</label>
@@ -191,14 +192,18 @@
 				use:enhance={() => ({ update }) => update({ reset: false })}
 			></form>
 
-			<EmailSection
-				email={data.currentUser.email}
-				verified={data.currentUser.verified ?? false}
-			/>
+			<div id="email" class="scroll-mt-24">
+				<EmailSection
+					email={data.currentUser.email}
+					verified={data.currentUser.verified ?? false}
+				/>
+			</div>
 		</div>
 	</div>
 
 	<NotificationSettings userId={data.currentUser.id} />
+
+	<LendingRequirementsSection settings={data.requirementSettings} />
 
 	<InviteLink inviteUrl={data.inviteUrl} />
 

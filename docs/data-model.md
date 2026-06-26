@@ -227,6 +227,14 @@ Coordinates are **not** stored on `users` — they live in a separate `user_geol
 
 Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
 
+## lending_requirements
+
+Lender-defined borrower requirements (issues #423 / #389): a flexible, extensible framework letting any lender set, per account, the conditions a borrower must meet before they may **request** the lender's items. This gates *requestability*, **not** visibility (visibility stays with `trusteesOnly` / groups) — so a borrower can see an item and is given a reason + action to "unlock" requesting it.
+
+One row per `owner` (unique index on `owner`). Each requirement type is one field; currently `requireVerifiedEmail` (bool) and `requireAddress` (bool, issue #389 — borrower must have `users.city` set, re-checked on every request). Drop-in extensions add a field per type (e.g. `requireAcceptedTerms`, `minOwnItems`, `minCompletedTransactions`). API rules: `listRule`/`viewRule` are `@request.auth.id != ""` (any logged-in viewer must read an owner's requirements to learn why a request is blocked — not sensitive); `createRule`/`updateRule`/`deleteRule` are `@request.auth.id = owner`.
+
+Enforcement is **authoritative in the backend hook** `pb_hooks/lending_requirements.pb.js` (`onRecordCreateRequest` on `conversations`), which aborts the create with `400 lending_requirement_unmet` if an enabled requirement is unmet — it cannot be bypassed by a direct API POST. The frontend mirrors the same registry in `$lib/server/lendingRequirements.ts` purely for UX (disable the request button, list what's missing). To add a requirement type: add the field (migration) + a registry entry in **both** the hook and the helper. Trust/visibility gating stays in the `conversations` createRule (migration `1781900002_harden_conversations_create.js`).
+
 ## Account deletion (`deleted` / `deletedAt`, `deleted_accounts`)
 
 Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place**:
