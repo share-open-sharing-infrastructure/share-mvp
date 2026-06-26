@@ -60,13 +60,6 @@
 				>
 					{texts.legal.accept.reviewLinkLabel} →
 				</button>
-				<LegalDocModal
-					bind:open={openDoc[doc.docType]}
-					title={doc.name}
-					version={doc.version}
-					effectiveDate={doc.effectiveDate}
-					body={doc.body}
-				/>
 				<Checkbox bind:checked={confirmed[doc.docType]} name={`confirm_${doc.docType}`}>
 					{texts.legal.accept.checkboxLabel(doc.name, doc.version)}
 				</Checkbox>
@@ -99,3 +92,15 @@
 		</form>
 	</div>
 </div>
+
+<!-- Document modals live OUTSIDE the forms above: Flowbite's modal close (×) is a
+     <button> that would otherwise submit the enclosing form (review on PR #440). -->
+{#each data.docs as doc (doc.docType)}
+	<LegalDocModal
+		bind:open={openDoc[doc.docType]}
+		title={doc.name}
+		version={doc.version}
+		effectiveDate={doc.effectiveDate}
+		body={doc.body}
+	/>
+{/each}

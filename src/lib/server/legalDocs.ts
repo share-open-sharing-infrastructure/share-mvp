@@ -17,9 +17,30 @@ export interface LegalDoc {
 	body: string;
 }
 
-/** All currently-active documents (full body) — for rendering pages. */
+/**
+ * Formats the `effectiveDate` (a PocketBase date field — an ISO datetime) as a
+ * German "23. Juni 2026" string for display. Formatted in UTC so the day doesn't
+ * shift across timezones; an empty or unparseable value is passed through as-is.
+ */
+function formatLegalDate(value: string): string {
+	if (!value) return '';
+	const d = new Date(value);
+	if (Number.isNaN(d.getTime())) return value;
+	return new Intl.DateTimeFormat('de-DE', {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric',
+		timeZone: 'UTC'
+	}).format(d);
+}
+
+/** All currently-active documents (full body) — for rendering pages.
+ *  `effectiveDate` is returned pre-formatted for display. */
 export async function getActiveLegalDocs(pb: PocketBase): Promise<LegalDoc[]> {
-	return pb.collection('legal_documents').getFullList<LegalDoc>({ filter: 'active = true' });
+	const docs = await pb
+		.collection('legal_documents')
+		.getFullList<LegalDoc>({ filter: 'active = true' });
+	return docs.map((d) => ({ ...d, effectiveDate: formatLegalDate(d.effectiveDate) }));
 }
 
 /** The active document for a single type, or null if none is configured. */

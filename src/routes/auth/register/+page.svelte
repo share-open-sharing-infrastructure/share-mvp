@@ -120,12 +120,6 @@
 					<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
 					<span>Ich habe die <button type="button" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openTos = true; }} class="cursor-pointer text-primary hover:underline">AGB{tosDoc ? ` (v${tosDoc.version})` : ''}</button> und die <button type="button" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openPrivacy = true; }} class="cursor-pointer text-primary hover:underline">Datenschutzerklärung{privacyDoc ? ` (v${privacyDoc.version})` : ''}</button> gelesen und stimme beiden zu.</span>
 				</label>
-				{#if tosDoc}
-					<LegalDocModal bind:open={openTos} title={tosDoc.title} version={tosDoc.version} effectiveDate={tosDoc.effectiveDate} body={tosDoc.body} />
-				{/if}
-				{#if privacyDoc}
-					<LegalDocModal bind:open={openPrivacy} title={privacyDoc.title} version={privacyDoc.version} effectiveDate={privacyDoc.effectiveDate} body={privacyDoc.body} />
-				{/if}
 				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
 					<input type="checkbox" name="subscribeToNewsletter" checked class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
 					<span>{texts.auth.newsletterOptOut}</span>
@@ -137,3 +131,12 @@
 		</div>
 	</Register>
 </Section>
+
+<!-- Document modals live OUTSIDE the form above: Flowbite's modal close (×) is a
+     <button> that would otherwise submit the registration form (review on PR #440). -->
+{#if tosDoc}
+	<LegalDocModal bind:open={openTos} title={tosDoc.title} version={tosDoc.version} effectiveDate={tosDoc.effectiveDate} body={tosDoc.body} />
+{/if}
+{#if privacyDoc}
+	<LegalDocModal bind:open={openPrivacy} title={privacyDoc.title} version={privacyDoc.version} effectiveDate={privacyDoc.effectiveDate} body={privacyDoc.body} />
+{/if}
