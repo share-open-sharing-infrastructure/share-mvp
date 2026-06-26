@@ -207,6 +207,15 @@ erDiagram
     USER 1 to zero or more TERM_ACCEPTANCE: accepts
     LENDING_TERMS 1 to zero or more TERM_ACCEPTANCE: recorded in
 
+    LENDING_REQUIREMENTS{
+        string id PK
+        User owner FK "cascadeDelete — unique per owner"
+        bool requireVerifiedEmail
+        bool requireAddress
+    }
+
+    USER 1 to zero or one LENDING_REQUIREMENTS: gates lending with
+
     OUTBOUND_CLICK{
         string id PK
         string destination
@@ -231,9 +240,11 @@ Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visib
 
 Lender-defined borrower requirements (issues #423 / #389): a flexible, extensible framework letting any lender set, per account, the conditions a borrower must meet before they may **request** the lender's items. This gates *requestability*, **not** visibility (visibility stays with `trusteesOnly` / groups) — so a borrower can see an item and is given a reason + action to "unlock" requesting it.
 
-One row per `owner` (unique index on `owner`). Each requirement type is one field; currently `requireVerifiedEmail` (bool) and `requireAddress` (bool, issue #389 — borrower must have `users.city` set, re-checked on every request). Drop-in extensions add a field per type (e.g. `requireAcceptedTerms`, `minOwnItems`, `minCompletedTransactions`). API rules: `listRule`/`viewRule` are `@request.auth.id != ""` (any logged-in viewer must read an owner's requirements to learn why a request is blocked — not sensitive); `createRule`/`updateRule`/`deleteRule` are `@request.auth.id = owner`.
+One row per `owner` (relation with `cascadeDelete: true` — the row is removed when the owner account is deleted; unique index on `owner`). Each requirement type is one field; currently `requireVerifiedEmail` (bool) and `requireAddress` (bool, issue #389 — borrower must have `users.city` set, re-checked on every request). Drop-in extensions add a field per type (e.g. `requireAcceptedTerms`, `minOwnItems`, `minCompletedTransactions`). API rules: `listRule`/`viewRule` are `@request.auth.id != ""` (any logged-in viewer must read an owner's requirements to learn why a request is blocked — not sensitive); `createRule`/`updateRule`/`deleteRule` are `@request.auth.id = owner`.
 
-Enforcement is **authoritative in the backend hook** `pb_hooks/lending_requirements.pb.js` (`onRecordCreateRequest` on `conversations`), which aborts the create with `400 lending_requirement_unmet` if an enabled requirement is unmet — it cannot be bypassed by a direct API POST. The frontend mirrors the same registry in `$lib/server/lendingRequirements.ts` purely for UX (disable the request button, list what's missing). To add a requirement type: add the field (migration) + a registry entry in **both** the hook and the helper. Trust/visibility gating stays in the `conversations` createRule (migration `1781900002_harden_conversations_create.js`).
+Enforcement is **authoritative in the backend hook** `pb_hooks/lending_requirements.pb.js` (`onRecordCreateRequest` on `conversations`). The hook resolves the lender from the **item** (`requestedItem.owner`), never from the client-supplied `itemOwner` field — it overwrites a forged/mismatched `itemOwner` with the real owner before evaluating, aborts the create with `400 lending_requirement_unmet` if an enabled requirement is unmet, and fails **closed** if the borrower record can't be loaded. Two migrations touch the `conversations` createRule: `1781900002_harden_conversations_create.js` (the pre-existing trust/visibility clause, kept unchanged) and `1782260002_conversations_bind_itemowner.js`, which adds `itemOwner = requestedItem.owner` so a forged owner is also rejected at the rule layer (defense in depth — the rule-layer counterpart of the hook check). It therefore cannot be bypassed by a direct API POST.
+
+The frontend mirrors the same registry in `$lib/server/lendingRequirements.ts` purely for UX (the hook is the source of truth). Lenders configure their per-account requirements via registry-driven toggles on the profile page (`LendingRequirementsSection` → the `saveLendingRequirements` action → `upsertOwnerRequirements`, which falls back to an update if a create races the unique index). Borrowers see a blocked request CTA with quick-fix links, derived from `evaluateUnmetRequirements`. To add a requirement type: add the field (migration) + a registry entry in **both** the hook and the helper — the owner settings UI, the load/save path and the borrower CTA are all driven from that registry.
 
 ## Account deletion (`deleted` / `deletedAt`, `deleted_accounts`)
 
