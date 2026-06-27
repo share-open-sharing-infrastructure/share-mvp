@@ -9,7 +9,7 @@
 	} from '$lib/utils/pushSubscription';
 	import { getClientPB } from '$lib/client-pb';
 
-	let { userId }: { userId: string } = $props();
+	let { userId, verified }: { userId: string; verified: boolean } = $props();
 
 	// null         → not yet read from browser; section stays hidden during SSR
 	//                and until onMount resolves the actual state.
@@ -92,6 +92,10 @@
 	}
 
 	async function toggleEmailNotifications() {
+		// Email notifications are only delivered to verified addresses (#8), so the toggle is
+		// inert until the user verifies. The Toggle is also rendered disabled in that state.
+		if (!verified) return;
+
 		const newValue = !emailNotificationsEnabled;
 		emailNotificationsEnabled = newValue;
 
@@ -165,11 +169,17 @@
 							</p>
 						</div>
 						<Toggle
-							checked={emailNotificationsEnabled}
+							checked={verified && emailNotificationsEnabled}
+							disabled={!verified}
 							onchange={toggleEmailNotifications}
 							classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
 						/>
 					</div>
+					{#if !verified}
+						<p class="text-sm text-accent-600 dark:text-accent-400 mt-2">
+							{texts.pages.profile.notifications.emailToggleVerifyHint}
+						</p>
+					{/if}
 				</div>
 			{/if}
 		</div>

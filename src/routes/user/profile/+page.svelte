@@ -198,7 +198,7 @@
 		</div>
 	</div>
 
-	<NotificationSettings userId={data.currentUser.id} />
+	<NotificationSettings userId={data.currentUser.id} verified={data.currentUser.verified ?? false} />
 
 	<InviteLink inviteUrl={data.inviteUrl} />
 
