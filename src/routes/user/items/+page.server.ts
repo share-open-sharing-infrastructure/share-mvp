@@ -187,7 +187,14 @@ export const actions = {
 		const itemId = (await request.formData()).get('itemId')?.toString();
 		if (itemId) {
 			try {
-				await deleteItem(locals.pb, itemId, locals.user.id);
+				const result = await deleteItem(locals.pb, itemId, locals.user.id);
+				if (result.status === 'has_open_conversations') {
+					return fail(409, {
+						fail: true,
+						message: texts.pages.items.deleteBlockedByConversation,
+						conversationIds: result.conversationIds,
+					});
+				}
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err ? err.message : err);
@@ -217,7 +224,14 @@ export const actions = {
 	bulkDelete: async ({ locals, request }) => {
 		const itemIds = (await request.formData()).getAll('itemId').map(String);
 		if (!itemIds.length) return fail(400, { fail: true, message: 'Ungültige Anfrage.' });
-		await deleteMultipleItems(locals.pb, itemIds, locals.user.id);
+		const { deleted, blocked } = await deleteMultipleItems(locals.pb, itemIds, locals.user.id);
+		if (blocked.length > 0) {
+			return fail(409, {
+				fail: true,
+				message: texts.pages.items.bulkDeletePartialBlock(deleted, blocked.length),
+				conversationIds: blocked.flatMap((b) => b.conversationIds),
+			});
+		}
 	},
 
 	toggleTrusteesOnly: async ({ locals, request }) => {
