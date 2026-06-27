@@ -564,6 +564,9 @@ export const texts = {
 			setUnavailable: 'Nicht verfügbar setzen',
 			deselectAll: 'Alle abwählen',
 			selectAll: 'Alle auf dieser Seite',
+			bulkDelete: 'Löschen',
+			bulkDeleteConfirm: (n: number) =>
+				`${n} Ding(e) wirklich löschen? Verbundene Gespräche werden ebenfalls gelöscht.`,
 		},
 		profile: {
 			title: 'Mein Profil',

@@ -155,6 +155,27 @@
 						{texts.pages.items.setUnavailable}
 					</button>
 				</form>
+				<form
+					method="POST"
+					action="?/bulkDelete"
+					use:enhance={({ cancel }) => {
+						if (!confirm(texts.pages.items.bulkDeleteConfirm(selectedIds.size))) {
+							cancel();
+							return;
+						}
+						return async ({ update }) => update({ reset: false });
+					}}
+				>
+					{#each [...selectedIds] as id}
+						<input type="hidden" name="itemId" value={id} />
+					{/each}
+					<button
+						type="submit"
+						class="text-xs font-semibold px-3 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 hover:bg-red-200 cursor-pointer transition-colors"
+					>
+						{texts.pages.items.bulkDelete}
+					</button>
+				</form>
 				<button
 					type="button"
 					onclick={() => { selectedIds = new Set(); }}

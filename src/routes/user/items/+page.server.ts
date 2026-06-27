@@ -3,8 +3,8 @@ import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
 import type { Item } from '$lib/types/models';
-import { deleteConversation } from '../../conversations/[conversationId]/conversation.server';
 import { getAttachableGroups } from '$lib/server/groups';
+import { deleteItem, deleteMultipleItems, setItemStatus } from '$lib/server/items';
 
 /**
  * Keep only the submitted group ids the user is actually allowed to attach
@@ -187,19 +187,7 @@ export const actions = {
 		const itemId = (await request.formData()).get('itemId')?.toString();
 		if (itemId) {
 			try {
-				const conversations = await locals.pb
-					.collection('conversations')
-					.getFullList({ filter: locals.pb.filter('requestedItem = {:itemId}', { itemId }) });
-
-				// Use deleteConversation (not a bare conversations.delete) so the
-				// notifications referencing each conversation are cleaned up too —
-				// otherwise the other party is left with dead-link notifications
-				// pointing at a now-missing conversation.
-				for (const conversation of conversations) {
-					await deleteConversation(locals.pb, conversation.id);
-				}
-
-				await locals.pb.collection('items').delete(itemId);
+				await deleteItem(locals.pb, itemId, locals.user.id);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err ? err.message : err);
@@ -218,14 +206,18 @@ export const actions = {
 
 		for (const itemId of itemIds) {
 			try {
-				const item = await locals.pb.collection('items').getOne(itemId);
-				if (item.owner !== locals.user.id) continue;
-				await locals.pb.collection('items').update(itemId, { status: newStatus });
+				await setItemStatus(locals.pb, itemId, locals.user.id, newStatus);
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (err: Error | any) {
 				console.error(err?.message ?? err);
 			}
 		}
+	},
+
+	bulkDelete: async ({ locals, request }) => {
+		const itemIds = (await request.formData()).getAll('itemId').map(String);
+		if (!itemIds.length) return fail(400, { fail: true, message: 'Ungültige Anfrage.' });
+		await deleteMultipleItems(locals.pb, itemIds, locals.user.id);
 	},
 
 	toggleTrusteesOnly: async ({ locals, request }) => {
@@ -267,7 +259,7 @@ export const actions = {
 
 		const newStatus = item.status === 'available' ? 'unavailable' : 'available';
 		try {
-			await locals.pb.collection('items').update(itemId, { status: newStatus });
+			await setItemStatus(locals.pb, itemId, locals.user.id, newStatus);
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
