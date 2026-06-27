@@ -8,9 +8,15 @@
 	import debounce from 'debounce';
 	import PocketBase from 'pocketbase';
 	import { PUBLIC_PB_URL } from '$env/static/public';
-	import { resolve } from '$app/paths';
+	import LegalDocModal from '$lib/components/LegalDocModal.svelte';
 
 	let { data, form } = $props();
+
+	// Legal docs shown inline in a modal (not a new tab — unusable in the PWA).
+	const tosDoc = $derived(data.legalDocs?.find((d) => d.docType === 'tos'));
+	const privacyDoc = $derived(data.legalDocs?.find((d) => d.docType === 'privacy'));
+	let openTos = $state(false);
+	let openPrivacy = $state(false);
 
 	const pb = new PocketBase(PUBLIC_PB_URL);
 
@@ -112,7 +118,7 @@
 				<PasswordInput autocomplete="new-password" />
 				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
 					<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-					<span>Ich habe die <a href={resolve("/misc/tos")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">AGB</a> und die <a href={resolve("/misc/privacy")} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Datenschutzerklärung</a> gelesen und stimme beiden zu.</span>
+					<span>Ich habe die <button type="button" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openTos = true; }} class="cursor-pointer text-primary hover:underline">AGB{tosDoc ? ` (v${tosDoc.version})` : ''}</button> und die <button type="button" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openPrivacy = true; }} class="cursor-pointer text-primary hover:underline">Datenschutzerklärung{privacyDoc ? ` (v${privacyDoc.version})` : ''}</button> gelesen und stimme beiden zu.</span>
 				</label>
 				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
 					<input type="checkbox" name="subscribeToNewsletter" checked class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
@@ -125,3 +131,12 @@
 		</div>
 	</Register>
 </Section>
+
+<!-- Document modals live OUTSIDE the form above: Flowbite's modal close (×) is a
+     <button> that would otherwise submit the registration form (review on PR #440). -->
+{#if tosDoc}
+	<LegalDocModal bind:open={openTos} title={tosDoc.title} version={tosDoc.version} effectiveDate={tosDoc.effectiveDate} body={tosDoc.body} />
+{/if}
+{#if privacyDoc}
+	<LegalDocModal bind:open={openPrivacy} title={privacyDoc.title} version={privacyDoc.version} effectiveDate={privacyDoc.effectiveDate} body={privacyDoc.body} />
+{/if}

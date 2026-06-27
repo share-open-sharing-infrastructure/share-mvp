@@ -1032,5 +1032,42 @@ export const texts = {
 		skip: 'Lieber nicht beantworten',
 		submit: 'Abschicken',
 	},
+
+	// Platform-wide ToS / privacy re-consent gate (Issue #399).
+	legal: {
+		docName: (docType: 'tos' | 'privacy') =>
+			docType === 'tos' ? 'Allgemeine Geschäftsbedingungen' : 'Datenschutzerklärung',
+		accept: {
+			pageTitle: 'Aktualisierte Bedingungen',
+			intro:
+				'Wir haben unsere rechtlichen Dokumente überarbeitet. Bitte lies die unten genannten Dokumente und stimme ihnen zu, um AllerLeih weiter zu nutzen.',
+			gateNotice:
+				'Du musst zuerst den aktuellen Bedingungen zustimmen, bevor du diese Seite aufrufen kannst.',
+			reviewLinkLabel: 'Vollständiges Dokument öffnen',
+			checkboxLabel: (docName: string, version: string) =>
+				`Ich habe die ${docName} (Version ${version}) gelesen und stimme ihnen zu.`,
+			acceptButton: 'Zustimmen und fortfahren',
+			declineButton: 'Ablehnen',
+			declineHint:
+				'Wenn du ablehnst, wird dein Konto gesperrt (deine Daten bleiben erhalten) und du wirst gebeten, dich an uns zu wenden.',
+			errors: {
+				mustAcceptAll: 'Bitte stimme allen aufgeführten Dokumenten zu, um fortzufahren.',
+				saveFailed:
+					'Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut.',
+				declineFailed:
+					'Deine Antwort konnte nicht verarbeitet werden. Bitte versuche es erneut.',
+			},
+		},
+		locked: {
+			pageTitle: 'Konto gesperrt',
+			body: 'Du hast den aktualisierten rechtlichen Bedingungen widersprochen. Dein Konto ist daher vorübergehend gesperrt; deine Daten bleiben erhalten.',
+			reconsiderPrompt:
+				'Du kannst es dir jederzeit anders überlegen und den Bedingungen nachträglich zustimmen, um dein Konto sofort wieder freizuschalten:',
+			acceptInstead: 'Bedingungen jetzt akzeptieren',
+			contactPrompt: 'Du hast Fragen oder möchtest den Sachverhalt klären? Wende dich an:',
+			contactEmail: 'kontakt@allerleih.org',
+			logout: 'Abmelden',
+		},
+	},
 };
 
