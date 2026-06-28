@@ -361,7 +361,8 @@ item into search/profile/sitemap.
 
 Free-text search (`buildSearchFilter`) matches the owner `username` in addition to item
 `name` and `description`, so an account or institution can be found by name. Deleted-owner
-rows are excluded by the view's rule, so this never surfaces a masked account.
+rows are excluded from the view (see the deleted-owner `WHERE` clause), so this never
+surfaces an anonymized account name.
 
 ### Base `items` rule
 

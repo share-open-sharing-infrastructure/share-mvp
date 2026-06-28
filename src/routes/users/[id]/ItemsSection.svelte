@@ -111,8 +111,9 @@
 		</div>
 	{/if}
 
-	<!-- Announce the (live-filtered) result count to screen readers without a visible change. -->
-	<p class="sr-only" aria-live="polite">{texts.ui.resultsFound(displayedItems.length)}</p>
+	<!-- Announce the result count to screen readers, but only for an actual text search (not on
+	     passive profile load or category clicks). -->
+	<p class="sr-only" aria-live="polite">{normalizedSearch !== '' ? texts.ui.resultsFound(displayedItems.length) : ''}</p>
 
 	{#if displayedItems.length === 0 && ghostIndices.length === 0}
 		<p class="text-tinte-500 dark:text-tinte-400 text-sm">

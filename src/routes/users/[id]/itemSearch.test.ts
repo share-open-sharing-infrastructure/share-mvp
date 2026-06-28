@@ -14,6 +14,7 @@ describe('matchesItemSearch', () => {
 
 	it('matches on the description', () => {
 		expect(matchesItemSearch({ name: 'Mixer', description: 'Für Smoothies' }, 'smoothies')).toBe(true);
+		expect(matchesItemSearch({ name: 'Mixer', description: 'Für Smoothies' }, 'zelt')).toBe(false);
 	});
 
 	it('does not throw on missing name or description', () => {
