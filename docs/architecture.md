@@ -49,7 +49,10 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
 | API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics` | Varies |
-| Static | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/sitemap.xml` | No |
+| Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/sitemap.xml` | No |
+| Legal consent | `/legal/accept`, `/legal/locked` | Yes (gate-exempt) |
+
+`/misc/tos` and `/misc/privacy` are public but no longer static — they render the active document from the `legal_documents` collection (Issue #399). `/legal/accept` and `/legal/locked` are the re-consent gate (see [domain-model.md](domain-model.md)); they are exempt from the gate itself so a not-yet-consented user can reach them.
 
 All mutations go through SvelteKit **form actions** (`action="?/actionName"`). There is no REST API layer between the frontend and PocketBase — server load functions fetch data, form actions write it.
 
@@ -62,6 +65,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 | `GET /api/invite/{code}` | public | Resolves an invite code to `{ id, username }` only, so guests can follow `/invite/<code>` without the public user view exposing every code |
 | `POST /api/travel-times` | required | Reads owner coordinates from the owner-only `user_geolocations` collection, calls ORS, and returns only bucketed minutes (coordinates never leave the backend). The SvelteKit `/api/travel-times/{item,search}` endpoints relay to this hook. |
 | `GET /api/contact/{userId}` | required | Returns a user's telegram/signal handles for the caller, honouring the per-handle "visible to trusted only" flags + trust at the data layer (handles live in the owner-only `user_contacts` collection). |
+| `POST /api/legal/accept` · `POST /api/legal/decline` | required | Platform legal consent (#399). Server-authoritative: snapshot the active `legal_documents` body, write the immutable `user_legal_acceptances` record, refresh the user's version cache, and set/clear `legalLocked` — all in a transaction, in superuser context (the user can't write any of this directly). A `legalLocked` user is additionally blocked from mutating data at the PocketBase layer. |
 
 ---
 
@@ -112,10 +116,13 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 
 ## Real-time Architecture
 
-AllerLeih uses PocketBase's built-in WebSocket subscriptions for live chat in the conversations view. The utility function `setupPocketBaseSubscription()` in `src/lib/utils/utils.ts` wraps this pattern:
+AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat in the conversations view. The single entry point `subscribeRealtime()` in `src/lib/client-pb.ts` wraps this pattern:
 
-- Takes a collection name, optional record ID (`'*'` to subscribe to all records), and a callback
+- Takes an options object: collection, optional topic/record ID (`'*'` for all records), a handler, and an optional `onReconnect` callback
+- Adds retry-on-connect-failure and automatic recovery after a network drop or a mobile tab background-freeze (which silently kills the stream) — `onReconnect` fires so callers can refetch state missed while the stream was down (issue #435)
 - Returns an unsubscribe function suitable for `$effect()` cleanup in Svelte 5
-- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the WebSocket connection (the httpOnly cookie is inaccessible to JS)
+- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the connection (the httpOnly cookie is inaccessible to JS)
+
+Domain-specific reconciliation (e.g. keeping the conversation sidebar list in sync) lives next to its route — see `src/routes/conversations/conversationListRealtime.ts` — rather than in the components themselves.
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.

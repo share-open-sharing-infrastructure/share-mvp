@@ -3,6 +3,8 @@ import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
+import { getOutstandingLegalDocs, isLegalLocked, type LegalUser } from '$lib/server/legal';
+import { getActiveLegalVersions } from '$lib/server/legalDocs';
 
 export { PUBLIC_PB_URL };
 
@@ -20,6 +22,12 @@ const unprotectedPrefix = [
 	'/api/redirect',
 	'/api/diagnostics',
 ];
+
+// Paths exempt from the legal-consent gate (Issue #399) — otherwise a not-yet-
+// consented user would be redirected away from the very pages they need: the
+// accept/locked pages, the auth flow (incl. logout), the readable legal docs
+// under /misc, and the fire-and-forget diagnostics/redirect endpoints.
+const legalGateExempt = ['/legal', '/auth', '/misc', '/api/diagnostics', '/api/redirect'];
 
 export const authentication: Handle = async ({ event, resolve }) => {
 	event.locals.pb = new PocketBase(PUBLIC_PB_URL);
@@ -65,15 +73,31 @@ export const authentication: Handle = async ({ event, resolve }) => {
 };
 
 export const authorization: Handle = async ({ event, resolve }) => {
-	if (
-		!unprotectedPrefix.some((path) => event.url.pathname.startsWith(path)) &&
-		event.url.pathname !== '/'
-	) {
-		const loggedIn = await event.locals.pb.authStore.isValid;
+	const { pathname } = event.url;
+	const loggedIn = event.locals.pb.authStore.isValid;
+
+	if (!unprotectedPrefix.some((path) => pathname.startsWith(path)) && pathname !== '/') {
 		if (!loggedIn) {
-			redirect(307, `/auth/login?redirectTo=${encodeURIComponent(event.url.pathname + event.url.search)}`);
+			redirect(307, `/auth/login?redirectTo=${encodeURIComponent(pathname + event.url.search)}`);
 		}
 	}
+
+	// Legal-consent gate (Issue #399): a logged-in user who declined the current
+	// terms is locked; one who hasn't accepted the current ToS/privacy version is
+	// sent to accept them. The accepted versions come from the auth record; the
+	// active versions are read from `legal_documents` but cached in-process (~60s),
+	// so this stays cheap. Exempt paths above keep the gate from trapping its own pages.
+	if (loggedIn && event.locals.user && !legalGateExempt.some((p) => pathname.startsWith(p))) {
+		const user = event.locals.user as unknown as LegalUser;
+		if (isLegalLocked(user)) {
+			redirect(307, '/legal/locked');
+		}
+		const activeVersions = await getActiveLegalVersions(event.locals.pb);
+		if (getOutstandingLegalDocs(user, activeVersions).length > 0) {
+			redirect(307, `/legal/accept?redirectTo=${encodeURIComponent(pathname + event.url.search)}`);
+		}
+	}
+
 	const result = await resolve(event);
 	return result;
 };

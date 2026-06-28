@@ -4,6 +4,7 @@
 	import type { Item, ItemPublic } from '$lib/types/models';
 	import ItemCard from '../../search/ItemCard.svelte';
 	import LockedItemCard from './LockedItemCard.svelte';
+	import { matchesItemSearch } from './itemSearch';
 
 	interface Props {
 		publicItems: Item[];
@@ -18,8 +19,16 @@
 	const { publicItems, trustedItems, hiddenItemsCount, hiddenCategories, profileImageUrl, pbImgUrl, loggedIn }: Props = $props();
 
 	let selectedCategory = $state<string | null>(null);
+	let searchText = $state('');
 
 	const allVisibleItems = $derived([...publicItems, ...(trustedItems ?? [])]);
+
+	// Free-text filter over the already-loaded items (in-memory, no extra request).
+	const normalizedSearch = $derived(searchText.trim().toLowerCase());
+
+	// Items left after the text filter; the category chips and their counts are derived from this
+	// set so the numbers the user reads always reflect the active search.
+	const textFilteredItems = $derived(allVisibleItems.filter((i) => matchesItemSearch(i, normalizedSearch)));
 
 	const categories = $derived(
 		[...new Set([
@@ -30,7 +39,7 @@
 
 	const categoryCounts = $derived(
 		Object.fromEntries(
-			categories.map((cat) => [cat, allVisibleItems.filter((i) => (i.categories ?? []).includes(cat)).length])
+			categories.map((cat) => [cat, textFilteredItems.filter((i) => (i.categories ?? []).includes(cat)).length])
 		)
 	);
 
@@ -43,12 +52,13 @@
 
 	const displayedItems = $derived(
 		selectedCategory === null
-			? allVisibleItems
-			: allVisibleItems.filter((i) => (i.categories ?? []).includes(selectedCategory!))
+			? textFilteredItems
+			: textFilteredItems.filter((i) => (i.categories ?? []).includes(selectedCategory!))
 	);
 
 	const ghostIndices = $derived(
-		trustedItems !== null
+		// Hidden items can't be matched by the text filter, so suppress the locked placeholders while searching.
+		trustedItems !== null || normalizedSearch !== ''
 			? []
 			: Array.from(
 				{ length: Math.min(selectedCategory === null ? hiddenItemsCount : (hiddenCategoryCounts[selectedCategory] ?? 0), 3) },
@@ -62,6 +72,16 @@
 		{texts.pages.userProfile.itemsSectionTitle}
 	</h2>
 
+	{#if allVisibleItems.length > 0}
+		<input
+			type="search"
+			bind:value={searchText}
+			placeholder={texts.pages.userProfile.itemSearchPlaceholder}
+			aria-label={texts.pages.userProfile.itemSearchPlaceholder}
+			class="w-full rounded-full border border-tinte-300 bg-papier px-4 py-2 text-sm text-tinte-900 placeholder-tinte-400 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
+		/>
+	{/if}
+
 	{#if categories.length > 0}
 		<div class="flex flex-wrap gap-2">
 			<button
@@ -73,7 +93,7 @@
 				onclick={() => (selectedCategory = null)}
 			>
 				{texts.pages.userProfile.allCategories}
-				<span class="ml-1 text-xs opacity-60">{allVisibleItems.length}{#if hiddenItemsCount > 0}&nbsp;(+{hiddenItemsCount}){/if}</span>
+				<span class="ml-1 text-xs opacity-60">{textFilteredItems.length}{#if hiddenItemsCount > 0 && normalizedSearch === ''}&nbsp;(+{hiddenItemsCount}){/if}</span>
 			</button>
 			{#each categories as cat (cat)}
 				<button
@@ -85,17 +105,23 @@
 					onclick={() => (selectedCategory = cat)}
 				>
 					{cat}
-					<span class="ml-1 text-xs opacity-60">{categoryCounts[cat]}{#if hiddenCategoryCounts[cat]}&nbsp;(+{hiddenCategoryCounts[cat]}){/if}</span>
+					<span class="ml-1 text-xs opacity-60">{categoryCounts[cat]}{#if hiddenCategoryCounts[cat] && normalizedSearch === ''}&nbsp;(+{hiddenCategoryCounts[cat]}){/if}</span>
 				</button>
 			{/each}
 		</div>
 	{/if}
 
+	<!-- Announce the result count to screen readers, but only for an actual text search (not on
+	     passive profile load or category clicks). -->
+	<p class="sr-only" aria-live="polite">{normalizedSearch !== '' ? texts.ui.resultsFound(displayedItems.length) : ''}</p>
+
 	{#if displayedItems.length === 0 && ghostIndices.length === 0}
 		<p class="text-tinte-500 dark:text-tinte-400 text-sm">
-			{selectedCategory !== null
-				? texts.pages.userProfile.noItemsInCategory
-				: texts.pages.userProfile.noItemsOnProfile}
+			{normalizedSearch !== ''
+				? texts.pages.userProfile.noItemsForSearch
+				: selectedCategory !== null
+					? texts.pages.userProfile.noItemsInCategory
+					: texts.pages.userProfile.noItemsOnProfile}
 		</p>
 	{:else}
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

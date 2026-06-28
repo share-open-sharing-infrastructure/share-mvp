@@ -3,13 +3,14 @@
 	import type PocketBase from 'pocketbase';
 	import type { RecordSubscription } from 'pocketbase';
 	import { onMount, untrack } from 'svelte';
+	import { invalidateAll } from '$app/navigation';
 	import { PUBLIC_PB_URL } from '$env/static/public';
-	import { getClientPB } from '$lib/client-pb';
+	import { getClientPB, subscribeRealtime } from '$lib/client-pb';
 
 	// Other imports
 	import { Button, Modal, Input } from 'flowbite-svelte';
 	import MessageElement from './MessageElement.svelte';
-	import { setupPocketBaseSubscription, displayName } from '$lib/utils/utils';
+	import { displayName } from '$lib/utils/utils';
 	import type { Conversation, Message } from '$lib/types/models';
 	import { texts } from '$lib/texts';
 	import ConversationHeader from './ConversationHeader.svelte';
@@ -28,7 +29,9 @@
 	);
 	// Sync messages when server data refreshes (e.g. after use:enhance reloads load())
 	$effect(() => {
-		messages = data.conversation.messages ? [...data.conversation.messages] : [];
+		messages = data.conversation.messages
+			? [...data.conversation.messages]
+			: [];
 	});
 
 	// eslint-disable-next-line svelte/prefer-writable-derived -- same pattern as messages: written by the real-time event handler
@@ -63,13 +66,18 @@
 
 	// UI state variables
 	let deleteConversationModal = $state(false);
-	let showCounterfactualModal = $derived(counterfactual === 'pending' && !loggedInUserIsItemOwner);
+	let showCounterfactualModal = $derived(
+		counterfactual === 'pending' && !loggedInUserIsItemOwner
+	);
 	let isSubmitting: boolean = $state(false);
 	let chatWindow: HTMLDivElement;
 
 	function scrollToBottom(smooth = true) {
 		if (!chatWindow) return;
-		chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+		chatWindow.scrollTo({
+			top: chatWindow.scrollHeight,
+			behavior: smooth ? 'smooth' : 'auto',
+		});
 	}
 
 	// Scroll chat window to bottom when messages change
@@ -147,8 +155,16 @@
 	$effect(() => {
 		if (!pb) return;
 		const id = untrack(() => data.conversation.id);
-		const cleanup = setupPocketBaseSubscription(pb, 'conversations', id, handleConversationEvent);
-		return cleanup;
+		return subscribeRealtime({
+			collection: 'conversations',
+			topic: id,
+			handler: handleConversationEvent,
+			// Messages sent while the stream was down (e.g. the phone was asleep)
+			// aren't replayed by realtime — refetch the conversation on reconnect
+			// so the missing messages appear. Fixes the "doesn't update for one
+			// party" symptom in #435.
+			onReconnect: () => invalidateAll(),
+		});
 	});
 </script>
 
@@ -172,10 +188,18 @@
 />
 
 <!-- Messages list -->
-<div bind:this={chatWindow} class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900">
+<div
+	bind:this={chatWindow}
+	class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900"
+>
 	{#if lendingStatus === 'pending' && messages.length === 0 && !loggedInUserIsItemOwner}
-		<p class="text-xl p-4 text-center max-w-100 mx-auto my-auto text-tinte-400 dark:text-tinte-500 italic">
-			{texts.lending.statusDescription.pending.requesterNudge(displayName(chatPartner), data.conversation.requestedItem.name)}
+		<p
+			class="text-xl p-4 text-center max-w-100 mx-auto my-auto text-tinte-400 dark:text-tinte-500 italic"
+		>
+			{texts.lending.statusDescription.pending.requesterNudge(
+				displayName(chatPartner),
+				data.conversation.requestedItem.name
+			)}
 		</p>
 	{/if}
 	{#each messages as message (message.id)}
@@ -184,11 +208,16 @@
 </div>
 
 <!-- Input bar -->
-<div class="border-t border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 px-4 py-3">
+<div
+	class="border-t border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 px-4 py-3"
+>
 	<MessageForm {chatPartner} bind:isSubmitting bind:messageText />
 </div>
 
-<CounterfactualModal open={showCounterfactualModal} conversationId={data.conversation.id} />
+<CounterfactualModal
+	open={showCounterfactualModal}
+	conversationId={data.conversation.id}
+/>
 
 <Modal title="Anfrage löschen" form bind:open={deleteConversationModal}>
 	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung

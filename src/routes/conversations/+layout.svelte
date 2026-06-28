@@ -2,7 +2,9 @@
 	import { texts } from '$lib/texts';
 	import ConversationList from './ConversationList.svelte';
 	import { getClientPB } from '$lib/client-pb';
+	import { subscribeConversationList } from './conversationListRealtime';
 	import { page } from '$app/state';
+	import { invalidateAll } from '$app/navigation';
 	import { onMount, untrack } from 'svelte';
 	import type { Conversation } from '$lib/types/models';
 
@@ -19,7 +21,8 @@
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const match = untrack(() => conversations.find((c: any) => c.id === id));
 		if (!match) return;
-		activeTab = match.itemOwner === data.currentUser.id ? 'lending' : 'borrowing';
+		activeTab =
+			match.itemOwner === data.currentUser.id ? 'lending' : 'borrowing';
 	});
 
 	const hasConversation = $derived(!!page.params.conversationId);
@@ -82,10 +85,14 @@
 	});
 
 	const lendingConversations = $derived(
-		conversations.filter((c: Conversation) => c.itemOwner === data.currentUser.id)
+		conversations.filter(
+			(c: Conversation) => c.itemOwner === data.currentUser.id
+		)
 	);
 	const borrowingConversations = $derived(
-		conversations.filter((c: Conversation) => c.requester === data.currentUser.id)
+		conversations.filter(
+			(c: Conversation) => c.requester === data.currentUser.id
+		)
 	);
 
 	function switchTab(tab: 'lending' | 'borrowing') {
@@ -93,46 +100,35 @@
 	}
 
 	onMount(() => {
-		const pb = getClientPB();
-
-		pb.collection('conversations').subscribe('*', async (e) => {
-			if (e.action === 'update') {
-				conversations = conversations.map((c) =>
-					c.id === e.record.id
-						? { ...c, readByOwner: e.record.readByOwner, readByRequester: e.record.readByRequester }
-						: c
-				);
-			} else if (e.action === 'create') {
-				if (conversations.some((c) => c.id === e.record.id)) return;
-				try {
-					// Subscription events don't include expanded relations — fetch the full record.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					const full: any = await pb.collection('conversations').getOne(e.record.id, {
-						expand: 'requester,itemOwner,requestedItem'
-					});
-					conversations = [...conversations, full];
-				} catch {
-					// Record may have been deleted before we could fetch it — ignore silently.
-				}
-			}
-		});
-
-		return () => {
-			pb.collection('conversations').unsubscribe('*');
-		};
+		// Resilient list sync: retries a failed connect and re-establishes itself after a
+		// network drop / mobile background-freeze; on reconnect, refetch the list since
+		// changes made while the stream was down aren't replayed. See ./conversationListRealtime
+		// and #435.
+		return subscribeConversationList(
+			getClientPB(),
+			() => conversations,
+			(next) => (conversations = next),
+			() => invalidateAll()
+		);
 	});
 </script>
 
 <!-- Height is set dynamically via $effect to fill viewport below the navbar -->
 <div bind:this={outerEl} class="flex flex-col">
 	<div class="flex-1 min-h-0 mx-auto w-full max-w-5xl flex gap-3 px-3 py-3">
-
 		<!-- SIDEBAR — full width on mobile when no conversation open, fixed width on desktop -->
-		<div class="{hasConversation ? 'hidden md:flex' : 'flex'} flex-col w-full md:w-72 shrink-0 bg-tinte-50 dark:bg-tinte-900 border border-tinte-200 dark:border-tinte-700 rounded-2xl overflow-hidden">
-
+		<div
+			class="{hasConversation
+				? 'hidden md:flex'
+				: 'flex'} flex-col w-full md:w-72 shrink-0 bg-tinte-50 dark:bg-tinte-900 border border-tinte-200 dark:border-tinte-700 rounded-2xl overflow-hidden"
+		>
 			<!-- Sidebar title -->
-			<div class="px-4 pt-4 pb-3 shrink-0 border-b border-tinte-100 dark:border-tinte-800">
-				<h2 class="text-lg font-bold text-tinte-900 dark:text-white tracking-tight">
+			<div
+				class="px-4 pt-4 pb-3 shrink-0 border-b border-tinte-100 dark:border-tinte-800"
+			>
+				<h2
+					class="text-lg font-bold text-tinte-900 dark:text-white tracking-tight"
+				>
 					{texts.pages.conversations.title}
 				</h2>
 			</div>
@@ -144,15 +140,17 @@
 						onclick={() => switchTab('borrowing')}
 						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
 							{activeTab === 'borrowing'
-								? 'bg-white dark:bg-tinte-700 text-primary shadow-sm'
-								: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
+							? 'bg-white dark:bg-tinte-700 text-primary shadow-sm'
+							: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
 					>
 						{texts.pages.conversations.borrowing}
 						{#if borrowingConversations.length > 0}
-							<span class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
+							<span
+								class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
 								{activeTab === 'borrowing'
 									? 'bg-primary text-white'
-									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}">
+									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}"
+							>
 								{borrowingConversations.length}
 							</span>
 						{/if}
@@ -161,15 +159,17 @@
 						onclick={() => switchTab('lending')}
 						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
 							{activeTab === 'lending'
-								? 'bg-white dark:bg-tinte-700 text-accent shadow-sm'
-								: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
+							? 'bg-white dark:bg-tinte-700 text-accent shadow-sm'
+							: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
 					>
 						{texts.pages.conversations.lending}
 						{#if lendingConversations.length > 0}
-							<span class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
+							<span
+								class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
 								{activeTab === 'lending'
 									? 'bg-accent text-white'
-									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}">
+									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}"
+							>
 								{lendingConversations.length}
 							</span>
 						{/if}
@@ -188,9 +188,12 @@
 		</div>
 
 		<!-- CHAT PANEL — hidden on mobile when no conversation open -->
-		<div class="{hasConversation ? 'flex' : 'hidden md:flex'} flex-col w-full md:flex-1 border border-tinte-200 dark:border-tinte-700 rounded-2xl overflow-hidden bg-papier dark:bg-tinte-900">
+		<div
+			class="{hasConversation
+				? 'flex'
+				: 'hidden md:flex'} flex-col w-full md:flex-1 border border-tinte-200 dark:border-tinte-700 rounded-2xl overflow-hidden bg-papier dark:bg-tinte-900"
+		>
 			{@render children()}
 		</div>
-
 	</div>
 </div>
