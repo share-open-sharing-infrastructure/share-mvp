@@ -18,7 +18,11 @@ const DELETED_USERNAME_RE = /^deleted-[a-z0-9]{15}$/;
 export function displayName(
 	user: { username?: string; deleted?: boolean } | null | undefined
 ): string {
-	if (!user || user.deleted || (user.username && DELETED_USERNAME_RE.test(user.username))) {
+	if (
+		!user ||
+		user.deleted ||
+		(user.username && DELETED_USERNAME_RE.test(user.username))
+	) {
 		return texts.account.deletedAccountName;
 	}
 	return user.username ?? texts.account.deletedAccountName;
@@ -70,39 +74,4 @@ export function formatTimestamp(
 		: `${pad(day)}.${pad(month)}. ${pad(hours)}:${pad(minutes)}`;
 
 	return returnString;
-}
-
-import type PocketBase from 'pocketbase';
-import type { RecordSubscription } from 'pocketbase';
-import { subscribeRealtime } from '$lib/client-pb';
-
-/**
- * Sets up a PocketBase real-time subscription for the respective collection and record, and unsubscribes on cleanup.
- *
- * Delegates to {@link subscribeRealtime}, which adds retry-on-connect-failure and
- * automatic recovery when the network returns or the tab is foregrounded again
- * (mobile browsers silently freeze the SSE stream when backgrounded — issue #435).
- *
- * @param _pocketBaseInstance Ignored — the shared singleton from getClientPB() is
- *   always used so all subscriptions multiplex over one EventSource. Kept in the
- *   signature for backwards compatibility with existing call sites.
- * @param collectionName The collection name to subscribe to
- * @param recordId The record ID to subscribe to, defaults to '*' (all records in the collection)
- * @param eventHandler A callback function to handle incoming subscription events
- * @param onReconnect Optional callback run after the stream reconnects — use it to
- *   refetch state that may have changed while the connection was down.
- */
-export function setupPocketBaseSubscription(
-	_pocketBaseInstance: PocketBase | undefined,
-	collectionName: string,
-	recordId: string = '*',
-	eventHandler: (event: RecordSubscription<unknown>) => void,
-	onReconnect?: () => void
-) {
-	return subscribeRealtime({
-		collection: collectionName,
-		topic: recordId,
-		handler: eventHandler,
-		onReconnect
-	});
 }

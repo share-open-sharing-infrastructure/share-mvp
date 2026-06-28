@@ -64,7 +64,7 @@ src/
 │   ├── server/                 # Server-only helpers: itemFilters, notifications, registration,
 │   │                           #   lendingTerms, pushSubscriptions, travelTimes, groups (owned/member + counts)
 │   ├── types/models.ts         # TS interfaces for all PocketBase collections + public views
-│   ├── utils/                  # utils.ts (formatTimestamp, setupPocketBaseSubscription),
+│   ├── utils/                  # utils.ts (formatTimestamp, displayName, itemImageUrl),
 │   │                           #   imageUtils (compressImage), categoryPlaceholder, pushSubscription (client)
 │   └── texts.ts                # ALL German UI strings + ITEM_CATEGORIES
 └── routes/
@@ -175,9 +175,8 @@ with `compressImage()` from `$lib/utils/imageUtils`. Items may instead carry an
 
 ### Real-time subscriptions
 
-Use `subscribeRealtime()` from `$lib/client-pb` (or its thin wrapper
-`setupPocketBaseSubscription()` in `$lib/utils/utils`) for client-side PocketBase realtime
-(e.g. live chat). Both return an unsubscribe function suitable for `$effect`/`onMount`
+Use `subscribeRealtime()` from `$lib/client-pb` for client-side PocketBase realtime
+(e.g. live chat). It returns an unsubscribe function suitable for `$effect`/`onMount`
 cleanup. Do **not** call `pb.collection(x).subscribe()` directly — the resilient layer adds
 retry on connect failure (the SDK gives up permanently on a first-attempt
 "Invalid realtime client" 400) and re-establishes subscriptions after a network drop or a

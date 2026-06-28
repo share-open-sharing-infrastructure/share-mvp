@@ -112,10 +112,13 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 
 ## Real-time Architecture
 
-AllerLeih uses PocketBase's built-in WebSocket subscriptions for live chat in the conversations view. The utility function `setupPocketBaseSubscription()` in `src/lib/utils/utils.ts` wraps this pattern:
+AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat in the conversations view. The single entry point `subscribeRealtime()` in `src/lib/client-pb.ts` wraps this pattern:
 
-- Takes a collection name, optional record ID (`'*'` to subscribe to all records), and a callback
+- Takes an options object: collection, optional topic/record ID (`'*'` for all records), a handler, and an optional `onReconnect` callback
+- Adds retry-on-connect-failure and automatic recovery after a network drop or a mobile tab background-freeze (which silently kills the stream) — `onReconnect` fires so callers can refetch state missed while the stream was down (issue #435)
 - Returns an unsubscribe function suitable for `$effect()` cleanup in Svelte 5
-- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the WebSocket connection (the httpOnly cookie is inaccessible to JS)
+- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the connection (the httpOnly cookie is inaccessible to JS)
+
+Domain-specific reconciliation (e.g. keeping the conversation sidebar list in sync) lives next to its route — see `src/routes/conversations/conversationListRealtime.ts` — rather than in the components themselves.
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.
