@@ -21,7 +21,9 @@ function validateFilterField(field: keyof ItemPublic): string {
 
 /**
  * Converts a free-text search query into a PocketBase filter expression that matches items
- * whose `name` or `description` contains every whitespace-separated token in the query.
+ * whose `name`, `description` or owner `username` contains every whitespace-separated token
+ * in the query. Including `username` lets users find an account's items by typing the account
+ * (or institution) name directly, instead of guessing one of its items first.
  * @param raw the raw search string entered by the user
  * @returns a PocketBase filter string, or `null` for blank input or the wildcard `*`
  */
@@ -32,7 +34,7 @@ export function buildSearchFilter(raw: string): string | null {
 	return tokens
 		.map((token) => {
 			const safe = token.replace(/"/g, '\\"');
-			return `(${validateFilterField('name')} ~ "${safe}" || ${validateFilterField('description')} ~ "${safe}")`;
+			return `(${validateFilterField('name')} ~ "${safe}" || ${validateFilterField('description')} ~ "${safe}" || ${validateFilterField('username')} ~ "${safe}")`;
 		})
 		.join(' && ');
 }
