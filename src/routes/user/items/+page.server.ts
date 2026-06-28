@@ -228,6 +228,7 @@ export const actions = {
 		if (blocked.length > 0) {
 			return fail(409, {
 				fail: true,
+				bulkBlocked: true,
 				message: texts.pages.items.bulkDeletePartialBlock(deleted, blocked.length),
 				conversationIds: blocked.flatMap((b) => b.conversationIds),
 			});

@@ -118,7 +118,7 @@
 		</div>
 
 		<!-- Bulk delete error -->
-		{#if form?.fail && form?.conversationIds?.length}
+		{#if form && 'bulkBlocked' in form && form.conversationIds?.length}
 			<div class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
 				<p>{form.message}</p>
 				<a href="/conversations" class="mt-1 inline-block font-semibold underline">
@@ -138,7 +138,7 @@
 					action="?/bulkSetStatus"
 					use:enhance={() => async ({ update }) => update({ reset: false })}
 				>
-					{#each [...selectedIds] as id}
+					{#each [...selectedIds] as id(id)}
 						<input type="hidden" name="itemId" value={id} />
 					{/each}
 					<input type="hidden" name="newStatus" value="available" />
@@ -154,7 +154,7 @@
 					action="?/bulkSetStatus"
 					use:enhance={() => async ({ update }) => update({ reset: false })}
 				>
-					{#each [...selectedIds] as id}
+					{#each [...selectedIds] as id(id)}
 						<input type="hidden" name="itemId" value={id} />
 					{/each}
 					<input type="hidden" name="newStatus" value="unavailable" />
@@ -168,15 +168,20 @@
 				<form
 					method="POST"
 					action="?/bulkDelete"
-					use:enhance={({ cancel }) => {
+					use:enhance={({ cancel, formData }) => {
 						if (!confirm(texts.pages.items.bulkDeleteConfirm(selectedIds.size))) {
 							cancel();
 							return;
 						}
-						return async ({ update }) => update({ reset: false });
+						const submitted = new Set(formData.getAll('itemId') as string[]);
+						return async ({ update }) => {
+							await update({ reset: false });
+							for (const id of submitted) selectedIds.delete(id);
+							selectedIds = new Set(selectedIds);
+						};
 					}}
 				>
-					{#each [...selectedIds] as id}
+					{#each [...selectedIds] as id(id)}
 						<input type="hidden" name="itemId" value={id} />
 					{/each}
 					<button

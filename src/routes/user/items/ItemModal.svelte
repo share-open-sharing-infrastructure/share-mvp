@@ -21,7 +21,6 @@
 	import { resolve } from '$app/paths';
 	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import { compressImage } from '$lib/utils/imageUtils';
-	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import type { ActionData } from './$types';
 
 	interface Props {
