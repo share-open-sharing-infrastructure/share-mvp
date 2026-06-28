@@ -5,7 +5,7 @@
 	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
-	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
+	import { getClientPB, syncClientPBAuth, subscribeRealtime } from '$lib/client-pb';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
@@ -93,32 +93,40 @@
 		// Auth is already synced by the $effect above (effects run before onMount).
 		const pb = getClientPB();
 
-		pb.collection('notifications').subscribe('*', async (e) => {
-			if (e.record.recipient !== userId) return;
+		// subscribeRealtime (not a bare pb.subscribe) so a transient
+		// "Invalid realtime client" failure retries instead of becoming an
+		// uncaught rejection + a silently dead badge, and so the subscription
+		// re-establishes after a mobile background-freeze / network drop. See #435.
+		return subscribeRealtime({
+			collection: 'notifications',
+			topic: '*',
+			handler: async (e) => {
+				if (e.record.recipient !== userId) return;
 
-			// Auto-mark as read when a notification arrives for the currently-open conversation
-			if (
-				e.action === 'create' &&
-				!e.record.read &&
-				e.record.relatedId &&
-				e.record.relatedId === page.params.conversationId
-			) {
-				await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
-			}
+				// Auto-mark as read when a notification arrives for the currently-open conversation
+				if (
+					e.action === 'create' &&
+					!e.record.read &&
+					e.record.relatedId &&
+					e.record.relatedId === page.params.conversationId
+				) {
+					await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
+				}
 
-			try {
-				const result = await pb.collection('notifications').getList(1, 1, {
-					filter: pb.filter('recipient = {:userId} && read = false', { userId }),
-				});
-				unreadCount = result.totalItems;
-			} catch (err) {
-				// status 0 = auto-cancelled by PocketBase (a concurrent request superseded this one).
-				// The superseding request will update the badge, so this is safe to ignore.
-				if ((err as { status?: number }).status !== 0) throw err;
-			}
+				try {
+					const result = await pb.collection('notifications').getList(1, 1, {
+						filter: pb.filter('recipient = {:userId} && read = false', { userId }),
+					});
+					unreadCount = result.totalItems;
+				} catch (err) {
+					// status 0 = auto-cancelled by PocketBase (a concurrent request superseded this one).
+					// The superseding request will update the badge, so this is safe to ignore.
+					if ((err as { status?: number }).status !== 0) throw err;
+				}
+			},
+			// Events fired while the stream was down are lost — re-derive the badge.
+			onReconnect: () => invalidate(NOTIFICATIONS_DEP),
 		});
-
-		return () => pb.collection('notifications').unsubscribe('*');
 	});
 
 
