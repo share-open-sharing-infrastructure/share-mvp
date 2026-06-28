@@ -21,7 +21,6 @@
 	import { resolve } from '$app/paths';
 	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import { compressImage } from '$lib/utils/imageUtils';
-	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import type { ActionData } from './$types';
 
 	interface Props {
@@ -132,8 +131,14 @@
 
 <Modal bind:open={isVisible} size="xs">
 	{#if form?.fail}
-		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-			<CustomAlert type="error" message={form?.message} />
+		<div class="mb-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
+			<p>{form.message}</p>
+			{#if form?.conversationIds?.length}
+				<a
+					href="/conversations/{form.conversationIds[0]}"
+					class="mt-1 inline-block font-semibold underline"
+				>{texts.pages.items.linkToConversation}</a>
+			{/if}
 		</div>
 	{/if}
 	<form

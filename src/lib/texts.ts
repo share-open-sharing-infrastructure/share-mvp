@@ -564,6 +564,15 @@ export const texts = {
 			setUnavailable: 'Nicht verfügbar setzen',
 			deselectAll: 'Alle abwählen',
 			selectAll: 'Alle auf dieser Seite',
+			bulkDelete: 'Löschen',
+			bulkDeleteConfirm: (n: number) =>
+				`${n} Ding(e) wirklich löschen? Verbundene Gespräche werden ebenfalls gelöscht.`,
+			deleteBlockedByConversation:
+				'Dieses Ding kann nicht gelöscht werden, da noch ein offenes Gespräch besteht.',
+			bulkDeletePartialBlock: (deleted: number, blocked: number) =>
+				`${deleted} Ding(e) gelöscht. ${blocked} Ding(e) konnten nicht gelöscht werden, da noch offene Gespräche bestehen.`,
+			linkToConversation: 'Zum Gespräch',
+			linkToConversations: 'Zu den Gesprächen',
 		},
 		profile: {
 			title: 'Mein Profil',
