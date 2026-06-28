@@ -1,36 +1,30 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Toggle } from 'flowbite-svelte';
 	import { ITEM_CATEGORIES } from '$lib/texts';
-	import { texts } from '$lib/texts';
 	import { buildSearchUrl } from './searchUrl';
 
 	interface Props {
 		selectedCategories: string[];
-		op: 'or' | 'and';
 		q: string;
 		perPage: number;
 		onlyAvailable: boolean;
 		ownerType: string;
 	}
 
-	let { selectedCategories, op, q, perPage, onlyAvailable, ownerType }: Props = $props();
+	let { selectedCategories, q, perPage, onlyAvailable, ownerType }: Props = $props();
 
-	function buildUrl(newCats: string[], newOp: 'or' | 'and'): string {
+	function buildUrl(newCats: string[]): string {
 		// Always reset to page 1 when filter changes (omit page param).
-		return buildSearchUrl({ q, cats: newCats, op: newOp, onlyAvailable, ownerType, perPage: perPage !== 10 ? perPage : undefined });
+		return buildSearchUrl({ q, cats: newCats, onlyAvailable, ownerType, perPage: perPage !== 10 ? perPage : undefined });
 	}
 
 	function toggleCat(cat: string) {
-		const next = selectedCategories.includes(cat) ? [] : [cat];
-		goto(buildUrl(next, op));
+		// Multiple categories are combined with OR (matches any selected category).
+		const next = selectedCategories.includes(cat)
+			? selectedCategories.filter((c) => c !== cat)
+			: [...selectedCategories, cat];
+		goto(buildUrl(next));
 	}
-
-	function toggleOp() {
-		goto(buildUrl(selectedCategories, op === 'or' ? 'and' : 'or'));
-	}
-
-	let andActive = $derived(op === 'and');
 </script>
 
 <div class="mt-3 space-y-2">
@@ -49,15 +43,4 @@
 			</button>
 		{/each}
 	</div>
-
-	{#if selectedCategories.length >= 2}
-		<div class="flex justify-center">
-			<label class="flex items-center gap-2 cursor-pointer">
-				<Toggle checked={andActive} onchange={toggleOp} />
-				<span class="text-sm text-tinte-600 dark:text-tinte-400">
-					{texts.pages.search.categoryFilterAnd}
-				</span>
-			</label>
-		</div>
-	{/if}
 </div>

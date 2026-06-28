@@ -28,7 +28,6 @@
 		return buildSearchUrl({
 			q: data.q,
 			cats: data.selectedCategories,
-			op: data.op,
 			onlyAvailable: overrides.onlyAvailable ?? data.onlyAvailable,
 			ownerType: overrides.ownerType ?? data.ownerType,
 		});
@@ -74,7 +73,6 @@
 			perPage={data.perPage}
 			q={data.q}
 			selectedCategories={data.selectedCategories}
-			op={data.op}
 			onlyAvailable={data.onlyAvailable}
 			ownerType={data.ownerType}
 		/>
@@ -95,7 +93,6 @@
 
 	<CategoryFilter
 		selectedCategories={data.selectedCategories}
-		op={data.op}
 		q={data.q}
 		perPage={data.perPage}
 		onlyAvailable={data.onlyAvailable}

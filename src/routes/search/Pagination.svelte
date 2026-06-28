@@ -10,17 +10,16 @@
 		perPage: number;
 		q: string;
 		selectedCategories: string[];
-		op: 'or' | 'and';
 		onlyAvailable: boolean;
 		ownerType: string;
 	}
 
-	let { page, totalPages, perPage, q, selectedCategories, op, onlyAvailable, ownerType }: Props = $props();
+	let { page, totalPages, perPage, q, selectedCategories, onlyAvailable, ownerType }: Props = $props();
 
 	const perPageOptions = [10, 20, 50];
 
 	function pageUrl(n: number): string {
-		return buildSearchUrl({ q, page: n, perPage, cats: selectedCategories, op, onlyAvailable, ownerType });
+		return buildSearchUrl({ q, page: n, perPage, cats: selectedCategories, onlyAvailable, ownerType });
 	}
 
 	function getPages(): (number | '...')[] {
@@ -89,9 +88,6 @@
 			<input type="hidden" name="page" value="1" />
 			{#if selectedCategories.length > 0}
 				<input type="hidden" name="cats" value={selectedCategories.join(',')} />
-			{/if}
-			{#if op === 'and'}
-				<input type="hidden" name="op" value="and" />
 			{/if}
 			{#if !onlyAvailable}
 				<input type="hidden" name="onlyAvailable" value="false" />

@@ -43,7 +43,6 @@ export async function load({ locals, url }) {
 		PB_IMG_URL: PUBLIC_PB_URL,
 		q: searchParameters.query,
 		selectedCategories: searchParameters.selectedCategories,
-		op: searchParameters.op,
 		onlyAvailable: searchParameters.onlyAvailable,
 		ownerType: searchParameters.ownerType,
 		currentUser: locals.user ?? null,
