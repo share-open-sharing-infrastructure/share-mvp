@@ -18,8 +18,12 @@
 	const { publicItems, trustedItems, hiddenItemsCount, hiddenCategories, profileImageUrl, pbImgUrl, loggedIn }: Props = $props();
 
 	let selectedCategory = $state<string | null>(null);
+	let searchText = $state('');
 
 	const allVisibleItems = $derived([...publicItems, ...(trustedItems ?? [])]);
+
+	// Free-text filter over the already-loaded items (in-memory, no extra request).
+	const normalizedSearch = $derived(searchText.trim().toLowerCase());
 
 	const categories = $derived(
 		[...new Set([
@@ -42,13 +46,18 @@
 	);
 
 	const displayedItems = $derived(
-		selectedCategory === null
-			? allVisibleItems
-			: allVisibleItems.filter((i) => (i.categories ?? []).includes(selectedCategory!))
+		allVisibleItems
+			.filter((i) => selectedCategory === null || (i.categories ?? []).includes(selectedCategory))
+			.filter(
+				(i) =>
+					normalizedSearch === '' ||
+					`${i.name ?? ''} ${i.description ?? ''}`.toLowerCase().includes(normalizedSearch)
+			)
 	);
 
 	const ghostIndices = $derived(
-		trustedItems !== null
+		// Hidden items can't be matched by the text filter, so suppress the locked placeholders while searching.
+		trustedItems !== null || normalizedSearch !== ''
 			? []
 			: Array.from(
 				{ length: Math.min(selectedCategory === null ? hiddenItemsCount : (hiddenCategoryCounts[selectedCategory] ?? 0), 3) },
@@ -61,6 +70,16 @@
 	<h2 class="text-sm font-semibold text-tinte-500 dark:text-tinte-400 uppercase tracking-wide">
 		{texts.pages.userProfile.itemsSectionTitle}
 	</h2>
+
+	{#if allVisibleItems.length > 0}
+		<input
+			type="search"
+			bind:value={searchText}
+			placeholder={texts.pages.userProfile.itemSearchPlaceholder}
+			aria-label={texts.pages.userProfile.itemSearchPlaceholder}
+			class="w-full rounded-full border border-tinte-300 bg-papier px-4 py-2 text-sm text-tinte-900 placeholder:text-tinte-400 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-white"
+		/>
+	{/if}
 
 	{#if categories.length > 0}
 		<div class="flex flex-wrap gap-2">
@@ -93,9 +112,11 @@
 
 	{#if displayedItems.length === 0 && ghostIndices.length === 0}
 		<p class="text-tinte-500 dark:text-tinte-400 text-sm">
-			{selectedCategory !== null
-				? texts.pages.userProfile.noItemsInCategory
-				: texts.pages.userProfile.noItemsOnProfile}
+			{normalizedSearch !== ''
+				? texts.pages.userProfile.noItemsForSearch
+				: selectedCategory !== null
+					? texts.pages.userProfile.noItemsInCategory
+					: texts.pages.userProfile.noItemsOnProfile}
 		</p>
 	{:else}
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
