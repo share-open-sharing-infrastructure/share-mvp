@@ -14,12 +14,6 @@ describe('buildSearchFilter', () => {
 		);
 	});
 
-	it('lets users find an account by username', () => {
-		// The whole point of #356: typing an account/institution name surfaces its items.
-		const filter = buildSearchFilter('stadtbuecherei');
-		expect(filter).toContain('username ~ "stadtbuecherei"');
-	});
-
 	it('combines multiple tokens with AND, each searched across all fields', () => {
 		expect(buildSearchFilter('testuser2 zelt')).toBe(
 			'(name ~ "testuser2" || description ~ "testuser2" || username ~ "testuser2") && ' +

@@ -359,6 +359,10 @@ item into search/profile/sitemap.
 | userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (`trusts` is **not** exposed) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 
+Free-text search (`buildSearchFilter`) matches the owner `username` in addition to item
+`name` and `description`, so an account or institution can be found by name. Deleted-owner
+rows are excluded by the view's rule, so this never surfaces a masked account.
+
 ### Base `items` rule
 
 The base `items` collection's `listRule`/`viewRule` are

@@ -4,6 +4,7 @@
 	import type { Item, ItemPublic } from '$lib/types/models';
 	import ItemCard from '../../search/ItemCard.svelte';
 	import LockedItemCard from './LockedItemCard.svelte';
+	import { matchesItemSearch } from './itemSearch';
 
 	interface Props {
 		publicItems: Item[];
@@ -25,6 +26,10 @@
 	// Free-text filter over the already-loaded items (in-memory, no extra request).
 	const normalizedSearch = $derived(searchText.trim().toLowerCase());
 
+	// Items left after the text filter; the category chips and their counts are derived from this
+	// set so the numbers the user reads always reflect the active search.
+	const textFilteredItems = $derived(allVisibleItems.filter((i) => matchesItemSearch(i, normalizedSearch)));
+
 	const categories = $derived(
 		[...new Set([
 			...allVisibleItems.flatMap((i) => i.categories ?? []),
@@ -34,7 +39,7 @@
 
 	const categoryCounts = $derived(
 		Object.fromEntries(
-			categories.map((cat) => [cat, allVisibleItems.filter((i) => (i.categories ?? []).includes(cat)).length])
+			categories.map((cat) => [cat, textFilteredItems.filter((i) => (i.categories ?? []).includes(cat)).length])
 		)
 	);
 
@@ -46,13 +51,9 @@
 	);
 
 	const displayedItems = $derived(
-		allVisibleItems
-			.filter((i) => selectedCategory === null || (i.categories ?? []).includes(selectedCategory))
-			.filter(
-				(i) =>
-					normalizedSearch === '' ||
-					`${i.name ?? ''} ${i.description ?? ''}`.toLowerCase().includes(normalizedSearch)
-			)
+		selectedCategory === null
+			? textFilteredItems
+			: textFilteredItems.filter((i) => (i.categories ?? []).includes(selectedCategory!))
 	);
 
 	const ghostIndices = $derived(
@@ -77,7 +78,7 @@
 			bind:value={searchText}
 			placeholder={texts.pages.userProfile.itemSearchPlaceholder}
 			aria-label={texts.pages.userProfile.itemSearchPlaceholder}
-			class="w-full rounded-full border border-tinte-300 bg-papier px-4 py-2 text-sm text-tinte-900 placeholder:text-tinte-400 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-white"
+			class="w-full rounded-full border border-tinte-300 bg-papier px-4 py-2 text-sm text-tinte-900 placeholder-tinte-400 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
 		/>
 	{/if}
 
@@ -92,7 +93,7 @@
 				onclick={() => (selectedCategory = null)}
 			>
 				{texts.pages.userProfile.allCategories}
-				<span class="ml-1 text-xs opacity-60">{allVisibleItems.length}{#if hiddenItemsCount > 0}&nbsp;(+{hiddenItemsCount}){/if}</span>
+				<span class="ml-1 text-xs opacity-60">{textFilteredItems.length}{#if hiddenItemsCount > 0 && normalizedSearch === ''}&nbsp;(+{hiddenItemsCount}){/if}</span>
 			</button>
 			{#each categories as cat (cat)}
 				<button
@@ -104,11 +105,14 @@
 					onclick={() => (selectedCategory = cat)}
 				>
 					{cat}
-					<span class="ml-1 text-xs opacity-60">{categoryCounts[cat]}{#if hiddenCategoryCounts[cat]}&nbsp;(+{hiddenCategoryCounts[cat]}){/if}</span>
+					<span class="ml-1 text-xs opacity-60">{categoryCounts[cat]}{#if hiddenCategoryCounts[cat] && normalizedSearch === ''}&nbsp;(+{hiddenCategoryCounts[cat]}){/if}</span>
 				</button>
 			{/each}
 		</div>
 	{/if}
+
+	<!-- Announce the (live-filtered) result count to screen readers without a visible change. -->
+	<p class="sr-only" aria-live="polite">{texts.ui.resultsFound(displayedItems.length)}</p>
 
 	{#if displayedItems.length === 0 && ghostIndices.length === 0}
 		<p class="text-tinte-500 dark:text-tinte-400 text-sm">
