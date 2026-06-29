@@ -70,18 +70,38 @@ export interface User extends PocketBaseEntity {
 	signalVisibleToTrustedOnly?: boolean;
 
 	/**
-	 * Issue #438: when true, the user's items skip the in-app request flow and
-	 * offer a `mailto:` contact instead. The address used is `contactEmail`.
+	 * Issue #438: off-platform contact channel. When set, the user's items skip the
+	 * in-app request flow and offer an alternative contact CTA instead:
+	 *   ''      — off (default, normal in-app request flow)
+	 *   'email' — a `mailto:` CTA to `contactEmail`
+	 *   'link'  — a link to `contactUrl` (e.g. an external lending form)
 	 */
-	contactViaEmail?: boolean;
+	contactMethod?: '' | 'email' | 'link';
 
 	/**
-	 * Dedicated public contact address for the `mailto:` CTA — kept separate from
-	 * the private login `email`, so the login address is never exposed. Readable
-	 * by any authenticated viewer (base `users` viewRule) but deliberately absent
-	 * from every `*_public` view, so it never leaks to unauthenticated browsing.
+	 * Dedicated public contact address for the `mailto:` CTA (`contactMethod = 'email'`)
+	 * — kept separate from the private login `email`, so the login address is never
+	 * exposed. Readable by any authenticated viewer (base `users` viewRule) and
+	 * deliberately absent from `users_public` / `items_searchable`; it reaches
+	 * unauthenticated browsing only via `items_public.ownerContactEmail` when the owner
+	 * set `contactPublic`.
 	 */
 	contactEmail?: string;
+
+	/**
+	 * Destination (https) the contact CTA links to when `contactMethod = 'link'` — e.g.
+	 * an institution's external lending form. Routed through `/api/redirect`. Same
+	 * visibility rules as `contactEmail`.
+	 */
+	contactUrl?: string;
+
+	/**
+	 * Issue #438: when true the off-platform contact CTA is shown to UNauthenticated
+	 * browsers too (institutions that want zero-account access). When false (default)
+	 * it's visible only to logged-in viewers. Drives whether `items_public` surfaces
+	 * the `ownerContact*` columns.
+	 */
+	contactPublic?: boolean;
 
 	/**
 	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
@@ -263,6 +283,16 @@ export interface ItemPublic extends PocketBaseEntity {
 	userCreated: string;
 	/** 1 if the owner has a non-zero geolocation set, 0 otherwise. Evaluated in the view SQL — never exposes coordinates. */
 	ownerHasLocation: 0 | 1;
+	/**
+	 * Issue #438 — the owner's off-platform contact, surfaced to UNauthenticated browsing
+	 * ONLY when the owner opted into public exposure (`contactPublic`) AND the item is
+	 * fully public (not masked). NULL otherwise. Evaluated in the view SQL so the
+	 * members-only case never leaks. Logged-in viewers get the contact from the base
+	 * `users` record instead (covers members-only too).
+	 */
+	ownerContactMethod?: '' | 'email' | 'link' | null;
+	ownerContactEmail?: string | null;
+	ownerContactUrl?: string | null;
 }
 
 // --- GROUPS ---

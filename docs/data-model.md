@@ -22,8 +22,10 @@ erDiagram
         string bio
         string preferredTransportMode "foot|bicycle|car"
         bool hasOnboarded
-        bool contactViaEmail "issue #438 — item CTA becomes a mailto: instead of the in-app flow"
-        string contactEmail "dedicated public contact address — never in a *_public view"
+        string contactMethod "issue #438 — ''|email|link: item CTA becomes a mailto:/external link instead of the in-app flow"
+        string contactEmail "dedicated contact address (contactMethod=email) — raw value never in a *_public view"
+        string contactUrl "external lending-form link (contactMethod=link) — raw value never in a *_public view"
+        bool contactPublic "issue #438 — when true the contact CTA is shown to unauthenticated browsing too"
         string inviteCode
         string invitedBy FK
         User[] trusts FK
@@ -281,8 +283,8 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
 
 **Phase 1 — deactivate** (`DELETE /api/account`, backend hook with superuser access):
 - The live `users` row is kept but anonymized: `username` → `deleted-<id>`, `email` →
-  `deleted-<id>@deleted.invalid`, profile fields/`trusts[]`/`inviteCode`/`contactEmail`
-  (and `contactViaEmail` reset to false) cleared, password randomized, and `deleted = true` +
+  `deleted-<id>@deleted.invalid`, profile fields/`trusts[]`/`inviteCode`/`contactEmail`/`contactUrl`
+  (and `contactMethod` reset to `''`, `contactPublic` to false) cleared, password randomized, and `deleted = true` +
   `deletedAt` set. `deleted` is also exposed on the `users_public` view so the public profile
   can mask the name.
 - Personal-only data is **hard-deleted**: `user_contacts`, `user_geolocations`,
@@ -361,6 +363,14 @@ item has `trusteesOnly = false` yet must not leak publicly.) The profile and
 item-detail pages read from this view and, for viewers who may see the item,
 fetch the unmasked details from the base `items` collection (rule below).
 
+For issue #438 this view also surfaces the owner's **off-platform contact** as three
+derived columns — `ownerContactMethod` (`''`|`email`|`link`), `ownerContactEmail`,
+`ownerContactUrl` — so unauthenticated browsing can show the contact CTA without an
+account. Each is `NULL` unless the owner set `contactPublic = true` **and** the item is
+**not** masked. The raw `contactEmail`/`contactUrl`/`contactMethod` fields are never in any
+`*_public`/`items_searchable` view, so the members-only case (`contactPublic = false`) never
+leaks — logged-in viewers read those from the base `users` record instead.
+
 ### `items_searchable` — audience-filtered, unmasked
 
 Used by the search page (and the profile and sitemap, to stay leak-free). Its
@@ -380,6 +390,7 @@ item into search/profile/sitemap.
 | id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared) |
 | userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (`trusts` is **not** exposed) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
+| ownerContactMethod, ownerContactEmail, ownerContactUrl | SQL expression on `users` | `items_public` only — the owner's off-platform contact (#438), NULL unless `contactPublic` **and** the item is unmasked; raw contact fields never selected |
 
 > **A view returns only the columns in its `viewQuery` SELECT — nothing else.** The TS
 > `ItemPublic` type extends `PocketBaseEntity`, so it *declares* `id`, `created` and `updated`,

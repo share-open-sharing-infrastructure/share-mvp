@@ -101,8 +101,11 @@ export const texts = {
 		contactEmailRequired:
 			'Bitte gib eine Kontakt-E-Mail an, wenn du Anfragen per E-Mail erhalten möchtest.',
 		invalidContactEmail: 'Bitte gib eine gültige Kontakt-E-Mail-Adresse an.',
-		contactViaEmailOnly:
-			'Dieser Anbieter möchte per E-Mail kontaktiert werden. Bitte nutze den „Anfragen"-Button auf der Gegenstandsseite.',
+		contactUrlRequired:
+			'Bitte gib einen Link an, wenn du Anfragen über einen externen Link erhalten möchtest.',
+		invalidContactUrl: 'Bitte gib einen gültigen Link an (muss mit https:// beginnen).',
+		contactOffPlatformOnly:
+			'Dieser Anbieter wickelt Anfragen außerhalb der Plattform ab. Bitte nutze den „Anfragen"-Button auf der Gegenstandsseite.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 		itemNotFound: 'Gegenstand nicht gefunden.',
@@ -167,15 +170,23 @@ export const texts = {
 	},
 
 	// Email-contact opt-in (issue #438): owners who handle lending off-platform
-	emailContact: {
-		title: 'Kontakt per E-Mail',
-		toggleLabel: 'Anfragen per E-Mail erhalten',
-		toggleDescription:
-			'Wenn aktiviert, startet der „Anfragen"-Button bei deinen Gegenständen keinen Chat, sondern öffnet eine E-Mail an deine Kontaktadresse. Praktisch, wenn du den Verleih außerhalb der Plattform abwickelst.',
+	contactOptions: {
+		title: 'Kontakt außerhalb der Plattform',
+		description:
+			'Wenn aktiviert, startet der „Anfragen"-Button bei deinen Gegenständen keine Chat-Anfrage, sondern führt zu deinem gewählten Kontaktweg. Praktisch, wenn du den Verleih außerhalb der Plattform abwickelst.',
+		methodLabel: 'Kontaktweg',
+		methodOff: 'Deaktiviert (normale In-App-Anfrage)',
+		methodEmail: 'E-Mail',
+		methodLink: 'Externer Link',
 		emailLabel: 'Kontakt-E-Mail',
 		emailPlaceholder: 'z.B. verleih@beispiel.de',
-		emailHelp:
-			'Diese Adresse sehen nur eingeloggte Nutzer:innen, die einen deiner Gegenstände anfragen. Deine Login-E-Mail bleibt privat.',
+		emailHelp: 'Deine Login-E-Mail bleibt privat – nur diese Adresse wird für den „Anfragen"-Button genutzt.',
+		urlLabel: 'Link-Adresse',
+		urlPlaceholder: 'https://…',
+		urlHelp: 'Muss mit https:// beginnen, z.B. zu deinem Verleih-Formular.',
+		publicLabel: 'Auch ohne Login sichtbar',
+		publicHelp:
+			'Wenn aktiviert, sehen auch nicht eingeloggte Besucher:innen den Kontaktweg – z.B. damit Anfragen ohne AllerLeih-Konto möglich sind. Andernfalls nur eingeloggte Nutzer:innen.',
 	},
 
 	// Form labels and placeholders

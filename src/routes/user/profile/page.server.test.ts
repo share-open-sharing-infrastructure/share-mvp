@@ -35,24 +35,39 @@ function callSave(fields: Record<string, string>) {
 	return { result, usersUpdate };
 }
 
-describe('profile saveProfile — email-contact opt-in (#438)', () => {
+describe('profile saveProfile — off-platform-contact opt-in (#438)', () => {
 	beforeEach(() => vi.clearAllMocks());
 
-	it('persists contactViaEmail + contactEmail on the users record', async () => {
+	it('persists an email contact (method + address) on the users record', async () => {
 		const { result, usersUpdate } = callSave({
-			contactViaEmail: 'on',
+			contactMethod: 'email',
 			contactEmail: 'verleih@asta-lueneburg.de',
+			contactUrl: '',
+			contactPublic: 'on',
 		});
 
 		await expect(result).resolves.toMatchObject({ success: true });
 		expect(usersUpdate).toHaveBeenCalledTimes(1);
 		const sent = usersUpdate.mock.calls[0][1] as FormData;
-		expect(sent.get('contactViaEmail')).toBe('true');
+		expect(sent.get('contactMethod')).toBe('email');
 		expect(sent.get('contactEmail')).toBe('verleih@asta-lueneburg.de');
+		expect(sent.get('contactPublic')).toBe('true');
 	});
 
-	it('rejects enabling the toggle without an address', async () => {
-		const { result, usersUpdate } = callSave({ contactViaEmail: 'on', contactEmail: '  ' });
+	it('persists a link contact (method + url)', async () => {
+		const { result, usersUpdate } = callSave({
+			contactMethod: 'link',
+			contactUrl: 'https://verleih.example/form',
+		});
+
+		await expect(result).resolves.toMatchObject({ success: true });
+		const sent = usersUpdate.mock.calls[0][1] as FormData;
+		expect(sent.get('contactMethod')).toBe('link');
+		expect(sent.get('contactUrl')).toBe('https://verleih.example/form');
+	});
+
+	it('rejects the email method without an address', async () => {
+		const { result, usersUpdate } = callSave({ contactMethod: 'email', contactEmail: '  ' });
 
 		await expect(result).resolves.toMatchObject({
 			error: true,
@@ -61,9 +76,19 @@ describe('profile saveProfile — email-contact opt-in (#438)', () => {
 		expect(usersUpdate).not.toHaveBeenCalled();
 	});
 
+	it('rejects the link method without a url', async () => {
+		const { result, usersUpdate } = callSave({ contactMethod: 'link', contactUrl: '  ' });
+
+		await expect(result).resolves.toMatchObject({
+			error: true,
+			message: texts.errors.contactUrlRequired,
+		});
+		expect(usersUpdate).not.toHaveBeenCalled();
+	});
+
 	it('rejects a malformed contact email', async () => {
 		const { result, usersUpdate } = callSave({
-			contactViaEmail: 'on',
+			contactMethod: 'email',
 			contactEmail: 'not-an-email',
 		});
 
@@ -74,24 +99,39 @@ describe('profile saveProfile — email-contact opt-in (#438)', () => {
 		expect(usersUpdate).not.toHaveBeenCalled();
 	});
 
-	it('saves the address but with the toggle off when the checkbox is unchecked', async () => {
-		// An unchecked checkbox is simply absent from the form data.
-		const { result, usersUpdate } = callSave({ contactEmail: 'verleih@asta-lueneburg.de' });
+	it('rejects a non-https contact url', async () => {
+		const { result, usersUpdate } = callSave({
+			contactMethod: 'link',
+			contactUrl: 'http://insecure.example/form',
+		});
+
+		await expect(result).resolves.toMatchObject({
+			error: true,
+			message: texts.errors.invalidContactUrl,
+		});
+		expect(usersUpdate).not.toHaveBeenCalled();
+	});
+
+	it('forces contactPublic off when the method is off', async () => {
+		// contactPublic checkbox present but method off → public must be coerced to false.
+		const { result, usersUpdate } = callSave({ contactPublic: 'on' });
 
 		await expect(result).resolves.toMatchObject({ success: true });
 		const sent = usersUpdate.mock.calls[0][1] as FormData;
-		expect(sent.get('contactViaEmail')).toBe('false');
-		expect(sent.get('contactEmail')).toBe('verleih@asta-lueneburg.de');
+		expect(sent.get('contactMethod')).toBe('');
+		expect(sent.get('contactPublic')).toBe('false');
 	});
 
-	it('clears a previously-set address when toggle off + empty field are submitted', async () => {
-		// No contact fields in the form → both are written as off/empty, erasing any
-		// stored address (the fields are written unconditionally).
+	it('clears the contact fields when nothing is submitted', async () => {
+		// No contact fields in the form → method off, fields empty, public off (written
+		// unconditionally), erasing any stored values.
 		const { result, usersUpdate } = callSave({});
 
 		await expect(result).resolves.toMatchObject({ success: true });
 		const sent = usersUpdate.mock.calls[0][1] as FormData;
-		expect(sent.get('contactViaEmail')).toBe('false');
+		expect(sent.get('contactMethod')).toBe('');
 		expect(sent.get('contactEmail')).toBe('');
+		expect(sent.get('contactUrl')).toBe('');
+		expect(sent.get('contactPublic')).toBe('false');
 	});
 });

@@ -8,7 +8,7 @@
 	import ProfileImageField from './ProfileImageField.svelte';
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
-	import ContactEmailSection from './ContactEmailSection.svelte';
+	import ContactSection from './ContactSection.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
@@ -155,10 +155,12 @@
 					/>
 				</div>
 
-				<!-- Email contact opt-in (issue #438) -->
-				<ContactEmailSection
-					contactViaEmail={data.currentUser.contactViaEmail ?? false}
+				<!-- Off-platform contact opt-in (issue #438) -->
+				<ContactSection
+					contactMethod={data.currentUser.contactMethod ?? ''}
 					contactEmail={data.currentUser.contactEmail ?? ''}
+					contactUrl={data.currentUser.contactUrl ?? ''}
+					contactPublic={data.currentUser.contactPublic ?? false}
 				/>
 
 				<!-- Profile Image -->

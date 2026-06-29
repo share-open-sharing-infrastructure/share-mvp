@@ -69,25 +69,38 @@ export async function load({ params, locals }) {
 
 	const isTrustRestricted = wasMasked && isAuthenticated && !viewerHasFullAccess;
 
-	// Email-contact opt-in (issue #438): if the owner handles requests off-platform,
-	// the CTA becomes a mailto: link instead of the in-app request flow. The address
-	// is resolved server-side and only for an authenticated, non-owner viewer who may
-	// actually see the item — it lives on the base `users` record (readable by any
-	// logged-in user) and is deliberately absent from every *_public view, so it never
-	// reaches unauthenticated browsing. When set, the regular-flow computations below
-	// are skipped (terms/requirements/conversation are irrelevant to email contact).
-	let ownerContactEmail: string | null = null;
+	// Off-platform contact opt-in (issue #438): when the owner handles requests outside
+	// the app, the CTA becomes a mailto: / external link instead of the in-app request
+	// flow. Resolution depends on the viewer:
+	//  - authenticated, non-owner, may-see-the-item → read the owner's base `users` record
+	//    (readable by any logged-in user; covers BOTH the public and members-only setting);
+	//  - unauthenticated → only what `items_public` exposes, i.e. the owner's PUBLIC contact
+	//    (contactPublic) on a fully-public item. Those `ownerContact*` columns ride on the
+	//    items_public row and are NULL for the members-only case, so reading them is safe.
+	// The raw contact fields are absent from every *_public view, so members-only never
+	// leaks. When resolved, the regular-flow computations below are skipped (terms /
+	// requirements / new conversation are irrelevant to off-platform contact).
+	const pickContact = (
+		method: unknown,
+		email: unknown,
+		url: unknown
+	): { method: 'email'; target: string } | { method: 'link'; target: string } | null => {
+		if (method === 'email' && typeof email === 'string' && email) return { method, target: email };
+		if (method === 'link' && typeof url === 'string' && url) return { method, target: url };
+		return null;
+	};
+	let ownerContact: ReturnType<typeof pickContact> = null;
 	if (currentUserId && !isOwnItem && !isTrustRestricted) {
 		try {
 			const owner = await locals.pb
 				.collection('users')
-				.getOne(item.userId, { fields: 'contactViaEmail,contactEmail' });
-			if (owner.contactViaEmail && owner.contactEmail) {
-				ownerContactEmail = owner.contactEmail as string;
-			}
+				.getOne(item.userId, { fields: 'contactMethod,contactEmail,contactUrl' });
+			ownerContact = pickContact(owner.contactMethod, owner.contactEmail, owner.contactUrl);
 		} catch {
 			// Owner record unreadable (e.g. unauthenticated) → fall back to normal flow.
 		}
+	} else if (!currentUserId) {
+		ownerContact = pickContact(item.ownerContactMethod, item.ownerContactEmail, item.ownerContactUrl);
 	}
 
 	// Find an in-progress conversation for this viewer + item so the CTA can link
@@ -115,7 +128,7 @@ export async function load({ params, locals }) {
 	// Does this owner publish lending terms, and if so has the viewer accepted them?
 	// We only gate the request flow on terms when the viewer is logged in and not the owner.
 	let requiresTermsAcceptance = false;
-	if (currentUserId && !isOwnItem && !ownerContactEmail) {
+	if (currentUserId && !isOwnItem && !ownerContact) {
 		const ownerId = item.userId;
 		const activeTerms = await getActiveTerms(locals.pb, ownerId);
 		if (activeTerms) {
@@ -129,7 +142,7 @@ export async function load({ params, locals }) {
 	// hook on conversation create is the authoritative gate. We skip own items and
 	// unauthenticated viewers (login is required before requesting anyway).
 	let unmetRequirements: Awaited<ReturnType<typeof evaluateUnmetRequirements>> = [];
-	if (currentUserId && !isOwnItem && !ownerContactEmail && locals.user) {
+	if (currentUserId && !isOwnItem && !ownerContact && locals.user) {
 		unmetRequirements = await evaluateUnmetRequirements(locals.pb, item.userId, locals.user);
 	}
 
@@ -162,7 +175,7 @@ export async function load({ params, locals }) {
 		existingConversation,
 		requiresTermsAcceptance,
 		unmetRequirements,
-		ownerContactEmail,
+		ownerContact,
 		ownerHasLocation: !!item.ownerHasLocation,
 	};
 }
@@ -230,15 +243,18 @@ export const actions = {
 			redirect(303, `/conversations/${existingConversations[0].id}`);
 		}
 
-		// Email-contact owners (#438) handle NEW requests off-platform — the CTA is a
-		// mailto:, never this form. Guard the action too, so a direct POST can't create a
-		// conversation the owner has opted out of ever seeing in-app.
+		// Off-platform-contact owners (#438) handle NEW requests outside the app — the CTA
+		// is a mailto: / external link, never this form. Guard the action too, so a direct
+		// POST can't create a conversation the owner has opted out of ever seeing in-app.
 		try {
 			const owner = await locals.pb
 				.collection('users')
-				.getOne(itemRecord.userId, { fields: 'contactViaEmail,contactEmail' });
-			if (owner.contactViaEmail && owner.contactEmail) {
-				return fail(403, { fail: true, message: texts.errors.contactViaEmailOnly });
+				.getOne(itemRecord.userId, { fields: 'contactMethod,contactEmail,contactUrl' });
+			const hasOffPlatformContact =
+				(owner.contactMethod === 'email' && owner.contactEmail) ||
+				(owner.contactMethod === 'link' && owner.contactUrl);
+			if (hasOffPlatformContact) {
+				return fail(403, { fail: true, message: texts.errors.contactOffPlatformOnly });
 			}
 		} catch {
 			// Owner record unreadable → fall through to the normal flow.

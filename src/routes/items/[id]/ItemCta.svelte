@@ -16,9 +16,10 @@
 		existingConversation: { id: string; lendingStatus: string } | null;
 		requiresTermsAcceptance?: boolean;
 		unmetRequirements?: UnmetRequirement[];
-		/** Issue #438: when the owner opted into email contact, the request CTA becomes
-		 *  a mailto: link to this address instead of starting the in-app flow. */
-		contactEmail?: string | null;
+		/** Issue #438: when the owner opted into off-platform contact, the request CTA
+		 *  becomes a mailto: (method 'email') or an external link (method 'link') instead
+		 *  of starting the in-app flow. Null = normal in-app request flow. */
+		ownerContact?: { method: 'email' | 'link'; target: string } | null;
 	}
 
 	const {
@@ -30,17 +31,23 @@
 		existingConversation,
 		requiresTermsAcceptance = false,
 		unmetRequirements = [],
-		contactEmail = null,
+		ownerContact = null,
 	}: Props = $props();
 
-	const mailtoHref = $derived.by(() => {
-		if (!contactEmail) return '';
-		const itemName = item.name ?? texts.pages.itemDetail.unknownItem;
-		return buildMailtoHref(
-			contactEmail,
-			texts.pages.itemDetail.mailtoSubject(itemName),
-			texts.pages.itemDetail.mailtoBody(itemName),
-		);
+	// Resolve the off-platform contact CTA target: a prefilled mailto: for email, or the
+	// owner's external link routed through /api/redirect (https-guarded + click-tracked,
+	// same as external-item CTAs).
+	const contactHref = $derived.by(() => {
+		if (!ownerContact) return '';
+		if (ownerContact.method === 'email') {
+			const itemName = item.name ?? texts.pages.itemDetail.unknownItem;
+			return buildMailtoHref(
+				ownerContact.target,
+				texts.pages.itemDetail.mailtoSubject(itemName),
+				texts.pages.itemDetail.mailtoBody(itemName),
+			);
+		}
+		return `/api/redirect?to=${encodeURIComponent(ownerContact.target)}&source=item-detail&item=${item.id}`;
 	});
 
 	const hasUnmetRequirements = $derived(unmetRequirements.length > 0 && !existingConversation);
@@ -113,12 +120,16 @@
 			<MessagesOutline class="h-4 w-4 mr-2" />
 			{texts.lending.goToConversation}
 		</a>
-	{:else if contactEmail}
-		<!-- Owner opted into email contact (#438): same "Anfragen" button, but it opens
-		     a prefilled mailto: instead of starting the in-app request flow. -->
+	{:else if ownerContact}
+		<!-- Owner opted into off-platform contact (#438): same "Anfragen" button, but it
+		     opens a prefilled mailto: (email) or links to the owner's external form (link)
+		     instead of starting the in-app request flow. The link opens in a new tab and
+		     is routed through /api/redirect (https guard + click tracking). -->
 		<!-- eslint-disable svelte/no-navigation-without-resolve -->
 		<a
-			href={mailtoHref}
+			href={contactHref}
+			target={ownerContact.method === 'link' ? '_blank' : undefined}
+			rel={ownerContact.method === 'link' ? 'noopener noreferrer' : undefined}
 			class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
 		>
 			<MessagesOutline class="h-4 w-4 mr-2" />
