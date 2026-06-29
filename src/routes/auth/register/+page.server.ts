@@ -10,15 +10,27 @@ import {
 	signUpForNewsletter,
 	handleInviterRelationship,
 } from '$lib/server/registration';
+import { getActiveLegalDocs } from '$lib/server/legalDocs';
 
 export async function load({ locals, url }) {
 	if (locals.user) {
 		return redirect(303, '/');
 	}
 
+	// Active legal documents for the consent-checkbox label + the inline reader modals
+	// (shown in-app rather than a new tab, which is unusable in the PWA). Fail-open: a
+	// transient DB error must not take down the whole signup page — consent is still
+	// enforced server-side by the users-create hook (#399, review round 2 / #4).
+	let legalDocs: Awaited<ReturnType<typeof getActiveLegalDocs>> = [];
+	try {
+		legalDocs = await getActiveLegalDocs(locals.pb);
+	} catch (err) {
+		console.error('failed to load legal documents for register page:', err);
+	}
+
 	const inviteCode = url.searchParams.get('invite');
 	if (!inviteCode) {
-		return { inviter: null, inviteCode: null };
+		return { inviter: null, inviteCode: null, legalDocs };
 	}
 
 	try {
@@ -26,9 +38,9 @@ export async function load({ locals, url }) {
 			`/api/invite/${encodeURIComponent(inviteCode)}`,
 			{ method: 'GET' }
 		);
-		return { inviter: { id: inviter.id, username: inviter.username }, inviteCode };
+		return { inviter: { id: inviter.id, username: inviter.username }, inviteCode, legalDocs };
 	} catch {
-		return { inviter: null, inviteCode };
+		return { inviter: null, inviteCode, legalDocs };
 	}
 }
 
@@ -54,6 +66,9 @@ export const actions = {
 			if (result.error === 'username_taken') return fail(400, { fail: true, message: texts.errors.usernameTaken });
 			return fail(500, { fail: true, message: texts.errors.somethingWentWrong });
 		}
+
+		// Registration-time consent (version cache + immutable audit records) is set
+		// server-side by the backend `legal.pb.js` users-create hook — see #399.
 
 		await requestEmailVerification(locals.pb, email);
 		if (subscribeToNewsletter) await signUpForNewsletter(email, username);

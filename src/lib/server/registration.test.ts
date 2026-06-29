@@ -208,6 +208,14 @@ describe('buildCreateUserPayload', () => {
 		const payload = buildCreateUserPayload(fields, 'newcode', null);
 		expect('invitedBy' in payload).toBe(false);
 	});
+
+	it('does NOT set the legal version cache (server-only — Issue #399, review #1)', () => {
+		// The version fields are stamped server-side by the backend users-create hook,
+		// never from the client payload, so the consent gate can't be pre-empted.
+		const payload = buildCreateUserPayload(fields, 'newcode', null);
+		expect('tosAcceptedVersion' in payload).toBe(false);
+		expect('privacyAcceptedVersion' in payload).toBe(false);
+	});
 });
 
 // ---------------------------------------------------------------------------

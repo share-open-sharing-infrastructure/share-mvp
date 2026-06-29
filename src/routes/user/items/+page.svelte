@@ -117,6 +117,16 @@
 			</select>
 		</div>
 
+		<!-- Bulk delete error -->
+		{#if form && 'bulkBlocked' in form && form.conversationIds?.length}
+			<div class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
+				<p>{form.message}</p>
+				<a href="/conversations" class="mt-1 inline-block font-semibold underline">
+					{texts.pages.items.linkToConversations}
+				</a>
+			</div>
+		{/if}
+
 		<!-- Bulk action bar -->
 		{#if selectedIds.size > 0}
 			<div class="flex flex-wrap items-center gap-3 mb-3 px-4 py-2 rounded-lg bg-primary-50 border border-primary-200 dark:bg-primary-900/30 dark:border-primary-700">
@@ -128,7 +138,7 @@
 					action="?/bulkSetStatus"
 					use:enhance={() => async ({ update }) => update({ reset: false })}
 				>
-					{#each [...selectedIds] as id}
+					{#each [...selectedIds] as id(id)}
 						<input type="hidden" name="itemId" value={id} />
 					{/each}
 					<input type="hidden" name="newStatus" value="available" />
@@ -144,7 +154,7 @@
 					action="?/bulkSetStatus"
 					use:enhance={() => async ({ update }) => update({ reset: false })}
 				>
-					{#each [...selectedIds] as id}
+					{#each [...selectedIds] as id(id)}
 						<input type="hidden" name="itemId" value={id} />
 					{/each}
 					<input type="hidden" name="newStatus" value="unavailable" />
@@ -153,6 +163,32 @@
 						class="text-xs font-semibold px-3 py-1 rounded-full bg-accent-100 text-accent-800 border border-accent-300 hover:bg-accent-200 cursor-pointer transition-colors"
 					>
 						{texts.pages.items.setUnavailable}
+					</button>
+				</form>
+				<form
+					method="POST"
+					action="?/bulkDelete"
+					use:enhance={({ cancel, formData }) => {
+						if (!confirm(texts.pages.items.bulkDeleteConfirm(selectedIds.size))) {
+							cancel();
+							return;
+						}
+						const submitted = new Set(formData.getAll('itemId') as string[]);
+						return async ({ update }) => {
+							await update({ reset: false });
+							for (const id of submitted) selectedIds.delete(id);
+							selectedIds = new Set(selectedIds);
+						};
+					}}
+				>
+					{#each [...selectedIds] as id(id)}
+						<input type="hidden" name="itemId" value={id} />
+					{/each}
+					<button
+						type="submit"
+						class="text-xs font-semibold px-3 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 hover:bg-red-200 cursor-pointer transition-colors"
+					>
+						{texts.pages.items.bulkDelete}
 					</button>
 				</form>
 				<button

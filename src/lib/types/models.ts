@@ -127,6 +127,26 @@ export interface User extends PocketBaseEntity {
 
 	/** ISO datetime the account was deleted/anonymized (drives the future purge job). */
 	deletedAt?: string;
+
+	/**
+	 * Cache of the latest platform ToS version this user has accepted (Issue #399).
+	 * Authoritative record lives in `user_legal_acceptances`; this mirror lets the
+	 * consent gate decide from the already-loaded auth record without a DB query.
+	 */
+	tosAcceptedVersion?: string;
+
+	/**
+	 * Cache of the latest privacy-statement version this user has accepted.
+	 * See `tosAcceptedVersion`.
+	 */
+	privacyAcceptedVersion?: string;
+
+	/**
+	 * True when the user declined the current legal documents. Set only by the
+	 * `legal.pb.js` backend hook (superuser) and excluded from the user updateRule,
+	 * so it cannot be self-cleared — an admin clears it after the matter is resolved.
+	 */
+	legalLocked?: boolean;
 }
 
 export interface UserPublic extends PocketBaseEntity {
@@ -486,4 +506,39 @@ export interface RequirementSetting {
 	settingsHelp: string;
 	/** Whether this requirement is currently switched on for the owner. */
 	enabled: boolean;
+}
+
+/**
+ * Audit-trail record of one user's consent decision on one version of a platform
+ * legal document — the Terms of Service or the privacy statement (Issue #399).
+ *
+ * Immutable (no update/delete API rule). `accepted` records are written by the
+ * SvelteKit app under the user's own auth; `declined` records (which also lock
+ * the account) are written by the `legal.pb.js` backend hook. The body shown to
+ * the user is snapshotted so the decision stays interpretable across text changes.
+ */
+export interface UserLegalAcceptance extends PocketBaseEntity {
+	/** Foreign key: user who made the decision */
+	user: UserId;
+
+	/** Which document this decision concerns */
+	docType: 'tos' | 'privacy';
+
+	/** Version string of the document at decision time */
+	version: string;
+
+	/** Whether the user accepted or declined */
+	decision: 'accepted' | 'declined';
+
+	/** Server-stamped decision timestamp (ISO) */
+	acceptedAt?: string;
+
+	/** Snapshot of the rendered document body at decision time */
+	bodySnapshot?: string;
+
+	/** Client IP at decision (best-effort, may be proxy IP) */
+	userIp?: string;
+
+	/** User-Agent string at decision */
+	userAgent?: string;
 }

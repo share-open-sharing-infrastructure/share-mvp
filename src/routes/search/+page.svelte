@@ -7,8 +7,7 @@
 	import CategoryFilter from './CategoryFilter.svelte';
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
-	import { invalidateAll } from '$app/navigation';
-	import { ShuffleOutline, ArrowsRepeatOutline } from 'flowbite-svelte-icons';
+	import { ArrowsRepeatOutline } from 'flowbite-svelte-icons';
 	import { buildSearchUrl } from './searchUrl';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -140,35 +139,22 @@
 		bind:maxMinutes
 	/>
 
-	{#if data.isRandom}
-		<div class="w-full text-center mt-4 mb-2 flex flex-col items-center gap-2">
-
-			<button
-				onclick={() => invalidateAll()}
-				class="flex rounded-full hover:cursor-pointer border px-3 py-1 text-sm font-medium transition-colors border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary"
-			>
-			<ShuffleOutline class="mr-1"></ShuffleOutline>
-			{texts.pages.search.randomItemsHeading}
-		</button>
-		</div>
-	{/if}
-
-	{#if data.q || data.selectedCategories.length > 0}
-		<div class="w-full items-center justify-center text-center mt-2">
+	<div class="w-full items-center justify-center text-center mt-2">
+		{#if data.q || data.selectedCategories.length > 0}
 			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
-		</div>
-	{/if}
+		{:else}
+			<h5>{texts.pages.search.newestItemsHeading}</h5>
+		{/if}
+	</div>
 
 	{@render paginationControls()}
 
-	{#if data.q || data.selectedCategories.length > 0 || data.isRandom}
-		<ResultsList
-			filteredItemList={filteredItems}
-			PB_IMG_URL={data.PB_IMG_URL}
-			{travelTimes}
-			transportMode={transportMode ?? undefined}
-		/>
-	{/if}
+	<ResultsList
+		filteredItemList={filteredItems}
+		PB_IMG_URL={data.PB_IMG_URL}
+		{travelTimes}
+		transportMode={transportMode ?? undefined}
+	/>
 
 	{@render paginationControls()}
 </Section>
