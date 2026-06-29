@@ -633,7 +633,7 @@ export const texts = {
 			trustsThisUser: 'Du vertraust diesem Account',
 			doesNotTrustThisUser: 'Du vertraust diesem Account (noch) nicht.',
 			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
-			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
+			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen. Manche Anbieter:innen verleihen nur an Nutzer:innen mit hinterlegter Adresse.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
 			noItemsOnProfile: 'Noch keine Gegenstände eingestellt.',
@@ -882,6 +882,7 @@ export const texts = {
 		sectionIntro:
 			'Lege fest, welche Voraussetzungen jemand erfüllen muss, um deine Gegenstände anfragen zu können. Die Sichtbarkeit deiner Gegenstände bleibt davon unberührt.',
 		saved: 'Verleih-Voraussetzungen gespeichert.',
+		saveError: 'Die Verleih-Voraussetzungen konnten nicht gespeichert werden. Bitte versuche es später erneut.',
 		// Borrower-facing intro (item detail CTA when a request is blocked)
 		blockedIntro: 'Bevor du anfragen kannst:',
 		// Per-requirement copy (keys match the requirement registry).

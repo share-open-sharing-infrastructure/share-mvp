@@ -55,8 +55,9 @@ export const actions = {
 		try {
 			await upsertOwnerRequirements(locals.pb, locals.user.id, data);
 			return { success: true, message: texts.lendingRequirements.saved };
-		} catch {
-			return { error: true, message: texts.errors.somethingWentWrong };
+		} catch (err) {
+			console.error('saveLendingRequirements failed', err);
+			return { error: true, message: texts.lendingRequirements.saveError };
 		}
 	},
 
