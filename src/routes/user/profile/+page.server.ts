@@ -45,22 +45,6 @@ export const actions = {
 		}
 	},
 
-	saveLendingRequirements: async ({ locals, request }) => {
-		const formData = await request.formData();
-		// Build the payload from the registry so a new requirement type needs no
-		// change here — its toggle (name = field) is read automatically.
-		const data = Object.fromEntries(
-			requirementFields.map((field) => [field, formData.get(field) === 'on'])
-		);
-		try {
-			await upsertOwnerRequirements(locals.pb, locals.user.id, data);
-			return { success: true, message: texts.lendingRequirements.saved };
-		} catch (err) {
-			console.error('saveLendingRequirements failed', err);
-			return { error: true, message: texts.lendingRequirements.saveError };
-		}
-	},
-
 	resendVerification: async ({ locals }) => {
 		try {
 			await locals.pb.collection('users').requestVerification(locals.user.email);
@@ -161,41 +145,47 @@ export const actions = {
 		const profileImageFile = formData?.get('profileImage');
 		const hasProfileImage = profileImageFile instanceof File && profileImageFile.size > 0;
 
+		// Handle lender-defined borrower requirements (#443). The toggles live in the
+		// same settings form, so the single save bar persists them too. Built from the
+		// registry so a new requirement type needs no change here.
+		const requirementData = Object.fromEntries(
+			requirementFields.map((field) => [field, formData.get(field) === 'on'])
+		);
+
 		try {
 			const hasUserUpdate = Object.keys(updateData).length > 0 || hasProfileImage;
-			await upsertOwnContact(locals.pb, locals.user.id, contact);
-			if (hasUserUpdate || geo !== undefined) {
-				if (hasUserUpdate) {
-					// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields
-					for (const [key, value] of Object.entries(updateData)) {
-						if (value === null) {
-							pbFormData.append(key, '');
-						} else if (typeof value === 'object') {
-							pbFormData.append(key, JSON.stringify(value));
-						} else {
-							pbFormData.append(key, String(value));
-						}
+			// Primary profile fields first, so a failure in the always-written side data
+			// (contact/requirements) below can't silently skip the user's main edits.
+			if (hasUserUpdate) {
+				// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields
+				for (const [key, value] of Object.entries(updateData)) {
+					if (value === null) {
+						pbFormData.append(key, '');
+					} else if (typeof value === 'object') {
+						pbFormData.append(key, JSON.stringify(value));
+					} else {
+						pbFormData.append(key, String(value));
 					}
-					if (hasProfileImage) {
-						pbFormData.append('profileImage', profileImageFile as File);
-					}
-					await locals.pb.collection('users').update(locals.user.id, pbFormData);
 				}
-				if (geo !== undefined) {
-					await upsertUserGeolocation(locals.pb, locals.user.id, geo);
+				if (hasProfileImage) {
+					pbFormData.append('profileImage', profileImageFile as File);
 				}
-				return {
-					success: true,
-					message: texts.success.dataUpdated,
-				};
-			} else {
-				return {
-					error: true,
-					message: texts.pages.profile.cannotUpdate,
-				};
+				await locals.pb.collection('users').update(locals.user.id, pbFormData);
 			}
+			if (geo !== undefined) {
+				await upsertUserGeolocation(locals.pb, locals.user.id, geo);
+			}
+			// Contact + requirements are always written, so clicking "Speichern" never
+			// returns a spurious "nothing to update".
+			await upsertOwnContact(locals.pb, locals.user.id, contact);
+			await upsertOwnerRequirements(locals.pb, locals.user.id, requirementData);
+			return {
+				success: true,
+				message: texts.success.dataUpdated,
+			};
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: Error | any) {
+			console.error('saveProfile failed', err);
 			return {
 				error: true,
 				message: texts.pages.profile.cannotUpdate + (err ? ` Fehler: ${err.message}` : ''),

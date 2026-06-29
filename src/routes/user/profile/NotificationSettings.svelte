@@ -8,13 +8,17 @@
 		teardownAllPushSubscriptions,
 	} from '$lib/utils/pushSubscription';
 	import { getClientPB } from '$lib/client-pb';
+	import { pushToast } from '$lib/stores/toast.svelte';
 
 	let { userId }: { userId: string } = $props();
 
-	// null         → not yet read from browser; section stays hidden during SSR
-	//                and until onMount resolves the actual state.
-	// 'unsupported' → Notification API unavailable; section stays hidden.
+	// null         → not yet read from browser; resolved in onMount.
+	// 'unsupported' → Notification (push) API unavailable in this browser.
 	let notifPermission = $state<NotificationPermission | 'unsupported' | null>(null);
+
+	// Whether to show the push-subscription controls. Email notifications work without
+	// push, so the section still renders (heading + email toggle) when push is absent.
+	let pushSupported = $derived(notifPermission !== null && notifPermission !== 'unsupported');
 
 	// Whether an active push subscription exists in this browser's push manager.
 	// A granted permission alone does not imply an active subscription — the user
@@ -110,19 +114,21 @@
 				});
 				emailPrefsRecordId = record.id;
 			}
+			pushToast('success', texts.success.dataUpdated);
 		} catch {
-			// Revert on failure
+			// Revert on failure and tell the user the auto-save didn't stick.
 			emailNotificationsEnabled = !newValue;
+			pushToast('error', texts.errors.somethingWentWrong);
 		}
 	}
 </script>
 
-{#if notifPermission !== null && notifPermission !== 'unsupported'}
-	<div class="max-w-2xl mx-auto px-4 pb-8">
-		<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8">
-			<h2 class="text-lg font-semibold text-tinte-900 dark:text-white mb-2">
-				{texts.pages.profile.notifications.sectionTitle}
-			</h2>
+{#if pushSupported || emailPrefsLoaded}
+	<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8">
+		<h2 class="text-lg font-semibold text-tinte-900 dark:text-white mb-2">
+			{texts.pages.profile.notifications.sectionTitle}
+		</h2>
+		{#if pushSupported}
 			{#if notifPermission === 'granted' && isPushSubscribed}
 				<p class="text-sm text-green-600 dark:text-green-400 mb-4">
 					{texts.pages.profile.notifications.enabled}
@@ -151,27 +157,32 @@
 					{texts.pages.profile.notifications.enable}
 				</Button>
 			{/if}
+		{/if}
 
-			<!-- Email Notifications Toggle -->
-			{#if emailPrefsLoaded}
-				<div class="border-t border-tinte-200 dark:border-tinte-700 mt-6 pt-6">
-					<div class="flex items-center justify-between">
-						<div>
-							<p class="text-sm font-medium text-tinte-900 dark:text-white">
-								{texts.pages.profile.notifications.emailToggleLabel}
-							</p>
-							<p class="text-sm text-tinte-600 dark:text-tinte-400 mt-1">
-								{texts.pages.profile.notifications.emailToggleDescription}
-							</p>
-						</div>
-						<Toggle
-							checked={emailNotificationsEnabled}
-							onchange={toggleEmailNotifications}
-							classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
-						/>
-					</div>
+		<!-- Email Notifications Toggle — works regardless of push support -->
+		{#if emailPrefsLoaded}
+			<div
+				class="flex items-center justify-between"
+				class:border-t={pushSupported}
+				class:border-tinte-200={pushSupported}
+				class:dark:border-tinte-700={pushSupported}
+				class:mt-6={pushSupported}
+				class:pt-6={pushSupported}
+			>
+				<div>
+					<p class="text-sm font-medium text-tinte-900 dark:text-white">
+						{texts.pages.profile.notifications.emailToggleLabel}
+					</p>
+					<p class="text-sm text-tinte-600 dark:text-tinte-400 mt-1">
+						{texts.pages.profile.notifications.emailToggleDescription}
+					</p>
 				</div>
-			{/if}
-		</div>
+				<Toggle
+					checked={emailNotificationsEnabled}
+					onchange={toggleEmailNotifications}
+					classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
+				/>
+			</div>
+		{/if}
 	</div>
 {/if}

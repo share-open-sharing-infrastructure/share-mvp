@@ -12,7 +12,7 @@
 	const { email, verified }: Props = $props();
 </script>
 
-<div class="pt-2 mt-2 border-t space-y-2">
+<div class="space-y-2">
 	<!-- Email display + change link -->
 	<p class="text-sm font-medium text-gray-900 dark:text-white">
 		{texts.ui.emailAddress}

@@ -51,7 +51,7 @@ export const texts = {
 		requests: 'Unterhaltungen',
 		notifications: 'Benachrichtigungen',
 		myItems: 'Meine Dinge',
-		myProfile: 'Mein Profil',
+		myProfile: 'Einstellungen',
 		social: 'Vertraute',
 		groups: 'Gruppen',
 		network: 'Mein Netzwerk',
@@ -187,6 +187,7 @@ export const texts = {
 	buttons: {
 		add: 'Hinzufügen',
 		save: 'Speichern',
+		close: 'Schließen',
 		delete: 'Löschen',
 		send: 'Senden',
 		addImage: 'Bild hinzufügen:',
@@ -575,7 +576,20 @@ export const texts = {
 			linkToConversations: 'Zu den Gesprächen',
 		},
 		profile: {
-			title: 'Mein Profil',
+			title: 'Einstellungen',
+			// Section headings + table-of-contents labels for the settings page
+			sections: {
+				tocLabel: 'Auf dieser Seite',
+				profile: 'Profil',
+				location: 'Standort & Mobilität',
+				contact: 'Kontakt',
+				notifications: 'Benachrichtigungen',
+				email: 'E-Mail',
+				invite: 'Einladung',
+				account: 'Konto & Datenschutz',
+			},
+			unsavedChanges: 'Du hast ungespeicherte Änderungen.',
+			fixErrorsBeforeSave: 'Bitte korrigiere die markierten Felder, bevor du speicherst.',
 			completeOnboarding: 'Onboarding fertigstellen',
 			emailVerified: 'E-Mail-Adresse bestätigt',
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
@@ -891,8 +905,6 @@ export const texts = {
 		sectionTitle: 'Verleih-Voraussetzungen',
 		sectionIntro:
 			'Lege fest, welche Voraussetzungen jemand erfüllen muss, um deine Gegenstände anfragen zu können. Die Sichtbarkeit deiner Gegenstände bleibt davon unberührt.',
-		saved: 'Verleih-Voraussetzungen gespeichert.',
-		saveError: 'Die Verleih-Voraussetzungen konnten nicht gespeichert werden. Bitte versuche es später erneut.',
 		// Borrower-facing intro (item detail CTA when a request is blocked)
 		blockedIntro: 'Bevor du anfragen kannst:',
 		// Per-requirement copy (keys match the requirement registry).
