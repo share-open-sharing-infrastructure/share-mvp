@@ -6,6 +6,7 @@
  * records. Scenarios should build their data through the exported factories.
  */
 import PocketBase from 'pocketbase';
+import zlib from 'node:zlib';
 
 export const SEED_DOMAIN = '@seed.test';
 export const USER_PASSWORD = 'password123';
@@ -66,8 +67,65 @@ export function createUser(pb, username, overrides = {}) {
 	});
 }
 
+// Tiny dependency-free PNG encoder so seeded items carry a real (offline, deterministic)
+// image instead of just the category placeholder. Each item gets a solid card whose colour
+// is derived from its name, so the seeded items look distinct when clicking through.
+const CRC_TABLE = (() => {
+	const t = new Uint32Array(256);
+	for (let n = 0; n < 256; n++) {
+		let c = n;
+		for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+		t[n] = c >>> 0;
+	}
+	return t;
+})();
+function crc32(buf) {
+	let c = 0xffffffff;
+	for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+	return (c ^ 0xffffffff) >>> 0;
+}
+function pngChunk(type, data) {
+	const len = Buffer.alloc(4);
+	len.writeUInt32BE(data.length, 0);
+	const typeBuf = Buffer.from(type, 'ascii');
+	const crc = Buffer.alloc(4);
+	crc.writeUInt32BE(crc32(Buffer.concat([typeBuf, data])), 0);
+	return Buffer.concat([len, typeBuf, data, crc]);
+}
+function solidPng(w, h, [r, g, b]) {
+	const ihdr = Buffer.alloc(13);
+	ihdr.writeUInt32BE(w, 0);
+	ihdr.writeUInt32BE(h, 4);
+	ihdr[8] = 8; // bit depth
+	ihdr[9] = 2; // colour type: truecolour RGB
+	const row = Buffer.alloc(1 + w * 3); // leading filter byte (0) + RGB pixels
+	for (let x = 0; x < w; x++) [row[1 + x * 3], row[1 + x * 3 + 1], row[1 + x * 3 + 2]] = [r, g, b];
+	const raw = Buffer.concat(Array.from({ length: h }, () => row));
+	const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+	return Buffer.concat([sig, pngChunk('IHDR', ihdr), pngChunk('IDAT', zlib.deflateSync(raw)), pngChunk('IEND', Buffer.alloc(0))]);
+}
+function hsvToRgb(h, s, v) {
+	const c = v * s,
+		x = c * (1 - Math.abs(((h / 60) % 2) - 1)),
+		m = v - c;
+	const [r, g, b] =
+		h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+	return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
+/** A deterministic solid-colour PNG (640×420) as an upload, coloured from the name. */
+export function placeholderImage(name) {
+	let hash = 0;
+	for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+	const png = solidPng(640, 420, hsvToRgb(hash % 360, 0.5, 0.8));
+	const file = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'item'}.png`;
+	return typeof File !== 'undefined'
+		? new File([png], file, { type: 'image/png' })
+		: new Blob([png], { type: 'image/png' });
+}
+
 export function createItem(pb, ownerId, name, categories, opts = {}) {
-	return pb.collection('items').create({
+	const data = {
 		name,
 		description: opts.description ?? `${name} (Testdaten)`,
 		place: opts.place ?? 'Kassel',
@@ -75,7 +133,13 @@ export function createItem(pb, ownerId, name, categories, opts = {}) {
 		status: opts.status ?? 'available',
 		trusteesOnly: opts.trusteesOnly ?? false,
 		categories,
-	});
+	};
+	// Items get a generated placeholder image by default. Opt out with `withImage: false`,
+	// or supply your own File/Blob via `image`. The PocketBase SDK detects the File and
+	// uploads it as multipart.
+	const image = opts.image ?? (opts.withImage === false ? null : placeholderImage(name));
+	if (image) data.image = image;
+	return pb.collection('items').create(data);
 }
 
 export async function createMessage(pb, fromId, toId, content) {
