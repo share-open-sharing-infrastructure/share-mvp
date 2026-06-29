@@ -54,8 +54,8 @@ export async function run(pb) {
 	const printer = await createItem(pb, verleih.id, '3D-Drucker', ['Werkzeug und Garten'], {
 		trusteesOnly: true,
 	});
-	const beamer = await createItem(pb, formular.id, 'Beamer', ['Multimedia']);
-	const zelt = await createItem(pb, intern.id, 'Zelt', ['Freizeit']);
+	const beamer = await createItem(pb, formular.id, 'Beamer', ['Ton und Licht']);
+	const zelt = await createItem(pb, intern.id, 'Zelt', ['Reisen und Outdoor']);
 	const bohrer = await createItem(pb, normalo.id, 'Akkuschrauber', ['Werkzeug und Garten']);
 
 	return `  Login (password for all: "${USER_PASSWORD}"):
