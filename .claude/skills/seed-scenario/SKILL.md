@@ -51,7 +51,7 @@ see **"When there's no factory"** below.
 
 `createUser`/`createItem`/`createConversation` return the **record** (use `.id`); `createMessage`
 returns just the **id**. A conversation's `lendingStatus` is one of `pending`, `accepted`, `rejected`,
-`active`, `return_requested`, `completed` (the `LendingStatus` type in `src/lib/types/models.ts`; a
+`active`, `return_requested`, `completed` (the inline `lendingStatus` union on the conversation interface in `src/lib/types/models.ts` (~line 352); a
 fresh request starts `pending`) — see `docs/domain-model.md` for the lifecycle.
 
 ### When there's no factory
