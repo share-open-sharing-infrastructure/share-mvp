@@ -141,7 +141,7 @@ stateDiagram-v2
 
 | Transition | Triggered by | Side effects |
 |---|---|---|
-| → pending | Requester | Creates `Conversation` record. A request is only allowed for an item the requester may actually see — public, their own, an item whose owner trusts them, or an item shared with a group they belong to — enforced by the `conversations` create rule (data layer), not just the UI. |
+| → pending | Requester | Creates `Conversation` record. A request is only allowed for an item the requester may actually see — public, their own, an item whose owner trusts them, or an item shared with a group they belong to — enforced by the `conversations` create rule (data layer), not just the UI. The owner may **additionally** gate requesting via their `lending_requirements` (e.g. verified e-mail / address), enforced authoritatively by the `conversations` `onRecordCreateRequest` hook (see [data-model.md](data-model.md#lending_requirements)). |
 | pending → accepted | Owner | Sets item `status = unavailable`; auto-rejects all other `pending` conversations for the same item; sends `request_accepted` notification |
 | pending → rejected | Owner | Sends `request_rejected` notification |
 | accepted → active | Owner | Sends `handover_confirmed` notification |

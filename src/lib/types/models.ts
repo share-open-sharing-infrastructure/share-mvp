@@ -456,6 +456,59 @@ export interface TermAcceptance extends PocketBaseEntity {
 }
 
 /**
+ * Lender-defined borrower requirements (issues #423 / #389). One row per owner;
+ * a flexible, extensible framework that gates *who may request* an owner's items
+ * (not visibility — that stays with trusteesOnly/groups). Each boolean/number
+ * field is one requirement type; new types are added as new fields. Enforced
+ * authoritatively by the backend hook on conversation create
+ * (allerleih-backend/pb_hooks/lending_requirements.pb.js); the frontend mirrors
+ * the checks for UX in $lib/server/lendingRequirements.ts.
+ */
+export interface LendingRequirements extends PocketBaseEntity {
+	/** Foreign key: the lender these requirements belong to */
+	owner: UserId;
+
+	/** Require the borrower to have a verified email address (users.verified). */
+	requireVerifiedEmail: boolean;
+
+	/** Require the borrower to have an address on file (users.city). Issue #389. */
+	requireAddress: boolean;
+}
+
+/**
+ * A single lending requirement the borrower has not yet met, in a form ready to
+ * render (label + hint + action link). Produced by
+ * `$lib/server/lendingRequirements` and passed to the item-detail CTA. Lives
+ * here (not in the server module) so client components can import the type
+ * without pulling in a server-only module.
+ */
+export interface UnmetRequirement {
+	key: string;
+	/** Label for the quick-fix button that lets the borrower satisfy it. */
+	actionLabel: string;
+	/** Internal route the borrower goes to in order to satisfy the requirement. */
+	actionHref: string;
+}
+
+/**
+ * One requirement toggle for the owner's settings UI, derived from the requirement
+ * registry (see $lib/server/lendingRequirements). Lives here (not in the server
+ * module) so the profile component can import the type without a server-only import.
+ */
+export interface RequirementSetting {
+	/** Registry key, e.g. "verifiedEmail". */
+	key: string;
+	/** Backing column on `lending_requirements`, e.g. "requireVerifiedEmail" — the form field name. */
+	field: string;
+	/** Owner-facing toggle label. */
+	settingsLabel: string;
+	/** Owner-facing help text under the toggle. */
+	settingsHelp: string;
+	/** Whether this requirement is currently switched on for the owner. */
+	enabled: boolean;
+}
+
+/**
  * Audit-trail record of one user's consent decision on one version of a platform
  * legal document — the Terms of Service or the privacy statement (Issue #399).
  *

@@ -12,8 +12,9 @@
 	import ItemCta from './ItemCta.svelte';
 	import OwnerCard from './OwnerCard.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
-	const { data } = $props();
+	const { data, form } = $props();
 	const item = $derived(data.item) as ItemPublic;
 	const owner = $derived({
 		id: item.userId,
@@ -119,6 +120,11 @@
 		</p>
 	{/if}
 
+	<!-- Request error feedback (e.g. lender requirements not met on submit) -->
+	{#if form?.fail && form?.message}
+		<CustomAlert type="error" message={form.message} />
+	{/if}
+
 	<!-- Travel Time + CTA -->
 	<div class="flex items-center justify-end gap-3">
 		<div>
@@ -137,6 +143,7 @@
 			{isArchived}
 			existingConversation={data.existingConversation}
 			requiresTermsAcceptance={data.requiresTermsAcceptance}
+			unmetRequirements={data.unmetRequirements}
 		/>
 	</div>
 

@@ -4,7 +4,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
-	import type { ItemPublic } from '$lib/types/models';
+	import type { ItemPublic, UnmetRequirement } from '$lib/types/models';
 
 	interface Props {
 		item: ItemPublic;
@@ -14,6 +14,7 @@
 		isArchived: boolean;
 		existingConversation: { id: string; lendingStatus: string } | null;
 		requiresTermsAcceptance?: boolean;
+		unmetRequirements?: UnmetRequirement[];
 	}
 
 	const {
@@ -24,7 +25,10 @@
 		isArchived,
 		existingConversation,
 		requiresTermsAcceptance = false,
+		unmetRequirements = [],
 	}: Props = $props();
+
+	const hasUnmetRequirements = $derived(unmetRequirements.length > 0 && !existingConversation);
 
 
 	const ctaHref = $derived(
@@ -96,6 +100,20 @@
 		<Tooltip triggeredBy="#anfragen-disabled" type="light" placement="top" trigger="click">
 			{texts.pages.itemDetail.trustRestrictedTooltip}
 		</Tooltip>
+	{:else if hasUnmetRequirements}
+		<!-- Lender requirements not met (#423/#389): requesting is disabled; we offer
+		     the missing steps as quick-fix buttons (same style as the request button). -->
+		<div class="flex flex-col items-end gap-2">
+			<p class="text-sm text-tinte-600 dark:text-tinte-400">{texts.lendingRequirements.blockedIntro}</p>
+			<div class="flex flex-wrap justify-end gap-2">
+				{#each unmetRequirements as req (req.key)}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+					<a href={req.actionHref} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
+						{req.actionLabel} →
+					</a>
+				{/each}
+			</div>
+		</div>
 	{:else if existingConversation || requiresTermsAcceptance}
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 		<a href={ctaHref} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
@@ -103,7 +121,7 @@
 			{ctaLabel}
 		</a>
 	{:else}
-		<form method="POST" action="?/startConversation">
+		<form method="POST" action="?/startConversation" use:enhance>
 			<Input name="itemId" value={item.id} hidden />
 			<Button pill type="submit" class="cursor-pointer min-button bg-primary-200 hover:bg-primary">
 				<MessagesOutline class="h-4 w-4 mr-2" />

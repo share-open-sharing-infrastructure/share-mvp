@@ -5,6 +5,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
+import { evaluateUnmetRequirements, requirementRegistry } from '$lib/server/lendingRequirements';
 
 export async function load({ params, locals }) {
 	let item: ItemPublic;
@@ -100,6 +101,15 @@ export async function load({ params, locals }) {
 		}
 	}
 
+	// Lender-defined borrower requirements (#423/#389): which enabled requirements
+	// does the current viewer NOT yet meet for this owner? UX only — the backend
+	// hook on conversation create is the authoritative gate. We skip own items and
+	// unauthenticated viewers (login is required before requesting anyway).
+	let unmetRequirements: Awaited<ReturnType<typeof evaluateUnmetRequirements>> = [];
+	if (currentUserId && !isOwnItem && locals.user) {
+		unmetRequirements = await evaluateUnmetRequirements(locals.pb, item.userId, locals.user);
+	}
+
 	// Total items listed by this owner (all statuses).
 	let ownerItemCount = 0;
 	if (item.userId) {
@@ -128,6 +138,7 @@ export async function load({ params, locals }) {
 		preferredTransportMode: locals.user?.preferredTransportMode || 'bicycle',
 		existingConversation,
 		requiresTermsAcceptance,
+		unmetRequirements,
 		ownerHasLocation: !!item.ownerHasLocation,
 	};
 }
@@ -183,6 +194,11 @@ export const actions = {
 			redirect(303, `/items/${params.id}/terms`);
 		}
 
+		// The lender's borrower requirements (#423/#389) are enforced authoritatively
+		// by the backend hook on conversation create — we don't re-check here (single
+		// source of truth). If the hook rejects, the catch below maps its
+		// 'lending_requirement_unmet' error into a friendly message.
+
 		// Consume form data (itemId kept for the conversation filter; ownerId ignored).
 		const formData = await request.formData();
 		const itemId = formData.get('itemId') as string;
@@ -218,7 +234,23 @@ export const actions = {
 					readByOwner: false,
 				});
 			} catch (err) {
-				const e = err as Partial<ClientResponseError>;
+				const e = err as Partial<ClientResponseError> & { response?: { message?: string } };
+				// The backend hook rejects unmet lending requirements with a message
+				// "lending_requirement_unmet: <keys>" — map the keys to friendly labels.
+				const raw = [e.response?.message, e.message].filter(Boolean).join(' ');
+				const m = raw.match(/lending_requirement_unmet:\s*([a-z_,]+)/i);
+				if (m) {
+					const labels = m[1]
+						.split(',')
+						.map((k) => requirementRegistry.find((d) => d.key === k.trim())?.label)
+						.filter(Boolean);
+					return fail(403, {
+						fail: true,
+						message: labels.length
+							? `${texts.lendingRequirements.blockedIntro} ${labels.join(', ')}`
+							: texts.lendingRequirements.blockedIntro,
+					});
+				}
 				return fail(e.status ?? 500, {
 					fail: true,
 					message: e.data?.message ?? texts.errors.failedToCreateConversation,

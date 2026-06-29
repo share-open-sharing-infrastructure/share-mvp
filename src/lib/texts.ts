@@ -641,7 +641,7 @@ export const texts = {
 			trustsThisUser: 'Du vertraust diesem Account',
 			doesNotTrustThisUser: 'Du vertraust diesem Account (noch) nicht.',
 			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
-			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen.',
+			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen. Manche Anbieter:innen verleihen nur an Nutzer:innen mit hinterlegter Adresse.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
 			itemSearchPlaceholder: 'Gegenstände durchsuchen…',
@@ -882,6 +882,35 @@ export const texts = {
 			notFound: 'Anfrage nicht gefunden.',
 			noPermission: 'Keine Berechtigung für diese Aktion.',
 			invalidState: 'Diese Aktion ist im aktuellen Status nicht möglich.',
+		},
+	},
+
+	// Lender-defined borrower requirements (issues #423 / #389)
+	lendingRequirements: {
+		// Section chrome (owner profile)
+		sectionTitle: 'Verleih-Voraussetzungen',
+		sectionIntro:
+			'Lege fest, welche Voraussetzungen jemand erfüllen muss, um deine Gegenstände anfragen zu können. Die Sichtbarkeit deiner Gegenstände bleibt davon unberührt.',
+		saved: 'Verleih-Voraussetzungen gespeichert.',
+		saveError: 'Die Verleih-Voraussetzungen konnten nicht gespeichert werden. Bitte versuche es später erneut.',
+		// Borrower-facing intro (item detail CTA when a request is blocked)
+		blockedIntro: 'Bevor du anfragen kannst:',
+		// Per-requirement copy (keys match the requirement registry).
+		// settings* = owner toggle in the profile; label = friendly name (error msg);
+		// actionLabel = borrower quick-fix button.
+		verifiedEmail: {
+			settingsLabel: 'Bestätigte E-Mail-Adresse verlangen',
+			settingsHelp:
+				'Nur Nutzer:innen mit bestätigter E-Mail-Adresse können deine Gegenstände anfragen.',
+			label: 'Bestätigte E-Mail-Adresse',
+			actionLabel: 'E-Mail bestätigen',
+		},
+		address: {
+			settingsLabel: 'Hinterlegte Adresse verlangen',
+			settingsHelp:
+				'Nur Nutzer:innen mit hinterlegter Adresse können deine Gegenstände anfragen.',
+			label: 'Hinterlegte Adresse',
+			actionLabel: 'Adresse hinterlegen',
 		},
 	},
 

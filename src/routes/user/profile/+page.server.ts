@@ -3,6 +3,12 @@ import { texts } from '$lib/texts';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { upsertUserGeolocation } from '$lib/server/geolocation';
 import { upsertOwnContact, getOwnContact } from '$lib/server/contacts';
+import {
+	getOwnerRequirements,
+	getRequirementSettings,
+	requirementFields,
+	upsertOwnerRequirements
+} from '$lib/server/lendingRequirements';
 
 export async function load({ locals, url }) {
 	// Fetch directly so the profile page always has fresh data regardless of
@@ -18,12 +24,14 @@ export async function load({ locals, url }) {
 
 	const inviteUrl = `${url.origin}/invite/${inviteCode}`;
 	const contact = await getOwnContact(locals.pb, locals.user.id);
+	const lendingRequirements = await getOwnerRequirements(locals.pb, locals.user.id);
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl,
 		currentUser,
 		contact,
+		requirementSettings: getRequirementSettings(lendingRequirements),
 	};
 }
 
@@ -34,6 +42,22 @@ export const actions = {
 			return { success: true, message: texts.success.dataUpdated };
 		} catch {
 			return { error: true, message: texts.errors.somethingWentWrong };
+		}
+	},
+
+	saveLendingRequirements: async ({ locals, request }) => {
+		const formData = await request.formData();
+		// Build the payload from the registry so a new requirement type needs no
+		// change here — its toggle (name = field) is read automatically.
+		const data = Object.fromEntries(
+			requirementFields.map((field) => [field, formData.get(field) === 'on'])
+		);
+		try {
+			await upsertOwnerRequirements(locals.pb, locals.user.id, data);
+			return { success: true, message: texts.lendingRequirements.saved };
+		} catch (err) {
+			console.error('saveLendingRequirements failed', err);
+			return { error: true, message: texts.lendingRequirements.saveError };
 		}
 	},
 
