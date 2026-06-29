@@ -94,12 +94,19 @@ function makePb(opts: {
 			}
 		}),
 		filter: vi.fn(mockFilter),
-		authStore: { isValid: !!opts && true },
+		// Real PocketBase: authStore.isValid is false for a guest. Driven per-call in
+		// callLoad() from whether a user is passed, so the anonymous path is faithful.
+		authStore: { isValid: true },
 	};
 	return { pb, usersGetOne, convGetFirstListItem };
 }
 
-function callLoad(pb: unknown, user: { id: string; trusts?: string[] } | null = { id: VIEWER_ID, trusts: [] }) {
+function callLoad(
+	pb: { authStore: { isValid: boolean } },
+	user: { id: string; trusts?: string[] } | null = { id: VIEWER_ID, trusts: [] }
+) {
+	// Mirror real PocketBase: a guest (no user) has an invalid auth store.
+	pb.authStore.isValid = !!user;
 	return load({
 		params: { id: 'item1' },
 		locals: { pb, user },
@@ -216,6 +223,22 @@ describe('items/[id] load — off-platform-contact owners (#438)', () => {
 		const data = await callLoad(pb, null);
 
 		expect(data.ownerContact).toBeNull();
+	});
+
+	it('never reads the base users record for an anonymous viewer of a masked item', async () => {
+		// A guest (authStore invalid) on a restricted item: the SQL view already NULLs the
+		// public columns, and the load must NOT fall back to the auth-only base users read.
+		const { pb, usersGetOne } = makePb({
+			masked: true,
+			itemExtra: { ownerContactMethod: null, ownerContactEmail: null, ownerContactUrl: null },
+		});
+
+		const data = await callLoad(pb, null);
+
+		expect(data.ownerContact).toBeNull();
+		expect(usersGetOne).not.toHaveBeenCalled();
+		// A guest never reaches the trust-restricted state (that requires authentication).
+		expect(data.isTrustRestricted).toBe(false);
 	});
 });
 

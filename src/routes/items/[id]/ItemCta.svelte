@@ -4,7 +4,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
-	import { buildMailtoHref } from '$lib/utils/utils';
+	import { buildMailtoHref, buildItemRedirectHref } from '$lib/utils/utils';
 	import type { ItemPublic, UnmetRequirement } from '$lib/types/models';
 
 	interface Props {
@@ -47,7 +47,7 @@
 				texts.pages.itemDetail.mailtoBody(itemName),
 			);
 		}
-		return `/api/redirect?to=${encodeURIComponent(ownerContact.target)}&source=item-detail&item=${item.id}`;
+		return buildItemRedirectHref(ownerContact.target, item.id);
 	});
 
 	const hasUnmetRequirements = $derived(unmetRequirements.length > 0 && !existingConversation);
@@ -65,7 +65,7 @@
 		{#if !isArchived && item.externalUrl}
 			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href={`/api/redirect?to=${encodeURIComponent(item.externalUrl)}&source=item-detail&item=${item.id}`}
+				href={buildItemRedirectHref(item.externalUrl, item.id)}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"

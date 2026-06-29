@@ -136,25 +136,37 @@ export const actions = {
 		// separate from the private login `email`.
 		const rawMethod = formData?.get('contactMethod')?.toString() ?? '';
 		const contactMethod = rawMethod === 'email' || rawMethod === 'link' ? rawMethod : '';
-		const contactEmail = (formData?.get('contactEmail')?.toString() ?? '').trim();
-		const contactUrl = (formData?.get('contactUrl')?.toString() ?? '').trim();
+		const submittedEmail = (formData?.get('contactEmail')?.toString() ?? '').trim();
+		const submittedUrl = (formData?.get('contactUrl')?.toString() ?? '').trim();
 		const contactPublic = contactMethod !== '' && formData?.get('contactPublic') === 'on';
-		// Practical email shape that also excludes URL-significant characters (?, &, %,
-		// quotes, spaces) so the address can't smuggle extra params into the mailto:
-		// CTA. PocketBase's email field is the authoritative validator; this is UX + a
-		// belt-and-braces guard alongside the per-part encoding in buildMailtoHref().
-		if (contactEmail !== '' && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(contactEmail)) {
-			return { error: true, message: texts.errors.invalidContactEmail };
+		// Persist only the ACTIVE method's target and clear the other, so no stale
+		// off-platform handle lingers on the record (it would otherwise stay readable by
+		// any logged-in viewer of the owner) — and so validation only ever runs against
+		// the field that will actually be used.
+		const contactEmail = contactMethod === 'email' ? submittedEmail : '';
+		const contactUrl = contactMethod === 'link' ? submittedUrl : '';
+		if (contactMethod === 'email') {
+			if (contactEmail === '') {
+				return { error: true, message: texts.errors.contactEmailRequired };
+			}
+			// Practical email shape that also excludes URL-significant characters (?, &, %,
+			// quotes, spaces) so the address can't smuggle extra params into the mailto:
+			// CTA. PocketBase's email field is the authoritative validator; this is UX + a
+			// belt-and-braces guard alongside the per-part encoding in buildMailtoHref().
+			if (!/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(contactEmail)) {
+				return { error: true, message: texts.errors.invalidContactEmail };
+			}
 		}
-		// Only https links are allowed (matches the /api/redirect guard the CTA routes through).
-		if (contactUrl !== '' && !/^https:\/\/[^\s?#]+/i.test(contactUrl)) {
-			return { error: true, message: texts.errors.invalidContactUrl };
-		}
-		if (contactMethod === 'email' && contactEmail === '') {
-			return { error: true, message: texts.errors.contactEmailRequired };
-		}
-		if (contactMethod === 'link' && contactUrl === '') {
-			return { error: true, message: texts.errors.contactUrlRequired };
+		if (contactMethod === 'link') {
+			if (contactUrl === '') {
+				return { error: true, message: texts.errors.contactUrlRequired };
+			}
+			// Only https links are allowed. Case-sensitive on purpose: the /api/redirect
+			// guard the CTA routes through checks `startsWith('https://')`, so accepting an
+			// upper/mixed-case scheme here would store a link that 400s at click time.
+			if (!/^https:\/\/[^\s?#]+/.test(contactUrl)) {
+				return { error: true, message: texts.errors.invalidContactUrl };
+			}
 		}
 		updateData['contactMethod'] = contactMethod;
 		updateData['contactEmail'] = contactEmail;

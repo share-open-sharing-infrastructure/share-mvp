@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { itemImageUrl, buildMailtoHref } from './utils';
+import { itemImageUrl, buildMailtoHref, buildItemRedirectHref } from './utils';
 import { texts } from '$lib/texts';
 
 const PB_URL = 'https://pb.example.com/';
@@ -76,5 +76,23 @@ describe('buildMailtoHref (#438)', () => {
 		expect(href).toContain('&body=');
 		// The masked-item fallback (item.name ?? unknownItem) must also be encodable.
 		expect(buildMailtoHref('o@x.test', texts.pages.itemDetail.mailtoSubject(texts.pages.itemDetail.unknownItem), '')).toContain('subject=');
+	});
+});
+
+describe('buildItemRedirectHref (#438 link CTA / external items)', () => {
+	it('routes the destination through /api/redirect with the item-detail source', () => {
+		const href = buildItemRedirectHref('https://verleih.example/form', 'itm123');
+		expect(href).toBe(
+			'/api/redirect?to=https%3A%2F%2Fverleih.example%2Fform&source=item-detail&item=itm123'
+		);
+	});
+
+	it('encodes the destination so query-significant characters cannot break out of the `to` param', () => {
+		const href = buildItemRedirectHref('https://x.test/a?b=1&c=2#frag', 'i1');
+		// The whole URL (incl. ? & #) must be percent-encoded inside `to`, not appended raw.
+		expect(href.startsWith('/api/redirect?to=https%3A%2F%2Fx.test%2Fa%3Fb%3D1%26c%3D2%23frag')).toBe(true);
+		expect(href.endsWith('&source=item-detail&item=i1')).toBe(true);
+		// Exactly the one source/item separator pair — the destination didn't smuggle extras.
+		expect(href.match(/&source=/g)).toHaveLength(1);
 	});
 });

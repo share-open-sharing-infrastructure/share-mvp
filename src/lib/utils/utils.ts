@@ -91,3 +91,13 @@ export function buildMailtoHref(email: string, subject: string, body: string): s
 			: `${encodeURIComponent(email.slice(0, at))}@${encodeURIComponent(email.slice(at + 1))}`;
 	return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
+
+/**
+ * Build the item-detail outbound-link href, routed through `/api/redirect` (which
+ * enforces https + records the click). Used for external-item deep links and for an
+ * owner's off-platform contact link (issue #438). The destination is URL-encoded so it
+ * rides safely as a query param; `/api/redirect` is the authoritative https guard.
+ */
+export function buildItemRedirectHref(target: string, itemId: string): string {
+	return `/api/redirect?to=${encodeURIComponent(target)}&source=item-detail&item=${itemId}`;
+}
