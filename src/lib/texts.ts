@@ -98,6 +98,11 @@ export const texts = {
 			'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link zum Zurücksetzen des Passworts an.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
+		contactEmailRequired:
+			'Bitte gib eine Kontakt-E-Mail an, wenn du Anfragen per E-Mail erhalten möchtest.',
+		invalidContactEmail: 'Bitte gib eine gültige Kontakt-E-Mail-Adresse an.',
+		contactViaEmailOnly:
+			'Dieser Anbieter möchte per E-Mail kontaktiert werden. Bitte nutze den „Anfragen"-Button auf der Gegenstandsseite.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 		itemNotFound: 'Gegenstand nicht gefunden.',
@@ -159,6 +164,18 @@ export const texts = {
 		contactViaTelegram: 'Telegram',
 		contactViaSignal: 'Signal',
 		onlyForTrusted: 'Nur für Vertraute sichtbar',
+	},
+
+	// Email-contact opt-in (issue #438): owners who handle lending off-platform
+	emailContact: {
+		title: 'Kontakt per E-Mail',
+		toggleLabel: 'Anfragen per E-Mail erhalten',
+		toggleDescription:
+			'Wenn aktiviert, startet der „Anfragen"-Button bei deinen Gegenständen keinen Chat, sondern öffnet eine E-Mail an deine Kontaktadresse. Praktisch, wenn du den Verleih außerhalb der Plattform abwickelst.',
+		emailLabel: 'Kontakt-E-Mail',
+		emailPlaceholder: 'z.B. verleih@beispiel.de',
+		emailHelp:
+			'Diese Adresse sehen nur eingeloggte Nutzer:innen, die einen deiner Gegenstände anfragen. Deine Login-E-Mail bleibt privat.',
 	},
 
 	// Form labels and placeholders
@@ -632,6 +649,10 @@ export const texts = {
 			ownerCardTitle: 'Verliehen von',
 			institutionCardTitle: 'Angeboten von',
 			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
+			// mailto: CTA for owners who opted into email contact (issue #438)
+			mailtoSubject: (item: string) => `Anfrage zu „${item}" über AllerLeih`,
+			mailtoBody: (item: string) =>
+				`Hallo,\n\nich interessiere mich für „${item}" auf AllerLeih und würde es gerne ausleihen.\n\nViele Grüße`,
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,

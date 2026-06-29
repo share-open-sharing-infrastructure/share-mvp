@@ -8,6 +8,7 @@
 	import ProfileImageField from './ProfileImageField.svelte';
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
+	import ContactEmailSection from './ContactEmailSection.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
@@ -153,6 +154,12 @@
 						tooltipText={texts.messenger.signalTooltipText}
 					/>
 				</div>
+
+				<!-- Email contact opt-in (issue #438) -->
+				<ContactEmailSection
+					contactViaEmail={data.currentUser.contactViaEmail ?? false}
+					contactEmail={data.currentUser.contactEmail ?? ''}
+				/>
 
 				<!-- Profile Image -->
 				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 border-t pt-4">

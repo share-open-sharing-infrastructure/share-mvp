@@ -22,6 +22,8 @@ erDiagram
         string bio
         string preferredTransportMode "foot|bicycle|car"
         bool hasOnboarded
+        bool contactViaEmail "issue #438 — item CTA becomes a mailto: instead of the in-app flow"
+        string contactEmail "dedicated public contact address — never in a *_public view"
         string inviteCode
         string invitedBy FK
         User[] trusts FK
@@ -279,9 +281,10 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
 
 **Phase 1 — deactivate** (`DELETE /api/account`, backend hook with superuser access):
 - The live `users` row is kept but anonymized: `username` → `deleted-<id>`, `email` →
-  `deleted-<id>@deleted.invalid`, profile fields/`trusts[]`/`inviteCode` cleared, password
-  randomized, and `deleted = true` + `deletedAt` set. `deleted` is also exposed on the
-  `users_public` view so the public profile can mask the name.
+  `deleted-<id>@deleted.invalid`, profile fields/`trusts[]`/`inviteCode`/`contactEmail`
+  (and `contactViaEmail` reset to false) cleared, password randomized, and `deleted = true` +
+  `deletedAt` set. `deleted` is also exposed on the `users_public` view so the public profile
+  can mask the name.
 - Personal-only data is **hard-deleted**: `user_contacts`, `user_geolocations`,
   `push_subscriptions`, and the user's own `notifications`. The user is removed from every
   other user's `trusts[]`, and `invitedBy` referencing them is nulled.

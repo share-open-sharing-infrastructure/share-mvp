@@ -129,6 +129,25 @@ export const actions = {
 			contact.signalLink = trimmedSignal;
 		}
 
+		// Email-contact opt-in (issue #438) → stored on the `users` record (not
+		// user_contacts): contactViaEmail makes the item CTA a mailto: link to
+		// contactEmail. The toggle requires a valid address, else the mailto would
+		// be broken. contactEmail stays separate from the private login `email`.
+		const contactViaEmail = formData?.get('contactViaEmail') === 'on';
+		const contactEmail = (formData?.get('contactEmail')?.toString() ?? '').trim();
+		// Practical email shape that also excludes URL-significant characters (?, &, %,
+		// quotes, spaces) so the address can't smuggle extra params into the mailto:
+		// CTA. PocketBase's email field is the authoritative validator; this is UX + a
+		// belt-and-braces guard alongside the per-part encoding in buildMailtoHref().
+		if (contactEmail !== '' && !/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(contactEmail)) {
+			return { error: true, message: texts.errors.invalidContactEmail };
+		}
+		if (contactViaEmail && contactEmail === '') {
+			return { error: true, message: texts.errors.contactEmailRequired };
+		}
+		updateData['contactViaEmail'] = contactViaEmail;
+		updateData['contactEmail'] = contactEmail;
+
 		// Handle geolocation → owner-only user_geolocations collection
 		// (undefined = leave unchanged; only set when a geocode suggestion was picked).
 		let geo: { lon: number; lat: number } | null | undefined;

@@ -70,6 +70,20 @@ export interface User extends PocketBaseEntity {
 	signalVisibleToTrustedOnly?: boolean;
 
 	/**
+	 * Issue #438: when true, the user's items skip the in-app request flow and
+	 * offer a `mailto:` contact instead. The address used is `contactEmail`.
+	 */
+	contactViaEmail?: boolean;
+
+	/**
+	 * Dedicated public contact address for the `mailto:` CTA — kept separate from
+	 * the private login `email`, so the login address is never exposed. Readable
+	 * by any authenticated viewer (base `users` viewRule) but deliberately absent
+	 * from every `*_public` view, so it never leaks to unauthenticated browsing.
+	 */
+	contactEmail?: string;
+
+	/**
 	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
 	 * Zero value {"lon":0,"lat":0} means no location set (Null Island).
 	 */
