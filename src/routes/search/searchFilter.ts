@@ -6,7 +6,6 @@ export type SearchParameters = {
 	page: number;
 	perPage: number;
 	selectedCategories: ItemCategory[];
-	op: 'or' | 'and';
 	onlyAvailable: boolean;
 	ownerType: 'all' | 'institution' | 'private';
 };
@@ -42,7 +41,7 @@ export function buildSearchFilter(raw: string): string | null {
 /**
  * Parses and validates all search-related URL parameters into a typed `SearchParams` object.
  * Invalid or missing values fall back to safe defaults; unrecognised category values are silently dropped.
- * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `op`, `onlyAvailable`, `ownerType`)
+ * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `onlyAvailable`, `ownerType`)
  * @returns a fully typed `SearchParams` object with all fields guaranteed to be valid
  */
 export function parseSearchParameters(url: URL): SearchParameters {
@@ -56,14 +55,13 @@ export function parseSearchParameters(url: URL): SearchParameters {
 		.map((s) => s.trim())
 		.filter((s): s is ItemCategory => ITEM_CATEGORIES.includes(s as ItemCategory));
 
-	const op: 'or' | 'and' = url.searchParams.get('op') === 'and' ? 'and' : 'or';
 	const onlyAvailable = url.searchParams.get('onlyAvailable') !== 'false';
 
 	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
 	const ownerType: 'all' | 'institution' | 'private' =
 		ownerTypeParam === 'institution' || ownerTypeParam === 'private' ? ownerTypeParam : 'all';
 
-	return { query, page, perPage, selectedCategories, op, onlyAvailable, ownerType };
+	return { query, page, perPage, selectedCategories, onlyAvailable, ownerType };
 }
 
 /**
@@ -82,9 +80,10 @@ export function buildItemFilter(params: SearchParameters, userId?: string): stri
 
 	// Escape & as \& so PocketBase's filter parser doesn't misinterpret it as the && operator.
 	const escapeCategoryValue = (c: string) => c.replace(/&/g, '\\&');
+	// Multiple selected categories are combined with OR: an item matches if it is in any of them.
 	const categoryFilter =
 		params.selectedCategories.length > 0
-			? `(${params.selectedCategories.map((c) => `${validateFilterField('categories')} ~ '${escapeCategoryValue(c)}'`).join(params.op === 'and' ? ' && ' : ' || ')})`
+			? `(${params.selectedCategories.map((c) => `${validateFilterField('categories')} ~ '${escapeCategoryValue(c)}'`).join(' || ')})`
 			: null;
 
 	// Trust visibility is enforced by the `items_searchable` view's rule (public items
