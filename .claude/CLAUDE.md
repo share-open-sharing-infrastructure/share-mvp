@@ -94,11 +94,27 @@ These prevent the most common bugs/security issues here — follow them without 
 
 ## Project tooling (this repo's `.claude/`)
 
+Skills auto-trigger from their own `description`; this list is the human index of what exists —
+run one explicitly with `/<name>`. Build / change work:
+
+- `/new-route` — scaffold a route (`+page.server.ts`/`.svelte` + co-located test) with the
+  pb.filter / trust-visibility / runes / form-action guardrails baked in.
+- `/add-notification-type` — wire a new notification type end-to-end (union → texts → trigger site →
+  in-app routing), keeping `relatedId` / push url / href consistent.
+- `/schema-change` — coordinate a schema change across both repos: migration (delegates to the
+  backend `new-migration`) → `models.ts` → `docs/data-model.md` → public-view leak check.
+- `/write-tests` — author tests to the repo's conventions (Vitest with mocked PocketBase).
+- `/seed-scenario` — add a deterministic local seed scenario (items get generated placeholder images).
+
+Maintenance & review:
+
+- `/refresh-skills` — audit & fix the `.claude/skills` when code they cite drifts (paths, signatures,
+  texts keys, commands). Run after a change that touches code a skill references.
 - `/create-pr` — preflight (lint/check/test/build), draft, and open a PR to `main`.
 - `/accessibility-review` — audit changed Svelte files against the project's a11y patterns.
-- `sveltekit-pb-reviewer` agent — delegated AllerLeih-specific code/security review
-  (pb.filter, trust visibility, public-view leakage, runes, texts.ts). Complements the
-  built-in `/code-review` and `/security-review`.
+- `sveltekit-pb-reviewer` agent — delegated AllerLeih-specific code/security review (pb.filter,
+  trust/group visibility, public-view & `items_searchable` leakage, deleted-account masking, runes,
+  texts.ts). Complements the built-in `/code-review` and `/security-review`.
 
 ## Keep in sync
 

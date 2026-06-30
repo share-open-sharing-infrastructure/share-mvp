@@ -1,6 +1,6 @@
 ---
 name: sveltekit-pb-reviewer
-description: AllerLeih-specific code & security reviewer for SvelteKit + PocketBase changes. Use to review a diff or set of files for PocketBase filter injection, trust-visibility / public-view leakage, auth, Svelte 5 runes correctness, German-string placement, and test conventions. Complements the generic built-in /code-review and /security-review — invoke when you want a project-aware review of the current branch.
+description: AllerLeih-specific code & security reviewer for SvelteKit + PocketBase changes. Use to review a diff or set of files for PocketBase filter injection, trust- & group-visibility and public-view / items_searchable leakage, auth, Svelte 5 runes correctness, deleted-account masking, realtime subscriptions, German-string placement, and test conventions. Complements the generic built-in /code-review and /security-review — invoke when you want a project-aware review of the current branch.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -21,11 +21,14 @@ user names files, review those. Read enough surrounding context to judge correct
    `pb.filter(raw, {params})` / `locals.pb.filter(...)`. Flag ANY template-literal or string
    concatenation in a filter — including values that look "safe" like `locals.user.id` or route
    params. `grep` for `filter:` and backtick filter strings.
-2. **Trust visibility & data leakage.** After fetching items, `filterTrustedItems()`
-   (`$lib/server/itemFilters`) must be applied so `trusteesOnly` items don't reach non-trusted
-   users. Unauthenticated paths must read the `*_public` views — verify no email, raw
-   coordinates, contact fields, or trust-graph (`trusts[]`) data leaks through any response or
-   public view usage.
+2. **Item visibility & data leakage.** After fetching items, `filterTrustedItems(items, userId, loggedIn)`
+   (`$lib/server/itemFilters`, synchronous) must be applied so `trusteesOnly` items don't reach
+   non-trusted users — and the fetch must `expand: 'owner'`, or it can't read the owner's `trusts[]`
+   and silently mis-filters. Items can also be shared with **groups** (`groups[]` + `group_members`),
+   an audience independent of trust; a visibility change must hold for *both* the trust and group
+   audiences. Check the **`items_searchable`** view (search/profile) as well as the `*_public` views:
+   verify no email, raw coordinates, contact data, `trusts[]`, or a group-only item leaks to anyone
+   outside its audience — and that `items_searchable`'s `groups` column isn't surfaced to clients.
 3. **Auth / route protection.** New routes outside the `unprotectedPrefix` set in
    `src/hooks.server.ts` must require auth; confirm anything newly made public is intentional and
    leaks nothing sensitive. Mutations belong in form actions, not unauthenticated `/api/*`.
@@ -36,8 +39,12 @@ user names files, review those. Read enough surrounding context to judge correct
    (+ `ITEM_CATEGORIES`), not be hardcoded inline in components.
 6. **Tests.** New/changed server logic should have co-located `*.test.ts` mocking PocketBase per
    `docs/testing-strategy.md` (a `mockLocals` with `pb.collection()` returning `vi.fn()` stubs).
-7. **Correctness & footguns.** Obvious bugs, unhandled errors, missing `$effect` cleanup for
-   `setupPocketBaseSubscription()`, and image handling that ignores `externalImgUrl` fallback.
+7. **Deleted accounts & realtime.** Never render `user.username` directly for a user that might be
+   deleted — it must go through `displayName()` (`$lib/utils/utils.ts`). Client realtime goes through
+   `subscribeRealtime()` (`$lib/client-pb`) with `$effect`/`onMount` cleanup — flag any direct
+   `pb.collection(...).subscribe()` (it loses the reconnect/retry from issue #435).
+8. **Correctness & footguns.** Obvious bugs, unhandled errors, and image handling that ignores the
+   `externalImgUrl` fallback.
 
 ## Output
 
