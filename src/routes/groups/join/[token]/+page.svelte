@@ -45,12 +45,14 @@
 			{:else}
 				<!-- Preview is public, but joining needs an account. Send guests to
 				     login and bring them straight back to this invite. -->
+				<!-- eslint-disable svelte/no-navigation-without-resolve -- path is resolve()d; the rule can't match the appended ?redirectTo query string -->
 				<a
 					href={`${resolve('/auth/login')}?redirectTo=${encodeURIComponent('/groups/join/' + data.token)}`}
 					class="inline-block w-full rounded-lg bg-primary-200 hover:bg-primary px-4 py-2 text-center font-medium"
 				>
 					{texts.groups.loginToJoin}
 				</a>
+				<!-- eslint-enable svelte/no-navigation-without-resolve -->
 			{/if}
 		{:else if data.state === 'expired'}
 			<CustomAlert type="error" message={texts.groups.expiredInvite} />

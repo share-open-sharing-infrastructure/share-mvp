@@ -23,10 +23,12 @@
 
 	function toggleCat(cat: string) {
 		const next = selectedCategories.includes(cat) ? [] : [cat];
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() already resolve()s the /search path; the rule can't see through the helper
 		goto(buildUrl(next, op));
 	}
 
 	function toggleOp() {
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() already resolve()s the /search path; the rule can't see through the helper
 		goto(buildUrl(selectedCategories, op === 'or' ? 'and' : 'or'));
 	}
 

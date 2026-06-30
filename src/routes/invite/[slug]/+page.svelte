@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 
 	let { data } = $props();
 
 	const origin = $derived(page.url.origin);
-	const registerUrl = $derived(`/auth/register?invite=${data.slug}`);
+	const registerUrl = $derived(`${resolve('/auth/register')}?invite=${data.slug}`);
 	const ogTitle = 'Du wurdest zu AllerLeih eingeladen!';
 	const ogDescription = texts.pages.inviteLanding.description;
 </script>
@@ -38,11 +39,13 @@
 			{ogDescription}
 		</p>
 
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- registerUrl is resolve()d; the rule can't match the appended ?invite query string -->
 		<a
 			href={registerUrl}
 			class="block w-full min-button rounded-full bg-primary-200 px-5 py-3 text-center text-base font-medium text-white hover:bg-primary focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
 		>
 			{texts.pages.inviteLanding.cta}
 		</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	</div>
 </div>

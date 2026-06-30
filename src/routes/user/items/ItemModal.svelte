@@ -135,7 +135,7 @@
 			<p>{form.message}</p>
 			{#if form?.conversationIds?.length}
 				<a
-					href="/conversations/{form.conversationIds[0]}"
+					href={resolve(`/conversations/${form.conversationIds[0]}`)}
 					class="mt-1 inline-block font-semibold underline"
 				>{texts.pages.items.linkToConversation}</a>
 			{/if}

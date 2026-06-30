@@ -1,21 +1,8 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { Accordion, AccordionItem } from 'flowbite-svelte';
-	import {
-		SearchOutline,
-		MessageDotsOutline,
-		UsersGroupOutline,
-		RefreshOutline,
-		UploadOutline,
-		InboxOutline,
-		ShieldCheckOutline,
-		CheckCircleOutline,
-	} from 'flowbite-svelte-icons';
 
 	const { guide } = texts.pages;
-
-	const borrowingIcons = [SearchOutline, MessageDotsOutline, UsersGroupOutline, RefreshOutline];
-	const lendingIcons = [UploadOutline, InboxOutline, ShieldCheckOutline, CheckCircleOutline];
 </script>
 
 <svelte:head>
