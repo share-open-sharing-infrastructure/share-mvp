@@ -166,6 +166,26 @@
 			onReconnect: () => invalidateAll(),
 		});
 	});
+
+	// Presence heartbeat: periodically update the lastSeenAt timestamp so the backend
+	// knows the user is actively viewing this conversation and can suppress email notifications.
+	$effect(() => {
+		if (!pb) return;
+		const conversationId = untrack(() => data.conversation.id);
+		const isOwner = untrack(() => loggedInUserIsItemOwner);
+		const field = isOwner ? 'ownerLastSeenAt' : 'requesterLastSeenAt';
+
+		const ping = () => {
+			pb!.collection('conversations').update(conversationId, {
+				[field]: new Date().toISOString(),
+			}).catch(() => {});
+		};
+
+		// Ping immediately on mount, then every 15 seconds
+		ping();
+		const interval = setInterval(ping, 15_000);
+		return () => clearInterval(interval);
+	});
 </script>
 
 <svelte:head>
