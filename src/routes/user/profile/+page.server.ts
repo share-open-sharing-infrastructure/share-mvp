@@ -36,15 +36,6 @@ export async function load({ locals, url }) {
 }
 
 export const actions = {
-	deleteProfileImage: async ({ locals }) => {
-		try {
-			await locals.pb.collection('users').update(locals.user.id, { profileImage: null });
-			return { success: true, message: texts.success.dataUpdated };
-		} catch {
-			return { error: true, message: texts.errors.somethingWentWrong };
-		}
-	},
-
 	resendVerification: async ({ locals }) => {
 		try {
 			await locals.pb.collection('users').requestVerification(locals.user.email);
@@ -144,6 +135,12 @@ export const actions = {
 		// Handle profileImage file upload
 		const profileImageFile = formData?.get('profileImage');
 		const hasProfileImage = profileImageFile instanceof File && profileImageFile.size > 0;
+
+		// Deferred profile-image removal (ProfileImageField sets this): clear the image on
+		// save unless a new one was also picked (a new upload wins).
+		if (formData?.get('removeProfileImage') === 'true' && !hasProfileImage) {
+			updateData['profileImage'] = null;
+		}
 
 		// Handle lender-defined borrower requirements (#443). The toggles live in the
 		// same settings form, so the single save bar persists them too. Built from the

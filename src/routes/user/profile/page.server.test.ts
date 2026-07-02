@@ -102,4 +102,16 @@ describe('profile: saveProfile action', () => {
 			requireAddress: false,
 		});
 	});
+
+	it('clears the profile image when removeProfileImage is set (deferred delete)', async () => {
+		const { locals, update } = setup();
+
+		const result = await callSave(locals, { removeProfileImage: 'true' });
+
+		expect(result).toMatchObject({ success: true });
+		// Removal counts as a user update; the image field is cleared (empty string).
+		expect(update).toHaveBeenCalledTimes(1);
+		const submitted = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(submitted.get('profileImage')).toBe('');
+	});
 });

@@ -175,7 +175,10 @@
 									{texts.pages.profile.profileImageLabel}
 								</label>
 								<div class="sm:flex-1">
-									<ProfileImageField imageUrl={profileImageUrl} />
+									<ProfileImageField
+										imageUrl={profileImageUrl}
+										ondirty={markDirty}
+									/>
 								</div>
 							</div>
 
@@ -314,16 +317,6 @@
 						<LendingRequirementsSection settings={data.requirementSettings} />
 					</section>
 				</form>
-
-				<!-- Standalone form targeted by the "delete photo" button in ProfileImageField -->
-				<form
-					id="delete-profile-image-form"
-					method="POST"
-					action="?/deleteProfileImage"
-					use:enhance={() =>
-						({ update }) =>
-							update({ reset: false })}
-				></form>
 
 				<!-- BENACHRICHTIGUNGEN: auto-saving toggles (push + email) -->
 				<section id="benachrichtigungen" class="scroll-mt-28">
