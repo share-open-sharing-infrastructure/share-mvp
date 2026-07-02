@@ -959,6 +959,14 @@ export const texts = {
 			description:
 				'Erstelle ein kostenloses AllerLeih-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.',
 		},
+		reset: {
+			title: 'Passwort zurücksetzen – AllerLeih',
+			description: 'Setze dein AllerLeih-Passwort zurück, um wieder auf dein Konto zugreifen zu können.',
+		},
+		resetConfirm: {
+			title: 'Neues Passwort festlegen – AllerLeih',
+			description: 'Lege ein neues Passwort für dein AllerLeih-Konto fest.',
+		},
 		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
 		itemDetailDescription: (name: string, owner: string) =>
 			`Leihe ${name} von ${owner} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
