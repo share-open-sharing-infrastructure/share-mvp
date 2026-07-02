@@ -113,7 +113,48 @@ export const actions = {
 - Svelte 5 runes only: `$props`, `$state`, `$derived`, `$effect`, `$bindable`. No `export let`.
 - Wire forms with `method="POST" action="?/name" use:enhance`.
 
-## 4. Strings, tests, auth
+## 4. SEO header
+
+Every `+page.svelte` sets a `<SeoHead>` (`$lib/components/SeoHead.svelte`) — the shared component
+every route in the app uses instead of hand-writing `<svelte:head>` meta tags. `title` is the only
+required prop; `src/app.html` has no default `<title>`, so skipping this leaves the browser tab
+showing whatever the previous page's title was.
+
+```svelte
+<script lang="ts">
+  import { texts } from '$lib/texts';
+  import SeoHead from '$lib/components/SeoHead.svelte';
+</script>
+
+<!-- Public / indexable route -->
+<SeoHead
+  title={texts.seo.myRoute.title}
+  description={texts.seo.myRoute.description}
+  canonical="https://allerleih.org/my-route"
+/>
+```
+
+```svelte
+<!-- Private / auth-gated route -->
+<SeoHead title={texts.seo.myRoute.title} robots="noindex, nofollow" />
+```
+
+- Add the new page's copy under `seo:` in `src/lib/texts.ts` (`{ title, description }` for a
+  static page, a function taking the relevant data for a dynamic one, following existing entries
+  like `texts.seo.about` / `texts.seo.itemDetail`) — never inline the strings in the component.
+- For a dynamic route, derive `title`/`description` with `$derived(...)` from load data instead of
+  static values (see `src/routes/items/[id]/+page.svelte`), and pass `image` if the route has a
+  natural preview image (adds the Twitter card + `og:image` automatically).
+- Private/auth-gated routes still need `title`; pass `robots="noindex, nofollow"` (or `"noindex"`
+  pre-login, matching `auth/register`) instead of `canonical`/`description`.
+- `src/routes/+layout.svelte` already sets site-wide `og:site_name`/`og:locale` — don't repeat
+  those. `SeoHead` doesn't need to know about the route's structured data either: a one-off like
+  the homepage's JSON-LD `Organization` script stays in that page's own separate `<svelte:head>`
+  block alongside `<SeoHead>`.
+- If the new route should appear in the sitemap, see `src/routes/sitemap.xml/+server.ts` — SEO
+  meta tags and sitemap inclusion are handled separately.
+
+## 5. Strings, tests, auth
 
 - **All user-facing German strings live in `src/lib/texts.ts`** (organised by feature) — import
   `texts` and reference them; never inline a German string in the component or the action.
