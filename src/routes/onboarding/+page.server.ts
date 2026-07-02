@@ -15,9 +15,12 @@ export async function load({ locals, url }) {
 		await locals.pb.collection('users').update(locals.user.id, { inviteCode });
 	}
 
-	// Exclude deleted (anonymized) accounts from the trustee picker.
+	// Exclude deleted (anonymized) accounts from the trustee picker. Project to only the
+	// fields the picker uses (id + username), so private base-`users` fields (contactEmail,
+	// login email, inviteCode, trusts, …) are never serialized to the client (#438 hardening).
 	const users = await locals.pb.collection('users').getFullList<User>({
 		filter: locals.pb.filter('deleted != true'),
+		fields: 'id,username',
 	});
 	const geolocation = await getUserGeolocation(locals.pb, locals.user.id);
 	const contact = await getOwnContact(locals.pb, locals.user.id);

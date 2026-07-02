@@ -8,6 +8,7 @@
 	import ProfileImageField from './ProfileImageField.svelte';
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
+	import ContactSection from './ContactSection.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
@@ -153,6 +154,14 @@
 						tooltipText={texts.messenger.signalTooltipText}
 					/>
 				</div>
+
+				<!-- Off-platform contact opt-in (issue #438) -->
+				<ContactSection
+					contactMethod={data.currentUser.contactMethod ?? ''}
+					contactEmail={data.currentUser.contactEmail ?? ''}
+					contactUrl={data.currentUser.contactUrl ?? ''}
+					contactPublic={data.currentUser.contactPublic ?? false}
+				/>
 
 				<!-- Profile Image -->
 				<div class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 border-t pt-4">
