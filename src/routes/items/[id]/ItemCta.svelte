@@ -130,7 +130,7 @@
 			href={contactHref}
 			target={ownerContact.method === 'link' ? '_blank' : undefined}
 			rel={ownerContact.method === 'link' ? 'noopener noreferrer' : undefined}
-			class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
+			class="inline-flex items-center rounded-full border border-black px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
 		>
 			<MessagesOutline class="h-4 w-4 mr-2" />
 			{texts.pages.itemDetail.requestButton}
