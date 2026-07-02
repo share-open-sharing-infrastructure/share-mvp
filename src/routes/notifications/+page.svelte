@@ -7,6 +7,7 @@
 	import { enhance } from '$app/forms';
 	import { BellOutline, EnvelopeOutline, UserAddOutline } from 'flowbite-svelte-icons';
 	import type { Notification } from '$lib/types/models';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 	let { data } = $props();
 
 	const conversationNotificationTypes = new Set([
@@ -30,10 +31,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{texts.notifications.title} – {texts.names.app}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead
+	title={`${texts.notifications.title} – ${texts.names.app}`}
+	robots="noindex, nofollow"
+/>
 
 <div class="max-w-2xl mx-auto px-4 py-8">
 	<h1 class="text-2xl font-semibold mb-6">{texts.notifications.title}</h1>

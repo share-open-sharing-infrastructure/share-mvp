@@ -965,6 +965,18 @@ export const texts = {
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
+		conversations: {
+			title: 'Nachrichten – AllerLeih',
+		},
+		social: {
+			title: 'Vertraute – AllerLeih',
+		},
+		onboarding: {
+			title: 'Willkommen – AllerLeih',
+		},
+		userImport: {
+			title: 'Gegenstände importieren – AllerLeih',
+		},
 	},
 
 	// Onboarding nudge banner

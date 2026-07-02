@@ -5,6 +5,7 @@
 	import TrustSection from './TrustSection.svelte';
 	import ItemsSection from './ItemsSection.svelte';
 	import {displayName} from '$lib/utils/utils';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data } = $props();
 
@@ -30,13 +31,10 @@
 	const shareUrl = $derived(`${page.url.origin}/users/${data.profileUser.id}`);
 </script>
 
-<svelte:head>
-	<title>{texts.seo.userProfile(profileName)}</title>
-	<meta name="description" content={texts.seo.userProfileDescription(profileName)} />
-	<meta property="og:title" content={texts.seo.userProfile(profileName)} />
-	<meta property="og:description" content={texts.seo.userProfileDescription(profileName)} />
-	<meta property="og:type" content="website" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.userProfile(profileName)}
+	description={texts.seo.userProfileDescription(profileName)}
+/>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">
 	<ProfileHeader

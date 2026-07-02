@@ -8,6 +8,7 @@
 	import ItemModal from './ItemModal.svelte';
 	import UserItemRow from './UserItemRow.svelte';
 	import Pagination from './Pagination.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { data, form } = $props();
 
@@ -61,9 +62,7 @@
 	);
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.pages.items.title} robots="noindex, nofollow" />
 
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">
