@@ -22,9 +22,10 @@
 </script>
 
 <div class="border-t pt-6 space-y-4">
-	<h2 class="text-lg font-semibold text-tinte-900 dark:text-white">
+	<!-- h3: this is a sub-block of the "Kontakt" section card (which owns the h2). -->
+	<h3 class="text-lg font-semibold text-tinte-900 dark:text-white">
 		{texts.contactOptions.title}
-	</h2>
+	</h3>
 	<p class="text-sm text-tinte-600 dark:text-tinte-400">
 		{texts.contactOptions.description}
 	</p>
