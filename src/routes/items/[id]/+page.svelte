@@ -144,6 +144,7 @@
 			existingConversation={data.existingConversation}
 			requiresTermsAcceptance={data.requiresTermsAcceptance}
 			unmetRequirements={data.unmetRequirements}
+			ownerContact={data.ownerContact}
 		/>
 	</div>
 

@@ -4,6 +4,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
+	import { buildMailtoHref, buildItemRedirectHref } from '$lib/utils/utils';
 	import type { ItemPublic, UnmetRequirement } from '$lib/types/models';
 
 	interface Props {
@@ -15,6 +16,10 @@
 		existingConversation: { id: string; lendingStatus: string } | null;
 		requiresTermsAcceptance?: boolean;
 		unmetRequirements?: UnmetRequirement[];
+		/** Issue #438: when the owner opted into off-platform contact, the request CTA
+		 *  becomes a mailto: (method 'email') or an external link (method 'link') instead
+		 *  of starting the in-app flow. Null = normal in-app request flow. */
+		ownerContact?: { method: 'email' | 'link'; target: string } | null;
 	}
 
 	const {
@@ -26,19 +31,26 @@
 		existingConversation,
 		requiresTermsAcceptance = false,
 		unmetRequirements = [],
+		ownerContact = null,
 	}: Props = $props();
 
+	// Resolve the off-platform contact CTA target: a prefilled mailto: for email, or the
+	// owner's external link routed through /api/redirect (https-guarded + click-tracked,
+	// same as external-item CTAs).
+	const contactHref = $derived.by(() => {
+		if (!ownerContact) return '';
+		if (ownerContact.method === 'email') {
+			const itemName = item.name ?? texts.pages.itemDetail.unknownItem;
+			return buildMailtoHref(
+				ownerContact.target,
+				texts.pages.itemDetail.mailtoSubject(itemName),
+				texts.pages.itemDetail.mailtoBody(itemName),
+			);
+		}
+		return buildItemRedirectHref(ownerContact.target, item.id);
+	});
+
 	const hasUnmetRequirements = $derived(unmetRequirements.length > 0 && !existingConversation);
-
-
-	const ctaHref = $derived(
-		existingConversation
-			? resolve(`/conversations/${existingConversation.id}`)
-			: resolve(`/items/${item.id}/terms`),
-	);
-	const ctaLabel = $derived(
-		existingConversation ? texts.lending.goToConversation : texts.pages.itemDetail.requestButton,
-	);
 </script>
 
 <div class="flex items-center gap-3">
@@ -53,7 +65,7 @@
 		{#if !isArchived && item.externalUrl}
 			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href={`/api/redirect?to=${encodeURIComponent(item.externalUrl)}&source=item-detail&item=${item.id}`}
+				href={buildItemRedirectHref(item.externalUrl, item.id)}
 				target="_blank"
 				rel="noopener noreferrer"
 				class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
@@ -100,6 +112,30 @@
 		<Tooltip triggeredBy="#anfragen-disabled" type="light" placement="top" trigger="click">
 			{texts.pages.itemDetail.trustRestrictedTooltip}
 		</Tooltip>
+	{:else if existingConversation}
+		<!-- An in-progress conversation exists (incl. when the owner uses email contact):
+		     link straight into it rather than offering a new request / mailto. -->
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+		<a href={resolve(`/conversations/${existingConversation.id}`)} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
+			<MessagesOutline class="h-4 w-4 mr-2" />
+			{texts.lending.goToConversation}
+		</a>
+	{:else if ownerContact}
+		<!-- Owner opted into off-platform contact (#438): same "Anfragen" button, but it
+		     opens a prefilled mailto: (email) or links to the owner's external form (link)
+		     instead of starting the in-app request flow. The link opens in a new tab and
+		     is routed through /api/redirect (https guard + click tracking). -->
+		<!-- eslint-disable svelte/no-navigation-without-resolve -->
+		<a
+			href={contactHref}
+			target={ownerContact.method === 'link' ? '_blank' : undefined}
+			rel={ownerContact.method === 'link' ? 'noopener noreferrer' : undefined}
+			class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
+		>
+			<MessagesOutline class="h-4 w-4 mr-2" />
+			{texts.pages.itemDetail.requestButton}
+		</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	{:else if hasUnmetRequirements}
 		<!-- Lender requirements not met (#423/#389): requesting is disabled; we offer
 		     the missing steps as quick-fix buttons (same style as the request button). -->
@@ -114,11 +150,11 @@
 				{/each}
 			</div>
 		</div>
-	{:else if existingConversation || requiresTermsAcceptance}
+	{:else if requiresTermsAcceptance}
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-		<a href={ctaHref} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
+		<a href={resolve(`/items/${item.id}/terms`)} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
 			<MessagesOutline class="h-4 w-4 mr-2" />
-			{ctaLabel}
+			{texts.pages.itemDetail.requestButton}
 		</a>
 	{:else}
 		<form method="POST" action="?/startConversation" use:enhance>
