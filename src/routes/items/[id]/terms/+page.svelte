@@ -67,6 +67,7 @@
 	<article
 		class="terms-body rounded-2xl border border-tinte-200 dark:border-tinte-700 bg-sand dark:bg-tinte-800 p-6 leading-relaxed text-tinte-800 dark:text-tinte-200"
 	>
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- admin-only source, server-side normalized via lendingTerms.cleanTermsHtml (see comment above) -->
 		{@html data.terms.body}
 	</article>
 

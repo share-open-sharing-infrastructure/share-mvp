@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
+	import { SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
 	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import ItemModal from './ItemModal.svelte';
@@ -10,16 +12,16 @@
 	let { data, form } = $props();
 
 	let showAddModal = $state(false);
-	let searchValue = $state(data.search);
+	let searchValue = $derived(data.search);
 	let debounceTimer: ReturnType<typeof setTimeout>;
-	let selectedIds = $state(new Set<string>());
-
-	$effect(() => { searchValue = data.search; });
+	const selectedIds = new SvelteSet<string>();
 
 	$effect(() => {
-		// Clear selection when item list changes (navigation, filter)
-		data.items;
-		selectedIds = new Set();
+		// Reading the current item ids registers this effect as a dependency of
+		// data.items, so the bulk selection is cleared on every list change
+		// (navigation, filter, page, delete).
+		data.items.map((item) => item.id);
+		selectedIds.clear();
 	});
 
 	function onSearchInput(e: Event) {
@@ -27,29 +29,31 @@
 		searchValue = value;
 		clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(() => {
-			const params = new URLSearchParams(window.location.search);
+			const params = new SvelteURLSearchParams(window.location.search);
 			params.set('search', value);
 			params.set('page', '1');
+			// eslint-disable-next-line svelte/no-navigation-without-resolve -- same-page query-string update; resolve() does not handle query strings
 			goto('?' + params.toString(), { keepFocus: true });
 		}, 300);
 	}
 
 	function onStatusChange(e: Event) {
 		const value = (e.currentTarget as HTMLSelectElement).value;
-		const params = new URLSearchParams(window.location.search);
+		const params = new SvelteURLSearchParams(window.location.search);
 		params.set('status', value);
 		params.set('page', '1');
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- same-page query-string update; resolve() does not handle query strings
 		goto('?' + params.toString());
 	}
 
 	function toggleSelectAll(checked: boolean) {
-		selectedIds = checked ? new Set(data.items.map((i) => i.id)) : new Set();
+		selectedIds.clear();
+		if (checked) for (const item of data.items) selectedIds.add(item.id);
 	}
 
 	function updateSelection(id: string, v: boolean) {
-		const next = new Set(selectedIds);
-		if (v) next.add(id); else next.delete(id);
-		selectedIds = next;
+		if (v) selectedIds.add(id);
+		else selectedIds.delete(id);
 	}
 
 	const allSelected = $derived(
@@ -121,7 +125,7 @@
 		{#if form && 'bulkBlocked' in form && form.conversationIds?.length}
 			<div class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
 				<p>{form.message}</p>
-				<a href="/conversations" class="mt-1 inline-block font-semibold underline">
+				<a href={resolve('/conversations')} class="mt-1 inline-block font-semibold underline">
 					{texts.pages.items.linkToConversations}
 				</a>
 			</div>
@@ -177,7 +181,6 @@
 						return async ({ update }) => {
 							await update({ reset: false });
 							for (const id of submitted) selectedIds.delete(id);
-							selectedIds = new Set(selectedIds);
 						};
 					}}
 				>
@@ -193,7 +196,7 @@
 				</form>
 				<button
 					type="button"
-					onclick={() => { selectedIds = new Set(); }}
+					onclick={() => selectedIds.clear()}
 					class="ml-auto text-xs text-tinte-500 hover:text-tinte-700 dark:hover:text-tinte-300 cursor-pointer"
 				>
 					{texts.pages.items.deselectAll}

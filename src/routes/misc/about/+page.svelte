@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { GithubSolid, LinkedinSolid, UsersGroupOutline, HeartOutline, GlobeOutline, EnvelopeOutline } from 'flowbite-svelte-icons';
+	import { GithubSolid, LinkedinSolid, EnvelopeOutline } from 'flowbite-svelte-icons';
 
 	const members = [
 		{
