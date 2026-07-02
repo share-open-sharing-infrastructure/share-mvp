@@ -1,18 +1,16 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { Accordion, AccordionItem } from 'flowbite-svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { guide } = texts.pages;
 </script>
 
-<svelte:head>
-	<title>{texts.seo.guide.title}</title>
-	<meta name="description" content={texts.seo.guide.description} />
-	<meta property="og:title" content={texts.seo.guide.title} />
-	<meta property="og:description" content={texts.seo.guide.description} />
-	<meta property="og:type" content="website" />
-	<link rel="canonical" href="https://allerleih.org/misc/guide" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.guide.title}
+	description={texts.seo.guide.description}
+	canonical="https://allerleih.org/misc/guide"
+/>
 
 <div class="mb-8 aspect-video w-full overflow-hidden rounded-2xl">
 	<iframe

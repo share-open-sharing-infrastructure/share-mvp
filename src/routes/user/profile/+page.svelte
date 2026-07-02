@@ -13,6 +13,7 @@
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -29,9 +30,7 @@
 	);
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.pages.profile.title} robots="noindex, nofollow" />
 
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">

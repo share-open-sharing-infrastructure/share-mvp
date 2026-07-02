@@ -15,6 +15,7 @@
 	import { texts } from '$lib/texts.js';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data } = $props();
 
@@ -67,9 +68,7 @@
 	}
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.seo.social.title} robots="noindex, nofollow" />
 
 
 <!-- HEADER -->

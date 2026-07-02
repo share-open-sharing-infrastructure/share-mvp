@@ -9,6 +9,7 @@
 	import PocketBase from 'pocketbase';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import LegalDocModal from '$lib/components/LegalDocModal.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { data, form } = $props();
 
@@ -48,13 +49,11 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{texts.seo.register.title}</title>
-	<meta name="description" content={texts.seo.register.description} />
-	<meta property="og:title" content={texts.seo.register.title} />
-	<meta property="og:description" content={texts.seo.register.description} />
-	<meta name="robots" content="noindex" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.register.title}
+	description={texts.seo.register.description}
+	robots="noindex"
+/>
 
 <Section name="register">
 	{#if form?.fail}

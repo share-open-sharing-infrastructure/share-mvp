@@ -6,17 +6,16 @@
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { form, data } = $props();
 </script>
 
-<svelte:head>
-	<title>{texts.seo.login.title}</title>
-	<meta name="description" content={texts.seo.login.description} />
-	<meta property="og:title" content={texts.seo.login.title} />
-	<meta property="og:description" content={texts.seo.login.description} />
-	<link rel="canonical" href="https://allerleih.org/auth/login" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.login.title}
+	description={texts.seo.login.description}
+	canonical="https://allerleih.org/auth/login"
+/>
 
 <Section name="login">
 	<Register class="w-full sm:max-w-md">

@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
 
@@ -17,10 +18,10 @@
 	);
 </script>
 
-<svelte:head>
-	<title>{texts.lendingTerms.pageTitle} – {data.item.name}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead
+	title={`${texts.lendingTerms.pageTitle} – ${data.item.name}`}
+	robots="noindex, nofollow"
+/>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<a
