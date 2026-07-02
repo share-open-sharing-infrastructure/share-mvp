@@ -3,6 +3,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import LegalDocModal from '$lib/components/LegalDocModal.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
 
@@ -22,10 +23,7 @@
 	const canSubmit = $derived(data.docs.every((d) => confirmed[d.docType] === true));
 </script>
 
-<svelte:head>
-	<title>{texts.legal.accept.pageTitle}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.legal.accept.pageTitle} robots="noindex, nofollow" />
 
 <div class="mx-auto max-w-2xl px-4 py-8 space-y-6">
 	<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">

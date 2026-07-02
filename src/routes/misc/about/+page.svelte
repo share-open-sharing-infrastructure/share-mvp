@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { GithubSolid, LinkedinSolid, UsersGroupOutline, HeartOutline, GlobeOutline, EnvelopeOutline } from 'flowbite-svelte-icons';
+	import { GithubSolid, LinkedinSolid, EnvelopeOutline } from 'flowbite-svelte-icons';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const members = [
 		{
@@ -26,14 +27,11 @@
 	];
 </script>
 
-<svelte:head>
-	<title>{texts.seo.about.title}</title>
-	<meta name="description" content={texts.seo.about.description} />
-	<meta property="og:title" content={texts.seo.about.title} />
-	<meta property="og:description" content={texts.seo.about.description} />
-	<meta property="og:type" content="website" />
-	<link rel="canonical" href="https://allerleih.org/misc/about" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.about.title}
+	description={texts.seo.about.description}
+	canonical="https://allerleih.org/misc/about"
+/>
 
 <!-- Mission -->
 <section class="px-4 py-8">

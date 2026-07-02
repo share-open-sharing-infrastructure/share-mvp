@@ -3,15 +3,18 @@
 	import { Button } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
+	import { beforeNavigate } from '$app/navigation';
 	import AddressInput from '$lib/components/AddressInput.svelte';
 	import ProfileImageField from './ProfileImageField.svelte';
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
+	import ContactSection from './ContactSection.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import ProfileToc from './ProfileToc.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 	import { pushToast } from '$lib/stores/toast.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -28,6 +31,23 @@
 	// enhance callback) — not when a sibling form (photo delete, resend) succeeds.
 	let isDirty = $state(false);
 	const markDirty = () => (isDirty = true);
+
+	// Warn before leaving with unsaved edits (MaRaMinden review request). beforeNavigate
+	// covers in-app navigation with a confirm; the native beforeunload below covers full
+	// page unloads (reload / tab close / external links), where browsers show their own prompt.
+	beforeNavigate((navigation) => {
+		if (!isDirty || navigation.willUnload) return;
+		if (!confirm(texts.pages.profile.unsavedLeaveConfirm)) navigation.cancel();
+	});
+	$effect(() => {
+		function onBeforeUnload(e: BeforeUnloadEvent) {
+			if (!isDirty) return;
+			e.preventDefault();
+			e.returnValue = '';
+		}
+		window.addEventListener('beforeunload', onBeforeUnload);
+		return () => window.removeEventListener('beforeunload', onBeforeUnload);
+	});
 
 	let settingsForm = $state<HTMLFormElement>();
 
@@ -91,9 +111,7 @@
 		'text-lg font-semibold text-tinte-900 dark:text-white';
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.pages.profile.title} robots="noindex, nofollow" />
 
 <main class="bg-secondary-100 dark:bg-tinte-900 min-h-screen pb-28">
 	<div class="max-w-5xl mx-auto px-4 py-6 sm:py-10">
@@ -309,6 +327,15 @@
 								tooltipText={texts.messenger.signalTooltipText}
 							/>
 						</div>
+
+						<!-- Off-platform contact opt-in (#438): the item-request CTA links to
+						     e-mail/URL instead of an in-app chat. Saves via the shared save bar. -->
+						<ContactSection
+							contactMethod={data.currentUser.contactMethod ?? ''}
+							contactEmail={data.currentUser.contactEmail ?? ''}
+							contactUrl={data.currentUser.contactUrl ?? ''}
+							contactPublic={data.currentUser.contactPublic ?? false}
+						/>
 					</section>
 
 					<!-- VERLEIH-VORAUSSETZUNGEN: lender-defined borrower requirements (#443).

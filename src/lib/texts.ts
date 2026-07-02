@@ -98,6 +98,14 @@ export const texts = {
 			'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link zum Zurücksetzen des Passworts an.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
+		contactEmailRequired:
+			'Bitte gib eine Kontakt-E-Mail an, wenn du Anfragen per E-Mail erhalten möchtest.',
+		invalidContactEmail: 'Bitte gib eine gültige Kontakt-E-Mail-Adresse an.',
+		contactUrlRequired:
+			'Bitte gib einen Link an, wenn du Anfragen über einen externen Link erhalten möchtest.',
+		invalidContactUrl: 'Bitte gib einen gültigen Link an (muss mit https:// beginnen).',
+		contactOffPlatformOnly:
+			'Dieser Anbieter wickelt Anfragen außerhalb der Plattform ab. Bitte nutze den „Anfragen"-Button auf der Gegenstandsseite.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 		itemNotFound: 'Gegenstand nicht gefunden.',
@@ -159,6 +167,26 @@ export const texts = {
 		contactViaTelegram: 'Telegram',
 		contactViaSignal: 'Signal',
 		onlyForTrusted: 'Nur für Vertraute sichtbar',
+	},
+
+	// Email-contact opt-in (issue #438): owners who handle lending off-platform
+	contactOptions: {
+		title: 'Kontakt außerhalb der Plattform',
+		description:
+			'Wenn aktiviert, startet der „Anfragen"-Button bei deinen Gegenständen keine Chat-Anfrage, sondern führt zu deinem gewählten Kontaktweg. Praktisch, wenn du den Verleih außerhalb der Plattform abwickelst.',
+		methodLabel: 'Kontaktweg',
+		methodOff: 'Deaktiviert (normale In-App-Anfrage)',
+		methodEmail: 'E-Mail',
+		methodLink: 'Externer Link',
+		emailLabel: 'Kontakt-E-Mail',
+		emailPlaceholder: 'z.B. verleih@beispiel.de',
+		emailHelp: 'Deine Login-E-Mail bleibt privat – nur diese Adresse wird für den „Anfragen"-Button genutzt.',
+		urlLabel: 'Link-Adresse',
+		urlPlaceholder: 'https://…',
+		urlHelp: 'Muss mit https:// beginnen, z.B. zu deinem Verleih-Formular.',
+		publicLabel: 'Auch ohne Login sichtbar',
+		publicHelp:
+			'Wenn aktiviert, sehen auch nicht eingeloggte Besucher:innen den Kontaktweg – z.B. damit Anfragen ohne AllerLeih-Konto möglich sind. Andernfalls nur eingeloggte Nutzer:innen.',
 	},
 
 	// Form labels and placeholders
@@ -589,6 +617,8 @@ export const texts = {
 				account: 'Konto & Datenschutz',
 			},
 			unsavedChanges: 'Du hast ungespeicherte Änderungen.',
+			unsavedLeaveConfirm:
+				'Du hast ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?',
 			fixErrorsBeforeSave: 'Bitte korrigiere die markierten Felder, bevor du speicherst.',
 			completeOnboarding: 'Onboarding fertigstellen',
 			emailVerified: 'E-Mail-Adresse bestätigt',
@@ -646,6 +676,10 @@ export const texts = {
 			ownerCardTitle: 'Verliehen von',
 			institutionCardTitle: 'Angeboten von',
 			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
+			// mailto: CTA for owners who opted into email contact (issue #438)
+			mailtoSubject: (item: string) => `Anfrage zu „${item}" über AllerLeih`,
+			mailtoBody: (item: string) =>
+				`Hallo,\n\nich interessiere mich für „${item}" auf AllerLeih und würde es gerne ausleihen.\n\nViele Grüße`,
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
@@ -971,12 +1005,32 @@ export const texts = {
 			description:
 				'Erstelle ein kostenloses AllerLeih-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.',
 		},
+		reset: {
+			title: 'Passwort zurücksetzen – AllerLeih',
+			description: 'Setze dein AllerLeih-Passwort zurück, um wieder auf dein Konto zugreifen zu können.',
+		},
+		resetConfirm: {
+			title: 'Neues Passwort festlegen – AllerLeih',
+			description: 'Lege ein neues Passwort für dein AllerLeih-Konto fest.',
+		},
 		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
 		itemDetailDescription: (name: string, owner: string) =>
 			`Leihe ${name} von ${owner} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
+		conversations: {
+			title: 'Nachrichten – AllerLeih',
+		},
+		social: {
+			title: 'Vertraute – AllerLeih',
+		},
+		onboarding: {
+			title: 'Willkommen – AllerLeih',
+		},
+		userImport: {
+			title: 'Gegenstände importieren – AllerLeih',
+		},
 	},
 
 	// Onboarding nudge banner

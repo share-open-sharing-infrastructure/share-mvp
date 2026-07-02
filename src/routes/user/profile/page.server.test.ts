@@ -1,13 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { texts } from '$lib/texts';
 
-// Mock the server helpers saveProfile delegates to, so the test exercises the
-// action's own logic (validation, field parsing, the folded-in requirement save).
+// hooks.server.ts (reached via +page.server's import chain) reads these.
+vi.mock('$env/static/public', () => ({
+	PUBLIC_PB_URL: 'http://localhost/',
+	PUBLIC_VAPID_PUBLIC_KEY: 'x',
+}));
+// Stub the server helpers saveProfile delegates to, so the tests exercise the
+// action's own logic (validation, field parsing, folded-in requirement save).
+vi.mock('$lib/inviteSlug', () => ({ generateInviteSlug: vi.fn() }));
+vi.mock('$lib/server/geolocation', () => ({
+	upsertUserGeolocation: vi.fn(() => Promise.resolve()),
+}));
 vi.mock('$lib/server/contacts', () => ({
 	upsertOwnContact: vi.fn(() => Promise.resolve()),
 	getOwnContact: vi.fn(() => Promise.resolve({})),
-}));
-vi.mock('$lib/server/geolocation', () => ({
-	upsertUserGeolocation: vi.fn(() => Promise.resolve()),
 }));
 vi.mock('$lib/server/lendingRequirements', () => ({
 	// Real field names so the action reads the right form fields.
@@ -23,95 +30,187 @@ import { upsertOwnerRequirements } from '$lib/server/lendingRequirements';
 
 type SaveEvent = Parameters<typeof actions.saveProfile>[0];
 
-function setup() {
-	const update = vi.fn(() => Promise.resolve({}));
-	const locals = {
-		user: { id: 'u1' },
-		pb: { collection: vi.fn(() => ({ update })) },
-	};
-	return { locals, update };
-}
+const USER_ID = 'u1';
 
-function callSave(locals: unknown, fields: Record<string, string>) {
+function callSave(fields: Record<string, string>) {
 	const fd = new FormData();
 	for (const [k, v] of Object.entries(fields)) fd.set(k, v);
-	return actions.saveProfile({
-		locals,
+	const update = vi.fn().mockResolvedValue({});
+	const pb = { collection: vi.fn(() => ({ update })) };
+	const result = actions.saveProfile({
+		locals: { pb, user: { id: USER_ID } },
 		request: { formData: vi.fn().mockResolvedValue(fd) },
 	} as unknown as SaveEvent);
+	return { result, update, pb };
 }
 
 describe('profile: saveProfile action', () => {
 	beforeEach(() => vi.clearAllMocks());
 
 	it('rejects a username containing spaces without writing anything', async () => {
-		const { locals, update } = setup();
+		const { result, update } = callSave({ username: 'foo bar' });
 
-		const result = await callSave(locals, { username: 'foo bar' });
-
-		expect(result).toMatchObject({ error: true });
+		expect(await result).toMatchObject({ error: true });
 		expect(update).not.toHaveBeenCalled();
 		expect(upsertOwnContact).not.toHaveBeenCalled();
 		expect(upsertOwnerRequirements).not.toHaveBeenCalled();
 	});
 
 	it('rejects an invalid Telegram handle', async () => {
-		const { locals, update } = setup();
-
-		const result = await callSave(locals, {
+		const { result, update } = callSave({
 			username: 'validname',
 			telegramUsername: 'ab', // too short for the 5-32 rule
 		});
 
-		expect(result).toMatchObject({ error: true });
+		expect(await result).toMatchObject({ error: true });
 		expect(update).not.toHaveBeenCalled();
 	});
 
 	it('saves profile fields and folds in the lending-requirement toggles', async () => {
-		const { locals, update } = setup();
-
-		const result = await callSave(locals, {
+		const { result, update, pb } = callSave({
 			username: 'validname',
 			bio: 'hello',
 			requireAddress: 'on',
 		});
 
-		expect(result).toMatchObject({ success: true });
+		expect(await result).toMatchObject({ success: true });
 		// Primary user fields written.
 		expect(update).toHaveBeenCalledTimes(1);
 		// Contact + requirements always persisted by the single save bar.
 		expect(upsertOwnContact).toHaveBeenCalledTimes(1);
-		expect(upsertOwnerRequirements).toHaveBeenCalledWith(locals.pb, 'u1', {
+		expect(upsertOwnerRequirements).toHaveBeenCalledWith(pb, USER_ID, {
 			requireVerifiedEmail: false,
 			requireAddress: true,
 		});
 	});
 
-	it('still succeeds (and persists requirements) when only a requirement toggle changed', async () => {
-		const { locals, update } = setup();
+	it('persists the requirement toggles on save', async () => {
+		const { result, pb } = callSave({ requireVerifiedEmail: 'on' });
 
-		const result = await callSave(locals, { requireVerifiedEmail: 'on' });
-
-		expect(result).toMatchObject({ success: true });
-		// No user-collection fields changed → no users.update call …
-		expect(update).not.toHaveBeenCalled();
-		// … but contact + requirements are still written (no spurious "nothing to update").
+		expect(await result).toMatchObject({ success: true });
+		// Contact + requirements are always written by the single save bar (no spurious
+		// "nothing to update").
 		expect(upsertOwnContact).toHaveBeenCalledTimes(1);
-		expect(upsertOwnerRequirements).toHaveBeenCalledWith(locals.pb, 'u1', {
+		expect(upsertOwnerRequirements).toHaveBeenCalledWith(pb, USER_ID, {
 			requireVerifiedEmail: true,
 			requireAddress: false,
 		});
 	});
 
 	it('clears the profile image when removeProfileImage is set (deferred delete)', async () => {
-		const { locals, update } = setup();
+		const { result, update } = callSave({ removeProfileImage: 'true' });
 
-		const result = await callSave(locals, { removeProfileImage: 'true' });
-
-		expect(result).toMatchObject({ success: true });
+		expect(await result).toMatchObject({ success: true });
 		// Removal counts as a user update; the image field is cleared (empty string).
 		expect(update).toHaveBeenCalledTimes(1);
 		const submitted = (update.mock.calls[0] as unknown[])[1] as FormData;
 		expect(submitted.get('profileImage')).toBe('');
+	});
+});
+
+describe('profile saveProfile — off-platform-contact opt-in (#438)', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('persists an email contact (method + address) on the users record', async () => {
+		const { result, update } = callSave({
+			contactMethod: 'email',
+			contactEmail: 'verleih@asta-lueneburg.de',
+			contactUrl: '',
+			contactPublic: 'on',
+		});
+
+		expect(await result).toMatchObject({ success: true });
+		expect(update).toHaveBeenCalledTimes(1);
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('contactMethod')).toBe('email');
+		expect(sent.get('contactEmail')).toBe('verleih@asta-lueneburg.de');
+		expect(sent.get('contactPublic')).toBe('true');
+	});
+
+	it('persists a link contact (method + url)', async () => {
+		const { result, update } = callSave({
+			contactMethod: 'link',
+			contactUrl: 'https://verleih.example/form',
+		});
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('contactMethod')).toBe('link');
+		expect(sent.get('contactUrl')).toBe('https://verleih.example/form');
+	});
+
+	it('rejects the email method without an address', async () => {
+		const { result, update } = callSave({
+			contactMethod: 'email',
+			contactEmail: '  ',
+		});
+
+		expect(await result).toMatchObject({
+			error: true,
+			message: texts.errors.contactEmailRequired,
+		});
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('rejects the link method without a url', async () => {
+		const { result, update } = callSave({
+			contactMethod: 'link',
+			contactUrl: '  ',
+		});
+
+		expect(await result).toMatchObject({
+			error: true,
+			message: texts.errors.contactUrlRequired,
+		});
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('rejects a malformed contact email', async () => {
+		const { result, update } = callSave({
+			contactMethod: 'email',
+			contactEmail: 'not-an-email',
+		});
+
+		expect(await result).toMatchObject({
+			error: true,
+			message: texts.errors.invalidContactEmail,
+		});
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('rejects a non-https contact url', async () => {
+		const { result, update } = callSave({
+			contactMethod: 'link',
+			contactUrl: 'http://insecure.example/form',
+		});
+
+		expect(await result).toMatchObject({
+			error: true,
+			message: texts.errors.invalidContactUrl,
+		});
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('forces contactPublic off when the method is off', async () => {
+		// contactPublic checkbox present but method off → public must be coerced to false.
+		const { result, update } = callSave({ contactPublic: 'on' });
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('contactMethod')).toBe('');
+		expect(sent.get('contactPublic')).toBe('false');
+	});
+
+	it('clears the contact fields when nothing is submitted', async () => {
+		// No contact fields → method off, fields empty, public off (written
+		// unconditionally), erasing any stored values.
+		const { result, update } = callSave({});
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('contactMethod')).toBe('');
+		expect(sent.get('contactEmail')).toBe('');
+		expect(sent.get('contactUrl')).toBe('');
+		expect(sent.get('contactPublic')).toBe('false');
 	});
 });

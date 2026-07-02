@@ -4,6 +4,7 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { form } = $props();
 
@@ -23,10 +24,7 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{texts.account.pageTitle}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.account.pageTitle} robots="noindex, nofollow" />
 
 <main class="bg-secondary-100 dark:bg-tinte-900 min-h-screen">
 	<div class="max-w-2xl mx-auto px-4 py-8 sm:py-12 space-y-6">

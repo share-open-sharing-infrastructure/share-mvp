@@ -2,12 +2,10 @@
 	import { Alert, Button } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 </script>
 
-<svelte:head>
-	<title>{texts.legal.locked.pageTitle}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.legal.locked.pageTitle} robots="noindex, nofollow" />
 
 <div class="mx-auto max-w-xl px-4 py-12 space-y-6">
 	<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">

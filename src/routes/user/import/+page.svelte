@@ -5,6 +5,7 @@
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { form } = $props();
 
@@ -51,9 +52,7 @@
 	};
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.seo.userImport.title} robots="noindex, nofollow" />
 
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center mb-6">
@@ -215,7 +214,7 @@
 				</Alert>
 				{#if form.rowErrors && form.rowErrors.length > 0}
 					<ul class="text-xs text-accent-700 font-mono space-y-0.5 list-disc list-inside">
-						{#each form.rowErrors as e}
+						{#each form.rowErrors as e, i (i)}
 							<li>{e}</li>
 						{/each}
 					</ul>
