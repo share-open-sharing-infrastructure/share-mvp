@@ -88,6 +88,8 @@ These prevent the most common bugs/security issues here — follow them without 
 | Writing tests + PocketBase mocks | `docs/testing-strategy.md` |
 | UI strings / categories | `docs/text-management.md`, `src/lib/texts.ts` |
 | Groups: roles, public/self-join, visibility model | `docs/groups.md` |
+| Partner catalogue integrations (leihbackend, WINBIAP), `/api/sync` + `/api/refresh`, adding a new integration | `docs/integrations.md`; leihbackend API reference: `docs/leihbackend-integration-spec.md` |
+| Operating the sync/refresh endpoints (env vars, cron, failure modes) | `docs/operations/integration-sync.md` |
 | Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
 | Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
