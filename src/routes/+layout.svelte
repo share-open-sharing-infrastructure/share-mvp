@@ -5,6 +5,7 @@
 	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
+	import ToastHost from '$lib/components/ToastHost.svelte';
 	import { getClientPB, syncClientPBAuth, subscribeRealtime } from '$lib/client-pb';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
@@ -193,4 +194,6 @@
 	{#if page.url.pathname !== '/onboarding'}
 		<FooterComponent />
 	{/if}
+
+	<ToastHost />
 </div>
