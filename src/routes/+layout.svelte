@@ -9,6 +9,7 @@
 	import { getClientPB, syncClientPBAuth, subscribeRealtime } from '$lib/client-pb';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
+	import { navigationLoader } from '$lib/stores/navigationLoader.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
@@ -22,10 +23,10 @@
 
 	let { children, data } = $props();
 
-	let isNavigating = $state(false);
-	beforeNavigate(() => { isNavigating = true; });
+	// Loading overlay: cleared when the navigation settles (incl. cancel/abort), which
+	// afterNavigate misses. See $lib/stores/navigationLoader (#482 / #346).
+	beforeNavigate((navigation) => navigationLoader.track(navigation));
 	afterNavigate(() => {
-		isNavigating = false;
 		// Resync the badge after every navigation (issue #376): a destination load can
 		// mark notifications read server-side, and realtime may miss it. afterNavigate
 		// runs after that destination load has committed, so the re-fetch reflects it.
@@ -172,7 +173,7 @@
 		{/if}
 	</main>
 
-	{#if isNavigating}
+	{#if navigationLoader.active}
 		<div
 			in:fade={{ delay: 200, duration: 150 }}
 			out:fade={{ duration: 80 }}
