@@ -15,7 +15,7 @@ Each stored item is routed to whichever integration `claimsItem(item)` recognize
 
 ## Prerequisite: enable the PocketBase Batch API
 
-All integration writes (full sync, per-item refresh, **and** the CSV import at `/user/import`) go through PocketBase **batch requests** (`pb.createBatch()`), and the Batch API is **disabled by default**. On a fresh PocketBase instance every write batch fails until it is enabled — enable it once per instance, either:
+All integration writes (full sync, per-item refresh, **and** the CSV import at `/user/import`) go through PocketBase **batch requests** (`pb.createBatch()`), and the Batch API is **disabled by default**. On an instance running the `allerleih-backend` migrations this is handled automatically (`pb_migrations/1783101579_enable_batch_api.js` enables it). On any other PocketBase instance every write batch fails until it is enabled — enable it once, either:
 
 - **Admin UI:** Settings → Application → enable **Batch API**, or
 - **API:** as a superuser,

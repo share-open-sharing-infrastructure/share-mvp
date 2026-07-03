@@ -47,7 +47,7 @@ WINBIAP has no bulk feed, so the lifecycle is two-step:
 
 ## Notes
 
-- The CSV import and all integration syncs write via PocketBase **batch requests**, which are disabled by default — enable the Batch API once per instance (see [integration-sync.md](integration-sync.md#prerequisite-enable-the-pocketbase-batch-api)).
+- The CSV import and all integration syncs write via PocketBase **batch requests**, which are disabled by default in PocketBase. The `allerleih-backend` migrations enable the Batch API automatically; on other instances enable it manually (see [integration-sync.md](integration-sync.md#prerequisite-enable-the-pocketbase-batch-api)).
 - `isInstitution` can only be toggled by an admin via the PocketBase dashboard. The user UI has no control over this field.
 - Items with a non-empty `externalUrl` show a deep-link CTA on the detail page instead of the AllerLeih request flow. Make sure this is the intended behaviour before publishing items with `externalUrl` set.
 - If the institution's external system (e.g. WinBIAP) does not yet have a confirmed permalink format, leave `externalUrl` empty in the CSV. Items will then use the normal AllerLeih request flow until the URL format is confirmed and the CSV is re-imported.
