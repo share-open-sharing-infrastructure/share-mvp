@@ -5,6 +5,7 @@
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { form } = $props();
 
@@ -52,9 +53,7 @@
 	};
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.seo.userImport.title} robots="noindex, nofollow" />
 
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center mb-6">

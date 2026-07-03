@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 
 	interface Props {
 		currentPage: number;
@@ -8,7 +9,7 @@
 	let { currentPage, totalPages }: Props = $props();
 
 	function pageUrl(n: number): string {
-		const params = new URLSearchParams($page.url.searchParams);
+		const params = new SvelteURLSearchParams($page.url.searchParams);
 		params.set('page', String(n));
 		return '?' + params.toString();
 	}
@@ -28,6 +29,7 @@
 	}
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -- same-page pagination links carry only a ?page query string, which resolve() does not handle -->
 {#if totalPages > 1}
 	<div class="mt-6 flex items-center justify-center gap-1">
 		<!-- Prev -->
@@ -66,3 +68,4 @@
 		{/if}
 	</div>
 {/if}
+<!-- eslint-enable svelte/no-navigation-without-resolve -->

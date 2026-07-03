@@ -16,7 +16,7 @@
 	const { itemId, preferredTransportMode }: Props = $props();
 
 	let transportMode = $state<TransportMode>(
-		untrack(() => preferredTransportMode ?? 'bicycle')
+		untrack(() => preferredTransportMode || 'bicycle')
 	);
 	let travelMinutes = $state<number | null | undefined>(undefined);
 	let dropdownOpen = $state(false);

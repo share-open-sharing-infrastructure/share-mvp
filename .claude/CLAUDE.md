@@ -1,26 +1,26 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repository. This file is loaded on **every**
+session, so it stays lean: it carries the always-relevant guardrails and a router to the
+detailed docs/skills that load on demand. Read the linked doc before structural changes.
 
 ## Project overview
 
-**AllerLeih** is an item-sharing platform. Users list items they are willing to share or lend, and browse and request items from others. The trust system lets owners restrict certain items to trusted users only. The UI is entirely in German.
-
-## User interaction
-
-- Claude always asks the user relevant questions before developing an implementation plan.
+**AllerLeih** is an item-sharing platform. Users list items to share or lend and browse/request others'. 
+The platform's purpose is to provide free and open-source infrastructure for the sharing economy. 
+It integrates peer-2-peer-lending as well as institutional lending (either directly on the platform for small institutions or via integrations).
+**The UI is entirely in German.**
 
 ## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Frontend framework | SvelteKit 2 + Svelte 5 |
-| Language | TypeScript (strict mode) |
-| CSS | Tailwind CSS v4 + Flowbite Svelte components |
-| Backend / DB | PocketBase (hosted SQLite, no migration files in repo) |
-| Build tool | Vite |
-| Testing | Vitest |
-| Linting / formatting | ESLint (flat config) + Prettier |
+| Framework | SvelteKit 2 + Svelte 5 (runes) |
+| Language | TypeScript (strict) |
+| CSS | Tailwind CSS v4 + Flowbite Svelte |
+| Backend / DB | PocketBase (hosted SQLite; schema + migrations live in separate repo) |
+| Build / test | Vite · Vitest |
+| Lint / format | ESLint (flat config) + Prettier |
 
 ## Key commands
 
@@ -28,169 +28,111 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev        # start dev server
 npm run build      # production build
 npm run preview    # preview production build
-npm run check      # svelte-check + tsc type checking
+npm run check      # svelte-kit sync + svelte-check (type checking)
 npm run lint       # ESLint
 npm run lint:fix   # ESLint with auto-fix
 npm run format     # Prettier
-npm run test       # Vitest (all tests)
+npm run test       # Vitest in WATCH mode
+npx vitest run                       # run all tests once (CI-style)
 npx vitest run src/path/to/file.test.ts  # run a single test file
+
+# Seed a running PocketBase with deterministic test data. Scenarios live in
+# scripts/seed/scenarios/ (one file per feature); shared helpers in scripts/seed/lib.js.
+# Idempotent; only touches its own `@seed.test` records. Requires superuser creds.
+npm run seed                                   # lists available scenarios
+PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- account-deletion
 ```
 
 ## Environment variables
 
-Required in `.env`:
+Required in `.env` (see `docs/architecture.md` for what each does): `PUBLIC_PB_URL`,
+`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
+`MISTRAL_API_KEY` (prod only).
 
-```
-PUBLIC_PB_URL=           # PocketBase instance URL
-PUBLIC_VAPID_PUBLIC_KEY= # VAPID public key for push notifications
-VAPID_PRIVATE_KEY=       # VAPID private key
-VAPID_SUBJECT=           # VAPID subject (mailto: or https: URI)
-ORS_API_KEY=             # OpenRouteService API key (geocoding + travel times)
-```
+## Guardrails (always apply)
 
-## Project structure
+These prevent the most common bugs/security issues here — follow them without being asked.
 
-```
-src/
-├── app.d.ts                    # Global TypeScript types (locals, PageData)
-├── hooks.server.ts             # Auth hooks — runs on every request
-├── service-worker.ts           # PWA: asset caching + push notification handling
-├── lib/
-│   ├── components/             # Reusable Svelte components
-│   ├── server/                 # Server-only helpers (itemFilters, notifications)
-│   ├── types/models.ts         # TypeScript interfaces for all PocketBase collections
-│   ├── utils/utils.ts          # formatTimestamp(), setupPocketBaseSubscription()
-│   └── texts.ts                # ALL German UI strings
-└── routes/
-    ├── api/geocode/            # GET — ORS address autocomplete
-    ├── api/travel-times/       # POST — ORS travel time matrix
-    ├── api/push-subscribe/     # POST — register/unregister push subscriptions
-    ├── auth/                   # login, register, reset, logout
-    ├── conversations/[conversationId]/  # messaging between users
-    ├── items/[id]/             # item detail view
-    ├── notifications/          # in-app notification list
-    ├── search/                 # browse/search items
-    ├── social/                 # trust network management
-    ├── user/                   # current user's profile and items
-    ├── users/[id]/             # other users' public profiles
-    └── misc/                   # static pages (about, contact, imprint)
-docs/                           # Architecture docs — read before making structural changes
-```
+- **Never destructure the `data` prop.** Access `data.x` directly in markup; assigning
+  `let x = data.x` detaches `use:enhance` reactivity. → `docs/best-practices.md`
+- **Always build PocketBase filters with `pb.filter(raw, {params})`** — never template-literal
+  interpolation. Applies to *every* value, including IDs from `locals.user.id` / route params
+  (filter injection). Use `locals.pb.filter(...)` in routes, `pb.filter(...)` in `$lib/server/*`.
+- **Use Svelte 5 runes** (`$state`, `$derived`, `$props`, `$effect`, `$bindable`). No `export let`.
+- **All mutations go through form actions** (`action="?/name"`). `/api/*` endpoints exist only
+  for external integrations + client helpers — there is no REST layer for app data.
+- **Trust visibility:** call `filterTrustedItems()` (`$lib/server/itemFilters`) after fetching
+  items. Unauthenticated browsing uses the `*_public` views — never leak email, raw coordinates,
+  trusted items, or trust-graph data through them.
+- **All user-facing strings go in `src/lib/texts.ts`** (+ `ITEM_CATEGORIES`), never inline.
+- **Never render `user.username` directly** for any user who might be deleted — use
+  `displayName()` from `$lib/utils/utils.ts` instead.
+- `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
+  `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
+  Authentication loads PocketBase auth from cookies and refreshes the token. Authorization
+  redirects unauthenticated users to `/auth/login` (preserving `redirectTo`). Unprotected
+  prefixes: `/auth/login`, `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`,
+  `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`,
+  `/auth/account-deleted`. Everything else — including `/` (home) — requires authentication.
 
-## Architecture patterns
+## Where to look (load on demand)
 
-### Routing and data flow
-
-SvelteKit file-based routing. Each route uses:
-- `+page.svelte` — UI component
-- `+page.server.ts` — `load()` for data fetching, `actions` for form submissions
-- `+layout.server.ts` — provides `currentUser` to all pages
-- `+server.ts` — explicit HTTP endpoints
-
-All mutations go through **form actions** (`action="?/actionName"`). There is no REST API layer.
-
-### Svelte 5 runes
-
-Use the new runes API throughout: `$state()`, `$derived()`, `$props()`, `$effect()`, `$bindable()`.
-
-### CRITICAL: do not destructure the `data` prop
-
-Breaking `use:enhance` reactivity is the #1 footgun. Always access page data directly:
-
-```svelte
-<!-- CORRECT -->
-{#each data.trustees as trustee}
-
-<!-- WRONG — breaks use:enhance reactivity -->
-<script lang="ts">
-  const { data } = $props();
-  let trustees = data.trustees; // detaches reactivity
-</script>
-```
-
-### PocketBase access pattern
-
-`locals.pb` is the PocketBase client (server-side only). `locals.user` is the authenticated user record (null if unauthenticated).
-
-```typescript
-// +page.server.ts
-export async function load({ locals }) {
-  const items = await locals.pb.collection('items').getFullList({
-    filter: `owner != "${locals.user.id}"`,
-    expand: 'owner',
-    sort: '-updated'
-  });
-  return { items };
-}
-```
-
-Schema changes are made in the PocketBase admin dashboard — no migration files in this repo.
-
-### Item image URLs
-
-Item images are PocketBase file fields. To display them, pass `PUBLIC_PB_URL` from the server and construct the URL client-side using the PocketBase SDK:
-
-```typescript
-// server: return { PB_IMG_URL: PUBLIC_PB_URL }
-// client: pb.getFileUrl(item, item.image)
-// or directly: `${PB_IMG_URL}/api/files/items/${item.id}/${item.image}`
-```
-
-### Real-time subscriptions
-
-Use `setupPocketBaseSubscription()` from `$lib/utils/utils` for client-side PocketBase realtime (e.g. live chat). It returns an unsubscribe function suitable for use in `$effect` cleanup.
-
-### Trust-based item visibility
-
-`filterTrustedItems()` in `$lib/server/itemFilters` filters items where `trusteesOnly=true` to only show them to users in the owner's `trusts[]` list. Always call this after fetching items in server load functions.
-
-## Data model
-
-PocketBase collections:
-
-| Collection | Key fields |
+| Working on… | Read / run |
 |---|---|
-| `users` | `username`, `email`, `city`, `trusts[]` (user IDs), `telegramUsername`, `signalLink`, `geolocation` (GeoPoint), `preferredTransportMode` |
-| `items` | `name`, `description`, `image` (file), `place`, `owner` (FK user), `trusteesOnly` (bool) |
-| `conversations` | `requester` (FK user), `itemOwner` (FK user), `requestedItem` (FK item), `messages[]`, `readByRequester`, `readByOwner` |
-| `messages` | `messageContent`, `from` (FK user), `to` (FK user) |
-| `notifications` | `recipient` (FK user), `type` (`new_message`\|`new_request`\|`trust_added`), `relatedId`, `body` (German text), `read` (bool) |
-| `push_subscriptions` | `user` (FK user), `endpoint`, `p256dh`, `auth` |
-| `feedback` | `feedbackMessage`, `route`, `device`, `viewportSize`, `browser`, `browserVersion` |
+| System architecture, routes, auth flow, external APIs | `docs/architecture.md` |
+| Collection schemas + `*_public` view SQL | `docs/data-model.md` |
+| The `/search` page: params, filter building, pagination, which view it reads | `docs/search-discovery.md` |
+| Schema/view migrations (separate repo) | `allerleih-backend` README → "Writing migrations" |
+| Domain relationships / lending lifecycle | `docs/domain-model.md` |
+| Form / CRUD patterns & conventions | `docs/best-practices.md` |
+| Writing tests + PocketBase mocks | `docs/testing-strategy.md` |
+| UI strings / categories | `docs/text-management.md`, `src/lib/texts.ts` |
+| Groups: roles, public/self-join, visibility model | `docs/groups.md` |
+| Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
+| Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
+| Institutional onboarding & other runbooks | `docs/operations/` |
 
-See [docs/data-model.md](docs/data-model.md) for ER diagrams.
+## Project tooling (this repo's `.claude/`)
 
-## Auth and authorization
+Skills auto-trigger from their own `description`; this list is the human index of what exists —
+run one explicitly with `/<name>`. Build / change work:
 
-`src/hooks.server.ts` runs `sequence(authentication, authorization)` on every request:
+- `/new-route` — scaffold a route (`+page.server.ts`/`.svelte` + co-located test) with the
+  pb.filter / trust-visibility / runes / form-action guardrails baked in.
+- `/add-notification-type` — wire a new notification type end-to-end (union → texts → trigger site →
+  in-app routing), keeping `relatedId` / push url / href consistent.
+- `/schema-change` — coordinate a schema change across both repos: migration (delegates to the
+  backend `new-migration`) → `models.ts` → `docs/data-model.md` → public-view leak check.
+- `/write-tests` — author tests to the repo's conventions (Vitest with mocked PocketBase).
+- `/seed-scenario` — add a deterministic local seed scenario (items get generated placeholder images).
 
-- **Authentication** — loads PocketBase auth from cookies, refreshes token, sets `locals.user`
-- **Authorization** — redirects unauthenticated users to `/auth/login`
+Maintenance & review:
 
-Unprotected routes: `/auth/login`, `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`, `/` (home)
+- `/refresh-skills` — audit & fix the `.claude/skills` when code they cite drifts (paths, signatures,
+  texts keys, commands). Run after a change that touches code a skill references.
+- `/create-pr` — preflight (lint/check/test/build), draft, and open a PR to `main`.
+- `/accessibility-review` — audit changed Svelte files against the project's a11y patterns.
+- `sveltekit-pb-reviewer` agent — delegated AllerLeih-specific code/security review (pb.filter,
+  trust/group visibility, public-view & `items_searchable` leakage, deleted-account masking, runes,
+  texts.ts). Complements the built-in `/code-review` and `/security-review`.
 
-## Push notifications
+## Keep in sync
 
-Uses Web Push (VAPID) via the `web-push` npm package. Two server helpers in `$lib/server/notifications.ts`:
-- `createNotification()` — writes a record to the `notifications` collection
-- `sendPushToUser()` — sends a push to all registered devices; auto-removes stale subscriptions (HTTP 410/404)
+Docs in `./docs` are published to GitHub Pages. When you add/remove/rename a route, an
+`/api/*` endpoint, a PocketBase collection/view, a server helper or util, or an env var,
+update the relevant doc **and** this file's guardrails/router in the same change so they
+never drift from the code.
 
-The service worker (`src/service-worker.ts`) handles `push` and `notificationclick` events. Notifications are suppressed if the user already has the target page open.
+## Account deletion & GDPR
 
-## External APIs
+Self-service deletion (Art. 17) and export (Art. 15/20) live at `/user/account`. The heavy
+lifting runs in the backend PocketBase hooks (`allerleih-backend/pb_hooks/account.pb.js` +
+`services/account.js`), which have superuser `$app` access. Key behaviors:
 
-**OpenRouteService (ORS)** — requires `ORS_API_KEY`:
-- `GET /api/geocode` — address autocomplete (restricted to Germany)
-- `POST /api/travel-times` — travel time matrix between user location and item owners; supports `foot`, `bicycle`, `car` transport modes
-
-## Testing
-
-Test files live co-located with their target (e.g. `+page.server.test.ts` next to `+page.server.ts`). Mock PocketBase by constructing a `mockLocals` object with `pb.collection(name)` returning vi.fn() stubs. See [docs/testing-strategy.md](docs/testing-strategy.md) for a full example.
-
-## Text management
-
-All German UI strings live in `src/lib/texts.ts`, organized by feature (`auth`, `nav`, `forms`, `errors`, `buttons`, etc.). Always add new user-facing strings there rather than inline in components.
-
-## Documentation
-
-Docs live in ./docs and are published on a static GitHub page via a GitHub Action. If Claude makes any changes to the data- or domain-model, it should update them there.
+- Refuses deletion if a loan is open (`accepted`/`active`/`return_requested`).
+- Anonymizes the `users` row in place (`deleted=true`, placeholder username/email, random
+  password); hard-deletes contacts, geolocation, push subs, and unreferenced items.
+- Shared/audit data (messages, conversations, `term_acceptances`) is **retained** and resolves
+  to "Gelöschtes Konto" via `displayName()`.
+- `GET /api/account/export` returns machine-readable JSON; proxied as a download by
+  `src/routes/user/account/export/+server.ts`.

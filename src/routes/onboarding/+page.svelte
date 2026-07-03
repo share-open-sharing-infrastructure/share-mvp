@@ -8,12 +8,15 @@
 	import StepTransportMode from './StepTransportMode.svelte';
 	import StepBrowserLocation from './StepBrowserLocation.svelte';
 	import StepPushNotifications from './StepPushNotifications.svelte';
+	import StepSurvey from './StepSurvey.svelte';
 	import StepDone from './StepDone.svelte';
+	import { texts } from '$lib/texts';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { data } = $props();
 
 	let step = $state(1);
-	const totalSteps = 10;
+	const totalSteps = 11;
 
 	function next() {
 		if (step < totalSteps) step++;
@@ -24,9 +27,7 @@
 	}
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.seo.onboarding.title} robots="noindex, nofollow" />
 
 <div class="min-h-screen bg-secondary-100 dark:bg-tinte-900 flex items-center justify-center px-4 py-10">
 	<div class="w-full max-w-md bg-sand dark:bg-tinte-800 rounded-2xl shadow-lg p-8 sm:p-10">
@@ -62,29 +63,31 @@
 		{:else if step === 2}
 			<StepHowItWorks onNext={next} />
 		{:else if step === 3}
-			<StepProfile onNext={next} currentUser={data.currentUser} pbUrl={data.PB_URL} />
+			<StepSurvey onNext={next} />
 		{:else if step === 4}
+			<StepProfile onNext={next} currentUser={data.currentUser} pbUrl={data.PB_URL} />
+		{:else if step === 5}
 			<StepLocation
 				onNext={next}
 				initialCity={data.currentUser.city}
-				initialGeolocation={data.currentUser.geolocation?.lon || data.currentUser.geolocation?.lat ? data.currentUser.geolocation : null}
+				initialGeolocation={data.geolocation}
 			/>
-		{:else if step === 5}
-			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />
 		{:else if step === 6}
-			<StepContact onNext={next} currentUser={data.currentUser} />
+			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />
 		{:else if step === 7}
+			<StepContact onNext={next} currentUser={data.contact} />
+		{:else if step === 8}
 			<StepTrustees
 				onNext={next}
 				users={data.users}
 				trustIds={data.trustIds}
 				currentUserId={data.currentUser.id}
 			/>
-		{:else if step === 8}
-			<StepBrowserLocation onNext={next} />
 		{:else if step === 9}
-			<StepPushNotifications onNext={next} />
+			<StepBrowserLocation onNext={next} />
 		{:else if step === 10}
+			<StepPushNotifications onNext={next} />
+		{:else if step === 11}
 			<StepDone inviteUrl={data.inviteUrl} username={data.username} />
 		{/if}
 

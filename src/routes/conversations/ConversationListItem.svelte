@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { texts } from '$lib/texts';
+	import { displayName } from '$lib/utils/utils';
 
 	let { conversation, currentUser, PB_IMG_URL, activeTab } = $props();
 
@@ -19,10 +20,13 @@
 			: !conversation.readByRequester
 	);
 
+	// requestedItem is normally expanded for participants, but guard against a
+	// missing item (e.g. deleted) so one bad row can't crash the whole list.
+	const item = $derived(conversation.expand?.requestedItem ?? null);
+	const itemName = $derived(item?.name ?? texts.ui.itemUnavailable);
+
 	const itemImage = $derived(
-		conversation.expand.requestedItem.image
-			? `${PB_IMG_URL}api/files/${conversation.expand.requestedItem.collectionId}/${conversation.expand.requestedItem.id}/${conversation.expand.requestedItem.image}`
-			: null
+		item?.image ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}` : null
 	);
 
 	const lendingStatusLabel = $derived(
@@ -49,7 +53,7 @@
 			{#if itemImage}
 				<img
 					src={itemImage}
-					alt={conversation.expand.requestedItem.name}
+					alt={itemName}
 					class="w-full h-full object-cover"
 				/>
 			{:else}
@@ -67,10 +71,10 @@
 					: isUnread
 						? 'font-semibold text-tinte-900 dark:text-white'
 						: 'font-medium text-tinte-700 dark:text-tinte-200'}">
-				{conversation.expand.requestedItem.name}
+				{itemName}
 			</p>
 			<p class="text-xs text-tinte-400 dark:text-tinte-500 truncate leading-tight mt-0.5">
-				{activeTab === 'borrowing' ? 'von' : 'an'} {otherUser.username}
+				{activeTab === 'borrowing' ? 'von' : 'an'} {displayName(otherUser)}
 			</p>
 			{#if lendingStatusLabel}
 				<span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium mt-0.5

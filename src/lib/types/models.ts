@@ -7,6 +7,7 @@ export type OwnerLocation = { id: string; lon: number; lat: number };
 export type UserId = string;
 export type ItemId = string;
 export type MessageId = string;
+export type GroupId = string;
 
 // --- Base entity shared by all records ---
 
@@ -67,6 +68,40 @@ export interface User extends PocketBaseEntity {
 	 * Whether signal contact is visible only to trusted users
 	 */
 	signalVisibleToTrustedOnly?: boolean;
+
+	/**
+	 * Issue #438: off-platform contact channel. When set, the user's items skip the
+	 * in-app request flow and offer an alternative contact CTA instead:
+	 *   ''      — off (default, normal in-app request flow)
+	 *   'email' — a `mailto:` CTA to `contactEmail`
+	 *   'link'  — a link to `contactUrl` (e.g. an external lending form)
+	 */
+	contactMethod?: '' | 'email' | 'link';
+
+	/**
+	 * Dedicated public contact address for the `mailto:` CTA (`contactMethod = 'email'`)
+	 * — kept separate from the private login `email`, so the login address is never
+	 * exposed. Readable by any authenticated viewer (base `users` viewRule) and
+	 * deliberately absent from `users_public` / `items_searchable`; it reaches
+	 * unauthenticated browsing only via `items_public.ownerContactEmail` when the owner
+	 * set `contactPublic`.
+	 */
+	contactEmail?: string;
+
+	/**
+	 * Destination (https) the contact CTA links to when `contactMethod = 'link'` — e.g.
+	 * an institution's external lending form. Routed through `/api/redirect`. Same
+	 * visibility rules as `contactEmail`.
+	 */
+	contactUrl?: string;
+
+	/**
+	 * Issue #438: when true the off-platform contact CTA is shown to UNauthenticated
+	 * browsers too (institutions that want zero-account access). When false (default)
+	 * it's visible only to logged-in viewers. Drives whether `items_public` surfaces
+	 * the `ownerContact*` columns.
+	 */
+	contactPublic?: boolean;
 
 	/**
 	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
@@ -132,6 +167,35 @@ export interface User extends PocketBaseEntity {
 	 * public catalogue page exists.
 	 */
 	leihbackendItemUrlTemplate?: string;
+
+	/**
+	 * Set when the user has deleted their account (phase 1 "deactivate"). The row is
+	 * anonymized in place; login is blocked and the UI shows "Gelöschtes Konto".
+	 */
+	deleted?: boolean;
+
+	/** ISO datetime the account was deleted/anonymized (drives the future purge job). */
+	deletedAt?: string;
+
+	/**
+	 * Cache of the latest platform ToS version this user has accepted (Issue #399).
+	 * Authoritative record lives in `user_legal_acceptances`; this mirror lets the
+	 * consent gate decide from the already-loaded auth record without a DB query.
+	 */
+	tosAcceptedVersion?: string;
+
+	/**
+	 * Cache of the latest privacy-statement version this user has accepted.
+	 * See `tosAcceptedVersion`.
+	 */
+	privacyAcceptedVersion?: string;
+
+	/**
+	 * True when the user declined the current legal documents. Set only by the
+	 * `legal.pb.js` backend hook (superuser) and excluded from the user updateRule,
+	 * so it cannot be self-cleared — an admin clears it after the matter is resolved.
+	 */
+	legalLocked?: boolean;
 }
 
 export interface UserPublic extends PocketBaseEntity {
@@ -142,6 +206,8 @@ export interface UserPublic extends PocketBaseEntity {
 	profileImage: string | null;
 	telegramVisibleToTrustedOnly: boolean;
 	signalVisibleToTrustedOnly: boolean;
+	/** True if this account has been deleted/anonymized — used to mask the username. */
+	deleted?: boolean;
 }
 
 // --- ITEM ---
@@ -167,6 +233,14 @@ export interface Item extends PocketBaseEntity {
 
 	/** If true, only users in the owner's trusts list can borrow this item */
 	trusteesOnly: boolean;
+
+	/**
+	 * Group ids this item is shared with. Independent of `trusteesOnly`: members
+	 * of any listed group may see/borrow the item whether or not it is
+	 * trustees-only. An item is public only when `trusteesOnly` is false AND this
+	 * array is empty. Empty when the item is shared with no group.
+	 */
+	groups?: GroupId[];
 
 	/** Availability status set by the owner */
 	status: 'available' | 'unavailable' | 'unknown';
@@ -217,7 +291,6 @@ export interface ItemPublic extends PocketBaseEntity {
 	/** joined user fields */
     userId: UserId;
 	username: string;
-	trusts: string[]; 
 	isInstitution: boolean;
 	bio: string;
 	verified: boolean;
@@ -225,6 +298,85 @@ export interface ItemPublic extends PocketBaseEntity {
 	userCreated: string;
 	/** 1 if the owner has a non-zero geolocation set, 0 otherwise. Evaluated in the view SQL — never exposes coordinates. */
 	ownerHasLocation: 0 | 1;
+	/**
+	 * Issue #438 — the owner's off-platform contact, surfaced to UNauthenticated browsing
+	 * ONLY when the owner opted into public exposure (`contactPublic`) AND the item is
+	 * fully public (not masked). NULL otherwise. Evaluated in the view SQL so the
+	 * members-only case never leaks. Logged-in viewers get the contact from the base
+	 * `users` record instead (covers members-only too).
+	 */
+	ownerContactMethod?: '' | 'email' | 'link' | null;
+	ownerContactEmail?: string | null;
+	ownerContactUrl?: string | null;
+}
+
+// --- GROUPS ---
+
+/**
+ * A named, owner-managed circle. Members may see the owner's items that are
+ * shared with this group (independent of the item's trustees setting). Created
+ * and managed solely by its owner.
+ */
+export interface Group extends PocketBaseEntity {
+	/** Display name */
+	name: string;
+
+	/** Optional free-text description */
+	description?: string;
+
+	/** Foreign key: the user who owns and manages the group */
+	owner: UserId;
+
+	/**
+	 * Public groups can be read (name + description) by anyone and joined without
+	 * an invite (self-join). Private (default) groups are invite-only.
+	 */
+	isPublic?: boolean;
+}
+
+/**
+ * Join-table row: one membership of a user in a group. The owner is ALSO stored
+ * here, as a row with role `admin`; invited / self-joined members have role
+ * `member`. Unique per (group, user). (Group.owner stays the source of truth for
+ * ownership; this admin row is what the roster, the member count and the items
+ * visibility rule match against.)
+ */
+export interface GroupMember extends PocketBaseEntity {
+	/** Foreign key: the group */
+	group: GroupId;
+
+	/** Foreign key: the member */
+	user: UserId;
+
+	/**
+	 * Role in the group. The owner is stored as a member with role `admin`;
+	 * invited/self-joined members are `member`. Groundwork for co-admins.
+	 */
+	role?: 'admin' | 'member';
+}
+
+/**
+ * A shareable invite link for a group. Resolved/consumed via the backend
+ * /api/group-invite/{token} endpoints. Only the group owner can create or revoke.
+ */
+export interface GroupInvite extends PocketBaseEntity {
+	/** Foreign key: the group this invite joins */
+	group: GroupId;
+
+	/** Random URL token */
+	token: string;
+
+	/** ISO datetime after which the invite is no longer usable. Empty = no expiry. */
+	expiresAt?: string;
+
+	/** Max number of joins allowed. 0 / empty = unlimited. */
+	maxUses?: number;
+
+	/** Number of joins consumed so far */
+	uses?: number;
+
+	/** Foreign key: who created the invite */
+	createdBy?: UserId;
 }
 
 // --- MESSAGE ---
@@ -359,5 +511,93 @@ export interface TermAcceptance extends PocketBaseEntity {
 	userIp?: string;
 
 	/** User-Agent string at acceptance */
+	userAgent?: string;
+}
+
+/**
+ * Lender-defined borrower requirements (issues #423 / #389). One row per owner;
+ * a flexible, extensible framework that gates *who may request* an owner's items
+ * (not visibility — that stays with trusteesOnly/groups). Each boolean/number
+ * field is one requirement type; new types are added as new fields. Enforced
+ * authoritatively by the backend hook on conversation create
+ * (allerleih-backend/pb_hooks/lending_requirements.pb.js); the frontend mirrors
+ * the checks for UX in $lib/server/lendingRequirements.ts.
+ */
+export interface LendingRequirements extends PocketBaseEntity {
+	/** Foreign key: the lender these requirements belong to */
+	owner: UserId;
+
+	/** Require the borrower to have a verified email address (users.verified). */
+	requireVerifiedEmail: boolean;
+
+	/** Require the borrower to have an address on file (users.city). Issue #389. */
+	requireAddress: boolean;
+}
+
+/**
+ * A single lending requirement the borrower has not yet met, in a form ready to
+ * render (label + hint + action link). Produced by
+ * `$lib/server/lendingRequirements` and passed to the item-detail CTA. Lives
+ * here (not in the server module) so client components can import the type
+ * without pulling in a server-only module.
+ */
+export interface UnmetRequirement {
+	key: string;
+	/** Label for the quick-fix button that lets the borrower satisfy it. */
+	actionLabel: string;
+	/** Internal route the borrower goes to in order to satisfy the requirement. */
+	actionHref: string;
+}
+
+/**
+ * One requirement toggle for the owner's settings UI, derived from the requirement
+ * registry (see $lib/server/lendingRequirements). Lives here (not in the server
+ * module) so the profile component can import the type without a server-only import.
+ */
+export interface RequirementSetting {
+	/** Registry key, e.g. "verifiedEmail". */
+	key: string;
+	/** Backing column on `lending_requirements`, e.g. "requireVerifiedEmail" — the form field name. */
+	field: string;
+	/** Owner-facing toggle label. */
+	settingsLabel: string;
+	/** Owner-facing help text under the toggle. */
+	settingsHelp: string;
+	/** Whether this requirement is currently switched on for the owner. */
+	enabled: boolean;
+}
+
+/**
+ * Audit-trail record of one user's consent decision on one version of a platform
+ * legal document — the Terms of Service or the privacy statement (Issue #399).
+ *
+ * Immutable (no update/delete API rule). `accepted` records are written by the
+ * SvelteKit app under the user's own auth; `declined` records (which also lock
+ * the account) are written by the `legal.pb.js` backend hook. The body shown to
+ * the user is snapshotted so the decision stays interpretable across text changes.
+ */
+export interface UserLegalAcceptance extends PocketBaseEntity {
+	/** Foreign key: user who made the decision */
+	user: UserId;
+
+	/** Which document this decision concerns */
+	docType: 'tos' | 'privacy';
+
+	/** Version string of the document at decision time */
+	version: string;
+
+	/** Whether the user accepted or declined */
+	decision: 'accepted' | 'declined';
+
+	/** Server-stamped decision timestamp (ISO) */
+	acceptedAt?: string;
+
+	/** Snapshot of the rendered document body at decision time */
+	bodySnapshot?: string;
+
+	/** Client IP at decision (best-effort, may be proxy IP) */
+	userIp?: string;
+
+	/** User-Agent string at decision */
 	userAgent?: string;
 }

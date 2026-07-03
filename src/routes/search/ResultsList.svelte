@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Gallery } from 'flowbite-svelte';
+	import { itemImageUrl } from '$lib/utils/utils';
 	import ItemCard from './ItemCard.svelte';
 	import type { ItemPublic } from '$lib/types/models';
 
@@ -10,13 +11,11 @@
 		PB_IMG_URL,
 		travelTimes = {},
 		transportMode = 'bicycle',
-		currentUserId,
 	}: {
 		filteredItemList: ItemPublic[];
 		PB_IMG_URL: string;
 		travelTimes: Record<string, number | null>;
 		transportMode?: TransportMode;
-		currentUserId?: string;
 	} = $props();
 </script>
 
@@ -24,13 +23,12 @@
 	{#each filteredItemList as item (item.id)}
 		<ItemCard
 			{item}
-			imgUrl={item.image ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}` : (item.externalImgUrl ?? '')}
+			imgUrl={itemImageUrl(PB_IMG_URL, item) ?? ''}
 			ownerImgUrl={item.profileImage
 				? `${PB_IMG_URL}api/files/users/${item.userId}/${item.profileImage}`
 				: undefined}
 			travelMinutes={travelTimes[item.userId]}
 			{transportMode}
-			{currentUserId}
 		/>
 	{/each}
 </Gallery>

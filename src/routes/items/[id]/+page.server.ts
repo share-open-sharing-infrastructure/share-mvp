@@ -5,6 +5,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
+import { evaluateUnmetRequirements, requirementRegistry } from '$lib/server/lendingRequirements';
 
 export async function load({ params, locals }) {
 	let item: ItemPublic;
@@ -17,24 +18,105 @@ export async function load({ params, locals }) {
 
 	const currentUserId = locals.user?.id ?? null;
 	const isAuthenticated = locals.pb.authStore.isValid;
-	const ownerTrusts: string[] = item.trusts ?? [];
-	const isTrustRestricted =
-		item.trusteesOnly && isAuthenticated && !ownerTrusts.includes(currentUserId);
 	const isOwnItem = currentUserId === item.userId;
 	const viewerTrustsOwner = locals.user?.trusts?.includes(item.userId) ?? false;
 
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
-	const ownerTrustsViewer = currentUserId ? ownerTrusts.includes(currentUserId) : false;
+	// Resolved server-side so the owner's trusts list never reaches the client
+	// (items_public no longer exposes it).
+	let ownerTrustsViewer = false;
+	if (currentUserId && !isOwnItem) {
+		try {
+			await locals.pb
+				.collection('users')
+				.getFirstListItem(
+					locals.pb.filter('id = {:oid} && trusts.id ?= {:vid}', { oid: item.userId, vid: currentUserId }),
+					{ fields: 'id' }
+				);
+			ownerTrustsViewer = true;
+		} catch {
+			ownerTrustsViewer = false;
+		}
+	}
+
+	// items_public masks RESTRICTED items (trustees-only OR shared with a group):
+	// name/image/description come back NULL. The owner, trusted viewers and members
+	// of an attached group may see full details. The base `items` rule permits the
+	// read only for those, so a successful privileged fetch is itself the
+	// authorization signal — covering trust AND group access without re-deriving
+	// either here. (We key off the mask, not trusteesOnly, so group-only items work.)
+	// We read full fields from the trust/group-filtered `items_searchable` view —
+	// incl. `collectionId` and the un-masked `image` — so the image file URL resolves
+	// (a URL built from the items_public row would 404, since its image is NULL).
+	const wasMasked = item.name == null;
+	let viewerHasFullAccess = !wasMasked; // unmasked == public == visible to everyone
+	if (wasMasked && currentUserId) {
+		try {
+			const full = await locals.pb.collection('items_searchable').getOne(item.id, {
+				fields: 'collectionId,name,image,externalImgUrl,externalUrl,description',
+			});
+			item.collectionId = full.collectionId;
+			item.name = full.name;
+			item.image = full.image;
+			item.externalImgUrl = full.externalImgUrl;
+			item.externalUrl = full.externalUrl;
+			item.description = full.description;
+			viewerHasFullAccess = true;
+		} catch {
+			// No access (or not logged in) -> details stay masked.
+		}
+	}
+
+	const isTrustRestricted = wasMasked && isAuthenticated && !viewerHasFullAccess;
+
+	// Off-platform contact opt-in (issue #438): when the owner handles requests outside
+	// the app, the CTA becomes a mailto: / external link instead of the in-app request
+	// flow. Resolution depends on the viewer:
+	//  - authenticated, non-owner, may-see-the-item → read the owner's base `users` record
+	//    (readable by any logged-in user; covers BOTH the public and members-only setting);
+	//  - unauthenticated → only what `items_public` exposes, i.e. the owner's PUBLIC contact
+	//    (contactPublic) on a fully-public item. Those `ownerContact*` columns ride on the
+	//    items_public row and are NULL for the members-only case, so reading them is safe.
+	// The raw contact fields are absent from every *_public view, so members-only never
+	// leaks. When resolved, the regular-flow computations below are skipped (terms /
+	// requirements / new conversation are irrelevant to off-platform contact).
+	const pickContact = (
+		method: unknown,
+		email: unknown,
+		url: unknown
+	): { method: 'email'; target: string } | { method: 'link'; target: string } | null => {
+		if (method === 'email' && typeof email === 'string' && email) return { method, target: email };
+		if (method === 'link' && typeof url === 'string' && url) return { method, target: url };
+		return null;
+	};
+	let ownerContact: ReturnType<typeof pickContact> = null;
+	if (currentUserId && !isOwnItem && !isTrustRestricted) {
+		try {
+			const owner = await locals.pb
+				.collection('users')
+				.getOne(item.userId, { fields: 'contactMethod,contactEmail,contactUrl' });
+			ownerContact = pickContact(owner.contactMethod, owner.contactEmail, owner.contactUrl);
+		} catch {
+			// Owner record unreadable (e.g. unauthenticated) → fall back to normal flow.
+		}
+	} else if (!currentUserId) {
+		ownerContact = pickContact(item.ownerContactMethod, item.ownerContactEmail, item.ownerContactUrl);
+	}
 
 	// Find an in-progress conversation for this viewer + item so the CTA can link
 	// to it instead of creating a duplicate. We exclude rejected/completed states
 	// (borrower may legitimately re-request) and the empty string (conversations
 	// created before the lending feature was added have no lendingStatus value).
+	// Resolved even for email-contact owners, so a borrower with a live in-app loan
+	// keeps the "Zur laufenden Anfrage" entry point; the CTA prefers it over the mailto.
 	let existingConversation: { id: string; lendingStatus: string } | null = null;
 	if (currentUserId && !isOwnItem) {
 		try {
 			const conv = await locals.pb.collection('conversations').getFirstListItem(
-				`requester="${currentUserId}" && requestedItem="${item.id}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
+				locals.pb.filter(
+					'requester={:uid} && requestedItem={:iid} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+					{ uid: currentUserId, iid: item.id }
+				),
 				{ sort: '-created', fields: 'id,lendingStatus' }
 			);
 			existingConversation = { id: conv.id, lendingStatus: conv.lendingStatus };
@@ -46,7 +128,7 @@ export async function load({ params, locals }) {
 	// Does this owner publish lending terms, and if so has the viewer accepted them?
 	// We only gate the request flow on terms when the viewer is logged in and not the owner.
 	let requiresTermsAcceptance = false;
-	if (currentUserId && !isOwnItem) {
+	if (currentUserId && !isOwnItem && !ownerContact) {
 		const ownerId = item.userId;
 		const activeTerms = await getActiveTerms(locals.pb, ownerId);
 		if (activeTerms) {
@@ -55,13 +137,24 @@ export async function load({ params, locals }) {
 		}
 	}
 
+	// Lender-defined borrower requirements (#423/#389): which enabled requirements
+	// does the current viewer NOT yet meet for this owner? UX only — the backend
+	// hook on conversation create is the authoritative gate. We skip own items and
+	// unauthenticated viewers (login is required before requesting anyway).
+	let unmetRequirements: Awaited<ReturnType<typeof evaluateUnmetRequirements>> = [];
+	if (currentUserId && !isOwnItem && !ownerContact && locals.user) {
+		unmetRequirements = await evaluateUnmetRequirements(locals.pb, item.userId, locals.user);
+	}
+
 	// Total items listed by this owner (all statuses).
 	let ownerItemCount = 0;
 	if (item.userId) {
 		try {
 			const { totalItems } = await locals.pb
 				.collection('items_public')
-				.getList(1, 1, { filter: `userId = "${item.userId}"` });
+				.getList(1, 1, {
+					filter: locals.pb.filter('userId = {:userId}', { userId: item.userId }),
+				});
 			ownerItemCount = totalItems;
 		} catch {
 			// silently fall back to 0
@@ -78,9 +171,11 @@ export async function load({ params, locals }) {
 		viewerTrustsOwner,
 		ownerTrustsViewer,
 		ownerItemCount,
-		preferredTransportMode: locals.user?.preferredTransportMode ?? 'bicycle',
+		preferredTransportMode: locals.user?.preferredTransportMode || 'bicycle',
 		existingConversation,
 		requiresTermsAcceptance,
+		unmetRequirements,
+		ownerContact,
 		ownerHasLocation: !!item.ownerHasLocation,
 	};
 }
@@ -124,6 +219,47 @@ export const actions = {
 			return fail(404, { fail: true, message: texts.errors.itemNotFound });
 		}
 
+		const requesterId = locals.user.id;
+		const itemOwnerId = itemRecord.userId;
+
+		// Resume an already in-progress conversation for this requester+item BEFORE any
+		// other gate, so a borrower with a live loan is taken back into it — even if the
+		// owner has since enabled email contact (#438) or published lending terms.
+		// (rejected/completed/empty are excluded so a fresh re-request still creates one.)
+		let existingConversations: { id: string }[] = [];
+		try {
+			existingConversations = await locals.pb.collection('conversations').getFullList({
+				filter: locals.pb.filter(
+					'requester = {:requesterId} && requestedItem = {:itemId} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+					{ requesterId, itemId: params.id }
+				),
+				sort: '-created',
+				fields: 'id',
+			});
+		} catch {
+			existingConversations = [];
+		}
+		if (existingConversations.length > 0) {
+			redirect(303, `/conversations/${existingConversations[0].id}`);
+		}
+
+		// Off-platform-contact owners (#438) handle NEW requests outside the app — the CTA
+		// is a mailto: / external link, never this form. Guard the action too, so a direct
+		// POST can't create a conversation the owner has opted out of ever seeing in-app.
+		try {
+			const owner = await locals.pb
+				.collection('users')
+				.getOne(itemRecord.userId, { fields: 'contactMethod,contactEmail,contactUrl' });
+			const hasOffPlatformContact =
+				(owner.contactMethod === 'email' && owner.contactEmail) ||
+				(owner.contactMethod === 'link' && owner.contactUrl);
+			if (hasOffPlatformContact) {
+				return fail(403, { fail: true, message: texts.errors.contactOffPlatformOnly });
+			}
+		} catch {
+			// Owner record unreadable → fall through to the normal flow.
+		}
+
 		// If the item's owner publishes lending terms and the user has not accepted
 		// the active version, divert them through the terms acceptance flow. This
 		// guards against POSTing directly to ?/startConversation past the CTA UI.
@@ -136,39 +272,43 @@ export const actions = {
 			redirect(303, `/items/${params.id}/terms`);
 		}
 
-		// Consume form data (itemId kept for the conversation filter; ownerId ignored).
-		const formData = await request.formData();
-		const itemId = formData.get('itemId') as string;
-		const requesterId = locals.user.id;
-		const itemOwnerId = itemRecord.userId;
+		// The lender's borrower requirements (#423/#389) are enforced authoritatively
+		// by the backend hook on conversation create — we don't re-check here (single
+		// source of truth). If the hook rejects, the catch below maps its
+		// 'lending_requirement_unmet' error into a friendly message.
 
-		// Check if a non-rejected/completed conversation already exists for this requester+item.
+		// No existing conversation (we'd have redirected above) → create a new one.
+		await request.formData(); // consume the POST body; item resolved from params, ownerId ignored
 		let targetConversationId = '';
-		let existingConversations;
-		try {
-			existingConversations = await locals.pb.collection('conversations').getFullList({
-				filter: `requester = "${requesterId}" && requestedItem = "${itemId}" && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""`,
-				sort: '-created',
-			});
-		} catch {
-			existingConversations = [];
-		}
-
-		if (existingConversations.length > 0) {
-			targetConversationId = existingConversations[0].id;
-		} else {
+		{
 			let conversation;
 			try {
 				conversation = await locals.pb.collection('conversations').create({
 					requester: requesterId,
 					itemOwner: itemOwnerId,
-					requestedItem: itemId,
+					requestedItem: params.id,
 					lendingStatus: 'pending',
 					readByRequester: true,
 					readByOwner: false,
 				});
 			} catch (err) {
-				const e = err as Partial<ClientResponseError>;
+				const e = err as Partial<ClientResponseError> & { response?: { message?: string } };
+				// The backend hook rejects unmet lending requirements with a message
+				// "lending_requirement_unmet: <keys>" — map the keys to friendly labels.
+				const raw = [e.response?.message, e.message].filter(Boolean).join(' ');
+				const m = raw.match(/lending_requirement_unmet:\s*([a-z_,]+)/i);
+				if (m) {
+					const labels = m[1]
+						.split(',')
+						.map((k) => requirementRegistry.find((d) => d.key === k.trim())?.label)
+						.filter(Boolean);
+					return fail(403, {
+						fail: true,
+						message: labels.length
+							? `${texts.lendingRequirements.blockedIntro} ${labels.join(', ')}`
+							: texts.lendingRequirements.blockedIntro,
+					});
+				}
 				return fail(e.status ?? 500, {
 					fail: true,
 					message: e.data?.message ?? texts.errors.failedToCreateConversation,
@@ -178,8 +318,17 @@ export const actions = {
 			targetConversationId = conversation.id;
 
 			const requesterName = locals.user.username ?? locals.user.name ?? texts.pages.itemDetail.unknownRequester;
-			const itemName = itemRecord.name ?? texts.pages.itemDetail.unknownItem;
-			const notificationBody = texts.notifications.newRequest(requesterName, itemName);
+			// items_public masks trustees-only item names; the requester is authorized
+			// (the conversation was just created), so read the real name from base items.
+			let itemName = itemRecord.name;
+			if (!itemName) {
+				try {
+					itemName = (await locals.pb.collection('items').getOne(params.id, { fields: 'name' })).name;
+				} catch {
+					// fall back to the generic label below
+				}
+			}
+			const notificationBody = texts.notifications.newRequest(requesterName, itemName ?? texts.pages.itemDetail.unknownItem);
 			const conversationUrl = `/conversations/${targetConversationId}`;
 
 			await createNotification(locals.pb, itemOwnerId, locals.user.id, 'new_request', targetConversationId, notificationBody);

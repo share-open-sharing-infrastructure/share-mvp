@@ -56,7 +56,7 @@ export async function withAuthRetry<T>(pb: PocketBase, operation: () => Promise<
  */
 export async function loadExistingItems(pb: PocketBase, ownerId: string): Promise<ExistingItem[]> {
 	return pb.collection('items').getFullList<ExistingItem>({
-		filter: `owner = "${ownerId}" && externalId != ""`,
+		filter: pb.filter('owner = {:ownerId} && externalId != ""', { ownerId }),
 		fields: EXISTING_ITEM_FIELDS,
 	});
 }

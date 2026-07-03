@@ -5,6 +5,7 @@ import type { Conversation, CounterfactualAnswer } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import * as lending from './lending.server.js';
 import * as messaging from './conversation.server.js';
+import { fetchPartnerContact } from '$lib/server/contacts';
 
 export async function load({ params, locals }) {
 	const conversationId: string = params.conversationId;
@@ -58,7 +59,10 @@ export async function load({ params, locals }) {
 		// state are tracked in separate collections, so viewing the conversation does
 		// not automatically clear the notification badge. We sync them here.
 		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
-			filter: `recipient="${locals.user.id}" && relatedId="${conversationId}" && read=false`,
+			filter: locals.pb.filter('recipient={:userId} && relatedId={:conversationId} && read=false', {
+				userId: locals.user.id,
+				conversationId,
+			}),
 			fields: 'id',
 		});
 		if (unreadNotifs.length > 0) {
@@ -70,7 +74,13 @@ export async function load({ params, locals }) {
 		}
 	}
 
-	return { conversation, PB_URL: PUBLIC_PB_URL };
+	const partnerId =
+		conversationRecord.requester === locals.user?.id
+			? conversationRecord.itemOwner
+			: conversationRecord.requester;
+	const partnerContact = await fetchPartnerContact(locals.pb, partnerId);
+
+	return { conversation, PB_URL: PUBLIC_PB_URL, partnerContact };
 }
 
 export const actions = {

@@ -21,7 +21,7 @@ export async function generateInviteSlug(pb: PocketBase): Promise<string> {
 	for (let i = 0; i < 10; i++) {
 		const slug = `${pick(adjectives)}-${pick(verbs)}-${pick(nouns)}`;
 		try {
-			await pb.collection('users').getFirstListItem(`inviteCode = "${slug}"`);
+			await pb.collection('users').getFirstListItem(pb.filter('inviteCode = {:code}', { code: slug }));
 			// slug already taken — retry
 		} catch {
 			// getFirstListItem throws when no record found, meaning slug is free

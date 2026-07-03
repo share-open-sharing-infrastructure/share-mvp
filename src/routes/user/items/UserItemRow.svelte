@@ -1,17 +1,21 @@
 <script lang="ts">
 	import type { Item } from '$lib/types/models';
 	import { enhance } from '$app/forms';
+	import { texts } from '$lib/texts';
 	import ItemModal from './ItemModal.svelte';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 	import { resolve } from '$app/paths';
+	import type { ActionData } from './$types';
 
 	interface Props {
 		item: Item;
 		PB_URL: string;
+		groups?: { id: string; name: string }[];
+		form?: ActionData;
 		selected: boolean;
 		onselectedchange: (v: boolean) => void;
 	}
-	let { item, PB_URL, selected, onselectedchange }: Props = $props();
+	let { item, PB_URL, groups = [], form, selected, onselectedchange }: Props = $props();
 
 	let showEditModal = $state(false);
 	// svelte-ignore state_referenced_locally
@@ -27,6 +31,13 @@
 		if (i.image) return `${PB_URL}api/files/${i.collectionId}/${i.id}/${i.image}`;
 		return i.externalImgUrl ?? null;
 	}
+
+	// Names of the groups this item is shared with (for the indicator tooltip).
+	let sharedGroupNames = $derived(
+		(item.groups ?? [])
+			.map((gid) => groups.find((g) => g.id === gid)?.name)
+			.filter((n): n is string => !!n)
+	);
 </script>
 
 <div
@@ -59,6 +70,23 @@
 			<span class="hidden sm:block text-xs text-tinte-400 dark:text-tinte-500 truncate min-w-0">{item.description}</span>
 		{/if}
 	</div>
+
+	<!-- Group-shared indicator (read-only; managed in the edit modal) -->
+	{#if item.groups?.length}
+		{@const indicatorLabel = sharedGroupNames.length
+			? texts.groups.itemGroupIndicator(sharedGroupNames.join(', '))
+			: texts.groups.itemGroupIndicatorGeneric}
+		<span
+			class="shrink-0 inline-flex items-center gap-0.5 text-xs text-primary-700 dark:text-primary-300"
+			title={indicatorLabel}
+			aria-label={indicatorLabel}
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.83-4M5 8a3 3 0 102.83 4" />
+			</svg>
+			{item.groups.length}
+		</span>
+	{/if}
 
 	<!-- Trustees-only heart toggle -->
 	<form
@@ -137,5 +165,7 @@
 	bind:isVisible={showEditModal}
 	type="edit"
 	editingItem={item}
+	{groups}
+	{form}
 	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories ?? []) ?? ''}
 />

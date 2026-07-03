@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
-	import InviteShareButton from '$lib/components/InviteShareButton.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
+	import { UserAddOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
 		inviteUrl: string;
@@ -32,6 +33,13 @@
 	</a>
 
 	<div class="flex justify-center">
-		<InviteShareButton {inviteUrl} {username} />
+		<ShareButton
+			url={inviteUrl}
+			shareText={texts.pages.invite.shareText(username)}
+			label={texts.pages.invite.shareButton}
+			copiedLabel={texts.pages.invite.linkCopied}
+			icon={UserAddOutline}
+			class="gap-2 min-button w-full bg-primary-300 hover:bg-primary whitespace-nowrap"
+		/>
 	</div>
 </div>

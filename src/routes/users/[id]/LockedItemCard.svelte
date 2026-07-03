@@ -12,9 +12,11 @@
 	let { id, loggedIn = false, isOverflow = false, overflowCount = 0 }: Props = $props();
 </script>
 
-<div
+<button
 	{id}
-	class="flex flex-row rounded-lg border border-tinte-200 dark:border-tinte-700 bg-white dark:bg-tinte-800 overflow-hidden min-h-20 cursor-help"
+	type="button"
+	aria-label={texts.pages.userProfile.lockedTooltipTitle}
+	class="flex w-full flex-row rounded-lg border border-tinte-200 dark:border-tinte-700 bg-white dark:bg-tinte-800 overflow-hidden min-h-20 cursor-help text-left"
 >
 	<div class="w-24 md:w-48 max-w-36 shrink-0 self-stretch bg-linear-to-br from-tinte-100 to-tinte-200 dark:from-tinte-700 dark:to-tinte-800 flex flex-col items-center justify-center gap-1 px-1">
 		<LockSolid class="h-6 w-6 text-tinte-400 dark:text-tinte-500" />
@@ -27,11 +29,11 @@
 	<div class="p-4 flex items-center">
 		<p class="text-sm text-tinte-500 dark:text-tinte-400">{texts.pages.userProfile.lockedCard}</p>
 	</div>
-</div>
+</button>
 
 <Popover
 	triggeredBy="#{id}"
-	trigger="hover"
+	trigger="click"
 	class="w-72 bg-papier text-sm font-light text-tinte-500 dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-400"
 	placement="top"
 >

@@ -9,3 +9,4 @@ dist
 .vscode
 .claude/settings.json
 .claude/worktrees
+.claude/CLAUDE.md

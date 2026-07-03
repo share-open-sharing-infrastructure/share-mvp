@@ -3,6 +3,9 @@
 	import { compressImage } from '$lib/utils/imageUtils';
 	import SelectStep from './SelectStep.svelte';
 	import ReviewStep from './ReviewStep.svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	type DraftStatus = 'pending' | 'analyzing' | 'done' | 'error';
 
@@ -12,6 +15,7 @@
 		name: string;
 		description: string;
 		categories: string[];
+		groups: string[];
 		trusteesOnly: boolean;
 		status: DraftStatus;
 	};
@@ -79,6 +83,6 @@
 	{#if phase === 'select'}
 		<SelectStep bind:drafts bind:noPhotosError onContinue={analyzeAll} />
 	{:else}
-		<ReviewStep bind:drafts bind:submitting {allAnalyzed} onBack={() => (phase = 'select')} />
+		<ReviewStep bind:drafts bind:submitting {allAnalyzed} attachableGroups={data.attachableGroups} onBack={() => (phase = 'select')} />
 	{/if}
 </div>

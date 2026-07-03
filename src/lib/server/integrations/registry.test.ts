@@ -93,6 +93,9 @@ describe('refreshAllIntegrations', () => {
 		const pbWithItems = {
 			collection: () => ({ getFullList: vi.fn().mockResolvedValue(items) }),
 			createBatch: () => ({ collection: () => ({ update: vi.fn(), create: vi.fn() }), send: vi.fn() }),
+			// Mirror pocketbase's filter binding: substitute {:key} with the quoted param.
+			filter: (expr: string, params: Record<string, string>) =>
+				expr.replace(/\{:(\w+)\}/g, (_, key) => `"${params[key]}"`),
 		} as never;
 		winbiapRefreshFetch.mockResolvedValue({ kind: 'gone' });
 		leihbackendRefreshFetch.mockResolvedValue({ kind: 'gone' });

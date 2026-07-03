@@ -1,16 +1,21 @@
 <script lang="ts">
 	import { Badge, Alert, Tooltip } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { HeartSolid } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { itemImageUrl } from '$lib/utils/utils';
 	import type { ItemPublic, UserPublic } from '$lib/types/models';
 	import ItemImage from './ItemImage.svelte';
 	import ItemTravelTime from './ItemTravelTime.svelte';
 	import ItemCta from './ItemCta.svelte';
 	import OwnerCard from './OwnerCard.svelte';
+	import ShareButton from '$lib/components/ShareButton.svelte';
+	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
-	const { data } = $props();
+	const { data, form } = $props();
 	const item = $derived(data.item) as ItemPublic;
 	const owner = $derived({
 		id: item.userId,
@@ -27,11 +32,9 @@
 	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
 	const isArchived = $derived(item.description?.startsWith('[Nicht mehr im Bestand]') ?? false);
 
-	const imageUrl = $derived(
-		item.image
-			? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
-			: (item.externalImgUrl ?? null)
-	);
+	const shareUrl = $derived(`${page.url.origin}/items/${item.id}`);
+
+	const imageUrl = $derived(itemImageUrl(data.PB_IMG_URL, item));
 
 	const ownerImageUrl = $derived(
 		owner.profileImage
@@ -49,24 +52,11 @@
 				)
 	);
 	const seoImage = $derived(
-		item.image
-			? `${data.PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}`
-			: 'https://allerleih.org/og-invite.png'
+		itemImageUrl(data.PB_IMG_URL, item) ?? 'https://allerleih.org/og-invite.png'
 	);
 </script>
 
-<svelte:head>
-	<title>{seoTitle}</title>
-	<meta name="description" content={seoDesc} />
-	<meta property="og:title" content={seoTitle} />
-	<meta property="og:description" content={seoDesc} />
-	<meta property="og:type" content="website" />
-	<meta property="og:image" content={seoImage} />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={seoTitle} />
-	<meta name="twitter:description" content={seoDesc} />
-	<meta name="twitter:image" content={seoImage} />
-</svelte:head>
+<SeoHead title={seoTitle} description={seoDesc} image={seoImage} canonical={shareUrl} />
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<!-- Archived banner -->
@@ -79,9 +69,12 @@
 	<ItemImage {imageUrl} {ownerImageUrl} {categoryPlaceholder} itemName={item.name} status={item.status} />
 
 	<!-- Item name -->
-	<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">
-		{item.name}
-	</h1>
+	<div class="flex items-center justify-between gap-3">
+		<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">
+			{item.name}
+		</h1>
+		<ShareButton url={shareUrl} title={item.name} />
+	</div>
 
 	<!-- Status + trustees-only pills -->
 	{#if item.status !== 'unknown' || item.trusteesOnly}
@@ -117,6 +110,11 @@
 		</p>
 	{/if}
 
+	<!-- Request error feedback (e.g. lender requirements not met on submit) -->
+	{#if form?.fail && form?.message}
+		<CustomAlert type="error" message={form.message} />
+	{/if}
+
 	<!-- Travel Time + CTA -->
 	<div class="flex items-center justify-end gap-3">
 		<div>
@@ -135,6 +133,8 @@
 			{isArchived}
 			existingConversation={data.existingConversation}
 			requiresTermsAcceptance={data.requiresTermsAcceptance}
+			unmetRequirements={data.unmetRequirements}
+			ownerContact={data.ownerContact}
 		/>
 	</div>
 

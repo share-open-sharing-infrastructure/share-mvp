@@ -1,31 +1,28 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { Accordion, AccordionItem } from 'flowbite-svelte';
-	import {
-		SearchOutline,
-		MessageDotsOutline,
-		UsersGroupOutline,
-		RefreshOutline,
-		UploadOutline,
-		InboxOutline,
-		ShieldCheckOutline,
-		CheckCircleOutline,
-	} from 'flowbite-svelte-icons';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { guide } = texts.pages;
-
-	const borrowingIcons = [SearchOutline, MessageDotsOutline, UsersGroupOutline, RefreshOutline];
-	const lendingIcons = [UploadOutline, InboxOutline, ShieldCheckOutline, CheckCircleOutline];
 </script>
 
-<svelte:head>
-	<title>{texts.seo.guide.title}</title>
-	<meta name="description" content={texts.seo.guide.description} />
-	<meta property="og:title" content={texts.seo.guide.title} />
-	<meta property="og:description" content={texts.seo.guide.description} />
-	<meta property="og:type" content="website" />
-	<link rel="canonical" href="https://allerleih.org/misc/guide" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.guide.title}
+	description={texts.seo.guide.description}
+	canonical="https://allerleih.org/misc/guide"
+/>
+
+<div class="mb-8 aspect-video w-full overflow-hidden rounded-2xl">
+	<iframe
+		class="h-full w-full"
+		src="https://www.youtube-nocookie.com/embed/IMPZfuff3eI"
+		title={guide.video.title}
+		frameborder="0"
+		allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+		referrerpolicy="strict-origin-when-cross-origin"
+		allowfullscreen
+	></iframe>
+</div>
 
 <h1 class="mb-3 text-2xl font-bold">{guide.title}</h1>
 <p class="mb-8 text-gray-600">{guide.intro}</p>

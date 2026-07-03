@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { invalidate } from '$app/navigation';
+	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { enhance } from '$app/forms';
 	import { BellOutline, EnvelopeOutline, UserAddOutline } from 'flowbite-svelte-icons';
 	import type { Notification } from '$lib/types/models';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 	let { data } = $props();
 
 	const conversationNotificationTypes = new Set([
@@ -28,10 +31,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{texts.notifications.title} – {texts.names.app}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead
+	title={`${texts.notifications.title} – ${texts.names.app}`}
+	robots="noindex, nofollow"
+/>
 
 <div class="max-w-2xl mx-auto px-4 py-8">
 	<h1 class="text-2xl font-semibold mb-6">{texts.notifications.title}</h1>
@@ -46,6 +49,7 @@
 			{#each data.notifications as notification (notification.id)}
 				<li class="flex items-center gap-2 py-4 px-2 rounded-lg hover:bg-papier transition-colors">
 					
+					<!-- eslint-disable svelte/no-navigation-without-resolve -- notificationHref() already returns resolve()d internal paths; the rule can't see through the function call -->
 					<a
 						href={notificationHref(notification)}
 						class="flex items-start gap-4 flex-1 min-w-0"
@@ -53,10 +57,15 @@
 							// Fire-and-forget: navigation proceeds immediately while the server
 							// marks the notification as read in the background. SvelteKit's
 							// client-side routing does not cancel in-flight fetches on navigate.
+							// Once it resolves, resync the badge — the destination load may not
+							// mark it read itself (e.g. trust_added/invite_accepted -> /users/[id]),
+							// so afterNavigate's invalidate could otherwise race this write (#376).
 							if (!notification.read) {
 								const fd = new FormData();
 								fd.append('id', notification.id);
-								fetch('?/markRead', { method: 'POST', body: fd });
+								fetch('?/markRead', { method: 'POST', body: fd })
+									.then(() => invalidate(NOTIFICATIONS_DEP))
+									.catch(() => {});
 							}
 						}}
 					>
@@ -74,6 +83,7 @@
 							<p class="text-xs text-tinte-400 mt-0.5">{formatTimestamp(notification.created)}</p>
 						</div>
 					</a>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 					<form
 						method="POST"
 						action="?/toggleRead"

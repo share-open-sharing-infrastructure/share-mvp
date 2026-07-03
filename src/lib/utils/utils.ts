@@ -1,3 +1,54 @@
+import { texts } from '$lib/texts';
+
+/**
+ * The anonymized username a deleted account gets on the backend (`deleted-<15-char id>`).
+ * Keep in sync with anonymizeAccount() in allerleih-backend/pb_hooks/services/account.js.
+ */
+const DELETED_USERNAME_RE = /^deleted-[a-z0-9]{15}$/;
+
+/**
+ * Display name for a user, masking deleted/anonymized accounts to "Gelöschtes Konto".
+ * Never render `user.username` directly — always pass the user object through this helper.
+ *
+ * Masks when the `deleted` flag is set, OR when the username matches the backend's
+ * placeholder shape. The latter is a safety net for records loaded from a source that
+ * doesn't expose `deleted` (e.g. a view that omits the column), so the raw `deleted-<id>`
+ * placeholder can never leak to the UI even if the flag is missing.
+ */
+export function displayName(
+	user: { username?: string; deleted?: boolean } | null | undefined
+): string {
+	if (
+		!user ||
+		user.deleted ||
+		(user.username && DELETED_USERNAME_RE.test(user.username))
+	) {
+		return texts.account.deletedAccountName;
+	}
+	return user.username ?? texts.account.deletedAccountName;
+}
+
+/**
+ * Build the display URL for an item's image, falling back to its external image URL.
+ *
+ * Item file fields are served via the `items_searchable` view, NOT the record's own
+ * `collectionId`. Records read from `items_public` carry that view's id, but its `image`
+ * column is a masking expression PocketBase does not serve as a file (→ 404). In
+ * `items_searchable`, `image` is a real, trust-filtered file column: it serves public items
+ * to everyone and trustees-only items only to authorized viewers. Use this for any item
+ * loaded from a public view; base-`items` records (their own `collectionId` already resolves)
+ * don't need it.
+ */
+export function itemImageUrl(
+	pbUrl: string,
+	item: { id: string; image?: string | null; externalImgUrl?: string | null }
+): string | null {
+	if (item.image) {
+		return `${pbUrl}api/files/items_searchable/${item.id}/${item.image}`;
+	}
+	return item.externalImgUrl || null;
+}
+
 export function formatTimestamp(
 	timestamp: string,
 	includeYear: boolean = false
@@ -25,38 +76,28 @@ export function formatTimestamp(
 	return returnString;
 }
 
-import PocketBase from 'pocketbase';
-import type { RecordSubscription } from 'pocketbase';
+/**
+ * Build a `mailto:` href for the email-contact CTA (issue #438). The address is
+ * URL-encoded per-part (local @ domain) so a crafted-but-RFC-valid address can't
+ * inject extra mailto headers/params into the sender's outgoing mail; subject and
+ * body are fully encoded. Returns '' for an empty address (caller hides the link).
+ */
+export function buildMailtoHref(email: string, subject: string, body: string): string {
+	if (!email) return '';
+	const at = email.lastIndexOf('@');
+	const address =
+		at === -1
+			? encodeURIComponent(email)
+			: `${encodeURIComponent(email.slice(0, at))}@${encodeURIComponent(email.slice(at + 1))}`;
+	return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 /**
- * Sets up a PocketBase real-time subscription for the respective collection and record, and unsubscribes on cleanup.
- * @param pocketBaseInstance A PocketBase instance to subscribe to
- * @param collectionName The collection name to subscribe to
- * @param recordId The record ID to subscribe to, defaults to '*' (all records in the collection)
- * @param eventHandler A callback function to handle incoming subscription events
- * TODO: Check if this needs to be done client-side, maybe it's better to do server-side? Would that work?
+ * Build the item-detail outbound-link href, routed through `/api/redirect` (which
+ * enforces https + records the click). Used for external-item deep links and for an
+ * owner's off-platform contact link (issue #438). The destination is URL-encoded so it
+ * rides safely as a query param; `/api/redirect` is the authoritative https guard.
  */
-export function setupPocketBaseSubscription(
-	pocketBaseInstance: PocketBase,
-	collectionName: string,
-	recordId: string = '*',
-	eventHandler: (event: RecordSubscription<unknown>) => void
-) {
-	// Subscribe to some collection's and record's events
-	pocketBaseInstance
-		?.collection(collectionName)
-		.subscribe(recordId, eventHandler)
-		.catch((error) => {
-			console.error(`Failed to subscribe to ${collectionName}:`, error);
-		});
-
-	// Cleanup: unsubscribe when chat partner changes or component unmounts
-	return (): void => {
-		pocketBaseInstance
-			?.collection(collectionName)
-			.unsubscribe(recordId)
-			.catch((error) => {
-				console.error(`Failed to unsubscribe from ${collectionName}:`, error);
-			});
-	};
+export function buildItemRedirectHref(target: string, itemId: string): string {
+	return `/api/redirect?to=${encodeURIComponent(target)}&source=item-detail&item=${itemId}`;
 }

@@ -27,11 +27,6 @@
 	});
 
 	$effect(() => {
-		// Focus on mount.
-		inputEl?.focus();
-	});
-
-	$effect(() => {
 		// Sync input with q prop when it changes externally (e.g. back/forward nav),
 		// but not while the user is actively typing.
 		if (inputEl !== document.activeElement) {
@@ -49,7 +44,6 @@
 			isDebouncing = false;
 			if (q) {
 				await goto(resolve('/search'));
-				inputEl?.focus();
 			}
 			return;
 		}
@@ -59,7 +53,6 @@
 			isDebouncing = false;
 			// eslint-disable-next-line svelte/no-navigation-without-resolve
 			await goto(`/search?q=${encodeURIComponent(value)}`);
-			inputEl?.focus();
 		}, SEARCH_DELAY_MS);
 	}
 
@@ -73,7 +66,6 @@
 		const value = inputValue.trim();
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl);
-		inputEl?.focus();
 	}
 
 	async function clearSearch() {
@@ -84,7 +76,6 @@
 		}
 		isDebouncing = false;
 		await goto(resolve('/search'));
-		inputEl?.focus();
 	}
 </script>
 

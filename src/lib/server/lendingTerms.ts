@@ -58,7 +58,10 @@ export async function getActiveTerms(
 	try {
 		const nowIso = new Date().toISOString().replace('T', ' ').replace('Z', '');
 		return await pb.collection('lending_terms').getFirstListItem<LendingTerms>(
-			`owner = "${ownerId}" && active = true && effectiveFrom <= "${nowIso}"`,
+			pb.filter('owner = {:ownerId} && active = true && effectiveFrom <= {:nowIso}', {
+				ownerId,
+				nowIso,
+			}),
 			{ sort: '-effectiveFrom' }
 		);
 	} catch {
@@ -78,7 +81,7 @@ export async function getAcceptance(
 ): Promise<TermAcceptance | null> {
 	try {
 		return await pb.collection('term_acceptances').getFirstListItem<TermAcceptance>(
-			`user = "${userId}" && terms = "${termsId}"`,
+			pb.filter('user = {:userId} && terms = {:termsId}', { userId, termsId }),
 			{ sort: '-acceptedAt' }
 		);
 	} catch {

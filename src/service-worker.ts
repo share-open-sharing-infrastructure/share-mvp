@@ -21,15 +21,15 @@ const ASSETS = [...build, ...files];
 const isDev = !build.length;
 
 self.addEventListener('install', (event) => {
-	if (isDev) {
-		// Activate immediately so stale caches from previous sessions are
-		// purged as quickly as possible (see activate handler below).
-		self.skipWaiting();
-		return;
-	}
+	// A new worker normally stays "waiting" until every tab using the old one is
+	// closed; skipWaiting() lets this version take over right away.
+	self.skipWaiting();
+	if (isDev) return;
 	async function addFilesToCache() {
 		const cache = await caches.open(CACHE);
-		await cache.addAll(ASSETS);
+		// allSettled, not addAll: one missing asset must not abort installation
+		// (a failed install leaves no active worker at all).
+		await Promise.allSettled(ASSETS.map((asset) => cache.add(asset)));
 	}
 	event.waitUntil(addFilesToCache());
 });
@@ -46,10 +46,11 @@ self.addEventListener('activate', (event) => {
 				isDev || key !== CACHE ? caches.delete(key) : Promise.resolve()
 			)
 		);
-		// In dev, immediately claim all open tabs so this SW (which does
-		// nothing in its fetch handler) displaces the old one mid-session —
-		// no tab-close/reopen required.
-		if (isDev) await self.clients.claim();
+		// A freshly activated worker otherwise only controls pages opened after
+		// it. claim() takes control of already-open windows now, which is what
+		// lets notificationclick below call WindowClient.navigate() on them —
+		// navigate() rejects on a window the worker does not control.
+		await self.clients.claim();
 	}
 	event.waitUntil(setup());
 });
@@ -105,21 +106,38 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
 	event.notification.close();
 
-	const url: string = (event.notification.data as { url: string }).url;
+	const data = event.notification.data as { url?: string } | null;
+	const target = new URL(data?.url ?? '/notifications', self.location.origin).href;
 
 	event.waitUntil(
-		self.clients
-			.matchAll({ type: 'window', includeUncontrolled: true })
-			.then((clientList) => {
-				// Focus an existing window if one is already open
-				for (const client of clientList) {
-					if (client.url.includes(self.location.origin) && 'focus' in client) {
-						client.navigate(url);
-						return client.focus();
+		(async () => {
+			const clientList = await self.clients.matchAll({
+				type: 'window',
+				includeUncontrolled: true
+			});
+
+			// Reuse an already-open app window (especially the installed PWA):
+			// navigate it to the notification's target page and focus it. We only
+			// fall back to openWindow() when no window is open, because in a PWA
+			// openWindow() spawns a separate browser tab instead of the app.
+			for (const client of clientList) {
+				if (!client.url.startsWith(self.location.origin)) continue;
+				if (client.url !== target) {
+					try {
+						await client.navigate(target);
+					} catch {
+						/* focus the window even if navigation isn't possible */
 					}
 				}
-				// Otherwise open a new window
-				return self.clients.openWindow(url);
-			})
+				try {
+					await client.focus();
+				} catch {
+					/* ignore */
+				}
+				return;
+			}
+
+			await self.clients.openWindow(target);
+		})()
 	);
 });

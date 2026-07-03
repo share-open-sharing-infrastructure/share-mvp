@@ -2,13 +2,16 @@
 	import '../app.css';
 	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
 	import FooterComponent from '$lib/components/FooterComponent.svelte';
+	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
-	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
-	import { setupPushSubscription } from '$lib/utils/pushSubscription';
+	import ToastHost from '$lib/components/ToastHost.svelte';
+	import { getClientPB, syncClientPBAuth, subscribeRealtime } from '$lib/client-pb';
+	import { NOTIFICATIONS_DEP } from '$lib/constants';
+	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { beforeNavigate, afterNavigate } from '$app/navigation';
+	import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
 	import { dev } from '$app/environment';
 	import { fade } from 'svelte/transition';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
@@ -21,7 +24,16 @@
 
 	let isNavigating = $state(false);
 	beforeNavigate(() => { isNavigating = true; });
-	afterNavigate(() => { isNavigating = false; });
+	afterNavigate(() => {
+		isNavigating = false;
+		// Resync the badge after every navigation (issue #376): a destination load can
+		// mark notifications read server-side, and realtime may miss it. afterNavigate
+		// runs after that destination load has committed, so the re-fetch reflects it.
+		// (Paths that mark read via a fire-and-forget request instead of in the load —
+		// see notifications/+page.svelte — resync separately when that request resolves.)
+		// Don't filter by navigation type: in-app navigations here report type 'enter'.
+		invalidate(NOTIFICATIONS_DEP);
+	});
 
 	// svelte-ignore state_referenced_locally
 	let unreadCount = $state(data.unreadNotificationCount ?? 0);
@@ -48,6 +60,22 @@
 		syncClientPBAuth(data.pbAuthToken ?? null, data.currentUser ?? null);
 	});
 
+	// Register/refresh this device's push subscription whenever the logged-in user
+	// changes. Login is a client-side navigation that does NOT remount this layout,
+	// so an onMount-only registration would miss it — leaving the user without a
+	// subscription until a hard reload (a regression once logout tears the previous
+	// subscription down). The tracked id makes this fire once per user, not on every
+	// invalidateAll().
+	let _pushUserId: string | undefined = undefined;
+	$effect(() => {
+		const granted = 'Notification' in window && Notification.permission === 'granted';
+		// Reads data.currentUser?.id reactively; the helper re-arms on logout (uid
+		// undefined) so a subsequent login of any user — incl. the same one — re-registers.
+		const decision = nextPushRegistration(data.currentUser?.id, _pushUserId, granted);
+		_pushUserId = decision.lastRegisteredUserId;
+		if (decision.register) setupPushSubscription();
+	});
+
 	onMount(() => {
 		// Capture Chrome/Edge's install prompt before it shows the mini-infobar
 		window.addEventListener('beforeinstallprompt', (e) => {
@@ -55,49 +83,51 @@
 			installPromptEvent = e as BeforeInstallPromptEvent;
 		});
 
-		// If push permission was already granted on a previous session, re-register
-		// the subscription silently (covers cleared browser data / new device scenarios)
-		if (data.currentUser && 'Notification' in window && Notification.permission === 'granted') {
-			setupPushSubscription();
-		}
-
-		// Set up once at mount rather than in $effect — $effect's cleanup/re-run cycle
-		// tears down and re-creates the subscription on every invalidateAll(), which
-		// causes PocketBase to auto-cancel concurrent getList requests.
-		// Login/logout are full-page navigations in SvelteKit, so remounting handles
-		// user changes correctly without needing $effect reactivity here.
+		// The realtime notification subscription below is set up once at mount, not in
+		// an $effect: an $effect's cleanup/re-run cycle would tear it down and recreate
+		// it on every invalidateAll(), making PocketBase auto-cancel concurrent getList
+		// requests. (Push re-registration is handled by the navigation-reactive $effect
+		// above, because login is a client-side navigation that does not remount here.)
 		const userId = data.currentUser?.id;
 		if (!userId) return;
 
 		// Auth is already synced by the $effect above (effects run before onMount).
 		const pb = getClientPB();
 
-		pb.collection('notifications').subscribe('*', async (e) => {
-			if (e.record.recipient !== userId) return;
+		// subscribeRealtime (not a bare pb.subscribe) so a transient
+		// "Invalid realtime client" failure retries instead of becoming an
+		// uncaught rejection + a silently dead badge, and so the subscription
+		// re-establishes after a mobile background-freeze / network drop. See #435.
+		return subscribeRealtime({
+			collection: 'notifications',
+			topic: '*',
+			handler: async (e) => {
+				if (e.record.recipient !== userId) return;
 
-			// Auto-mark as read when a notification arrives for the currently-open conversation
-			if (
-				e.action === 'create' &&
-				!e.record.read &&
-				e.record.relatedId &&
-				e.record.relatedId === page.params.conversationId
-			) {
-				await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
-			}
+				// Auto-mark as read when a notification arrives for the currently-open conversation
+				if (
+					e.action === 'create' &&
+					!e.record.read &&
+					e.record.relatedId &&
+					e.record.relatedId === page.params.conversationId
+				) {
+					await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
+				}
 
-			try {
-				const result = await pb.collection('notifications').getList(1, 1, {
-					filter: pb.filter('recipient = {:userId} && read = false', { userId }),
-				});
-				unreadCount = result.totalItems;
-			} catch (err) {
-				// status 0 = auto-cancelled by PocketBase (a concurrent request superseded this one).
-				// The superseding request will update the badge, so this is safe to ignore.
-				if ((err as { status?: number }).status !== 0) throw err;
-			}
+				try {
+					const result = await pb.collection('notifications').getList(1, 1, {
+						filter: pb.filter('recipient = {:userId} && read = false', { userId }),
+					});
+					unreadCount = result.totalItems;
+				} catch (err) {
+					// status 0 = auto-cancelled by PocketBase (a concurrent request superseded this one).
+					// The superseding request will update the badge, so this is safe to ignore.
+					if ((err as { status?: number }).status !== 0) throw err;
+				}
+			},
+			// Events fired while the stream was down are lost — re-derive the badge.
+			onReconnect: () => invalidate(NOTIFICATIONS_DEP),
 		});
-
-		return () => pb.collection('notifications').unsubscribe('*');
 	});
 
 
@@ -115,9 +145,13 @@
 			currentUser={data.currentUser}
 			{unreadCount}
 		/>
+	{:else}
+		<div class="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+			<FeedbackButton />
+		</div>
 	{/if}
 
-	<main class="flex-1 py-8">
+	<main class="flex-1 py-2 sm:py-8">
 		<!--
 			Dev-only workaround. SvelteKit 2 + Svelte 5 in `vite dev` intermittently
 			fails to remove the previous route's DOM from {@render children()} when
@@ -160,4 +194,6 @@
 	{#if page.url.pathname !== '/onboarding'}
 		<FooterComponent />
 	{/if}
+
+	<ToastHost />
 </div>

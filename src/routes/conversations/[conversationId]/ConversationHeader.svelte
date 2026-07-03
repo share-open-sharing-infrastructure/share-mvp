@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { formatTimestamp } from '$lib/utils/utils';
+	import { formatTimestamp, displayName } from '$lib/utils/utils';
 	import { TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
 	import { Tooltip } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
@@ -10,49 +10,33 @@
 	import telegramLogo from '$lib/images/telegram-logo.svg';
 	import signalLogo from '$lib/images/Signal-Logo-White.svg';
 
-	let { chatPartner, conversation, PB_URL, onDelete, loggedInUserIsItemOwner = false, currentUser } : {
+	let { chatPartner, conversation, PB_URL, onDelete, loggedInUserIsItemOwner = false, partnerContact } : {
 		chatPartner: User;
 		conversation: Conversation;
 		PB_URL: string;
 		onDelete?: () => void;
 		loggedInUserIsItemOwner?: boolean;
-		currentUser: User;
+		partnerContact: { telegramUsername: string | null; telegramHidden: boolean; signalLink: string | null; signalHidden: boolean };
 	} = $props();
 
-	const isUserTrusted = $derived(chatPartner.trusts?.includes(currentUser.id) ?? false);
+	// Visibility (trusted-only handling) is resolved server-side by the /api/contact
+	// hook; here we just render what the partner is allowed to see.
+	const telegramAvailable = $derived(!!partnerContact?.telegramUsername);
+	const telegramHidden = $derived(!!partnerContact?.telegramHidden);
+	const signalAvailable = $derived(!!partnerContact?.signalLink);
+	const signalHidden = $derived(!!partnerContact?.signalHidden);
 
-	const telegramAvailable = $derived(
-		!!(chatPartner.telegramUsername &&
-			chatPartner.telegramUsername.trim() !== '' &&
-			(!chatPartner.telegramVisibleToTrustedOnly || isUserTrusted))
-	);
-	const telegramHidden = $derived(
-		!!(chatPartner.telegramUsername &&
-			chatPartner.telegramUsername.trim() !== '' &&
-			chatPartner.telegramVisibleToTrustedOnly &&
-			!isUserTrusted)
-	);
-	const signalAvailable = $derived(
-		!!(chatPartner.signalLink &&
-			chatPartner.signalLink.trim() !== '' &&
-			(!chatPartner.signalVisibleToTrustedOnly || isUserTrusted))
-	);
-	const signalHidden = $derived(
-		!!(chatPartner.signalLink &&
-			chatPartner.signalLink.trim() !== '' &&
-			chatPartner.signalVisibleToTrustedOnly &&
-			!isUserTrusted)
-	);
-
-	const telegramLink = $derived(telegramAvailable ? `https://t.me/${chatPartner.telegramUsername}` : null);
-	const signalLink = $derived(signalAvailable ? (chatPartner.signalLink ?? null) : null);
+	const telegramLink = $derived(telegramAvailable ? `https://t.me/${partnerContact.telegramUsername}` : null);
+	const signalLink = $derived(signalAvailable ? partnerContact.signalLink : null);
 
 	const showMessengerSection = $derived(telegramAvailable || telegramHidden || signalAvailable || signalHidden);
+
+	const chatPartnerName = $derived(displayName(chatPartner));
 
 	const chatPartnerAvatarUrl = $derived(
 		chatPartner.profileImage
 			? `${PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}`
-			: `https://ui-avatars.com/api/?name=${encodeURIComponent(chatPartner.username)}&background=random`
+			: `https://ui-avatars.com/api/?name=${encodeURIComponent(chatPartnerName)}&background=random`
 	);
 </script>
 
@@ -142,7 +126,7 @@
 			class="flex items-center gap-2 hover:opacity-80 transition-opacity"
 		>
 			<div class="hidden md:flex flex-col items-end">
-				<span class="text-sm font-medium">{chatPartner.username}</span>
+				<span class="text-sm font-medium">{chatPartnerName}</span>
 				<span class="text-xs text-tinte-500 dark:text-tinte-400">
 					{texts.ui.activeSince(formatTimestamp(chatPartner.created, true))}
 				</span>

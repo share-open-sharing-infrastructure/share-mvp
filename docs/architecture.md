@@ -18,12 +18,13 @@ graph TD
     Browser -->|"HTTP (pages + form actions)"| SK
     Browser -->|"WebSocket subscription"| PB
     SK -->|"PocketBase SDK — per-request"| PB
-    SK -->|"REST — server-side only"| ORS
+    SK -->|"REST — geocoding (server-side)"| ORS
+    PB -->|"REST — travel times (server-side hook)"| ORS
     SK -->|"REST — server-side only"| Mistral
     SK -->|"Web Push VAPID — server-side"| Push
 ```
 
-**Key constraint:** All calls to external services (ORS, Mistral, Web Push) are made server-side only. Raw geolocation coordinates and API credentials never reach the browser. The browser connects directly to PocketBase only for real-time WebSocket subscriptions — and only with a token passed through `page.data`, since the auth cookie is httpOnly.
+**Key constraint:** All calls to external services (ORS, Mistral, Web Push) are made server-side only. Raw geolocation coordinates and API credentials never reach the browser. User coordinates live in an **owner-only** `user_geolocations` collection (only the owner can read their own row) and are read solely by a PocketBase backend hook (`POST /api/travel-times`) that calls ORS and returns only bucketed minutes — so travel-time ORS calls run from the backend and coordinates never leave it. The browser connects directly to PocketBase only for real-time WebSocket subscriptions — and only with a token passed through `page.data`, since the auth cookie is httpOnly.
 
 ---
 
@@ -48,11 +49,26 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 | Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/logout` | No |
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
-| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync` | Varies |
-| Static | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/sitemap.xml` | No |
+| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync`, `/api/refresh` | Varies |
+| Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/sitemap.xml` | No |
+| Legal consent | `/legal/accept`, `/legal/locked` | Yes (gate-exempt) |
+
+`/misc/tos` and `/misc/privacy` are public but no longer static — they render the active document from the `legal_documents` collection (Issue #399). `/legal/accept` and `/legal/locked` are the re-consent gate (see [domain-model.md](domain-model.md)); they are exempt from the gate itself so a not-yet-consented user can reach them.
 
 All mutations go through SvelteKit **form actions** (`action="?/actionName"`). There is no REST API layer between the frontend and PocketBase — server load functions fetch data, form actions write it.
 
+### PocketBase server hooks (`pb_hooks`)
+
+Some logic runs inside PocketBase itself (JS hooks) so it can use backend privileges without exposing data to the client:
+
+| Hook route | Auth | Purpose |
+|---|---|---|
+| `GET /api/invite/{code}` | public | Resolves an invite code to `{ id, username }` only, so guests can follow `/invite/<code>` without the public user view exposing every code |
+| `POST /api/travel-times` | required | Reads owner coordinates from the owner-only `user_geolocations` collection, calls ORS, and returns only bucketed minutes (coordinates never leave the backend). The SvelteKit `/api/travel-times/{item,search}` endpoints relay to this hook. |
+| `GET /api/contact/{userId}` | required | Returns a user's telegram/signal handles for the caller, honouring the per-handle "visible to trusted only" flags + trust at the data layer (handles live in the owner-only `user_contacts` collection). |
+| `POST /api/legal/accept` · `POST /api/legal/decline` | required | Platform legal consent (#399). Server-authoritative: snapshot the active `legal_documents` body, write the immutable `user_legal_acceptances` record, refresh the user's version cache, and set/clear `legalLocked` — all in a transaction, in superuser context (the user can't write any of this directly). A `legalLocked` user is additionally blocked from mutating data at the PocketBase layer. |
+
+---
 
 ## AI Integration
 
@@ -71,7 +87,7 @@ All mutations go through SvelteKit **form actions** (`action="?/actionName"`). T
 | Service | Direction | Purpose | Notes |
 |---|---|---|---|
 | OpenRouteService (ORS) | Server → ORS | Address autocomplete (`/api/geocode`) | Restricted to Germany (`boundary.country=DEU`) |
-| OpenRouteService (ORS) | Server → ORS | Travel time matrix (`/api/travel-times/*`) | Supports foot, bicycle, car; coordinates never sent to browser |
+| OpenRouteService (ORS) | PocketBase hook → ORS | Travel time matrix (`POST /api/travel-times` hook) | Supports foot, bicycle, car; reads coords from owner-only `user_geolocations`, returns only bucketed minutes; SvelteKit `/api/travel-times/{item,search}` relay to it |
 | Mistral AI | Server → Mistral | Item photo analysis (`/api/analyze-item`) | pixtral-12b-2409 vision model; server-side only |
 | Web Push (VAPID) | Server → Push service | Push notifications | Per-device subscriptions stored in `push_subscriptions`; stale subscriptions auto-removed on HTTP 410/404 |
 | partner lending software instances | Server → partner software | Sync partner item catalogues into `items` (via `POST /api/sync` or `POST /api/refresh`) | Polled by a cronjob every X min; reads each institution's items and upserts/archives items owned by that institution's account. See [integrations.md](integrations.md) for details |
@@ -84,16 +100,19 @@ All mutations go through SvelteKit **form actions** (`action="?/actionName"`). T
 - **Process restart:** `supervisorctl restart svelte`
 - **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
-- **PocketBase:** runs as a separate process on Uberspace; SQLite data and file uploads live on the server filesystem — not managed by the CI/CD pipeline
+- **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
 
 **CI on pull requests:** Vitest runs with coverage (json + lcov) on every PR to `main` via `.github/workflows/vitest.yaml`. Coverage is posted as a PR comment via `davelosert/vitest-coverage-report-action`. The build step also catches TypeScript and Svelte compilation errors before merging.
 
 ## Real-time Architecture
 
-AllerLeih uses PocketBase's built-in WebSocket subscriptions e.g. for live chat in the conversations view. The utility function `setupPocketBaseSubscription()` in `src/lib/utils/utils.ts` wraps this pattern:
+AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat in the conversations view. The single entry point `subscribeRealtime()` in `src/lib/client-pb.ts` wraps this pattern:
 
-- Takes a collection name, optional record ID (`'*'` to subscribe to all records), and a callback
+- Takes an options object: collection, optional topic/record ID (`'*'` for all records), a handler, and an optional `onReconnect` callback
+- Adds retry-on-connect-failure and automatic recovery after a network drop or a mobile tab background-freeze (which silently kills the stream) — `onReconnect` fires so callers can refetch state missed while the stream was down (issue #435)
 - Returns an unsubscribe function suitable for `$effect()` cleanup in Svelte 5
-- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the WebSocket connection (the httpOnly cookie is inaccessible to JS)
+- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the connection (the httpOnly cookie is inaccessible to JS)
+
+Domain-specific reconciliation (e.g. keeping the conversation sidebar list in sync) lives next to its route — see `src/routes/conversations/conversationListRealtime.ts` — rather than in the components themselves.
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.

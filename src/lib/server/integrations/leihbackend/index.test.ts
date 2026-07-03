@@ -60,6 +60,10 @@ function makeMockPb(users: unknown[] = [], items: unknown[] = []) {
 			throw new Error(`unexpected collection: ${name}`);
 		}),
 		createBatch: vi.fn(() => batch),
+		// Mirror pocketbase's filter binding: substitute {:key} with the quoted param.
+		filter: vi.fn((expr: string, params: Record<string, string>) =>
+			expr.replace(/\{:(\w+)\}/g, (_, key) => `"${params[key]}"`)
+		),
 	};
 	return { pb: pb as never, batchCalls, usersGetFullList, itemsGetFullList };
 }

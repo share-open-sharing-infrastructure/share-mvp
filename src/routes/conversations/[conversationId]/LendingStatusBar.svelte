@@ -54,7 +54,7 @@
 </script>
 
 {#if status}
-	<div class="border-b border-tinte-100 dark:border-tinte-800 bg-papier dark:bg-tinte-900 px-4 py-3 space-y-3 shrink-0">
+	<div class="border-b border-tinte-100 dark:border-tinte-800 bg-papier dark:bg-tinte-900 px-4 sm:py-3 space-y-3 shrink-0">
 		{#if status === 'rejected'}
 			<div class="flex items-center gap-2">
 				<span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 dark:bg-tinte-800 text-tinte-500 dark:text-tinte-400 border border-gray-200 dark:border-tinte-700">
@@ -83,10 +83,10 @@
 			<!-- Current status + description + action buttons -->
 			<div class="flex items-center justify-between gap-3">
 				<div class="flex items-center gap-2 min-w-0">
-					<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 border border-primary-200 dark:border-primary-700 shrink-0">
+					<!-- <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 border border-primary-200 dark:border-primary-700 shrink-0">
 						{texts.lending.statusLabel[status]}
-					</span>
-					<span class="text-xs text-tinte-500 dark:text-tinte-400">
+					</span> -->
+					<span class="text-xs line-clamp-2 text-tinte-500 dark:text-tinte-400">
 						{descriptionText}
 					</span>
 				</div>
