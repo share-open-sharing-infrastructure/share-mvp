@@ -129,6 +129,14 @@ export interface User extends PocketBaseEntity {
 	deletedAt?: string;
 
 	/**
+	 * ISO datetime of the last authentication, stamped (throttled to 24h) by the
+	 * backend auth hook. Drives the inactive-account retention job (#461).
+	 * `hidden: true` on the collection — only readable via the superuser context, so
+	 * it never reaches a client (kept here to document the schema).
+	 */
+	lastLoginAt?: string;
+
+	/**
 	 * Cache of the latest platform ToS version this user has accepted (Issue #399).
 	 * Authoritative record lives in `user_legal_acceptances`; this mirror lets the
 	 * consent gate decide from the already-loaded auth record without a DB query.

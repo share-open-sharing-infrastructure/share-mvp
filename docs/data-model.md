@@ -28,6 +28,8 @@ erDiagram
         string tosAcceptedVersion "legal-consent cache (Issue #399) — server-only"
         string privacyAcceptedVersion "legal-consent cache — server-only"
         bool legalLocked "decline lock — set/cleared only by backend hooks"
+        date lastLoginAt "stamped on auth (throttled 24h) — drives inactive-account retention; hidden field, superuser-only"
+        date retentionNotifiedAt "last open-loan skip-notice (retention job); hidden field, superuser-only"
         date created
         date updated
     }
@@ -301,9 +303,23 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
 - Deletion is refused while any of the user's conversations is `accepted` / `active` /
   `return_requested` (open loan).
 
-**Phase 2 — purge** (not yet implemented): a scheduled job uses `deletedAt` to finally remove
-`deleted_accounts` rows and the anonymized `users` rows after the retention window; the same
-routine will drive auto-deletion of long-inactive accounts.
+**Phase 2 — purge** (partially implemented, issue #461): purging `deleted_accounts` rows and the
+anonymized `users` rows after their dispute-resolution window is still open. **Automated retention
+is implemented** as four nightly cron jobs in the backend (`pb_hooks/retention.pb.js` +
+`pb_hooks/jobs/retention.js`), enforcing the privacy policy (DSE v2.8):
+
+- **Inactive accounts** (6 months without login, keyed on `users.lastLoginAt`, stamped on auth and
+  throttled to once per 24h; empty `lastLoginAt` falls back to `created`): anonymized through the
+  same `anonymizeAccount` path as self-service deletion. Accounts with an open loan are skipped and
+  the user plus a platform admin (`ADMIN_NOTIFY_EMAIL`) are notified by email (deduped via a cooldown
+  recorded in `users.retentionNotifiedAt`, so the nightly job doesn't re-mail every night).
+- **Conversations** (6 months after last activity = `conversations.updated`): the conversation, its
+  `messages`, and notifications whose `relatedId` points at it are deleted — regardless of
+  `lendingStatus` (product decision in #461).
+- **Notifications** older than 90 days and **feedback** older than 6 months are deleted.
+
+Windows are configurable per deployment via `RETENTION_*` env vars (0 disables a job); jobs are
+idempotent and log counts only, never personal data.
 
 Login for a `deleted` account is blocked by an `onRecordAuthRequest` hook and, defensively, in
 `hooks.server.ts`. In the app, **never render `user.username` directly** — use `displayName()`
