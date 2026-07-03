@@ -51,9 +51,27 @@ curl -X POST "https://allerleih.org/api/refresh?institution=<users-id>" \
   -H "Authorization: Bearer $SYNC_SECRET"
 ```
 
-## Cron jobs (Uberspace)
+## Scheduling
 
-Add to the crontab (`crontab -e`):
+### Built-in PocketBase cron jobs (preferred)
+
+The backend (`allerleih-backend`, `pb_hooks/integration_sync.pb.js`) can trigger both endpoints itself. Configure in the **backend's** environment:
+
+| Variable | Example | Purpose |
+|---|---|---|
+| `FRONTEND_URL` | `https://allerleih.org` | SvelteKit origin the cron calls (no trailing slash) |
+| `SYNC_SECRET` | — | Must equal the frontend's `SYNC_SECRET` (the token is now needed in **both** environments) |
+| `SYNC_CRON` | `*/15 * * * *` | Schedule for the full pull (`POST /api/sync`); unset/empty = job disabled |
+| `REFRESH_CRON` | `0 * * * *` | Schedule for the per-item refresh (`POST /api/refresh`); unset/empty = job disabled |
+| `SYNC_TIMEOUT_SECONDS` | `540` (default) | HTTP timeout of the cron's call |
+
+Schedules are standard 5-field cron expressions (minute granularity). The jobs appear as `integration_sync` / `integration_refresh` in the PocketBase admin UI (Settings → Crons), where a superuser can also fire them manually; `GET /api/crons` and `POST /api/crons/{id}` do the same over HTTP. If a cron variable is set but `FRONTEND_URL` or `SYNC_SECRET` is missing, the backend logs an error at startup and does not schedule the job. `DRY_MODE=true` skips the outbound call.
+
+> **Overlap caveat:** neither side locks a running sync. Pick a schedule comfortably longer than the worst-case run duration (creates are batched 15-at-a-time with 5.5 s pauses, and per-item refresh makes one upstream request per stored item — heavier per institution than a bulk pull).
+
+### OS crontab (fallback)
+
+Alternatively, schedule curl from the host's crontab (`crontab -e`), e.g. on Uberspace:
 
 ```cron
 # Full catalogue pull for leihbackend institutions, every 15 minutes
@@ -63,7 +81,7 @@ Add to the crontab (`crontab -e`):
 0 * * * * curl -fsS -X POST https://allerleih.org/api/refresh -H "Authorization: Bearer $SYNC_SECRET" >/dev/null
 ```
 
-Tune the cadence to each source's freshness needs and politeness limits (per-item refresh makes one upstream request per stored item, so it is heavier per institution than a bulk pull).
+Tune the cadence to each source's freshness needs and politeness limits.
 
 ## Failure modes
 
