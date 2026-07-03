@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { parseAndValidateRow, parseCsv, validateFileLimits, parseAndMapCsv } from './csv';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+	parseAndValidateRow,
+	parseCsv,
+	validateFileLimits,
+	parseAndMapCsv,
+} from './csv';
 
 describe('parseAndValidateRow', () => {
 	const baseRow = {
@@ -36,12 +43,18 @@ describe('parseAndValidateRow', () => {
 	});
 
 	it('rejects an invalid category', () => {
-		const { errors } = parseAndValidateRow({ ...baseRow, categories: 'Ungültig;Werkzeug und Garten' });
+		const { errors } = parseAndValidateRow({
+			...baseRow,
+			categories: 'Ungültig;Werkzeug und Garten',
+		});
 		expect(errors.some((e) => e.includes('Ungültige Kategorie'))).toBe(true);
 	});
 
 	it('accepts up to 3 valid categories separated by semicolons', () => {
-		const { parsed, errors } = parseAndValidateRow({ ...baseRow, categories: 'Bücher;Spiele;Elektronik' });
+		const { parsed, errors } = parseAndValidateRow({
+			...baseRow,
+			categories: 'Bücher;Spiele;Elektronik',
+		});
 		expect(errors).toHaveLength(0);
 		expect(parsed!.categories).toEqual(['Bücher', 'Spiele', 'Elektronik']);
 	});
@@ -52,13 +65,21 @@ describe('parseAndValidateRow', () => {
 	});
 
 	it('accepts empty status and defaults to "available" when no externalUrl', () => {
-		const { parsed, errors } = parseAndValidateRow({ ...baseRow, status: '', externalUrl: '' });
+		const { parsed, errors } = parseAndValidateRow({
+			...baseRow,
+			status: '',
+			externalUrl: '',
+		});
 		expect(errors).toHaveLength(0);
 		expect(parsed!.status).toBe('available');
 	});
 
 	it('defaults status to "unknown" when externalUrl is set and status is empty', () => {
-		const { parsed, errors } = parseAndValidateRow({ ...baseRow, status: '', externalUrl: 'https://example.com/item/1' });
+		const { parsed, errors } = parseAndValidateRow({
+			...baseRow,
+			status: '',
+			externalUrl: 'https://example.com/item/1',
+		});
 		expect(errors).toHaveLength(0);
 		expect(parsed!.status).toBe('unknown');
 	});
@@ -69,7 +90,10 @@ describe('parseAndValidateRow', () => {
 	});
 
 	it('sets trusteesOnly to true', () => {
-		const { parsed } = parseAndValidateRow({ ...baseRow, trusteesOnly: 'true' });
+		const { parsed } = parseAndValidateRow({
+			...baseRow,
+			trusteesOnly: 'true',
+		});
 		expect(parsed!.trusteesOnly).toBe(true);
 	});
 });
@@ -115,7 +139,8 @@ describe('validateFileLimits', () => {
 });
 
 describe('parseAndMapCsv', () => {
-	const header = 'externalId,name,description,place,categories,externalUrl,status,image,trusteesOnly';
+	const header =
+		'externalId,name,description,place,categories,externalUrl,status,image,trusteesOnly';
 
 	it('maps valid rows to core items owned by the institution', () => {
 		const csv = `${header}\nABC-001,Bohrmaschine,Stark,Lager,Werkzeug und Garten,,available,https://img/1.jpg,false`;
@@ -165,5 +190,42 @@ describe('parseAndMapCsv', () => {
 		const { parseError, mappedRows } = parseAndMapCsv(csv, 'inst1');
 		expect(parseError).toBeTruthy();
 		expect(mappedRows).toHaveLength(0);
+	});
+});
+
+// Guards the checked-in example file (docs/examples/import-test.csv) against drift —
+// e.g. a renamed category or column would silently break the documented manual test.
+describe('docs/examples/import-test.csv', () => {
+	it('parses with exactly the intended errors and duplicate warning', () => {
+		const csvText = readFileSync(
+			join(__dirname, '../../../../../docs/examples/import-test.csv'),
+			'utf-8'
+		);
+		const { mappedRows, rowErrors, totalRows, parseError } = parseAndMapCsv(
+			csvText,
+			'inst1'
+		);
+
+		expect(parseError).toBeUndefined();
+		expect(totalRows).toBe(9);
+
+		// Two intentionally invalid rows: missing name (ERR-001) and unknown category (ERR-002).
+		expect(rowErrors.map((r) => r.externalId)).toEqual(['ERR-001', 'ERR-002']);
+		expect(rowErrors[0].errors.join(' ')).toContain('name ist erforderlich');
+		expect(rowErrors[1].errors.join(' ')).toContain('Ungültige Kategorie');
+
+		// 7 valid rows, the last being the intentional duplicate of TEST-001.
+		expect(mappedRows).toHaveLength(7);
+		const duplicate = mappedRows[mappedRows.length - 1];
+		expect(duplicate.item.externalId).toBe('TEST-001');
+		expect(duplicate.warnings.join(' ')).toContain('Doppelter externalId');
+
+		// Empty status + externalUrl set → 'unknown' (TEST-002).
+		const tent = mappedRows.find((r) => r.item.externalId === 'TEST-002');
+		expect(tent?.item.status).toBe('unknown');
+		expect(tent?.item.categories).toEqual([
+			'Reisen und Outdoor',
+			'Freizeit und Sport',
+		]);
 	});
 });

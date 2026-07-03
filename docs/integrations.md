@@ -77,7 +77,7 @@ The **core never imports a concrete integration.** Concrete integrations import 
 - **Idempotent upsert keyed on `(owner, externalId)`.** Each integration sets a stable `externalId` per item; re-running a sync with unchanged source data produces zero writes.
 - **Change detection.** `diffItems` compares the synced fields (`name`, `description`, `status`, `place`, `externalUrl`, `externalImgUrl`, `categories` — order-independent) and **skips** items that are unchanged.
 - **Archiving, not deleting.** Items that disappear from the source are set to `status: 'unavailable'` and their description is prefixed with `DESCRIPTION_PREFIX` (see `$lib/server/itemArchive`). Already-archived items are not re-archived. A reappearing item is un-archived by the normal update path.
-- **Rate-limit-safe batched writes.** `applyDiff` writes in batches sized to stay under PocketBase's default `*:create` limit (creates: 15/batch with a 5.5s pause; updates/archives: 50/batch). A failed batch is recorded as an error without aborting the rest.
+- **Rate-limit-safe batched writes.** `applyDiff` writes in batches sized to stay under PocketBase's default `*:create` limit (creates: 15/batch with a 5.5s pause; updates/archives: 50/batch). A failed batch is recorded as an error without aborting the rest. ⚠️ This requires the PocketBase **Batch API to be enabled** (it is off by default) — see [operations/integration-sync.md](operations/integration-sync.md#prerequisite-enable-the-pocketbase-batch-api).
 - **Auth retry is injected, not assumed.** Core write/read accept a `RetryWrapper`. Scheduled-pull flows pass one that re-authenticates as superuser on a 401; the user-session CSV import passes none (the default identity wrapper). This is why the same core serves both a cron-driven superuser sync and an institution uploading their own file.
 - **A `SyncSummary` per institution** with counts (`fetched`, `created`, `updated`, `archived`, `skipped`), `errors`, and `durationMs`.
 
@@ -108,6 +108,14 @@ handler, `syncEndpoint.ts`) and are driven by cron jobs. See
 failure modes.
 
 The WINBIAP CSV import is triggered by an institution uploading a file at `/user/import`; it runs the same core diff + write in-request.
+
+> **Trying it out:** the import page offers a minimal downloadable template
+> (`static/templates/items-import-template.csv`). For a fuller manual test there is
+> [`examples/import-test.csv`](examples/import-test.csv) — it exercises multi-category rows,
+> external image URLs, `trusteesOnly`, an `unavailable` item, two intentionally invalid rows
+> (missing `name`, unknown category) that must show up as errors in the preview, and a duplicate
+> `externalId` that must produce a warning. Re-uploading the same file after applying it should
+> report every row as `skip`.
 
 > **Shared base-URL field (interim):** institution discovery currently keys on `users.leihbackendUrl`,
 > which doubles as the generic base URL. A WINBIAP institution therefore puts its WebOPAC base

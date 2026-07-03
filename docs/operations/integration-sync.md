@@ -13,6 +13,22 @@ Both are session-unauthenticated (listed in `hooks.server.ts`'s unprotected pref
 
 Each stored item is routed to whichever integration `claimsItem(item)` recognizes (by `externalUrl`/`externalId`), so leihbackend and WINBIAP items belonging to the same institution are handled correctly.
 
+## Prerequisite: enable the PocketBase Batch API
+
+All integration writes (full sync, per-item refresh, **and** the CSV import at `/user/import`) go through PocketBase **batch requests** (`pb.createBatch()`), and the Batch API is **disabled by default**. On a fresh PocketBase instance every write batch fails until it is enabled — enable it once per instance, either:
+
+- **Admin UI:** Settings → Application → enable **Batch API**, or
+- **API:** as a superuser,
+
+  ```bash
+  curl -X PATCH https://<pocketbase-host>/api/settings \
+    -H "Authorization: Bearer $SUPERUSER_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"batch": {"enabled": true}}'
+  ```
+
+The default `batch.maxRequests` (50) is sufficient — the largest batch the integrations send is 50 operations.
+
 ## Required environment variables
 
 | Variable | Purpose |
@@ -92,6 +108,7 @@ Tune the cadence to each source's freshness needs and politeness limits.
 - **Feed exceeds the item cap (full sync)** — treated as a fetch failure (zero writes, error recorded).
 - **Many per-item fetches fail (refresh)** — a per-institution **circuit-breaker** aborts that institution with zero writes if ≥50% of items error, so a source outage can't mass-archive a catalogue. Individual transient errors leave their item untouched.
 - **PocketBase batch write fails for some items** — that batch is skipped, the error is recorded in `errors`, and the rest of the run continues.
+- **Every batch fails (typically "Batch requests are not allowed")** — the Batch API is disabled on the PocketBase instance; see the prerequisite section above.
 
 ## Item lifecycle
 

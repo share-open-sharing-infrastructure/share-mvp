@@ -1,0 +1,10 @@
+externalId,name,description,place,categories,externalUrl,status,image,trusteesOnly
+TEST-001,"Bohrmaschine Bosch PSB 750","Schlagbohrmaschine mit Koffer und Zubehör. Ideal für Beton, Holz und Metall.","Marienplatz 3, 21335 Lüneburg","Werkzeug und Garten",https://example.org/item/TEST-001,available,,false
+TEST-002,"Zelt für 4 Personen","Kuppelzelt mit Vorraum, wasserdicht bis 3.000 mm Wassersäule.","Marienplatz 3, 21335 Lüneburg","Reisen und Outdoor;Freizeit und Sport",https://example.org/item/TEST-002,,,false
+TEST-003,"Raclette-Grill","Raclette für 8 Personen mit Pfännchen und Schabern.","Marienplatz 3, 21335 Lüneburg",Küche,,available,https://picsum.photos/seed/raclette/600/400,false
+TEST-004,"Kinderfahrrad 16 Zoll","Rotes Kinderfahrrad mit Stützrädern, für Kinder ab 4 Jahren.","Marienplatz 3, 21335 Lüneburg","Für Kinder",,unavailable,,false
+TEST-005,"Beamer Epson EB-W49","Full-HD-Beamer inkl. HDMI-Kabel und Tasche. Nur für vertraute Nutzer:innen.","Marienplatz 3, 21335 Lüneburg","Elektronik;Ton und Licht",,available,,true
+TEST-006,"Werkzeugkoffer 108-teilig","Universalkoffer mit Ratschen, Bits und Schraubendrehern.","Marienplatz 3, 21335 Lüneburg","Werkzeug und Garten",,available,,false
+ERR-001,,"Diese Zeile hat absichtlich keinen Namen und erscheint in der Vorschau als Fehler.","Marienplatz 3, 21335 Lüneburg",Sonstiges,,available,,false
+ERR-002,"Heckenschere","Diese Zeile hat absichtlich eine ungültige Kategorie und erscheint als Fehler.","Marienplatz 3, 21335 Lüneburg",Gartenzeug,,available,,false
+TEST-001,"Bohrmaschine Bosch PSB 750 (aktualisiert)","Absichtliches Duplikat von TEST-001 – die Vorschau zeigt eine Warnung, die letzte Zeile gewinnt.","Marienplatz 3, 21335 Lüneburg","Werkzeug und Garten",https://example.org/item/TEST-001,available,,false
