@@ -10,3 +10,10 @@ dist
 .claude/settings.json
 .claude/worktrees
 .claude/CLAUDE.md
+
+# Playwright e2e
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/.auth/
