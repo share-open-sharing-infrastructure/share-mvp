@@ -115,7 +115,7 @@ export async function countMembersForGroups(
 /**
  * Fetch a group and enforce that the user may view it (owner or member). Throws 404 if the
  * group does not exist and redirects to the group list if the user is neither the owner nor
- * a member. Shared by the group overview and its sub-pages (`/mitglieder`, `/einstellungen`)
+ * a member. Shared by the group overview and its sub-pages (`/members`, `/settings`)
  * so the guard lives in one place.
  *
  * Returns the group, whether the user owns it, and the (expanded) membership rows — the

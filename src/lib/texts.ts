@@ -274,6 +274,8 @@ export const texts = {
 		activeLendingBadge: 'aktive Leihe',
 		activeLendingExplain:
 			'„Aktive Leihe" heißt: diese Person hat aktuell einen deiner Gegenstände ausgeliehen.',
+		removeUnshareHint:
+			'Wird ein Mitglied entfernt oder verlässt die Gruppe, werden seine mit dieser Gruppe geteilten Gegenstände automatisch wieder aus der Gruppe genommen.',
 		removeMemberConfirm: (name: string) => `${name} wirklich aus der Gruppe entfernen?`,
 		activeLendingWarning: (name: string) =>
 			`Achtung: ${name} hat aktuell noch einen deiner Gegenstände ausgeliehen. Die laufende Leihe bleibt bestehen, aber nach dem Entfernen besteht kein Gruppenzugriff mehr.`,

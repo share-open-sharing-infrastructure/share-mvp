@@ -5,7 +5,7 @@ import { ME, params, r, req, makeLocals } from '../groupTestHelpers';
 
 beforeEach(() => vi.clearAllMocks());
 
-const url = new URL('http://x/user/groups/g1/mitglieder');
+const url = new URL('http://x/user/groups/g1/members');
 
 describe('members — addMember', () => {
 	it('rejects adding yourself (you already own/manage the group)', async () => {

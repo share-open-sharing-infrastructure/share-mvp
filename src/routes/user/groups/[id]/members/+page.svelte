@@ -95,6 +95,9 @@
 					<p class="text-xs text-tinte-400 flex items-center gap-1">
 						<InfoCircleOutline class="h-3.5 w-3.5" />{texts.groups.activeLendingExplain}
 					</p>
+					<p class="text-xs text-tinte-400 flex items-start gap-1">
+						<InfoCircleOutline class="h-3.5 w-3.5 shrink-0 mt-0.5" />{texts.groups.removeUnshareHint}
+					</p>
 				{/if}
 				<ul class="divide-y divide-tinte-100 dark:divide-tinte-700">
 					{#each data.members as m (m.membershipId)}

@@ -5,7 +5,7 @@ import { ME, params, r, req, makeLocals } from '../groupTestHelpers';
 
 beforeEach(() => vi.clearAllMocks());
 
-const url = new URL('http://x/user/groups/g1/einstellungen');
+const url = new URL('http://x/user/groups/g1/settings');
 
 describe('settings — load (owner only)', () => {
 	it('returns the group, public url and current invite for the owner', async () => {

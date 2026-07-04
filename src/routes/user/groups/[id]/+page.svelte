@@ -22,11 +22,11 @@
 			<p class="mx-auto max-w-2xl whitespace-pre-line text-tinte-700 dark:text-tinte-300">{data.group.description}</p>
 		{/if}
 		<div class="flex flex-wrap justify-center gap-2">
-			<a href={resolve(`/user/groups/${data.group.id}/mitglieder`)} class={navLinkClass}>
+			<a href={resolve(`/user/groups/${data.group.id}/members`)} class={navLinkClass}>
 				<UsersGroupOutline class="h-4 w-4" />{texts.groups.members}
 			</a>
 			{#if data.isOwner}
-				<a href={resolve(`/user/groups/${data.group.id}/einstellungen`)} class={navLinkClass}>
+				<a href={resolve(`/user/groups/${data.group.id}/settings`)} class={navLinkClass}>
 					<CogOutline class="h-4 w-4" />{texts.groups.settings}
 				</a>
 			{/if}
