@@ -11,7 +11,7 @@ Both are session-unauthenticated (listed in `hooks.server.ts`'s unprotected pref
 | `POST /api/sync` | Full catalogue pull: runs every registered **pull** integration, fetches each configured institution's whole catalogue, and upserts/archives its items. | Sources with a cheap bulk feed (leihbackend `item_public`). |
 | `POST /api/refresh` | Per-item refresh: loads each institution's already-stored items and re-fetches them **one by one**, updating changed ones and archiving those the source no longer has. Never creates. | Sources without a practical bulk re-pull (WINBIAP WebOPAC). Pass `?institution=<users id>` to refresh just one institution; omit to refresh all. |
 
-Each stored item is routed to whichever integration `claimsItem(item)` recognizes (by `externalUrl`/`externalId`), so leihbackend and WINBIAP items belonging to the same institution are handled correctly.
+Each institution is first matched to the integrations serving its source (`claimsInstitution`, detected from the base URL — `/webopac` ⇒ WINBIAP), then each stored item is routed to whichever remaining integration `claimsItem(item)` recognizes (by `externalUrl`/`externalId`).
 
 ## Prerequisite: enable the PocketBase Batch API
 
@@ -83,7 +83,7 @@ The backend (`allerleih-backend`, `pb_hooks/integration_sync.pb.js`) can trigger
 
 Schedules are standard 5-field cron expressions (minute granularity). The jobs appear as `integration_sync` / `integration_refresh` in the PocketBase admin UI (Settings → Crons), where a superuser can also fire them manually; `GET /api/crons` and `POST /api/crons/{id}` do the same over HTTP. If a cron variable is set but `FRONTEND_URL` or `SYNC_SECRET` is missing, the backend logs an error at startup and does not schedule the job. `DRY_MODE=true` skips the outbound call.
 
-> **Overlap caveat:** neither side locks a running sync. Pick a schedule comfortably longer than the worst-case run duration (creates are batched 15-at-a-time with 5.5 s pauses, and per-item refresh makes one upstream request per stored item — heavier per institution than a bulk pull).
+> **Overlap protection & long first runs:** the frontend holds a process-wide **in-flight lock** shared by `/api/sync` and `/api/refresh` — while one run is active, any further request answers `429` without doing work, so an overlapping cron tick is harmless (it just skips a beat). Be aware of durations, though: creates are batched 15-at-a-time with 5.5 s pauses (≈2.7 items/s), so a **first sync** of a large catalogue can far exceed `SYNC_TIMEOUT_SECONDS` — 5000 items take ≈30 min. The backend cron then logs a timeout while the run **keeps completing server-side**; subsequent ticks 429 until it finishes. For a first import of a big catalogue, prefer a manual `curl` without a timeout (see above) instead of waiting for the cron. Per-item refresh makes one upstream request per stored item — heavier per institution than a bulk pull; size `REFRESH_CRON` accordingly.
 
 ### OS crontab (fallback)
 
@@ -103,10 +103,12 @@ Tune the cadence to each source's freshness needs and politeness limits.
 
 - **Wrong or missing `Authorization` header** — `401 Unauthorized`, no work done.
 - **Missing env vars** — `503 Sync is not configured.`
+- **Another run already in progress** — `429`; no work done. Retry after the running sync/refresh finishes (its summaries appear in the logs).
 - **Superuser authentication fails** — `503`; no institutions processed. Check `PB_SUPERUSER_EMAIL` / `PB_SUPERUSER_PASSWORD`.
 - **A source instance is unreachable / errors (full sync)** — that institution's pull is aborted with zero writes (existing items untouched, nothing archived). The error is recorded in that institution's `errors` and logged via `console.error`; other institutions are unaffected.
 - **Feed exceeds the item cap (full sync)** — treated as a fetch failure (zero writes, error recorded).
-- **Many per-item fetches fail (refresh)** — a per-institution **circuit-breaker** aborts that institution with zero writes if ≥50% of items error, so a source outage can't mass-archive a catalogue. Individual transient errors leave their item untouched.
+- **Source answers with an empty or collapsed feed (full sync)** — an **archive circuit-breaker** skips the archive phase (creates/updates still apply) when the feed is empty or would archive ≥50% of the institution's stored items, and records an error. A source mid-migration or an emptied view can't mass-archive a catalogue; a genuine mass-removal must be archived manually (or the guard relaxed for one run).
+- **Many per-item fetches fail or report "gone" (refresh)** — a per-institution **circuit-breaker** aborts that institution with zero writes if ≥50% of items error **or come back "gone"** (a collection-level 404 or a WebOPAC in maintenance reports every item gone), so a source outage can't mass-archive a catalogue. Individual transient errors leave their item untouched; individually gone items below the threshold are archived normally.
 - **PocketBase batch write fails for some items** — that batch is skipped, the error is recorded in `errors`, and the rest of the run continues.
 - **Every batch fails (typically "Batch requests are not allowed")** — the Batch API is disabled on the PocketBase instance; see the prerequisite section above.
 

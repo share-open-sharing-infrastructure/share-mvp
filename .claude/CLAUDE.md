@@ -45,9 +45,10 @@ PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- 
 
 ## Environment variables
 
-Required in `.env` (see `docs/architecture.md` for what each does): `PUBLIC_PB_URL`,
-`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
-`MISTRAL_API_KEY` (prod only).
+Required in `.env` (see `docs/architecture.md` for what each does; template: `.env.example`):
+`PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
+`MISTRAL_API_KEY` (prod only). Integration sync (`/api/sync`, `/api/refresh`; see
+`docs/operations/integration-sync.md`): `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`.
 
 ## Guardrails (always apply)
 

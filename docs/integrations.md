@@ -35,7 +35,7 @@ up to date when a full re-pull isn't practical (because e.g. the data source is 
 whole catalogue, it loads the institution's stored items and re-fetches **each one** from its source:
 
 ```
-existing items ──▶ per item: claimsItem → fetchOne ──▶ found | gone | error
+existing items ──▶ per item: claimsInstitution → claimsItem → fetchOne ──▶ found | gone | error
                                                           ▼
                               diffItems(found-items, resolved) ──▶ applyDiff (update + archive; never create)
 ```
@@ -43,10 +43,13 @@ existing items ──▶ per item: claimsItem → fetchOne ──▶ found | gon
 - **found & changed** → update. **gone** (source no longer has it) → archive (`unavailable`).
   **error** (transient) → leave untouched.
 - A per-institution **circuit-breaker** aborts with zero writes if ≥50% of fetches error
-  (so a source outage can't mass-archive the catalogue).
-- Each stored item is routed to the `RefreshIntegration` whose `claimsItem(item)` returns true
-  (detected from `externalUrl`/`externalId`), so leihbackend and WINBIAP items in the same
-  institution are each handled correctly.
+  **or come back "gone"** (so a source outage — including a collection-level 404 or an empty
+  maintenance response — can't mass-archive the catalogue).
+- Routing is two-staged: integrations are first narrowed to those whose optional
+  `claimsInstitution(institution)` accepts the institution's source (detected from its base URL,
+  e.g. `/webopac` ⇒ WINBIAP), then each stored item goes to the first remaining integration whose
+  `claimsItem(item)` returns true (detected from `externalUrl`/`externalId`). The two stages keep
+  leihbackend's catch-all `claimsItem` from grabbing — and wrongly archiving — another source's items.
 - Discovery is shared (`findSyncInstitutions` in `core/pocketbase.ts`). `POST /api/refresh` refreshes
   every configured institution; `POST /api/refresh?institution=<id>` refreshes just one (an unknown
   id returns a single error summary, zero writes).

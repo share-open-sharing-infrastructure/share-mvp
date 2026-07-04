@@ -98,7 +98,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
 - **Deploy trigger:** push to `main` → GitHub Actions (`.github/workflows/deploy-to-uberspace.yaml`) → `npm ci && npm run build` → `rsync` to Uberspace
 - **Process restart:** `supervisorctl restart svelte`
-- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`
+- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`, and the integration-sync vars `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (see [operations/integration-sync.md](operations/integration-sync.md)); a tracked `.env.example` lists all required vars
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
 
