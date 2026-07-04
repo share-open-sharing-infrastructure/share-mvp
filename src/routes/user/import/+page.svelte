@@ -43,13 +43,7 @@
 		return 'gray';
 	};
 
-	const actionLabel = (action: string) => {
-		if (action === 'create') return 'Neu';
-		if (action === 'update') return 'Update';
-		if (action === 'archive') return 'Archivieren';
-		if (action === 'error') return 'Fehler';
-		return action;
-	};
+	const actionLabel = (action: string) => texts.institutional.importActionLabels[action] ?? action;
 </script>
 
 <SeoHead title={texts.seo.userImport.title} robots="noindex, nofollow" />
@@ -62,17 +56,29 @@
 	</div>
 </div>
 
+<form method="POST" action="?/refresh" 
+	use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }} 
+	class="px-4 mx-auto max-w-7xl justify-center flex">	
+	<Button type="submit">{texts.institutional.importRefreshButton}</Button>
+</form>
+
+{#if form?.refreshed}
+	<div class="px-4 mx-auto max-w-7xl mt-4 flex justify-center">
+		<CustomAlert type="success" message={form.message ?? texts.institutional.importRefreshTriggered} />
+	</div>
+{/if}
+
 <main class="max-w-3xl mx-auto px-4 py-8 space-y-6 relative">
 	{#if submitting}
 		<div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-sand/80 rounded-lg gap-3">
-			<AllerLoader size={64} variant="rotate" label="Importiere …" />
-			<p class="text-sm text-tinte-600">Bitte warten …</p>
+			<AllerLoader size={64} variant="rotate" label={texts.institutional.importLoaderLabel} />
+			<p class="text-sm text-tinte-600">{texts.institutional.importLoaderHint}</p>
 		</div>
 	{/if}
 	{#if step === 'upload'}
 		<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm p-6 space-y-4">
 			<p class="text-sm text-tinte-600 dark:text-tinte-400">
-				Lade dein Inventar als CSV-Datei hoch. Verwende das Format der Vorlage.
+				{texts.institutional.importIntro}
 			</p>
 			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
@@ -123,7 +129,7 @@
 
 			{#if form.summary.errors > 0}
 				<Alert color="yellow">
-					{form.summary.errors} Zeile(n) konnten nicht importiert werden. Korrigiere die Fehler in der CSV-Datei und lade sie erneut hoch.
+					{texts.institutional.importRowErrorsAlert(form.summary.errors)}
 				</Alert>
 			{/if}
 
@@ -133,11 +139,11 @@
 					<table class="w-full text-sm text-left">
 						<thead class="text-xs text-tinte-500 uppercase bg-tinte-50">
 							<tr>
-								<th class="px-3 py-2">Zeile</th>
-								<th class="px-3 py-2">ID</th>
-								<th class="px-3 py-2">Name</th>
-								<th class="px-3 py-2">Aktion</th>
-								<th class="px-3 py-2">Hinweise</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.row}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.id}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.name}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.action}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.hints}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -158,7 +164,7 @@
 					</table>
 					{#if form.totalRows > 50}
 						<p class="text-xs text-tinte-400 mt-2">
-							Vorschau zeigt die ersten 50 von {form.totalRows} Zeilen.
+							{texts.institutional.importPreviewTruncated(form.totalRows)}
 						</p>
 					{/if}
 				</div>
@@ -168,14 +174,14 @@
 			{#if form.archiveRows && form.archiveRows.length > 0}
 				<div class="space-y-1">
 					<p class="text-sm font-medium text-tinte-700">
-						Folgende Einträge werden archiviert (nicht mehr in der CSV):
+						{texts.institutional.importArchiveListTitle}
 					</p>
 					<ul class="text-sm text-tinte-500 list-disc list-inside space-y-0.5">
 						{#each form.archiveRows.slice(0, 10) as row (row.id)}
 							<li>{row.name} <span class="font-mono text-xs">({row.externalId})</span></li>
 						{/each}
 						{#if form.archiveRows.length > 10}
-							<li class="text-tinte-400">… und {form.archiveRows.length - 10} weitere</li>
+							<li class="text-tinte-400">{texts.institutional.importArchiveMore(form.archiveRows.length - 10)}</li>
 						{/if}
 					</ul>
 				</div>
@@ -210,7 +216,7 @@
 			</div>
 			{#if form.summary.errors > 0}
 				<Alert color="yellow">
-					{form.summary.errors} Fehler beim Importieren. Prüfe die CSV-Datei und starte einen neuen Import.
+					{texts.institutional.importApplyErrorsAlert(form.summary.errors)}
 				</Alert>
 				{#if form.rowErrors && form.rowErrors.length > 0}
 					<ul class="text-xs text-accent-700 font-mono space-y-0.5 list-disc list-inside">
@@ -229,7 +235,7 @@
 					{texts.institutional.importAnotherButton}
 				</Button>
 				<a href={resolve('/user/items')} class="inline-flex items-center text-sm font-medium text-primary hover:underline">
-					Zu meinen Dingen →
+					{texts.institutional.importGoToItems}
 				</a>
 			</div>
 		</div>

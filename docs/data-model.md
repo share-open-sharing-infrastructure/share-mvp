@@ -29,6 +29,8 @@ erDiagram
         string inviteCode
         string invitedBy FK
         User[] trusts FK
+        string leihbackendUrl "leihbackend instance origin, for institutional sync"
+        string leihbackendItemUrlTemplate "deep-link template, {id}/{iid} placeholders"
         string tosAcceptedVersion "legal-consent cache (Issue #399) — server-only"
         string privacyAcceptedVersion "legal-consent cache — server-only"
         bool legalLocked "decline lock — set/cleared only by backend hooks"

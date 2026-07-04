@@ -45,9 +45,10 @@ PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- 
 
 ## Environment variables
 
-Required in `.env` (see `docs/architecture.md` for what each does): `PUBLIC_PB_URL`,
-`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
-`MISTRAL_API_KEY` (prod only).
+Required in `.env` (see `docs/architecture.md` for what each does; template: `.env.example`):
+`PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
+`MISTRAL_API_KEY` (prod only). Integration sync (`/api/sync`, `/api/refresh`; see
+`docs/operations/integration-sync.md`): `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`.
 
 ## Guardrails (always apply)
 
@@ -88,6 +89,8 @@ These prevent the most common bugs/security issues here — follow them without 
 | Writing tests + PocketBase mocks | `docs/testing-strategy.md` |
 | UI strings / categories | `docs/text-management.md`, `src/lib/texts.ts` |
 | Groups: roles, public/self-join, visibility model | `docs/groups.md` |
+| Partner catalogue integrations (leihbackend, WINBIAP), `/api/sync` + `/api/refresh`, adding a new integration | `docs/integrations.md`; leihbackend API reference: `docs/leihbackend-integration-spec.md` |
+| Operating the sync/refresh endpoints (env vars, cron, failure modes) | `docs/operations/integration-sync.md` |
 | Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
 | Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |

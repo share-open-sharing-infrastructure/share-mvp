@@ -9,7 +9,7 @@ System-level overview of AllerLeih: tech stack, request flow, authentication, ro
 ```mermaid
 graph TD
     Browser["Browser (SvelteKit SPA + PWA)"]
-    SK["SvelteKit Node server (Uberspace shared hosting)"]
+    SK["SvelteKit Node server"]
     PB["PocketBase (SQLite + Auth + Realtime)"]
     ORS["OpenRouteService API (geocoding + travel times\nGermany only)"]
     Mistral["Mistral AI (pixtral-12b-2409 vision)\nitem photo analysis"]
@@ -34,8 +34,9 @@ Auth runs as a two-handle sequence in `src/hooks.server.ts` on every request:
 
 1. **`authentication`** — creates a per-request PocketBase instance, restores auth state from the httpOnly cookie, calls `authRefresh()` to extend the session, and sets `event.locals.user` (null if not logged in).
 
-2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list:
-   - `/auth/*`, `/search`, `/items`, `/users`, `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`
+2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list as defined in `hooks.server.ts`.
+
+   `/api/sync` protects itself via a bearer token (`SYNC_SECRET`) instead of session auth.
 
 For client-side PocketBase WebSocket subscriptions (live chat), the auth token is passed from the server to the client via `page.data.token`, since the httpOnly cookie is not accessible to browser JS.
 
@@ -48,7 +49,7 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 | Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/logout` | No |
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
-| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics` | Varies |
+| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync`, `/api/refresh` | Varies |
 | Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/sitemap.xml` | No |
 | Legal consent | `/legal/accept`, `/legal/locked` | Yes (gate-exempt) |
 
@@ -71,7 +72,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 
 ## AI Integration
 
-### Current: Mistral Vision — Item Photo Analysis (`/api/analyze-item`)
+### Mistral Vision — Item Photo Analysis (`/api/analyze-item`)
 
 - **Trigger:** User uploads photos in `/user/items/bulk-add` (bulk import flow for institutions and power users)
 - **Model:** `pixtral-12b-2409` (multimodal vision)
@@ -81,15 +82,6 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 - **Rate limiting:** In-memory per-user limit of 300 requests/hour — resets on server restart, not safe for multi-instance deployments
 - **Data residency:** Mistral processes data in France under EU law; this is disclosed in the bulk upload UI
 
-### Potential Extension Points
-
-- AI-enhanced search (e.g. user asks "What do I need to drill build a treehouse?" and AI suggests relevant items)
-- Auto-categorisation during single-item upload (currently bulk-only)
-- CSV import quality checks and enrichment for institutional partners
-- ...
-
----
-
 ## External API Boundaries
 
 | Service | Direction | Purpose | Notes |
@@ -98,21 +90,19 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 | OpenRouteService (ORS) | PocketBase hook → ORS | Travel time matrix (`POST /api/travel-times` hook) | Supports foot, bicycle, car; reads coords from owner-only `user_geolocations`, returns only bucketed minutes; SvelteKit `/api/travel-times/{item,search}` relay to it |
 | Mistral AI | Server → Mistral | Item photo analysis (`/api/analyze-item`) | pixtral-12b-2409 vision model; server-side only |
 | Web Push (VAPID) | Server → Push service | Push notifications | Per-device subscriptions stored in `push_subscriptions`; stale subscriptions auto-removed on HTTP 410/404 |
+| partner lending software instances | Server → partner software | Sync partner item catalogues into `items` (via `POST /api/sync` or `POST /api/refresh`) | Polled by a cronjob every X min; reads each institution's items and upserts/archives items owned by that institution's account. See [integrations.md](integrations.md) for details |
 
----
 
-## Deployment Pipeline
+## Current Deployment Pipeline for "AllerLeih" (proof-of-concept instance)
 
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
 - **Deploy trigger:** push to `main` → GitHub Actions (`.github/workflows/deploy-to-uberspace.yaml`) → `npm ci && npm run build` → `rsync` to Uberspace
 - **Process restart:** `supervisorctl restart svelte`
-- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`
+- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`, and the integration-sync vars `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (see [operations/integration-sync.md](operations/integration-sync.md)); a tracked `.env.example` lists all required vars
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
 
 **CI on pull requests:** Vitest runs with coverage (json + lcov) on every PR to `main` via `.github/workflows/vitest.yaml`. Coverage is posted as a PR comment via `davelosert/vitest-coverage-report-action`. The build step also catches TypeScript and Svelte compilation errors before merging.
-
----
 
 ## Real-time Architecture
 
