@@ -1,4 +1,6 @@
+import { dev } from '$app/environment';
 import type { Item } from '$lib/types/models';
+import { assertPublicHttpUrl } from '../core/urlGuard';
 
 type ItemStatus = Item['status']; // 'available' | 'unavailable' | 'unknown'
 
@@ -74,6 +76,7 @@ async function requestSearch(url: string, base: string, fetchFn: typeof fetch): 
 	try {
 		response = await fetchFn(url, {
 			signal: AbortSignal.timeout(TIMEOUT_MS),
+			redirect: 'manual',
 			headers: { ...BROWSER_HEADERS, Referer: `${base}/` },
 		});
 	} catch (err) {
@@ -109,6 +112,7 @@ export async function fetchItemStatus(
 	fetchFn: typeof fetch = fetch
 ): Promise<{ found: false } | { found: true; status: ItemStatus }> {
 	const base = normalizeBaseUrl(baseUrl);
+	assertPublicHttpUrl(base, { allowInsecure: dev });
 
 	let body = await requestSearch(buildSearchUrl(base, barcode, true), base, fetchFn);
 

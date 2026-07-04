@@ -18,9 +18,18 @@ function isAuthorized(request: Request): boolean {
 }
 
 /**
+ * Process-wide in-flight lock shared by all integration endpoints. Sync and refresh write the
+ * same `items` records, so only one run may be active at a time: a large first sync can outlast
+ * the cron cadence, and an overlapping second run would double-create items (the diff of both
+ * runs is computed before either's creates land). Holds the label of the running endpoint.
+ */
+let runInProgress: string | null = null;
+
+/**
  * Builds the shared request handler behind the bearer-secret-protected integration endpoints
  * (`/api/sync`, `/api/refresh`). Verifies configuration + authorization, obtains the superuser
- * client, runs `runner`, logs one `[label] …` line per institution summary, and returns the JSON.
+ * client, runs `runner` (rejecting overlapping runs with 429), logs one `[label] …` line per
+ * institution summary, and returns the JSON.
  *
  * @param label - Log prefix, e.g. 'sync' or 'refresh'.
  * @param runner - Produces the per-institution summaries from an authenticated superuser client.
@@ -39,11 +48,22 @@ export function makeSyncHandler(
 			error(401, 'Unauthorized');
 		}
 
-		const pb = await getSuperuserClient().catch((): never =>
-			error(503, 'Sync unavailable: superuser authentication failed.')
-		);
+		if (runInProgress) {
+			error(429, `A ${runInProgress} run is already in progress — try again later.`);
+		}
 
-		const summaries = await runner(pb, url);
+		// Take the lock synchronously (no await between check and set) so two concurrent
+		// requests cannot both pass the check.
+		runInProgress = label;
+		let summaries: SyncSummary[];
+		try {
+			const pb = await getSuperuserClient().catch((): never =>
+				error(503, 'Sync unavailable: superuser authentication failed.')
+			);
+			summaries = await runner(pb, url);
+		} finally {
+			runInProgress = null;
+		}
 
 		for (const summary of summaries) {
 			const line =

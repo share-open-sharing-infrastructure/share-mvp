@@ -128,6 +128,29 @@ describe('fetchAllItems', () => {
 
 		await expect(fetchAllItems('https://allerlei.uber.space', fetchFn)).rejects.toThrow(LeihbackendFetchError);
 	});
+
+	it('throws after one request if the source claims an absurd page count (no request storm)', async () => {
+		const fetchFn = vi.fn().mockResolvedValue(
+			jsonResponse({ page: 1, perPage: 200, totalItems: 1, totalPages: 1_000_000, items: [makeItem('a')] })
+		);
+
+		await expect(fetchAllItems('https://allerlei.uber.space', fetchFn)).rejects.toThrow(/pages/);
+		expect(fetchFn).toHaveBeenCalledTimes(1);
+	});
+
+	it('stops paginating when a page comes back empty despite a higher totalPages', async () => {
+		const fetchFn = vi
+			.fn()
+			.mockResolvedValueOnce(
+				jsonResponse({ page: 1, perPage: 200, totalItems: 3, totalPages: 3, items: [makeItem('a')] })
+			)
+			.mockResolvedValueOnce(jsonResponse({ page: 2, perPage: 200, totalItems: 3, totalPages: 3, items: [] }));
+
+		const items = await fetchAllItems('https://allerlei.uber.space', fetchFn);
+
+		expect(items.map((i) => i.id)).toEqual(['a']);
+		expect(fetchFn).toHaveBeenCalledTimes(2);
+	});
 });
 
 describe('fetchItemById', () => {

@@ -127,6 +127,13 @@ export type RefreshOutcome =
 export interface RefreshIntegration {
 	/** Stable identifier, e.g. 'winbiap'. */
 	readonly id: string;
+	/**
+	 * True if this integration serves `institution` at all (detected from its configured
+	 * source base URL). Checked before `claimsItem`, so a catch-all `claimsItem` cannot
+	 * grab — and wrongly archive — items belonging to another integration's institution.
+	 * Omitted ⇒ claims every institution.
+	 */
+	claimsInstitution?(institution: Institution): boolean;
 	/** True if this integration owns `item` (detected from its `externalUrl`/`externalId`). */
 	claimsItem(item: ExistingItem): boolean;
 	/** Fetches the current state of one stored item from the source. */

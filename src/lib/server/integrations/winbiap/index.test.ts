@@ -7,7 +7,7 @@ vi.mock('./client', async (importOriginal) => {
 	return { ...actual, fetchItemStatus };
 });
 
-import { winbiapRefreshIntegration, isWinbiapItem } from './index';
+import { winbiapRefreshIntegration, isWinbiapItem, isWinbiapInstitution } from './index';
 import type { ExistingItem, Institution } from '../core/types';
 
 function existingItem(overrides: Partial<ExistingItem> = {}): ExistingItem {
@@ -42,6 +42,18 @@ describe('isWinbiapItem', () => {
 
 	it('does not claim a plain leihbackend item', () => {
 		expect(isWinbiapItem(existingItem({ externalId: 'abc123def456ghi', externalUrl: 'https://allerlei.uber.space/x' }))).toBe(false);
+	});
+});
+
+describe('isWinbiapInstitution', () => {
+	it('claims institutions whose base URL is a WebOPAC', () => {
+		expect(isWinbiapInstitution(institution)).toBe(true);
+		expect(winbiapRefreshIntegration.claimsInstitution?.(institution)).toBe(true);
+	});
+
+	it('does not claim a leihbackend institution', () => {
+		const leihbackend = { id: 'i2', username: 'commons', leihbackendUrl: 'https://allerlei.uber.space' } as Institution;
+		expect(isWinbiapInstitution(leihbackend)).toBe(false);
 	});
 });
 

@@ -110,9 +110,18 @@ describe('refreshInstitution', () => {
 	});
 
 	it('archives an item the source no longer has (gone)', async () => {
-		const item = existingItem('118$1', { description: 'a thing' });
-		const { pb, ops } = makeMockPb([item]);
-		const integrations = [integration({ '118$1': { kind: 'gone' } })];
+		// A minority gone (1 of 3) — below the circuit-breaker threshold, so it archives.
+		const gone = existingItem('118$1', { description: 'a thing' });
+		const ok1 = existingItem('118$2', { status: 'available' });
+		const ok2 = existingItem('118$3', { status: 'available' });
+		const { pb, ops } = makeMockPb([gone, ok1, ok2]);
+		const integrations = [
+			integration({
+				'118$1': { kind: 'gone' },
+				'118$2': { kind: 'found', item: refreshed(ok1, 'available') },
+				'118$3': { kind: 'found', item: refreshed(ok2, 'available') },
+			}),
+		];
 
 		const summary = await refreshInstitution(pb, institution, integrations);
 
@@ -123,6 +132,27 @@ describe('refreshInstitution', () => {
 			id: 'pb-118$1',
 			data: { status: 'unavailable', description: `${DESCRIPTION_PREFIX}a thing` },
 		});
+	});
+
+	it('aborts with zero writes when every item is reported gone (likely source outage)', async () => {
+		// A collection-level 404 or empty maintenance response answers "gone" for everything,
+		// with no transient errors — the breaker must still refuse to archive the catalogue.
+		const items = [existingItem('118$1'), existingItem('118$2'), existingItem('118$3')];
+		const { pb, ops } = makeMockPb(items);
+		const integrations = [
+			integration({
+				'118$1': { kind: 'gone' },
+				'118$2': { kind: 'gone' },
+				'118$3': { kind: 'gone' },
+			}),
+		];
+
+		const summary = await refreshInstitution(pb, institution, integrations);
+
+		expect(ops).toHaveLength(0);
+		expect(summary.archived).toBe(0);
+		expect(summary.errors[0]).toMatch(/Aborted/);
+		expect(summary.errors[0]).toMatch(/3 reported gone/);
 	});
 
 	it('leaves a transiently-errored item untouched and records the error', async () => {
@@ -203,6 +233,23 @@ describe('refreshInstitution', () => {
 		expect(winbiapFetch.mock.calls[0][1]).toMatchObject({ externalId: '118$1' });
 		expect(leihFetch).toHaveBeenCalledTimes(1);
 		expect(leihFetch.mock.calls[0][1]).toMatchObject({ externalId: 'rec9' });
+	});
+
+	it('never routes items to an integration that does not claim the institution', async () => {
+		const item = existingItem('rec1');
+		const { pb, ops } = makeMockPb([item]);
+		const foreignFetch = vi.fn();
+		const integrations: RefreshIntegration[] = [
+			// Catch-all claimsItem, but the institution belongs to another source: must not
+			// be consulted (its fetch would 404 and wrongly archive the item).
+			{ id: 'other-source', claimsInstitution: () => false, claimsItem: () => true, fetchOne: foreignFetch },
+		];
+
+		const summary = await refreshInstitution(pb, institution, integrations);
+
+		expect(foreignFetch).not.toHaveBeenCalled();
+		expect(ops).toHaveLength(0);
+		expect(summary.archived).toBe(0);
 	});
 
 	it('aborts with zero writes and records an error when the DB load fails', async () => {

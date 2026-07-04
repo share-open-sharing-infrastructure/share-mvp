@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { diffItems } from '../core/diff';
 import {
 	parseAndValidateRow,
 	parseCsv,
@@ -170,13 +171,31 @@ describe('parseAndMapCsv', () => {
 		expect(rowErrors[0].errors.join(' ')).toContain('externalId');
 	});
 
-	it('warns on duplicate externalId within the file', () => {
+	it('dedupes duplicate externalIds keep-last, with a warning on the surviving row', () => {
+		const csv = `${header}\nABC-001,Erste,,,,,,,\nABC-002,Andere,,,,,,,\nABC-001,Zweite,,,,,,,`;
+		const { mappedRows } = parseAndMapCsv(csv, 'inst1');
+
+		// Exactly one row per externalId — two creates for the same (owner, externalId)
+		// would fail the whole write batch on the unique index.
+		expect(mappedRows).toHaveLength(2);
+		const survivor = mappedRows.find((r) => r.item.externalId === 'ABC-001');
+		expect(survivor?.item.name).toBe('Zweite'); // letzte Zeile gewinnt
+		expect(survivor?.rowIndex).toBe(4);
+		expect(survivor?.warnings.join(' ')).toContain('Doppelter');
+		expect(mappedRows.find((r) => r.item.externalId === 'ABC-002')?.warnings).toHaveLength(0);
+	});
+
+	it('a first-import diff of a file with duplicates yields a single create per externalId', () => {
 		const csv = `${header}\nABC-001,Erste,,,,,,,\nABC-001,Zweite,,,,,,,`;
 		const { mappedRows } = parseAndMapCsv(csv, 'inst1');
 
-		expect(mappedRows).toHaveLength(2);
-		expect(mappedRows[0].warnings).toHaveLength(0);
-		expect(mappedRows[1].warnings.join(' ')).toContain('Doppelter');
+		const diff = diffItems(
+			mappedRows.map((r) => r.item),
+			[]
+		);
+
+		expect(diff.toCreate).toHaveLength(1);
+		expect(diff.toCreate[0].name).toBe('Zweite');
 	});
 
 	it('returns no parseError for a clean file', () => {
@@ -214,11 +233,12 @@ describe('docs/examples/import-test.csv', () => {
 		expect(rowErrors[0].errors.join(' ')).toContain('name ist erforderlich');
 		expect(rowErrors[1].errors.join(' ')).toContain('Ungültige Kategorie');
 
-		// 7 valid rows, the last being the intentional duplicate of TEST-001.
-		expect(mappedRows).toHaveLength(7);
-		const duplicate = mappedRows[mappedRows.length - 1];
-		expect(duplicate.item.externalId).toBe('TEST-001');
-		expect(duplicate.warnings.join(' ')).toContain('Doppelter externalId');
+		// 7 valid rows, but the intentional duplicate of TEST-001 is deduplicated keep-last:
+		// 6 mapped rows, with the surviving TEST-001 carrying the duplicate warning.
+		expect(mappedRows).toHaveLength(6);
+		const test1Rows = mappedRows.filter((r) => r.item.externalId === 'TEST-001');
+		expect(test1Rows).toHaveLength(1);
+		expect(test1Rows[0].warnings.join(' ')).toContain('Doppelter externalId');
 
 		// Empty status + externalUrl set → 'unknown' (TEST-002).
 		const tent = mappedRows.find((r) => r.item.externalId === 'TEST-002');

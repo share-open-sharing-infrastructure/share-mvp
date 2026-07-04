@@ -121,6 +121,51 @@ describe('syncInstitution', () => {
 		expect(batchCalls).toHaveLength(0);
 	});
 
+	it('archives a small minority of vanished items normally', async () => {
+		const kept = [mappedItem('rec1'), mappedItem('rec2'), mappedItem('rec3')];
+		const gone = mappedItem('rec4');
+		const { pb, batchCalls } = makeMockPb([...kept, gone].map(existingFrom));
+		const fetchItems = vi.fn().mockResolvedValue(kept);
+
+		const summary = await syncInstitution(pb, institution, fetchItems);
+
+		expect(summary.archived).toBe(1);
+		expect(summary.errors).toHaveLength(0);
+		expect(batchCalls.filter((c) => c.method === 'update')).toHaveLength(1);
+	});
+
+	it('skips the archive phase and records an error when the feed is empty but items exist', async () => {
+		const existing = [mappedItem('rec1'), mappedItem('rec2')].map(existingFrom);
+		const { pb, batchCalls } = makeMockPb(existing);
+		const fetchItems = vi.fn().mockResolvedValue([]);
+
+		const summary = await syncInstitution(pb, institution, fetchItems);
+
+		expect(summary.archived).toBe(0);
+		expect(batchCalls).toHaveLength(0);
+		expect(summary.errors.some((e) => e.includes('Archive phase skipped'))).toBe(true);
+	});
+
+	it('applies creates/updates but skips archiving when most stored items would be archived', async () => {
+		const kept = mappedItem('rec1');
+		const vanished = [mappedItem('rec2'), mappedItem('rec3')];
+		const { pb, batchCalls } = makeMockPb([kept, ...vanished].map(existingFrom));
+		// rec1 changed (still present), rec4 is new; rec2+rec3 vanished → 2/3 ≥ 50%.
+		const fetchItems = vi.fn().mockResolvedValue([
+			mappedItem('rec1', { status: 'unavailable' }),
+			mappedItem('rec4'),
+		]);
+
+		const summary = await syncInstitution(pb, institution, fetchItems);
+
+		expect(summary.created).toBe(1);
+		expect(summary.updated).toBe(1);
+		expect(summary.archived).toBe(0);
+		expect(summary.errors.some((e) => e.includes('Archive phase skipped'))).toBe(true);
+		// Only the rec1 update and rec4 create hit the batch — no archive updates.
+		expect(batchCalls).toHaveLength(2);
+	});
+
 	it('applies the injected retry wrapper to the DB load', async () => {
 		const { pb } = makeMockPb([]);
 		const fetchItems = vi.fn().mockResolvedValue([]);

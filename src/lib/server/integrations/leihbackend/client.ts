@@ -1,3 +1,5 @@
+import { dev } from '$app/environment';
+import { assertPublicHttpUrl } from '../core/urlGuard';
 import type { LeihbackendItem } from './mapping';
 
 interface ItemPublicListResponse {
@@ -24,6 +26,8 @@ export class LeihbackendFetchError extends Error {
 
 const PER_PAGE = 200;
 const MAX_ITEMS = 5000;
+// A source reporting an absurd `totalPages` must not drive endless sequential GETs.
+const MAX_PAGES = Math.ceil(MAX_ITEMS / PER_PAGE) + 1;
 const TIMEOUT_MS = 15000;
 
 /** Strips trailing slashes from a leihbackend base URL. */
@@ -41,6 +45,7 @@ export async function fetchAllItems(
 	fetchFn: typeof fetch = fetch
 ): Promise<LeihbackendItem[]> {
 	const base = normalizeBaseUrl(baseUrl);
+	assertPublicHttpUrl(base, { allowInsecure: dev });
 	const items: LeihbackendItem[] = [];
 	let page = 1;
 	let totalPages = 1;
@@ -50,7 +55,7 @@ export async function fetchAllItems(
 
 		let response: Response;
 		try {
-			response = await fetchFn(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+			response = await fetchFn(url, { signal: AbortSignal.timeout(TIMEOUT_MS), redirect: 'manual' });
 		} catch (err) {
 			throw new LeihbackendFetchError(`Request to ${url} failed: ${(err as Error).message}`, base, {
 				cause: err,
@@ -70,6 +75,15 @@ export async function fetchAllItems(
 			throw new LeihbackendFetchError(`${base} returned more than ${MAX_ITEMS} items`, base);
 		}
 
+		// A page count beyond the item cap means a runaway/lying source; a silently truncated
+		// feed would wrongly archive the tail, so treat it as a fetch failure (zero writes).
+		if (data.totalPages > MAX_PAGES) {
+			throw new LeihbackendFetchError(`${base} reports ${data.totalPages} pages (max ${MAX_PAGES})`, base);
+		}
+
+		// An empty page means the feed is exhausted regardless of the claimed totalPages.
+		if (data.items.length === 0) break;
+
 		totalPages = data.totalPages;
 		page += 1;
 	} while (page <= totalPages);
@@ -88,11 +102,12 @@ export async function fetchItemById(
 	fetchFn: typeof fetch = fetch
 ): Promise<LeihbackendItem | null> {
 	const base = normalizeBaseUrl(baseUrl);
+	assertPublicHttpUrl(base, { allowInsecure: dev });
 	const url = `${base}/api/collections/item_public/records/${encodeURIComponent(id)}`;
 
 	let response: Response;
 	try {
-		response = await fetchFn(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+		response = await fetchFn(url, { signal: AbortSignal.timeout(TIMEOUT_MS), redirect: 'manual' });
 	} catch (err) {
 		throw new LeihbackendFetchError(`Request to ${url} failed: ${(err as Error).message}`, base, {
 			cause: err,

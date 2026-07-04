@@ -1,6 +1,8 @@
 import Papa from 'papaparse';
-import { ITEM_CATEGORIES } from '$lib/texts';
+import { ITEM_CATEGORIES, texts } from '$lib/texts';
 import type { MappedItem } from '../core/types';
+
+const csvErrors = texts.institutional.importCsvErrors;
 
 export type ImportStatus = 'available' | 'unavailable' | 'unknown';
 export type RowAction = 'create' | 'update' | 'skip' | 'archive';
@@ -63,7 +65,7 @@ function normalizeStatus(
 	}
 	// Placeholder status alongside the error (mirrors normalizeCategories); the caller
 	// discards the parsed row whenever any error is present.
-	return { status: 'unknown', error: `Ungültiger status-Wert: "${raw}"` };
+	return { status: 'unknown', error: csvErrors.invalidStatus(raw) };
 }
 
 function normalizeCategories(raw: string | undefined): { categories: string[]; error?: string } {
@@ -74,10 +76,10 @@ function normalizeCategories(raw: string | undefined): { categories: string[]; e
 		.filter(Boolean);
 	const invalid = parts.filter((p) => !(ITEM_CATEGORIES as readonly string[]).includes(p));
 	if (invalid.length > 0) {
-		return { categories: [], error: `Ungültige Kategorie(n): ${invalid.join(', ')}` };
+		return { categories: [], error: csvErrors.invalidCategories(invalid.join(', ')) };
 	}
 	if (parts.length > 3) {
-		return { categories: parts.slice(0, 3), error: 'Maximal 3 Kategorien erlaubt (Rest ignoriert)' };
+		return { categories: parts.slice(0, 3), error: csvErrors.tooManyCategories };
 	}
 	return { categories: parts };
 }
@@ -93,17 +95,17 @@ export function parseAndValidateRow(
 	const errors: string[] = [];
 
 	const externalId = row['externalId']?.toString().trim() ?? '';
-	if (!externalId) errors.push('externalId ist erforderlich');
+	if (!externalId) errors.push(csvErrors.externalIdRequired);
 
 	const name = row['name']?.toString().trim() ?? '';
-	if (!name) errors.push('name ist erforderlich');
-	if (name.length > 200) errors.push('name darf max. 200 Zeichen lang sein');
+	if (!name) errors.push(csvErrors.nameRequired);
+	if (name.length > 200) errors.push(csvErrors.nameTooLong);
 
 	const description = row['description']?.toString().trim() ?? '';
-	if (description.length > 4000) errors.push('description darf max. 4.000 Zeichen lang sein');
+	if (description.length > 4000) errors.push(csvErrors.descriptionTooLong);
 
 	const place = row['place']?.toString().trim() ?? '';
-	if (place.length > 200) errors.push('place darf max. 200 Zeichen lang sein');
+	if (place.length > 200) errors.push(csvErrors.placeTooLong);
 
 	const externalUrl = row['externalUrl']?.toString().trim() ?? '';
 
@@ -137,7 +139,7 @@ export function parseCsv(csvText: string): {
 	if (result.errors.length > 0) {
 		const fatalErrors = result.errors.filter((e) => e.type === 'Delimiter' || e.type === 'Quotes');
 		if (fatalErrors.length > 0) {
-			return { rows: [], error: `CSV-Fehler: ${fatalErrors[0].message}` };
+			return { rows: [], error: csvErrors.parseFatal(fatalErrors[0].message) };
 		}
 	}
 
@@ -146,10 +148,10 @@ export function parseCsv(csvText: string): {
 
 export function validateFileLimits(text: string, rowCount: number): string | null {
 	if (new TextEncoder().encode(text).length > MAX_FILE_SIZE_BYTES) {
-		return 'Die Datei ist zu groß (max. 1 MB).';
+		return texts.institutional.importFileTooLarge;
 	}
 	if (rowCount > MAX_ROWS) {
-		return 'Zu viele Zeilen (max. 5.000).';
+		return texts.institutional.importTooManyRows;
 	}
 	return null;
 }
@@ -172,8 +174,9 @@ export function mapRowToItem(row: ParsedRow, ownerId: string): MappedItem {
 
 /**
  * Parses, validates, and maps an uploaded WINBIAP CSV into core `MappedItem`s.
- * Valid rows become `mappedRows` (with their source row number and any warnings,
- * e.g. duplicate `externalId`); invalid rows become `rowErrors`.
+ * Valid rows become `mappedRows` (with their source row number and any warnings);
+ * invalid rows become `rowErrors`. Duplicate `externalId`s are deduplicated
+ * keep-last, so each externalId maps to at most one row (carrying a warning).
  *
  * @param csvText - Raw CSV text.
  * @param ownerId - PocketBase id of the importing institution (becomes `item.owner`).
@@ -186,7 +189,10 @@ export function parseAndMapCsv(csvText: string, ownerId: string): ParseAndMapRes
 
 	const mappedRows: MappedRow[] = [];
 	const rowErrors: RowResult[] = [];
-	const seenExternalIds = new Set<string>();
+	// Keep-last dedupe: a duplicate externalId must yield exactly one MappedRow, otherwise a
+	// first import would issue two creates for the same (owner, externalId) and fail the
+	// whole write batch on the unique index.
+	const rowByExternalId = new Map<string, MappedRow>();
 
 	rows.forEach((raw, i) => {
 		const rowIndex = i + 2; // +2: row 1 is the header, arrays are 0-based
@@ -203,12 +209,18 @@ export function parseAndMapCsv(csvText: string, ownerId: string): ParseAndMapRes
 			return;
 		}
 
-		const warnings = seenExternalIds.has(parsed.externalId)
-			? ['Doppelter externalId in der Datei – letzte Zeile gewinnt']
-			: [];
-		seenExternalIds.add(parsed.externalId);
-
-		mappedRows.push({ rowIndex, item: mapRowToItem(parsed, ownerId), warnings });
+		const duplicateOf = rowByExternalId.get(parsed.externalId);
+		const row: MappedRow = {
+			rowIndex,
+			item: mapRowToItem(parsed, ownerId),
+			warnings: duplicateOf ? [csvErrors.duplicateExternalId] : [],
+		};
+		if (duplicateOf) {
+			mappedRows[mappedRows.indexOf(duplicateOf)] = row;
+		} else {
+			mappedRows.push(row);
+		}
+		rowByExternalId.set(parsed.externalId, row);
 	});
 
 	return { mappedRows, rowErrors, totalRows: rows.length };

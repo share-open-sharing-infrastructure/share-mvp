@@ -7,6 +7,15 @@ interface WithBaseUrl {
 }
 
 /**
+ * True for institutions whose configured base URL is a WINBIAP WebOPAC (per the documented
+ * convention, e.g. `https://rblg.stadt.lueneburg.de/webopac`). Interim source-type detection
+ * on the overloaded `leihbackendUrl`, until a dedicated `sync_config` collection exists.
+ */
+export function isWinbiapInstitution(institution: Institution): boolean {
+	return ((institution as WithBaseUrl).leihbackendUrl ?? '').toLowerCase().includes('/webopac');
+}
+
+/**
  * True for items that came from a WINBIAP WebOPAC: their deep link lives under `/webopac/`, and
  * their `externalId` is a `{libraryId}${Mediennummer}` barcode. The `externalId` check also catches
  * items imported without API enrichment, whose `externalUrl` is empty.
@@ -46,6 +55,7 @@ async function refreshOne(institution: Institution, item: ExistingItem): Promise
 /** Refresh integration for WINBIAP WebOPAC items (status only). Registered first in `../registry`. */
 export const winbiapRefreshIntegration: RefreshIntegration = {
 	id: 'winbiap',
+	claimsInstitution: isWinbiapInstitution,
 	claimsItem: isWinbiapItem,
 	fetchOne: refreshOne,
 	pauseMsBetweenFetches: 500, // spare the library WebOPAC from a burst of per-item requests

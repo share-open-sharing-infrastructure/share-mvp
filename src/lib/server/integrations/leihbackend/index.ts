@@ -9,17 +9,26 @@ import type {
 	RefreshOutcome,
 	SyncInstitution,
 } from '../core/types';
+import { isWinbiapInstitution } from '../winbiap';
 import { fetchAllItems, fetchItemById, normalizeBaseUrl } from './client';
 import { mapItem } from './mapping';
 
 /**
  * Fetches an institution's full leihbackend catalogue and maps it to AllerLeih's item schema.
  * Throws on network or API failure (the sync then aborts with zero writes for that institution).
+ * Records with an empty/missing name are skipped (one bad source record must not crash or
+ * pollute the whole institution's sync).
  */
 async function fetchAndMapItems(institution: SyncInstitution): Promise<MappedItem[]> {
 	const mappingContext = mappingContextFor(institution);
 	const remoteFeed = await fetchAllItems(mappingContext.baseUrl);
-	return remoteFeed.map((remoteItem) => mapItem(remoteItem, mappingContext));
+	return remoteFeed
+		.map((remoteItem) => mapItem(remoteItem, mappingContext))
+		.filter((item) => {
+			if (item.name !== '') return true;
+			console.error(`[sync] ${institution.username}: skipping nameless source record ${item.externalId}`);
+			return false;
+		});
 }
 
 /** Scheduled-pull integration for leihbackend instances. Registered in `../registry`. */
@@ -53,11 +62,13 @@ async function refreshOne(institution: Institution, item: ExistingItem): Promise
 }
 
 /**
- * Refresh integration for leihbackend. Claims any item not claimed by a more specific
- * integration (it is registered last), and re-maps all of its fields from the source.
+ * Refresh integration for leihbackend. Within a leihbackend institution it claims every
+ * item (catch-all, registered last) — but never items of a WINBIAP institution, where a
+ * catch-all would 404 against `item_public` and wrongly archive them.
  */
 export const leihbackendRefreshIntegration: RefreshIntegration = {
 	id: 'leihbackend',
+	claimsInstitution: (institution) => !isWinbiapInstitution(institution),
 	claimsItem: () => true,
 	fetchOne: refreshOne,
 };

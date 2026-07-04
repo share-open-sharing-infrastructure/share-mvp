@@ -88,6 +88,19 @@ describe('fetchAndMapItems', () => {
 			categories: ['Werkzeug und Garten'],
 		});
 	});
+
+	it('skips records with a missing or empty name instead of crashing the sync', async () => {
+		fetchAllItems.mockResolvedValue([
+			makeRemoteItem({ id: 'rec1', name: undefined as unknown as string }),
+			makeRemoteItem({ id: 'rec2', name: '   ' }),
+			makeRemoteItem({ id: 'rec3', name: 'Bohrmaschine' }),
+		]);
+
+		const items = await fetchAndMapItems(institution);
+
+		expect(items).toHaveLength(1);
+		expect(items[0].externalId).toBe('rec3');
+	});
 });
 
 describe('leihbackendIntegration.syncAll', () => {
@@ -124,6 +137,12 @@ describe('leihbackendRefreshIntegration', () => {
 
 	it('claims any item (catch-all default)', () => {
 		expect(leihbackendRefreshIntegration.claimsItem(existing)).toBe(true);
+	});
+
+	it('claims leihbackend institutions but not WINBIAP (WebOPAC) ones', () => {
+		expect(leihbackendRefreshIntegration.claimsInstitution?.(institution)).toBe(true);
+		const winbiap = { ...institution, leihbackendUrl: 'https://rblg.stadt.lueneburg.de/webopac' };
+		expect(leihbackendRefreshIntegration.claimsInstitution?.(winbiap)).toBe(false);
 	});
 
 	it('re-maps all fields on a hit (found)', async () => {

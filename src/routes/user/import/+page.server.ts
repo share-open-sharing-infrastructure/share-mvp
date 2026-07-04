@@ -1,6 +1,7 @@
 import { error, fail, type ActionFailure } from '@sveltejs/kit';
 import { SYNC_SECRET } from '$env/static/private';
 import type PocketBase from 'pocketbase';
+import { texts } from '$lib/texts';
 import {
 	validateFileLimits,
 	parseAndMapCsv,
@@ -14,7 +15,7 @@ import type { DiffResult } from '$lib/server/integrations/core/types';
 
 export async function load({ locals }) {
 	if (!locals.user?.isInstitution) {
-		error(403, 'Nur für institutionelle Accounts zugänglich.');
+		error(403, texts.institutional.importForbidden);
 	}
 	return {};
 }
@@ -63,7 +64,7 @@ async function loadCsvDiff(
 			ok: false,
 			failure: fail(503, {
 				error: true,
-				message: 'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+				message: texts.institutional.importLoadExistingFailed,
 			}),
 		};
 	}
@@ -121,18 +122,18 @@ export const actions = {
 	preview: async ({ locals, request }) => {
 		const ownerId = institutionOwnerId(locals);
 		if (!ownerId) {
-			return fail(403, { error: true, message: 'Keine Berechtigung.' });
+			return fail(403, { error: true, message: texts.institutional.importNoPermission });
 		}
 
 		const formData = await request.formData();
 		const file = formData.get('csv') as File | null;
 
 		if (!file || !(file instanceof File) || file.size === 0) {
-			return fail(400, { error: true, message: 'Keine Datei hochgeladen.' });
+			return fail(400, { error: true, message: texts.institutional.importNoFile });
 		}
 
 		if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-			return fail(400, { error: true, message: 'Bitte als CSV speichern und erneut hochladen.' });
+			return fail(400, { error: true, message: texts.institutional.importXlsxError });
 		}
 
 		const csvText = await file.text();
@@ -151,14 +152,14 @@ export const actions = {
 	apply: async ({ locals, request }) => {
 		const ownerId = institutionOwnerId(locals);
 		if (!ownerId) {
-			return fail(403, { error: true, message: 'Keine Berechtigung.' });
+			return fail(403, { error: true, message: texts.institutional.importNoPermission });
 		}
 
 		const formData = await request.formData();
 		const csvText = formData.get('csvText')?.toString() ?? '';
 
 		if (!csvText) {
-			return fail(400, { error: true, message: 'Keine CSV-Daten vorhanden.' });
+			return fail(400, { error: true, message: texts.institutional.importNoCsvData });
 		}
 
 		const result = await loadCsvDiff(locals.pb, csvText, ownerId);
@@ -182,21 +183,22 @@ export const actions = {
 	},
 	refresh: async ({ locals, fetch }) => {
 		const ownerId = institutionOwnerId(locals);
+		if (!ownerId) {
+			return fail(403, { error: true, message: texts.institutional.importNoPermission });
+		}
 
 		try {
-			console.log('Triggering refresh for institution', ownerId);
-			const res = await fetch(`/api/refresh?institution=${ownerId}`, {
+			const response = await fetch(`/api/refresh?institution=${encodeURIComponent(ownerId)}`, {
 				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'authorization': 'Bearer ' + SYNC_SECRET
-				}
+				headers: { authorization: `Bearer ${SYNC_SECRET}` },
 			});
-			if (res.ok) {
-				console.log('Refresh successful');
+			if (!response.ok) {
+				return fail(503, { error: true, message: texts.institutional.importRefreshFailed });
 			}
 		} catch {
-			console.error('Refresh failed');
+			return fail(503, { error: true, message: texts.institutional.importRefreshFailed });
 		}
-	}
+
+		return { success: true, refreshed: true, message: texts.institutional.importRefreshTriggered };
+	},
 };

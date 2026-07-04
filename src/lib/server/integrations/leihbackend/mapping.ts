@@ -151,7 +151,7 @@ function buildImageUrl(src: LeihbackendItem, baseUrl: string): string {
 export function mapItem(leihbackendItem: LeihbackendItem, itemContext: MapItemContext): MappedItem {
 	return {
 		externalId: leihbackendItem.id,
-		name: leihbackendItem.name.trim().slice(0, MAX_NAME_LENGTH),
+		name: (leihbackendItem.name ?? '').trim().slice(0, MAX_NAME_LENGTH),
 		description: buildDescription(leihbackendItem),
 		status: leihbackendItem.status === 'instock' ? 'available' : 'unavailable',
 		categories: mapCategory(leihbackendItem.category),
