@@ -2,6 +2,7 @@ import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { texts } from '$lib/texts';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { upsertUserGeolocation } from '$lib/server/geolocation';
+import { normalizeUsername, validateUsername } from '$lib/utils/username';
 import { upsertOwnContact, getOwnContact } from '$lib/server/contacts';
 import {
 	getOwnerRequirements,
@@ -54,18 +55,19 @@ export const actions = {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {};
 
-		// Get username separately to check for spaces
-		const username = formData?.get('username')?.toString();
-		if (username) {
-			const trimmedUsername = username.trim();
-			if (trimmedUsername.includes(' ')) {
-				return {
-					error: true,
-					message: texts.errors.usernameNoSpaces,
-				};
-			} else if (trimmedUsername !== '') {
-				updateData['username'] = trimmedUsername;
+		// Username: normalize (trim + collapse internal whitespace) and validate against
+		// the shared rules before writing. Empty means "left unchanged", so skip it.
+		const username = normalizeUsername(formData?.get('username')?.toString() ?? '');
+		if (username !== '') {
+			switch (validateUsername(username)) {
+				case 'too_short':
+					return { error: true, message: texts.errors.usernameTooShort };
+				case 'too_long':
+					return { error: true, message: texts.errors.usernameTooLong };
+				case 'invalid':
+					return { error: true, message: texts.errors.usernameInvalidFormat };
 			}
+			updateData['username'] = username;
 		}
 
 		// Handle other fields
