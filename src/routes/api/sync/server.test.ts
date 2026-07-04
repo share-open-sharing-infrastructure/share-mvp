@@ -2,12 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { getSuperuserClient } = vi.hoisted(() => ({ getSuperuserClient: vi.fn() }));
 const { runAllIntegrations } = vi.hoisted(() => ({ runAllIntegrations: vi.fn() }));
+// Hermetic env: never depend on a local .env (absent in CI) — mock all required vars.
+const { TEST_SECRET } = vi.hoisted(() => ({ TEST_SECRET: 'test-sync-secret' }));
 
+vi.mock('$env/static/private', () => ({
+	SYNC_SECRET: TEST_SECRET,
+	PB_SUPERUSER_EMAIL: 'superuser@test.example',
+	PB_SUPERUSER_PASSWORD: 'test-password',
+}));
 vi.mock('$lib/server/integrations/core/pocketbase', () => ({ getSuperuserClient }));
 vi.mock('$lib/server/integrations/registry', () => ({ runAllIntegrations }));
 
 import { POST } from './+server';
-import { SYNC_SECRET } from '$env/static/private';
 
 function makeRequest(authHeader?: string): Request {
 	const headers = new Headers();
@@ -35,7 +41,7 @@ describe('POST /api/sync', () => {
 	it('returns 503 if the superuser client cannot authenticate', async () => {
 		getSuperuserClient.mockRejectedValue(new Error('auth failed'));
 
-		await expect(POST({ request: makeRequest(`Bearer ${SYNC_SECRET}`) } as never)).rejects.toMatchObject({
+		await expect(POST({ request: makeRequest(`Bearer ${TEST_SECRET}`) } as never)).rejects.toMatchObject({
 			status: 503,
 		});
 	});
@@ -55,12 +61,33 @@ describe('POST /api/sync', () => {
 			},
 		]);
 
-		const response = await POST({ request: makeRequest(`Bearer ${SYNC_SECRET}`) } as never);
+		const response = await POST({ request: makeRequest(`Bearer ${TEST_SECRET}`) } as never);
 		const body = await response.json();
 
 		expect(runAllIntegrations).toHaveBeenCalledTimes(1);
 		expect(body.summaries).toHaveLength(1);
 		expect(body.summaries[0].institution).toBe('commons-zentrum');
+	});
+
+	it('rejects an overlapping run with 429 and releases the lock afterwards', async () => {
+		getSuperuserClient.mockResolvedValue({});
+		let finishFirstRun!: (value: unknown[]) => void;
+		runAllIntegrations.mockReturnValueOnce(new Promise((resolve) => (finishFirstRun = resolve)));
+		runAllIntegrations.mockResolvedValue([]);
+
+		const firstRun = POST({ request: makeRequest(`Bearer ${TEST_SECRET}`) } as never);
+		// While the first run is still writing, a second (e.g. the next cron tick) must not start.
+		await expect(POST({ request: makeRequest(`Bearer ${TEST_SECRET}`) } as never)).rejects.toMatchObject({
+			status: 429,
+		});
+		expect(runAllIntegrations).toHaveBeenCalledTimes(1);
+
+		finishFirstRun([]);
+		await firstRun;
+
+		// Lock released: the next request runs normally.
+		await POST({ request: makeRequest(`Bearer ${TEST_SECRET}`) } as never);
+		expect(runAllIntegrations).toHaveBeenCalledTimes(2);
 	});
 });
 
