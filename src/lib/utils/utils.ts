@@ -41,12 +41,30 @@ export function displayName(
  */
 export function itemImageUrl(
 	pbUrl: string,
-	item: { id: string; image?: string | null; externalImgUrl?: string | null }
+	item: { id: string; image?: string | string[] | null; externalImgUrl?: string | null }
 ): string | null {
-	if (item.image) {
-		return `${pbUrl}api/files/items_searchable/${item.id}/${item.image}`;
+	const first = Array.isArray(item.image) ? item.image[0] : item.image;
+	if (first) {
+		return `${pbUrl}api/files/items_searchable/${item.id}/${first}`;
 	}
 	return item.externalImgUrl || null;
+}
+
+/**
+ * All display URLs for an item's images (for the detail-page gallery), in order.
+ * Falls back to a single-element list with the external image URL when the item
+ * has no uploaded PocketBase files. Empty when there is nothing to show.
+ * See {@link itemImageUrl} for the file-serving-via-view rationale.
+ */
+export function itemImageUrls(
+	pbUrl: string,
+	item: { id: string; image?: string | string[] | null; externalImgUrl?: string | null }
+): string[] {
+	const files = Array.isArray(item.image) ? item.image : item.image ? [item.image] : [];
+	if (files.length > 0) {
+		return files.map((f) => `${pbUrl}api/files/items_searchable/${item.id}/${f}`);
+	}
+	return item.externalImgUrl ? [item.externalImgUrl] : [];
 }
 
 export function formatTimestamp(

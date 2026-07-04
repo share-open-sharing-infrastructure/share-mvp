@@ -28,7 +28,8 @@
 	$effect(() => { optimisticTrusteesOnly = item.trusteesOnly; });
 
 	function getRealImageUrl(i: Item): string | null {
-		if (i.image) return `${PB_URL}api/files/${i.collectionId}/${i.id}/${i.image}`;
+		const first = i.image?.[0];
+		if (first) return `${PB_URL}api/files/${i.collectionId}/${i.id}/${first}`;
 		return i.externalImgUrl ?? null;
 	}
 

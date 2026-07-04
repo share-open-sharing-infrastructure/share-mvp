@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { itemImageUrl, buildMailtoHref, buildItemRedirectHref } from './utils';
+import { itemImageUrl, itemImageUrls, buildMailtoHref, buildItemRedirectHref } from './utils';
 import { texts } from '$lib/texts';
 
 const PB_URL = 'https://pb.example.com/';
@@ -42,6 +42,49 @@ describe('itemImageUrl', () => {
 	it('returns null when there is neither a file nor an external image', () => {
 		expect(itemImageUrl(PB_URL, { id: 'item123', image: null })).toBeNull();
 		expect(itemImageUrl(PB_URL, { id: 'item123', image: '', externalImgUrl: '' })).toBeNull();
+	});
+
+	it('uses the first filename as the cover when image is an array (multi-file field)', () => {
+		const url = itemImageUrl(PB_URL, { id: 'item123', image: ['first.jpg', 'second.jpg'] });
+		expect(url).toBe('https://pb.example.com/api/files/items_searchable/item123/first.jpg');
+	});
+
+	it('falls back to externalImgUrl when the image array is empty', () => {
+		const url = itemImageUrl(PB_URL, {
+			id: 'item123',
+			image: [],
+			externalImgUrl: 'https://catalogue.example/cover.jpg',
+		});
+		expect(url).toBe('https://catalogue.example/cover.jpg');
+	});
+});
+
+describe('itemImageUrls', () => {
+	it('returns one URL per uploaded file, in order', () => {
+		const urls = itemImageUrls(PB_URL, { id: 'item123', image: ['a.jpg', 'b.jpg'] });
+		expect(urls).toEqual([
+			'https://pb.example.com/api/files/items_searchable/item123/a.jpg',
+			'https://pb.example.com/api/files/items_searchable/item123/b.jpg',
+		]);
+	});
+
+	it('accepts a legacy single-string image', () => {
+		const urls = itemImageUrls(PB_URL, { id: 'item123', image: 'only.jpg' });
+		expect(urls).toEqual(['https://pb.example.com/api/files/items_searchable/item123/only.jpg']);
+	});
+
+	it('falls back to a single-element list with the external image URL', () => {
+		const urls = itemImageUrls(PB_URL, {
+			id: 'item123',
+			image: null,
+			externalImgUrl: 'https://catalogue.example/cover.jpg',
+		});
+		expect(urls).toEqual(['https://catalogue.example/cover.jpg']);
+	});
+
+	it('returns an empty list when there is nothing to show', () => {
+		expect(itemImageUrls(PB_URL, { id: 'item123', image: [] })).toEqual([]);
+		expect(itemImageUrls(PB_URL, { id: 'item123', image: null, externalImgUrl: '' })).toEqual([]);
 	});
 });
 

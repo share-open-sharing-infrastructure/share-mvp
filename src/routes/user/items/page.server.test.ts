@@ -3,21 +3,32 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // The delete action delegates the cascade + open-loan guard to deleteItem();
 // that helper is unit-tested in src/lib/server/items.test.ts, so here we only
 // assert the action delegates correctly and maps the result.
-const { deleteItemMock, deleteMultipleItemsMock, setItemStatusMock } = vi.hoisted(() => ({
-	deleteItemMock: vi.fn(),
-	deleteMultipleItemsMock: vi.fn(),
-	setItemStatusMock: vi.fn(),
-}));
+const { deleteItemMock, deleteMultipleItemsMock, setItemStatusMock, getAttachableGroupsMock } =
+	vi.hoisted(() => ({
+		deleteItemMock: vi.fn(),
+		deleteMultipleItemsMock: vi.fn(),
+		setItemStatusMock: vi.fn(),
+		getAttachableGroupsMock: vi.fn(),
+	}));
 vi.mock('$lib/server/items', () => ({
 	deleteItem: deleteItemMock,
 	deleteMultipleItems: deleteMultipleItemsMock,
 	setItemStatus: setItemStatusMock,
 }));
+// sanitizeGroups() calls getAttachableGroups; mock it so the group-filtering wiring is testable.
+vi.mock('$lib/server/groups', () => ({ getAttachableGroups: getAttachableGroupsMock }));
 // hooks.server.ts (re-exported by +page.server) reads PUBLIC_PB_URL from here.
 vi.mock('$env/static/public', () => ({ PUBLIC_PB_URL: 'http://localhost', PUBLIC_VAPID_PUBLIC_KEY: 'x' }));
 
 import { actions } from './+page.server';
 import { texts } from '$lib/texts';
+
+// The actions return a union of fail() shapes (validation vs. save-error), so narrow the
+// data to a permissive shape for assertions instead of indexing the union directly.
+type FailData = { fail?: boolean; message?: string; missingFields?: Record<string, boolean> };
+function failData(result: unknown): FailData {
+	return (((result as { data?: unknown } | undefined)?.data ?? {}) as FailData) ?? {};
+}
 
 type DeleteEvent = Parameters<typeof actions.delete>[0];
 
@@ -71,5 +82,230 @@ describe('user items: delete action', () => {
 		deleteItemMock.mockRejectedValueOnce(new Error('boom'));
 
 		await expect(callDelete('item1')).resolves.toBeUndefined();
+	});
+});
+
+// create/update accept a MULTI-file `image` field (#246): several photos per item.
+type CreateEvent = Parameters<typeof actions.create>[0];
+type UpdateEvent = Parameters<typeof actions.update>[0];
+
+function imageFile(name: string, type = 'image/jpeg') {
+	return new File(['x'], name, { type });
+}
+
+function buildPb() {
+	const createMock = vi.fn().mockResolvedValue({});
+	const updateMock = vi.fn().mockResolvedValue({});
+	const pbClient = { collection: vi.fn(() => ({ create: createMock, update: updateMock })) };
+	return { pbClient, createMock, updateMock };
+}
+
+function runCreate(pbClient: unknown, fd: FormData) {
+	return actions.create({
+		locals: { pb: pbClient, user: { id: 'u1' } },
+		request: { formData: vi.fn().mockResolvedValue(fd) },
+	} as unknown as CreateEvent);
+}
+
+function runUpdate(pbClient: unknown, fd: FormData) {
+	return actions.update({
+		locals: { pb: pbClient, user: { id: 'u1' } },
+		request: { formData: vi.fn().mockResolvedValue(fd) },
+	} as unknown as UpdateEvent);
+}
+
+describe('user items: create action (multi-image)', () => {
+	it('passes every uploaded image as an array to items.create', async () => {
+		const { pbClient, createMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemName', 'Bohrmaschine');
+		fd.set('itemDescription', 'Eine gute Bohrmaschine');
+		const a = imageFile('a.jpg');
+		const b = imageFile('b.png', 'image/png');
+		fd.append('itemImage', a);
+		fd.append('itemImage', b);
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result).toBeUndefined();
+		expect(createMock).toHaveBeenCalledTimes(1);
+		expect(createMock.mock.calls[0][0].image).toEqual([a, b]);
+	});
+
+	it('fails when no image is uploaded (image required on create)', async () => {
+		const { pbClient, createMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result?.status).toBe(400);
+		expect(failData(result).missingFields?.imageIsMissing).toBe(true);
+		expect(createMock).not.toHaveBeenCalled();
+	});
+
+	it('fails when any uploaded file is not an accepted image type', async () => {
+		const { pbClient, createMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+		fd.append('itemImage', imageFile('ok.jpg'));
+		fd.append('itemImage', imageFile('bad.pdf', 'application/pdf'));
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result?.status).toBe(400);
+		expect(failData(result).missingFields?.imageInvalidType).toBe(true);
+		expect(createMock).not.toHaveBeenCalled();
+	});
+});
+
+describe('user items: update action (multi-image)', () => {
+	it('replaces images with the newly uploaded set', async () => {
+		const { pbClient, updateMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemId', 'item1');
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+		const a = imageFile('a.jpg');
+		const b = imageFile('b.jpg');
+		fd.append('itemImage', a);
+		fd.append('itemImage', b);
+
+		await runUpdate(pbClient, fd);
+
+		expect(updateMock).toHaveBeenCalledTimes(1);
+		expect(updateMock.mock.calls[0][0]).toBe('item1');
+		expect(updateMock.mock.calls[0][1].image).toEqual([a, b]);
+	});
+
+	it('leaves the image field untouched when no new files are uploaded', async () => {
+		const { pbClient, updateMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemId', 'item1');
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+
+		await runUpdate(pbClient, fd);
+
+		expect(updateMock).toHaveBeenCalledTimes(1);
+		expect(updateMock.mock.calls[0][1]).not.toHaveProperty('image');
+	});
+});
+
+describe('user items: create/update validation & guards', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('rejects a create with no name', async () => {
+		const { pbClient, createMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemDescription', 'Beschreibung');
+		fd.append('itemImage', imageFile('a.jpg'));
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result?.status).toBe(400);
+		expect(failData(result).missingFields?.nameIsMissing).toBe(true);
+		expect(createMock).not.toHaveBeenCalled();
+	});
+
+	it('rejects a create with no description', async () => {
+		const { pbClient, createMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemName', 'Ding');
+		fd.append('itemImage', imageFile('a.jpg'));
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result?.status).toBe(400);
+		expect(failData(result).missingFields?.descriptionIsMissing).toBe(true);
+		expect(createMock).not.toHaveBeenCalled();
+	});
+
+	it('rejects a create with more than 5 images', async () => {
+		const { pbClient, createMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+		for (let i = 0; i < 6; i++) fd.append('itemImage', imageFile(`img${i}.jpg`));
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result?.status).toBe(400);
+		expect(failData(result).missingFields?.tooManyImages).toBe(true);
+		expect(createMock).not.toHaveBeenCalled();
+	});
+
+	it('accepts an SVG upload (svg is an allowed image type)', async () => {
+		const { pbClient, createMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemName', 'Logo');
+		fd.set('itemDescription', 'Ein SVG');
+		fd.append('itemImage', new File(['<svg></svg>'], 'logo.svg', { type: 'image/svg+xml' }));
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result).toBeUndefined();
+		expect(createMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('rejects an invalid update (missing name) without calling pb.update', async () => {
+		const { pbClient, updateMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemId', 'item1');
+		fd.set('itemDescription', 'Beschreibung');
+
+		const result = await runUpdate(pbClient, fd);
+
+		expect(result?.status).toBe(400);
+		expect(failData(result).missingFields?.nameIsMissing).toBe(true);
+		expect(updateMock).not.toHaveBeenCalled();
+	});
+
+	it('ignores an empty (0-byte) file on update so existing images are kept', async () => {
+		const { pbClient, updateMock } = buildPb();
+		const fd = new FormData();
+		fd.set('itemId', 'item1');
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+		fd.append('itemImage', new File([], 'empty.png', { type: 'image/png' }));
+
+		await runUpdate(pbClient, fd);
+
+		expect(updateMock).toHaveBeenCalledTimes(1);
+		expect(updateMock.mock.calls[0][1]).not.toHaveProperty('image');
+	});
+
+	it('only saves the groups the user may attach (sanitizeGroups filtering)', async () => {
+		const { pbClient, createMock } = buildPb();
+		// getAttachableGroups returns the allowed set; g3 is not in it and must be dropped.
+		getAttachableGroupsMock.mockResolvedValue([{ id: 'g1' }, { id: 'g2' }]);
+		const fd = new FormData();
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+		fd.append('itemImage', imageFile('a.jpg'));
+		fd.append('groups', 'g1');
+		fd.append('groups', 'g3');
+
+		await runCreate(pbClient, fd);
+
+		expect(createMock).toHaveBeenCalledTimes(1);
+		expect(createMock.mock.calls[0][0].groups).toEqual(['g1']);
+	});
+
+	it('surfaces a create failure as a 400/500 instead of a silent success', async () => {
+		const { pbClient, createMock } = buildPb();
+		createMock.mockRejectedValueOnce(new Error('maxSelect exceeded'));
+		const fd = new FormData();
+		fd.set('itemName', 'Ding');
+		fd.set('itemDescription', 'Beschreibung');
+		fd.append('itemImage', imageFile('a.jpg'));
+
+		const result = await runCreate(pbClient, fd);
+
+		expect(result?.status).toBe(500);
+		expect(failData(result).fail).toBe(true);
+		expect(failData(result).message).toBe(texts.pages.items.saveFailed);
 	});
 });

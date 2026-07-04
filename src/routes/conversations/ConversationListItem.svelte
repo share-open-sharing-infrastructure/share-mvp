@@ -25,8 +25,10 @@
 	const item = $derived(conversation.expand?.requestedItem ?? null);
 	const itemName = $derived(item?.name ?? texts.ui.itemUnavailable);
 
+	// `image` is a multi-file field; the first entry is the cover.
+	const itemCover = $derived(Array.isArray(item?.image) ? item.image[0] : (item?.image ?? null));
 	const itemImage = $derived(
-		item?.image ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${item.image}` : null
+		itemCover ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${itemCover}` : null
 	);
 
 	const lendingStatusLabel = $derived(

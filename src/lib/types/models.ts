@@ -224,11 +224,12 @@ export interface Item extends PocketBaseEntity {
 	name: string;
 
 	/**
-	 * Image file name or URL.
-	 * If you use a PocketBase file field, this will usually be the filename
-	 * which you then turn into a URL with pb.getFileUrl(...)
+	 * Image file names. The PocketBase `image` file field is multi-select, so this
+	 * is an array of filenames (the first is the cover). Turn a filename into a URL
+	 * with `itemImageUrl` / `itemImageUrls` ($lib/utils/utils). Empty/`null` when the
+	 * item has no uploaded image (it may still have an `externalImgUrl`).
 	 */
-	image: string | null;
+	image: string[] | null;
 
 	/** Free-text description (you can enforce length via validation, not TS) */
 	description: string;
@@ -287,7 +288,7 @@ export interface Item extends PocketBaseEntity {
 export interface ItemPublic extends PocketBaseEntity {
 	id: string;
 	name: string;
-	image: string | null;
+	image: string[] | null;
 	externalImgUrl: string | null;
 	externalUrl: string | null;
 	description: string;
