@@ -1,6 +1,7 @@
 import tailwindcss from '@tailwindcss/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig, loadEnv, type PluginOption } from 'vite';
+import { loadEnv, type PluginOption } from 'vite';
+import { defineConfig, configDefaults } from 'vitest/config';
 import mkcert from 'vite-plugin-mkcert';
 
 export default defineConfig(({ mode }) => {
@@ -36,6 +37,11 @@ export default defineConfig(({ mode }) => {
 		server: {
 			host: true, // oder explizit: host: '0.0.0.0'
 			...(allowedHosts.length ? { allowedHosts } : {})
+		},
+		test: {
+			// Vitest (unit tests) must not pick up the Playwright e2e specs in e2e/,
+			// which use `@playwright/test` and run via `npm run test:e2e` instead.
+			exclude: [...configDefaults.exclude, 'e2e/**']
 		}
 	};
 });

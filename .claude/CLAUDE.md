@@ -36,6 +36,15 @@ npm run test       # Vitest in WATCH mode
 npx vitest run                       # run all tests once (CI-style)
 npx vitest run src/path/to/file.test.ts  # run a single test file
 
+# Bring up the whole local stack (real-schema PocketBase + dev server + optional seed) in one
+# command, with all env gotchas baked in. Backend lives in a sibling ../allerleih-backend.
+scripts/dev-stack.sh --seed e2e
+
+# Playwright end-to-end tests (browser-level; require a running PocketBase + superuser creds).
+# Playwright starts the dev server itself; global-setup seeds the deterministic `e2e` scenario.
+# See e2e/README.md for env + conventions.
+PB_URL=http://127.0.0.1:8091 PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run test:e2e
+
 # Seed a running PocketBase with deterministic test data. Scenarios live in
 # scripts/seed/scenarios/ (one file per feature); shared helpers in scripts/seed/lib.js.
 # Idempotent; only touches its own `@seed.test` records. Requires superuser creds.
