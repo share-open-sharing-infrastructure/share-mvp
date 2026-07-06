@@ -151,6 +151,16 @@ export function createConversation(pb, data) {
 	return pb.collection('conversations').create(data);
 }
 
-export function setTrust(pb, userId, trustedIds) {
-	return pb.collection('users').update(userId, { trusts: trustedIds });
+// Set userId's trust list to exactly `trustedIds` by replacing their outgoing
+// `trusts` edges (truster = userId). Idempotent: drops existing edges first, then
+// re-creates. Runs as superuser (seed), so the createRule is bypassed.
+export async function setTrust(pb, userId, trustedIds) {
+	const existing = await pb
+		.collection('trusts')
+		.getFullList({ filter: pb.filter('truster = {:u}', { u: userId }) });
+	for (const row of existing) await pb.collection('trusts').delete(row.id);
+	for (const trusteeId of trustedIds) {
+		if (trusteeId === userId) continue;
+		await pb.collection('trusts').create({ truster: userId, trustee: trusteeId });
+	}
 }

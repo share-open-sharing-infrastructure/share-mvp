@@ -3,6 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
+import { addTrust } from '$lib/server/trust';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -161,7 +162,8 @@ export async function signUpForNewsletter(email: string, username: string): Prom
 
 export async function handleInviterRelationship(pb: PocketBase, newUser: User, inviter: { id: string }): Promise<void> {
 	try {
-		await pb.collection('users').update(newUser.id, { trusts: [inviter.id] });
+		// The new user trusts their inviter (truster = newUser, trustee = inviter).
+		await addTrust(pb, newUser.id, inviter.id);
 	} catch (error) {
 		console.error('Failed to set new user trust:', error);
 	}

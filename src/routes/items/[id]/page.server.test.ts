@@ -81,12 +81,11 @@ function makePb(opts: {
 				case 'items_searchable':
 					// Unmask attempt: denied for a restricted viewer.
 					return { getOne: vi.fn().mockRejectedValue(new Error('no access')) };
+				case 'trusts':
+					// isTrusting() probes here; default: no trust edge in either direction.
+					return { getFirstListItem: vi.fn().mockRejectedValue(new Error('not trusted')) };
 				case 'users':
-					return {
-						// ownerTrustsViewer probe — owner does not trust the viewer.
-						getFirstListItem: vi.fn().mockRejectedValue(new Error('not trusted')),
-						getOne: usersGetOne,
-					};
+					return { getOne: usersGetOne };
 				case 'conversations':
 					return { getFirstListItem: convGetFirstListItem };
 				default:
@@ -103,7 +102,7 @@ function makePb(opts: {
 
 function callLoad(
 	pb: { authStore: { isValid: boolean } },
-	user: { id: string; trusts?: string[] } | null = { id: VIEWER_ID, trusts: [] }
+	user: { id: string } | null = { id: VIEWER_ID }
 ) {
 	// Mirror real PocketBase: a guest (no user) has an invalid auth store.
 	pb.authStore.isValid = !!user;
@@ -190,7 +189,7 @@ describe('items/[id] load — off-platform-contact owners (#438)', () => {
 	it('does not resolve a contact for the viewer on their own item', async () => {
 		const { pb, usersGetOne } = makePb({ contactMethod: 'email', contactEmail: 'x@y.de' });
 
-		const data = await callLoad(pb, { id: OWNER_ID, trusts: [] });
+		const data = await callLoad(pb, { id: OWNER_ID });
 
 		expect(data.isOwnItem).toBe(true);
 		expect(data.ownerContact).toBeNull();

@@ -40,7 +40,6 @@ export async function load({ params, locals, url }) {
 	// Strip sensitive fields from owner expand before returning.
 	if (item.expand?.owner) {
 		delete item.expand.owner.geolocation;
-		delete item.expand.owner.trusts;
 		delete item.expand.owner.email;
 	}
 
