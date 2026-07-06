@@ -1,0 +1,18 @@
+[     648ms] [WARNING] <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes"> @ http://127.0.0.1:5173/auth/login:0
+[     651ms] [INFO] Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner. @ http://127.0.0.1:5173/auth/login:0
+[   22369ms] [WARNING] Avoid using `history.pushState(...)` and `history.replaceState(...)` as these will conflict with SvelteKit's router. Use the `pushState` and `replaceState` imports from `$app/navigation` instead. @ http://127.0.0.1:5173/@vite/client:524
+[   22374ms] [WARNING] Unrecognized feature: 'web-share'. @ http://127.0.0.1:5173/node_modules/.vite/deps/legacy-client-BePX9ZsI.js?v=af949bba:433
+[   22375ms] [WARNING] %c[svelte] derived_inert
+%cReading a derived belonging to a now-destroyed effect may result in stale values
+https://svelte.dev/e/derived_inert font-weight: bold font-weight: normal @ http://127.0.0.1:5173/@vite/client:524
+[   22376ms] TypeError: get(...) is not a function
+    at HTMLInputElement.handleBlur (http://127.0.0.1:5173/node_modules/.vite/deps/dist-8nJTp18X.js?v=af949bba:25803:47)
+    at HTMLInputElement.handle (http://127.0.0.1:5173/node_modules/.vite/deps/index-client-CF5SepX3.js?v=af949bba:2520:19)
+    at http://127.0.0.1:5173/node_modules/.vite/deps/events-wGWPgiE6.js?v=af949bba:43:20
+    at without_reactive_context (http://127.0.0.1:5173/node_modules/.vite/deps/runtime-DoN3gXrD.js?v=af949bba:4221:10)
+    at HTMLInputElement.target_handler (http://127.0.0.1:5173/node_modules/.vite/deps/events-wGWPgiE6.js?v=af949bba:42:35)
+    at remove_effect_dom (http://127.0.0.1:5173/node_modules/.vite/deps/runtime-DoN3gXrD.js?v=af949bba:4598:8)
+    at destroy_effect (http://127.0.0.1:5173/node_modules/.vite/deps/runtime-DoN3gXrD.js?v=af949bba:4573:3)
+    at on_destroy (http://127.0.0.1:5173/node_modules/.vite/deps/index-client-CF5SepX3.js?v=af949bba:525:12)
+    at fn (http://127.0.0.1:5173/node_modules/.vite/deps/runtime-DoN3gXrD.js?v=af949bba:4634:17)
+    at pause_effect (http://127.0.0.1:5173/node_modules/.vite/deps/runtime-DoN3gXrD.js?v=af949bba:4640:9)

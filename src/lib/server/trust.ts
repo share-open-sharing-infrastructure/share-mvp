@@ -51,11 +51,17 @@ export async function removeTrust(pb: PocketBase, trusterId: UserId, trusteeId: 
 	}
 }
 
+// getTrustees + getTrusters both hit the `trusts` collection and are typically awaited
+// together (e.g. Promise.all on /social). PocketBase auto-cancellation keys concurrent
+// requests by path, so without distinct requestKeys the second would cancel the first —
+// leaving one side of the network silently empty. Give each a stable, distinct key.
+
 /** Trust edges where `userId` is the truster, with the trustee expanded. */
 export function getTrustees(pb: PocketBase, userId: UserId): Promise<Trust[]> {
 	return pb.collection('trusts').getFullList<Trust>({
 		filter: pb.filter('truster = {:u}', { u: userId }),
 		expand: 'trustee',
+		requestKey: 'trust-trustees',
 	});
 }
 
@@ -64,5 +70,6 @@ export function getTrusters(pb: PocketBase, userId: UserId): Promise<Trust[]> {
 	return pb.collection('trusts').getFullList<Trust>({
 		filter: pb.filter('trustee = {:u}', { u: userId }),
 		expand: 'truster',
+		requestKey: 'trust-trusters',
 	});
 }

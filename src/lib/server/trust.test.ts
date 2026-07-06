@@ -102,13 +102,33 @@ describe('getTrustees / getTrusters', () => {
 		const getFullList = vi.fn().mockResolvedValue([{ id: 't1', truster: 'a', trustee: 'b' }]);
 		const pb = makePb({ getFullList });
 		await getTrustees(pb, 'a');
-		expect(getFullList).toHaveBeenCalledWith({ filter: "truster = 'a'", expand: 'trustee' });
+		expect(getFullList).toHaveBeenCalledWith({
+			filter: "truster = 'a'",
+			expand: 'trustee',
+			requestKey: 'trust-trustees',
+		});
 	});
 
 	it('getTrusters filters by trustee and expands the truster', async () => {
 		const getFullList = vi.fn().mockResolvedValue([{ id: 't2', truster: 'c', trustee: 'a' }]);
 		const pb = makePb({ getFullList });
 		await getTrusters(pb, 'a');
-		expect(getFullList).toHaveBeenCalledWith({ filter: "trustee = 'a'", expand: 'truster' });
+		expect(getFullList).toHaveBeenCalledWith({
+			filter: "trustee = 'a'",
+			expand: 'truster',
+			requestKey: 'trust-trusters',
+		});
+	});
+
+	it('getTrustees and getTrusters use distinct requestKeys (avoid auto-cancellation collision)', async () => {
+		const trusteesFn = vi.fn().mockResolvedValue([]);
+		const trustersFn = vi.fn().mockResolvedValue([]);
+		await getTrustees(makePb({ getFullList: trusteesFn }), 'a');
+		await getTrusters(makePb({ getFullList: trustersFn }), 'a');
+		const k1 = trusteesFn.mock.calls[0][0].requestKey;
+		const k2 = trustersFn.mock.calls[0][0].requestKey;
+		expect(k1).toBeTruthy();
+		expect(k2).toBeTruthy();
+		expect(k1).not.toBe(k2);
 	});
 });
