@@ -46,9 +46,32 @@ export async function teardown(pb) {
 	const ids = seedUsers.map((u) => u.id);
 	const anyOf = (field) => '(' + ids.map((id) => `${field} = "${id}"`).join(' || ') + ')';
 
+	// Groups owned by seed users: clear their invites + memberships before the groups.
+	const seedGroups = await pb
+		.collection('groups')
+		.getFullList({ filter: anyOf('owner') })
+		.catch(() => []);
+	if (seedGroups.length > 0) {
+		const byGroup =
+			'(' + seedGroups.map((g) => `group = "${g.id}"`).join(' || ') + ')';
+		await deleteWhere(pb, 'group_invites', byGroup);
+		await deleteWhere(pb, 'group_members', byGroup);
+	}
+	// Memberships the seed users hold in any (incl. non-seed) group.
+	await deleteWhere(pb, 'group_members', anyOf('user'));
+
+	// Records keyed to seed users. deleteWhere swallows unknown-collection errors, so
+	// naming a collection that a given schema lacks is harmless.
+	await deleteWhere(pb, 'notifications', `${anyOf('recipient')} || ${anyOf('sender')}`);
+	await deleteWhere(pb, 'trusts', `${anyOf('truster')} || ${anyOf('trustee')}`);
+	await deleteWhere(pb, 'term_acceptances', anyOf('user'));
+	await deleteWhere(pb, 'user_legal_acceptances', anyOf('user'));
+	await deleteWhere(pb, 'lending_requirements', anyOf('owner'));
+	await deleteWhere(pb, 'lending_terms', anyOf('owner'));
 	await deleteWhere(pb, 'messages', `${anyOf('from')} || ${anyOf('to')}`);
 	await deleteWhere(pb, 'conversations', `${anyOf('requester')} || ${anyOf('itemOwner')}`);
 	await deleteWhere(pb, 'items', anyOf('owner'));
+	for (const g of seedGroups) await pb.collection('groups').delete(g.id).catch(() => {});
 	for (const u of seedUsers) await pb.collection('users').delete(u.id).catch(() => {});
 	return seedUsers.length;
 }
