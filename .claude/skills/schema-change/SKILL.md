@@ -55,8 +55,10 @@ migration adds it — and it usually shouldn't be. Confirm, don't assume:
 - Inspect what each view actually selects (in a `pb_migrations/*` `viewQuery`, or live:
   `app.findCollectionByNameOrId('users_public').viewQuery`).
 - These are **deliberately excluded** and must stay out: `users.email`, `users.password`,
-  `users.trusts`, `users.inviteCode`, raw coordinates (geolocation lives in an owner-only collection),
-  and the raw `owner` relation (exposed only as `userId`). Note the two views protect differently:
+  `users.inviteCode`, raw coordinates (geolocation lives in an owner-only collection), the raw
+  `owner` relation (exposed only as `userId`), and any **trust-graph data** (trust lives in the
+  separate `trusts` join collection — its edges must never be joined into a view). Note the two
+  views protect differently:
   `users_public` works by **column omission** (a field that isn't in its `SELECT` is simply absent),
   while `items_public` keeps the row but **NULL-masks** content fields (`name`, `image`,
   `description`, …) for `trusteesOnly`/group-shared items — check the mechanism for the view you touched.
