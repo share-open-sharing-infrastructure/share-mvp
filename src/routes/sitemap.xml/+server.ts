@@ -7,6 +7,7 @@ const STATIC_PATHS = [
 	'/search',
 	'/misc/about',
 	'/misc/guide',
+	'/misc/app',
 	'/misc/contact',
 	'/misc/imprint',
 	'/misc/newsletter',
