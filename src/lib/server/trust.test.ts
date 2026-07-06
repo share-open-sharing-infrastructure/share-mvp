@@ -57,6 +57,28 @@ describe('addTrust', () => {
 		expect(create).not.toHaveBeenCalled();
 		expect(getFirstListItem).not.toHaveBeenCalled();
 	});
+
+	it('tolerates a concurrent duplicate: create rejects but the edge now exists → no throw', async () => {
+		// isTrusting: false up front (pre-check), then true on the post-failure re-check.
+		const getFirstListItem = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('none'))
+			.mockResolvedValueOnce({ id: 't1' });
+		const create = vi.fn().mockRejectedValue(new Error('unique constraint'));
+		const pb = makePb({ getFirstListItem, create });
+		await expect(addTrust(pb, 'a', 'b')).resolves.toBeUndefined();
+		expect(create).toHaveBeenCalledTimes(1);
+	});
+
+	it('rethrows a genuine create error when no edge exists afterwards', async () => {
+		const getFirstListItem = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('none'))
+			.mockRejectedValueOnce(new Error('still none'));
+		const create = vi.fn().mockRejectedValue(new Error('boom'));
+		const pb = makePb({ getFirstListItem, create });
+		await expect(addTrust(pb, 'a', 'b')).rejects.toThrow('boom');
+	});
 });
 
 describe('removeTrust', () => {

@@ -22,11 +22,19 @@ export async function isTrusting(pb: PocketBase, trusterId: UserId, trusteeId: U
 }
 
 /** Create a trust edge (truster trusts trustee). Idempotent: an existing edge or a
- *  self-edge is a no-op, so re-adding never throws on the unique index. */
+ *  self-edge is a no-op, so re-adding never surfaces an error — even under a
+ *  concurrent double-submit, where the check-then-create guard can be raced and the
+ *  second create hits the UNIQUE(truster, trustee) index. */
 export async function addTrust(pb: PocketBase, trusterId: UserId, trusteeId: UserId): Promise<void> {
 	if (trusterId === trusteeId) return;
 	if (await isTrusting(pb, trusterId, trusteeId)) return;
-	await pb.collection('trusts').create({ truster: trusterId, trustee: trusteeId });
+	try {
+		await pb.collection('trusts').create({ truster: trusterId, trustee: trusteeId });
+	} catch (err) {
+		// A concurrent add can slip past isTrusting() and violate the unique index. If the
+		// edge exists now, the intent is satisfied — treat it as a no-op; otherwise rethrow.
+		if (!(await isTrusting(pb, trusterId, trusteeId))) throw err;
+	}
 }
 
 /** Remove the trust edge {truster, trustee} if it exists. */
