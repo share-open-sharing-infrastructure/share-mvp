@@ -132,18 +132,19 @@
 			const lastMessageId =
 				event.record.messages?.[event.record.messages.length - 1];
 
+			// Skip fetch if there's no new message or we already have it
+			if (!lastMessageId || messages.some((m) => m.id === lastMessageId)) return;
+
 			// get last messages contents from pocketbase
 			let latestMessage: Message;
-			if (lastMessageId) {
-				try {
-					latestMessage = await pb.collection('messages').getOne(lastMessageId);
-					// Deduplicate: server reload via use:enhance may have already added this message
-					if (!messages.some((m) => m.id === latestMessage.id)) {
-						messages = [...messages, latestMessage];
-					}
-				} catch (error) {
-					console.error('Failed to fetch last message record:', error);
+			try {
+				latestMessage = await pb.collection('messages').getOne(lastMessageId);
+				// Deduplicate: server reload via use:enhance may have already added this message
+				if (!messages.some((m) => m.id === latestMessage.id)) {
+					messages = [...messages, latestMessage];
 				}
+			} catch (error) {
+				console.error('Failed to fetch last message record:', error);
 			}
 		}
 	}
@@ -172,6 +173,7 @@
 		const field = loggedInUserIsItemOwner ? 'ownerLastSeenAt' : 'requesterLastSeenAt';
 
 		const ping = () => {
+			if (document.visibilityState !== 'visible') return;
 			pb!.collection('conversations').update(conversationId, {
 				[field]: new Date().toISOString(),
 			}).catch(() => {});
