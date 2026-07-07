@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { matchesItemSearch } from './itemSearch';
+import { matchesItemSearch, isAvailable } from './itemSearch';
 
 describe('matchesItemSearch', () => {
 	it('matches every item for an empty search', () => {
@@ -21,5 +21,14 @@ describe('matchesItemSearch', () => {
 		expect(matchesItemSearch({ description: 'Zelt' }, 'zelt')).toBe(true);
 		expect(matchesItemSearch({ name: 'Zelt' }, 'zelt')).toBe(true);
 		expect(matchesItemSearch({}, 'zelt')).toBe(false);
+	});
+});
+
+describe('isAvailable', () => {
+	it('keeps everything except explicitly unavailable items', () => {
+		expect(isAvailable({ status: 'available' })).toBe(true);
+		expect(isAvailable({ status: 'unknown' })).toBe(true);
+		expect(isAvailable({})).toBe(true); // missing status passes (matches /search)
+		expect(isAvailable({ status: 'unavailable' })).toBe(false);
 	});
 });

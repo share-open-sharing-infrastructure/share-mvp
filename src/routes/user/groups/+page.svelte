@@ -21,7 +21,7 @@
 	}
 </script>
 
-<div class="mx-auto max-w-2xl px-4 py-6 space-y-6">
+<div class="mx-auto max-w-5xl px-4 py-6 space-y-6">
 	<div class="flex items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold text-tinte-900">{texts.groups.pageTitle}</h1>
 		<Button class="bg-primary-200 hover:bg-primary min-button" onclick={() => (showCreate = true)}>
