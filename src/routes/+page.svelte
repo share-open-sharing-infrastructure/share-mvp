@@ -114,15 +114,15 @@
 				</div>
 			</div>
 			<div class="aspect-video w-full overflow-hidden rounded-2xl">
-				<iframe
+
+				<iframe 
 					class="h-full w-full"
-					src="https://www.youtube-nocookie.com/embed/IMPZfuff3eI"
+					src="https://fair.tube/videos/embed/8B7gwMzz6AbyDBgF1Uu6fg"
 					title={landingTexts.howVideoTitle}
 					frameborder="0"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-					referrerpolicy="strict-origin-when-cross-origin"
-					allowfullscreen
-				></iframe>
+					allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+					sandbox="allow-same-origin allow-scripts allow-popups allow-forms">
+					</iframe>
 			</div>
 		</div>
 	</section>
