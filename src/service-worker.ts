@@ -5,6 +5,7 @@ declare const self: ServiceWorkerGlobalScope;
 
 // SvelteKit service-worker module (provides build, files, version)
 import { build, files, version } from '$service-worker';
+import { respondWithAsset } from '$lib/serviceWorker/respondWithAsset';
 
 // ─── Precaching (optional, keeps the shell fast) ─────────────────────────────
 
@@ -68,11 +69,10 @@ self.addEventListener('fetch', (event) => {
 	if (url.origin !== self.location.origin) return;
 	if (!ASSETS.includes(url.pathname)) return;
 
+	// Cache-first with self-heal; never rejects (see respondWithAsset for why —
+	// a rejected respondWith is what crashed the page after onboarding, #291).
 	event.respondWith(
-		caches.open(CACHE).then(async (cache) => {
-			const cached = await cache.match(event.request);
-			return cached ?? fetch(event.request);
-		})
+		caches.open(CACHE).then((cache) => respondWithAsset(event.request, url.pathname, cache))
 	);
 });
 
