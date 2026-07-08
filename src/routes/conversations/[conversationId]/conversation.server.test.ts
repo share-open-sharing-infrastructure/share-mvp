@@ -8,7 +8,7 @@ vi.mock('$lib/server/notifications.js', () => ({
 	isMessageNotificationThrottled: vi.fn(),
 }));
 
-import { deleteConversation } from './conversation.server';
+import { deleteConversation, sendMessage } from './conversation.server';
 
 function mockFilter(raw: string, params?: Record<string, unknown>): string {
 	if (!params) return raw;
@@ -77,5 +77,104 @@ describe('deleteConversation', () => {
 		});
 
 		await expect(deleteConversation(pb, 'conv1')).rejects.toThrow('cannot delete');
+	});
+});
+
+describe('sendMessage', () => {
+	it('creates the message with conversation relation and updates lastMessageAt (not *LastSeenAt)', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg1' });
+		const convGetOne = vi.fn().mockResolvedValue({
+			id: 'conv1',
+			requester: 'userA',
+			itemOwner: 'userB',
+			messages: ['msg0'],
+		});
+		const convUpdate = vi.fn().mockResolvedValue(true);
+		const pb = makeMockPb({
+			messages: { create: msgCreate },
+			conversations: { getOne: convGetOne, update: convUpdate },
+			notifications: {
+				getFullList: vi.fn().mockResolvedValue([]),
+				delete: vi.fn(),
+			},
+		});
+
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
+
+		await sendMessage(pb, 'conv1', 'Hello!', 'userB', 'userA', 'Owner');
+
+		// messages.create is called with conversation relation
+		expect(msgCreate).toHaveBeenCalledWith({
+			messageContent: 'Hello!',
+			from: 'userB',
+			to: 'userA',
+			conversation: 'conv1',
+		});
+
+		// conversations.update sets lastMessageAt but NOT requesterLastSeenAt or ownerLastSeenAt
+		expect(convUpdate).toHaveBeenCalledTimes(1);
+		const updatePayload = convUpdate.mock.calls[0][1];
+		expect(updatePayload).toHaveProperty('lastMessageAt');
+		expect(updatePayload).not.toHaveProperty('requesterLastSeenAt');
+		expect(updatePayload).not.toHaveProperty('ownerLastSeenAt');
+	});
+
+	it('marks readByRequester as false when sending to the requester', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg2' });
+		const convGetOne = vi.fn().mockResolvedValue({
+			id: 'conv1',
+			requester: 'userA',
+			itemOwner: 'userB',
+			messages: [],
+		});
+		const convUpdate = vi.fn().mockResolvedValue(true);
+		const pb = makeMockPb({
+			messages: { create: msgCreate },
+			conversations: { getOne: convGetOne, update: convUpdate },
+			notifications: {
+				getFullList: vi.fn().mockResolvedValue([]),
+				delete: vi.fn(),
+			},
+		});
+
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
+
+		// Send from owner (userB) to requester (userA)
+		await sendMessage(pb, 'conv1', 'Hey', 'userB', 'userA', 'Owner');
+
+		const updatePayload = convUpdate.mock.calls[0][1];
+		expect(updatePayload).toHaveProperty('readByRequester', false);
+		expect(updatePayload).not.toHaveProperty('readByOwner');
+	});
+
+	it('marks readByOwner as false when sending to the owner', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg3' });
+		const convGetOne = vi.fn().mockResolvedValue({
+			id: 'conv1',
+			requester: 'userA',
+			itemOwner: 'userB',
+			messages: ['msg0'],
+		});
+		const convUpdate = vi.fn().mockResolvedValue(true);
+		const pb = makeMockPb({
+			messages: { create: msgCreate },
+			conversations: { getOne: convGetOne, update: convUpdate },
+			notifications: {
+				getFullList: vi.fn().mockResolvedValue([]),
+				delete: vi.fn(),
+			},
+		});
+
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
+
+		// Send from requester (userA) to owner (userB)
+		await sendMessage(pb, 'conv1', 'Hi', 'userA', 'userB', 'Requester');
+
+		const updatePayload = convUpdate.mock.calls[0][1];
+		expect(updatePayload).toHaveProperty('readByOwner', false);
+		expect(updatePayload).not.toHaveProperty('readByRequester');
 	});
 });

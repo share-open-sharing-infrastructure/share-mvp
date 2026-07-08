@@ -152,6 +152,9 @@ erDiagram
         bool readByOwner
         string lendingStatus "pending|accepted|rejected|active|return_requested|completed"
         json counterfactual "impact research answer"
+        date lastMessageAt "set on message send — drives list sort"
+        date requesterLastSeenAt "presence heartbeat — server-only"
+        date ownerLastSeenAt "presence heartbeat — server-only"
         date created
         date updated
     }
@@ -164,6 +167,7 @@ erDiagram
         string messageContent
         User from FK
         User to FK
+        Conversation conversation FK "back-link for notification hook"
         date created
         date updated
     }

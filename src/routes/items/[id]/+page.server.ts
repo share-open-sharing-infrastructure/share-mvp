@@ -290,6 +290,7 @@ export const actions = {
 					lendingStatus: 'pending',
 					readByRequester: true,
 					readByOwner: false,
+					lastMessageAt: new Date().toISOString(),
 				});
 			} catch (err) {
 				const e = err as Partial<ClientResponseError> & { response?: { message?: string } };
