@@ -6,7 +6,14 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 </script>
+
+<SeoHead
+	title={texts.seo.reset.title}
+	description={texts.seo.reset.description}
+	canonical="https://allerleih.org/auth/reset"
+/>
 
 <Section name="reset">
 	{#if form?.fail}

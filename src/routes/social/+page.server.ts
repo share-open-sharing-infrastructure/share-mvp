@@ -10,8 +10,12 @@ export async function load({ locals, url }) {
 
 	try {
 		// Exclude deleted (anonymized) accounts so they can't be found/added as trustees.
+		// Project to only the columns the trustee picker + trust-network computation need,
+		// so private base-`users` fields (contactEmail, login email, inviteCode, …) are never
+		// serialized to the client (#438 hardening).
 		users = await locals.pb.collection('users').getFullList({
 			filter: locals.pb.filter('deleted != true'),
+			fields: 'id,username,trusts',
 		});
 	} catch (error: Error | any) {
 		console.error(error.message ? error.message : error);

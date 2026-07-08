@@ -9,6 +9,7 @@
 	import { texts } from '$lib/texts';
 	import { ArrowsRepeatOutline } from 'flowbite-svelte-icons';
 	import { buildSearchUrl } from './searchUrl';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -54,13 +55,7 @@
 	});
 </script>
 
-<svelte:head>
-	<title>{texts.seo.search.title}</title>
-	<meta name="description" content={texts.seo.search.description} />
-	<meta property="og:title" content={texts.seo.search.title} />
-	<meta property="og:description" content={texts.seo.search.description} />
-	<meta property="og:type" content="website" />
-</svelte:head>
+<SeoHead title={texts.seo.search.title} description={texts.seo.search.description} />
 
 {#snippet paginationControls()}
 	{#if filterActive}

@@ -174,6 +174,9 @@ Institutions (public libraries, lending shops, tool libraries) are regular `User
 - Personal-only data (contacts, geolocation, push subscriptions, owned `Item`s, own notifications) is hard-deleted; the user is removed from every other user's `trusts[]`
 - The original email + username are retained in a restricted `deleted_accounts` record for the dispute-resolution window, then purged by a future scheduled job (see [data-model.md](data-model.md))
 
+**Automated data retention (issue #461)**
+- Nightly backend cron jobs enforce the privacy policy's retention limits: accounts inactive for 6 months are anonymized through the same deletion path (skipped with user + admin email notice while a loan is open), conversations incl. messages are deleted 6 months after last activity, in-app notifications after 90 days, feedback after 6 months (see [data-model.md](data-model.md))
+
 # Platform Legal Consent (ToS & Privacy)
 
 Distinct from the per-institution `LendingTerms` above, the **platform operator's** Terms of Service and privacy statement are versioned centrally (Issue #399):

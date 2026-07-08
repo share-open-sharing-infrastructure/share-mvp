@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
 
@@ -17,10 +18,10 @@
 	);
 </script>
 
-<svelte:head>
-	<title>{texts.lendingTerms.pageTitle} – {data.item.name}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead
+	title={`${texts.lendingTerms.pageTitle} – ${data.item.name}`}
+	robots="noindex, nofollow"
+/>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<a
@@ -67,6 +68,7 @@
 	<article
 		class="terms-body rounded-2xl border border-tinte-200 dark:border-tinte-700 bg-sand dark:bg-tinte-800 p-6 leading-relaxed text-tinte-800 dark:text-tinte-200"
 	>
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- admin-only source, server-side normalized via lendingTerms.cleanTermsHtml (see comment above) -->
 		{@html data.terms.body}
 	</article>
 

@@ -6,9 +6,16 @@
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
+
+<SeoHead
+	title={texts.seo.resetConfirm.title}
+	description={texts.seo.resetConfirm.description}
+	robots="noindex"
+/>
 
 <Section name="reset">
 	{#if form?.fail}

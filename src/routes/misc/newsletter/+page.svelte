@@ -1,16 +1,14 @@
 <script>
 	import { Button, Input, Label } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 </script>
 
-<svelte:head>
-	<title>{texts.seo.newsletter.title}</title>
-	<meta name="description" content={texts.seo.newsletter.description} />
-	<meta property="og:title" content={texts.seo.newsletter.title} />
-	<meta property="og:description" content={texts.seo.newsletter.description} />
-	<meta property="og:type" content="website" />
-	<link rel="canonical" href="https://allerleih.org/misc/newsletter" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.newsletter.title}
+	description={texts.seo.newsletter.description}
+	canonical="https://allerleih.org/misc/newsletter"
+/>
 
 <div class="mx-auto max-w-md">
 	<div class="rounded-2xl bg-white p-8 shadow-lg dark:bg-gray-800">

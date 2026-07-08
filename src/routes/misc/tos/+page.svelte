@@ -1,10 +1,9 @@
 <script lang="ts">
+	import SeoHead from '$lib/components/SeoHead.svelte';
 	const { data } = $props();
 </script>
 
-<svelte:head>
-	<title>{data.doc.title}</title>
-</svelte:head>
+<SeoHead title={data.doc.title} />
 
 <h1 class="mb-2 text-2xl font-bold">{data.doc.title}</h1>
 <p class="mb-6 text-sm text-gray-500">Stand: {data.doc.effectiveDate} · Version {data.doc.version}</p>

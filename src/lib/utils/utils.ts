@@ -75,3 +75,29 @@ export function formatTimestamp(
 
 	return returnString;
 }
+
+/**
+ * Build a `mailto:` href for the email-contact CTA (issue #438). The address is
+ * URL-encoded per-part (local @ domain) so a crafted-but-RFC-valid address can't
+ * inject extra mailto headers/params into the sender's outgoing mail; subject and
+ * body are fully encoded. Returns '' for an empty address (caller hides the link).
+ */
+export function buildMailtoHref(email: string, subject: string, body: string): string {
+	if (!email) return '';
+	const at = email.lastIndexOf('@');
+	const address =
+		at === -1
+			? encodeURIComponent(email)
+			: `${encodeURIComponent(email.slice(0, at))}@${encodeURIComponent(email.slice(at + 1))}`;
+	return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/**
+ * Build the item-detail outbound-link href, routed through `/api/redirect` (which
+ * enforces https + records the click). Used for external-item deep links and for an
+ * owner's off-platform contact link (issue #438). The destination is URL-encoded so it
+ * rides safely as a query param; `/api/redirect` is the authoritative https guard.
+ */
+export function buildItemRedirectHref(target: string, itemId: string): string {
+	return `/api/redirect?to=${encodeURIComponent(target)}&source=item-detail&item=${itemId}`;
+}

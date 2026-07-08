@@ -2,6 +2,7 @@
 	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const landingTexts = texts.pages.landing;
 	const siteUrl = 'https://allerleih.org';
@@ -76,18 +77,15 @@
 	};
 </script>
 
+<SeoHead
+	title={texts.seo.home.title}
+	description={texts.seo.home.description}
+	canonical="{siteUrl}/"
+	image="{siteUrl}/og-invite.png"
+/>
+
 <svelte:head>
-	<title>{texts.seo.home.title}</title>
-	<meta name="description" content={texts.seo.home.description} />
-	<meta property="og:title" content={texts.seo.home.title} />
-	<meta property="og:description" content={texts.seo.home.description} />
-	<meta property="og:type" content="website" />
 	<meta property="og:url" content="{siteUrl}/" />
-	<meta property="og:image" content="{siteUrl}/og-invite.png" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={texts.seo.home.title} />
-	<meta name="twitter:description" content={texts.seo.home.description} />
-	<link rel="canonical" href="{siteUrl}/" />
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static, self-constructed JSON-LD -->
 	{@html jsonLdScriptTag}
 </svelte:head>
@@ -118,12 +116,11 @@
 			<div class="aspect-video w-full overflow-hidden rounded-2xl">
 				<iframe
 					class="h-full w-full"
-					src="https://www.youtube-nocookie.com/embed/IMPZfuff3eI"
+					src="https://fair.tube/videos/embed/8B7gwMzz6AbyDBgF1Uu6fg"
 					title={landingTexts.howVideoTitle}
 					frameborder="0"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-					referrerpolicy="strict-origin-when-cross-origin"
-					allowfullscreen
+					allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+					sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
 				></iframe>
 			</div>
 		</div>

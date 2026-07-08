@@ -15,12 +15,16 @@
 		"lint:fix": "eslint . --ext .ts,.svelte,.js --fix",
 		"format": "prettier --write .",
 		"test": "vitest",
+		"test:e2e": "playwright test",
+		"test:e2e:ui": "playwright test --ui",
+		"test:e2e:report": "playwright show-report",
 		"seed": "node scripts/seed.js"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.1",
 		"@eslint/js": "^9.39.2",
 		"@flowbite-svelte-plugins/datatable": "^0.4.1",
+		"@playwright/test": "^1.61.1",
 		"@sveltejs/adapter-auto": "^6.1.1",
 		"@sveltejs/adapter-node": "^5.4.0",
 		"@sveltejs/adapter-static": "^3.0.10",

@@ -1,0 +1,42 @@
+name: Lint & Typecheck on PR
+env:
+  node_version: '25.2.1'
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  lint:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    # Skip on fork PRs (mirrors the Vitest workflow); still runs on manual dispatch.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # `svelte-kit sync` generates the `$env/static/*` type declarations from the environment,
+    # so `npm run check` fails on missing members without these. Dummy values are fine — only
+    # the presence of the members matters for type-checking, not the values.
+    env:
+      PUBLIC_PB_URL: http://127.0.0.1:8090
+      PUBLIC_VAPID_PUBLIC_KEY: dummy
+      VAPID_PRIVATE_KEY: dummy
+      VAPID_SUBJECT: mailto:ci@example.com
+      ORS_API_KEY: dummy
+      MISTRAL_API_KEY: dummy
+      SYNC_SECRET: dummy
+      PB_SUPERUSER_EMAIL: ci@example.com
+      PB_SUPERUSER_PASSWORD: dummy
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.node_version }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: ESLint
+        run: npm run lint
+      - name: Type check (svelte-check)
+        run: npm run check

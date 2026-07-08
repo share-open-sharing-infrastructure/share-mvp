@@ -7,6 +7,7 @@
 	import { enhance } from '$app/forms';
 	import { BellOutline, EnvelopeOutline, UserAddOutline } from 'flowbite-svelte-icons';
 	import type { Notification } from '$lib/types/models';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 	let { data } = $props();
 
 	const conversationNotificationTypes = new Set([
@@ -30,10 +31,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{texts.notifications.title} – {texts.names.app}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead
+	title={`${texts.notifications.title} – ${texts.names.app}`}
+	robots="noindex, nofollow"
+/>
 
 <div class="max-w-2xl mx-auto px-4 py-8">
 	<h1 class="text-2xl font-semibold mb-6">{texts.notifications.title}</h1>
@@ -48,6 +49,7 @@
 			{#each data.notifications as notification (notification.id)}
 				<li class="flex items-center gap-2 py-4 px-2 rounded-lg hover:bg-papier transition-colors">
 					
+					<!-- eslint-disable svelte/no-navigation-without-resolve -- notificationHref() already returns resolve()d internal paths; the rule can't see through the function call -->
 					<a
 						href={notificationHref(notification)}
 						class="flex items-start gap-4 flex-1 min-w-0"
@@ -81,6 +83,7 @@
 							<p class="text-xs text-tinte-400 mt-0.5">{formatTimestamp(notification.created)}</p>
 						</div>
 					</a>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 					<form
 						method="POST"
 						action="?/toggleRead"

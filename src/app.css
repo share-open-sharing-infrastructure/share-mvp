@@ -82,11 +82,6 @@
 	--color-primary-600: #239628; /* For some reason, the flowbite toggle element uses this color as its background */
 }
 
-.logo {
-	font-family: 'Work Sans', sans-serif;
-	font-weight: 900;
-}
-
 .landing-img {
 	border-radius:5%;
 	overflow:hidden
@@ -98,7 +93,7 @@
 	border: 1px solid;
 	font-size: larger;
 	font-weight: bold;
-	font-family: work sans, sans-serif;
+	font-family: "Verdana", sans-serif;
 	border-radius: 50px;
 	cursor: pointer;
 	padding: 15px 20px;

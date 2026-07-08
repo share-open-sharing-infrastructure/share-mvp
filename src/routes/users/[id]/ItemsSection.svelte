@@ -4,7 +4,7 @@
 	import type { Item, ItemPublic } from '$lib/types/models';
 	import ItemCard from '../../search/ItemCard.svelte';
 	import LockedItemCard from './LockedItemCard.svelte';
-	import { matchesItemSearch } from './itemSearch';
+	import { matchesItemSearch } from '$lib/utils/itemSearch';
 
 	interface Props {
 		publicItems: Item[];

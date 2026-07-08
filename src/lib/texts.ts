@@ -51,7 +51,7 @@ export const texts = {
 		requests: 'Unterhaltungen',
 		notifications: 'Benachrichtigungen',
 		myItems: 'Meine Dinge',
-		myProfile: 'Mein Profil',
+		myProfile: 'Einstellungen',
 		social: 'Vertraute',
 		groups: 'Gruppen',
 		network: 'Mein Netzwerk',
@@ -98,6 +98,14 @@ export const texts = {
 			'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link zum Zurücksetzen des Passworts an.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
+		contactEmailRequired:
+			'Bitte gib eine Kontakt-E-Mail an, wenn du Anfragen per E-Mail erhalten möchtest.',
+		invalidContactEmail: 'Bitte gib eine gültige Kontakt-E-Mail-Adresse an.',
+		contactUrlRequired:
+			'Bitte gib einen Link an, wenn du Anfragen über einen externen Link erhalten möchtest.',
+		invalidContactUrl: 'Bitte gib einen gültigen Link an (muss mit https:// beginnen).',
+		contactOffPlatformOnly:
+			'Dieser Anbieter wickelt Anfragen außerhalb der Plattform ab. Bitte nutze den „Anfragen"-Button auf der Gegenstandsseite.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 		itemNotFound: 'Gegenstand nicht gefunden.',
@@ -161,6 +169,26 @@ export const texts = {
 		onlyForTrusted: 'Nur für Vertraute sichtbar',
 	},
 
+	// Email-contact opt-in (issue #438): owners who handle lending off-platform
+	contactOptions: {
+		title: 'Kontakt außerhalb der Plattform',
+		description:
+			'Wenn aktiviert, startet der „Anfragen"-Button bei deinen Gegenständen keine Chat-Anfrage, sondern führt zu deinem gewählten Kontaktweg. Praktisch, wenn du den Verleih außerhalb der Plattform abwickelst.',
+		methodLabel: 'Kontaktweg',
+		methodOff: 'Deaktiviert (normale In-App-Anfrage)',
+		methodEmail: 'E-Mail',
+		methodLink: 'Externer Link',
+		emailLabel: 'Kontakt-E-Mail',
+		emailPlaceholder: 'z.B. verleih@beispiel.de',
+		emailHelp: 'Deine Login-E-Mail bleibt privat – nur diese Adresse wird für den „Anfragen"-Button genutzt.',
+		urlLabel: 'Link-Adresse',
+		urlPlaceholder: 'https://…',
+		urlHelp: 'Muss mit https:// beginnen, z.B. zu deinem Verleih-Formular.',
+		publicLabel: 'Auch ohne Login sichtbar',
+		publicHelp:
+			'Wenn aktiviert, sehen auch nicht eingeloggte Besucher:innen den Kontaktweg – z.B. damit Anfragen ohne AllerLeih-Konto möglich sind. Andernfalls nur eingeloggte Nutzer:innen.',
+	},
+
 	// Form labels and placeholders
 	forms: {
 		username: 'Nutzername',
@@ -187,6 +215,7 @@ export const texts = {
 	buttons: {
 		add: 'Hinzufügen',
 		save: 'Speichern',
+		close: 'Schließen',
 		delete: 'Löschen',
 		send: 'Senden',
 		addImage: 'Bild hinzufügen:',
@@ -219,8 +248,21 @@ export const texts = {
 		descriptionLabel: 'Beschreibung (optional)',
 		descriptionPlaceholder: 'Worum geht es in dieser Gruppe?',
 		manage: 'Verwalten',
+		settings: 'Einstellungen',
+		detailsTitle: 'Gruppendetails',
+		dangerZone: 'Gefahrenzone',
+		backToGroup: 'Zurück zur Gruppe',
+		showMore: (n: number) => `Mehr anzeigen (${n})`,
 		members: 'Mitglieder',
 		noMembers: 'Diese Gruppe hat noch keine Mitglieder. Teile den Einladungslink, um Leute hinzuzufügen.',
+		// Items shared with the group (group detail page)
+		itemsSectionTitle: 'Geteilte Gegenstände',
+		itemSearchPlaceholder: 'Gegenstände durchsuchen…',
+		allCategories: 'Alle',
+		noGroupItems: 'In dieser Gruppe werden noch keine Gegenstände geteilt.',
+		noItemsInCategory: 'Keine Gegenstände in dieser Kategorie.',
+		noItemsForSearch: 'Keine Gegenstände gefunden.',
+		noAvailableItems: 'Keine verfügbaren Gegenstände.',
 		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
 		cannotAddSelf: 'Du verwaltest die Gruppe bereits.',
 		removeMember: 'Entfernen',
@@ -232,6 +274,8 @@ export const texts = {
 		activeLendingBadge: 'aktive Leihe',
 		activeLendingExplain:
 			'„Aktive Leihe" heißt: diese Person hat aktuell einen deiner Gegenstände ausgeliehen.',
+		removeUnshareHint:
+			'Wird ein Mitglied entfernt oder verlässt die Gruppe, werden seine mit dieser Gruppe geteilten Gegenstände automatisch wieder aus der Gruppe genommen.',
 		removeMemberConfirm: (name: string) => `${name} wirklich aus der Gruppe entfernen?`,
 		activeLendingWarning: (name: string) =>
 			`Achtung: ${name} hat aktuell noch einen deiner Gegenstände ausgeliehen. Die laufende Leihe bleibt bestehen, aber nach dem Entfernen besteht kein Gruppenzugriff mehr.`,
@@ -575,7 +619,22 @@ export const texts = {
 			linkToConversations: 'Zu den Gesprächen',
 		},
 		profile: {
-			title: 'Mein Profil',
+			title: 'Einstellungen',
+			// Section headings + table-of-contents labels for the settings page
+			sections: {
+				tocLabel: 'Auf dieser Seite',
+				profile: 'Profil',
+				location: 'Standort & Mobilität',
+				contact: 'Kontakt',
+				notifications: 'Benachrichtigungen',
+				email: 'E-Mail',
+				invite: 'Einladung',
+				account: 'Konto & Datenschutz',
+			},
+			unsavedChanges: 'Du hast ungespeicherte Änderungen.',
+			unsavedLeaveConfirm:
+				'Du hast ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?',
+			fixErrorsBeforeSave: 'Bitte korrigiere die markierten Felder, bevor du speicherst.',
 			completeOnboarding: 'Onboarding fertigstellen',
 			emailVerified: 'E-Mail-Adresse bestätigt',
 			emailNotVerified: 'E-Mail-Adresse noch nicht bestätigt',
@@ -588,13 +647,13 @@ export const texts = {
 			transportModeLabel: 'Standard-Verkehrsmittel',
 			transportModeNote: 'Wird für die Reisezeitanzeige in der Suche verwendet.',
 			deleteProfileImage: 'Foto löschen',
+			profileImageWillBeRemoved: 'Wird beim Speichern entfernt',
+			undoRemoveProfileImage: 'Rückgängig',
 			cannotUpdate: 'Daten konnten nicht aktualisiert werden. Bitte überprüfe deine Eingaben.',
 		notifications: {
 			sectionTitle: 'Benachrichtigungen',
+			pushToggleLabel: 'Push auf diesem Gerät',
 			description: 'Erhalte eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
-			enable: 'Benachrichtigungen aktivieren',
-			enabled: 'Benachrichtigungen sind aktiviert. Du erhälst eine Benachrichtigung, wenn jemand deine Dinge anfragt oder dir schreibt.',
-			deactivateThisDevice: 'Für dieses Gerät deaktivieren',
 			deactivateAllDevices: 'Für alle meine Geräte deaktivieren',
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
 			emailToggleLabel: 'E-Mail-Benachrichtigungen',
@@ -632,6 +691,10 @@ export const texts = {
 			ownerCardTitle: 'Verliehen von',
 			institutionCardTitle: 'Angeboten von',
 			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
+			// mailto: CTA for owners who opted into email contact (issue #438)
+			mailtoSubject: (item: string) => `Anfrage zu „${item}" über AllerLeih`,
+			mailtoBody: (item: string) =>
+				`Hallo,\n\nich interessiere mich für „${item}" auf AllerLeih und würde es gerne ausleihen.\n\nViele Grüße`,
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
@@ -891,8 +954,6 @@ export const texts = {
 		sectionTitle: 'Verleih-Voraussetzungen',
 		sectionIntro:
 			'Lege fest, welche Voraussetzungen jemand erfüllen muss, um deine Gegenstände anfragen zu können. Die Sichtbarkeit deiner Gegenstände bleibt davon unberührt.',
-		saved: 'Verleih-Voraussetzungen gespeichert.',
-		saveError: 'Die Verleih-Voraussetzungen konnten nicht gespeichert werden. Bitte versuche es später erneut.',
 		// Borrower-facing intro (item detail CTA when a request is blocked)
 		blockedIntro: 'Bevor du anfragen kannst:',
 		// Per-requirement copy (keys match the requirement registry).
@@ -959,12 +1020,32 @@ export const texts = {
 			description:
 				'Erstelle ein kostenloses AllerLeih-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.',
 		},
+		reset: {
+			title: 'Passwort zurücksetzen – AllerLeih',
+			description: 'Setze dein AllerLeih-Passwort zurück, um wieder auf dein Konto zugreifen zu können.',
+		},
+		resetConfirm: {
+			title: 'Neues Passwort festlegen – AllerLeih',
+			description: 'Lege ein neues Passwort für dein AllerLeih-Konto fest.',
+		},
 		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
 		itemDetailDescription: (name: string, owner: string) =>
 			`Leihe ${name} von ${owner} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
+		conversations: {
+			title: 'Nachrichten – AllerLeih',
+		},
+		social: {
+			title: 'Vertraute – AllerLeih',
+		},
+		onboarding: {
+			title: 'Willkommen – AllerLeih',
+		},
+		userImport: {
+			title: 'Gegenstände importieren – AllerLeih',
+		},
 	},
 
 	// Onboarding nudge banner
@@ -1003,6 +1084,7 @@ export const texts = {
 		imagePlaceholder: 'Foto folgt',
 		importNavLabel: 'Bestand importieren',
 		importTitle: 'Bestand als CSV importieren',
+		importIntro: 'Lade dein Inventar als CSV-Datei hoch. Verwende das Format der Vorlage.',
 		importTemplateLink: 'Vorlage herunterladen',
 		importUploadLabel: 'CSV-Datei auswählen',
 		importUploadHint: 'Nur .csv-Dateien, max. 1 MB, max. 5.000 Zeilen.',
@@ -1012,6 +1094,46 @@ export const texts = {
 		importPreviewButton: 'Vorschau laden',
 		importApplyButton: 'Importieren',
 		importBackButton: 'Zurück',
+		importForbidden: 'Nur für institutionelle Accounts zugänglich.',
+		importNoPermission: 'Keine Berechtigung.',
+		importNoFile: 'Keine Datei hochgeladen.',
+		importNoCsvData: 'Keine CSV-Daten vorhanden.',
+		importLoadExistingFailed:
+			'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+		importLoaderLabel: 'Importiere …',
+		importLoaderHint: 'Bitte warten …',
+		importRefreshButton: 'Alle Gegenstände synchronisieren',
+		importRefreshTriggered: 'Synchronisierung abgeschlossen.',
+		importRefreshFailed: 'Synchronisierung fehlgeschlagen. Bitte später erneut versuchen.',
+		importActionLabels: {
+			create: 'Neu',
+			update: 'Update',
+			archive: 'Archivieren',
+			error: 'Fehler',
+			skip: 'Unverändert',
+		} as Record<string, string>,
+		importTableHeaders: { row: 'Zeile', id: 'ID', name: 'Name', action: 'Aktion', hints: 'Hinweise' },
+		importRowErrorsAlert: (count: number) =>
+			`${count} Zeile(n) konnten nicht importiert werden. Korrigiere die Fehler in der CSV-Datei und lade sie erneut hoch.`,
+		importPreviewTruncated: (totalRows: number) =>
+			`Vorschau zeigt die ersten 50 von ${totalRows} Zeilen.`,
+		importArchiveListTitle: 'Folgende Einträge werden archiviert (nicht mehr in der CSV):',
+		importArchiveMore: (count: number) => `… und ${count} weitere`,
+		importApplyErrorsAlert: (count: number) =>
+			`${count} Fehler beim Importieren. Prüfe die CSV-Datei und starte einen neuen Import.`,
+		importGoToItems: 'Zu meinen Dingen →',
+		importCsvErrors: {
+			externalIdRequired: 'externalId ist erforderlich',
+			nameRequired: 'name ist erforderlich',
+			nameTooLong: 'name darf max. 200 Zeichen lang sein',
+			descriptionTooLong: 'description darf max. 4.000 Zeichen lang sein',
+			placeTooLong: 'place darf max. 200 Zeichen lang sein',
+			invalidStatus: (raw: string) => `Ungültiger status-Wert: "${raw}"`,
+			invalidCategories: (invalid: string) => `Ungültige Kategorie(n): ${invalid}`,
+			tooManyCategories: 'Maximal 3 Kategorien erlaubt (Rest ignoriert)',
+			duplicateExternalId: 'Doppelter externalId in der Datei – letzte Zeile gewinnt',
+			parseFatal: (message: string) => `CSV-Fehler: ${message}`,
+		},
 		importPreviewSummary: (c: { create: number; update: number; archive: number; skip: number }) =>
 			`${c.create} neu · ${c.update} aktualisiert · ${c.archive} archiviert · ${c.skip} übersprungen`,
 		importApplySummary: (c: {

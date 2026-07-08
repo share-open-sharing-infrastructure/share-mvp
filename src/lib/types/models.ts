@@ -70,6 +70,40 @@ export interface User extends PocketBaseEntity {
 	signalVisibleToTrustedOnly?: boolean;
 
 	/**
+	 * Issue #438: off-platform contact channel. When set, the user's items skip the
+	 * in-app request flow and offer an alternative contact CTA instead:
+	 *   ''      — off (default, normal in-app request flow)
+	 *   'email' — a `mailto:` CTA to `contactEmail`
+	 *   'link'  — a link to `contactUrl` (e.g. an external lending form)
+	 */
+	contactMethod?: '' | 'email' | 'link';
+
+	/**
+	 * Dedicated public contact address for the `mailto:` CTA (`contactMethod = 'email'`)
+	 * — kept separate from the private login `email`, so the login address is never
+	 * exposed. Readable by any authenticated viewer (base `users` viewRule) and
+	 * deliberately absent from `users_public` / `items_searchable`; it reaches
+	 * unauthenticated browsing only via `items_public.ownerContactEmail` when the owner
+	 * set `contactPublic`.
+	 */
+	contactEmail?: string;
+
+	/**
+	 * Destination (https) the contact CTA links to when `contactMethod = 'link'` — e.g.
+	 * an institution's external lending form. Routed through `/api/redirect`. Same
+	 * visibility rules as `contactEmail`.
+	 */
+	contactUrl?: string;
+
+	/**
+	 * Issue #438: when true the off-platform contact CTA is shown to UNauthenticated
+	 * browsers too (institutions that want zero-account access). When false (default)
+	 * it's visible only to logged-in viewers. Drives whether `items_public` surfaces
+	 * the `ownerContact*` columns.
+	 */
+	contactPublic?: boolean;
+
+	/**
 	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
 	 * Zero value {"lon":0,"lat":0} means no location set (Null Island).
 	 */
@@ -120,6 +154,21 @@ export interface User extends PocketBaseEntity {
 	bio?: string;
 
 	/**
+	 * Bare origin of a leihbackend instance (no trailing slash, no /api), e.g.
+	 * "https://allerlei.uber.space". When set together with `isInstitution = true`,
+	 * this institution's items are periodically synced from leihbackend's `item_public` view.
+	 */
+	leihbackendUrl?: string;
+
+	/**
+	 * Human-facing deep-link template for an institution's leihbackend items, e.g.
+	 * "https://allerlei.uber.space/reservierung/{iid}". Placeholders `{id}` and `{iid}`
+	 * are substituted with the leihbackend record id / inventory number. Empty if no
+	 * public catalogue page exists.
+	 */
+	leihbackendItemUrlTemplate?: string;
+
+	/**
 	 * Set when the user has deleted their account (phase 1 "deactivate"). The row is
 	 * anonymized in place; login is blocked and the UI shows "Gelöschtes Konto".
 	 */
@@ -127,6 +176,14 @@ export interface User extends PocketBaseEntity {
 
 	/** ISO datetime the account was deleted/anonymized (drives the future purge job). */
 	deletedAt?: string;
+
+	/**
+	 * ISO datetime of the last authentication, stamped (throttled to 24h) by the
+	 * backend auth hook. Drives the inactive-account retention job (#461).
+	 * `hidden: true` on the collection — only readable via the superuser context, so
+	 * it never reaches a client (kept here to document the schema).
+	 */
+	lastLoginAt?: string;
 
 	/**
 	 * Cache of the latest platform ToS version this user has accepted (Issue #399).
@@ -249,6 +306,16 @@ export interface ItemPublic extends PocketBaseEntity {
 	userCreated: string;
 	/** 1 if the owner has a non-zero geolocation set, 0 otherwise. Evaluated in the view SQL — never exposes coordinates. */
 	ownerHasLocation: 0 | 1;
+	/**
+	 * Issue #438 — the owner's off-platform contact, surfaced to UNauthenticated browsing
+	 * ONLY when the owner opted into public exposure (`contactPublic`) AND the item is
+	 * fully public (not masked). NULL otherwise. Evaluated in the view SQL so the
+	 * members-only case never leaks. Logged-in viewers get the contact from the base
+	 * `users` record instead (covers members-only too).
+	 */
+	ownerContactMethod?: '' | 'email' | 'link' | null;
+	ownerContactEmail?: string | null;
+	ownerContactUrl?: string | null;
 }
 
 // --- GROUPS ---

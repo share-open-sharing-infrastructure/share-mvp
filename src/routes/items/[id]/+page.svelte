@@ -13,6 +13,7 @@
 	import OwnerCard from './OwnerCard.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
 	const item = $derived(data.item) as ItemPublic;
@@ -55,18 +56,7 @@
 	);
 </script>
 
-<svelte:head>
-	<title>{seoTitle}</title>
-	<meta name="description" content={seoDesc} />
-	<meta property="og:title" content={seoTitle} />
-	<meta property="og:description" content={seoDesc} />
-	<meta property="og:type" content="website" />
-	<meta property="og:image" content={seoImage} />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={seoTitle} />
-	<meta name="twitter:description" content={seoDesc} />
-	<meta name="twitter:image" content={seoImage} />
-</svelte:head>
+<SeoHead title={seoTitle} description={seoDesc} image={seoImage} canonical={shareUrl} />
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<!-- Archived banner -->
@@ -144,6 +134,7 @@
 			existingConversation={data.existingConversation}
 			requiresTermsAcceptance={data.requiresTermsAcceptance}
 			unmetRequirements={data.unmetRequirements}
+			ownerContact={data.ownerContact}
 		/>
 	</div>
 

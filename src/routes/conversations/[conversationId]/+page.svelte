@@ -17,6 +17,7 @@
 	import MessageForm from './MessageForm.svelte';
 	import LendingStatusBar from './LendingStatusBar.svelte';
 	import CounterfactualModal from './CounterfactualModal.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	// Props and state variables
 	let { data } = $props();
@@ -186,9 +187,7 @@
 	});
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.seo.conversations.title} robots="noindex, nofollow" />
 
 <ConversationHeader
 	{chatPartner}
