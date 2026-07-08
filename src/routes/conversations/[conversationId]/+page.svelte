@@ -2,7 +2,7 @@
 	// Imports for pocketbase real-time subcription
 	import type PocketBase from 'pocketbase';
 	import type { RecordSubscription } from 'pocketbase';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { getClientPB, subscribeRealtime } from '$lib/client-pb';
@@ -58,6 +58,7 @@
 	let loggedInUserIsItemOwner = $derived(
 		data.currentUser.id === data.conversation.itemOwner.id
 	);
+	let conversationId = $derived(data.conversation.id);
 	let chatPartner = $derived(
 		loggedInUserIsItemOwner
 			? data.conversation.requester
@@ -132,33 +133,31 @@
 			const lastMessageId =
 				event.record.messages?.[event.record.messages.length - 1];
 
+			// Skip fetch if there's no new message or we already have it
+			if (!lastMessageId || messages.some((m) => m.id === lastMessageId)) return;
+
 			// get last messages contents from pocketbase
 			let latestMessage: Message;
-			if (lastMessageId) {
-				try {
-					latestMessage = await pb.collection('messages').getOne(lastMessageId);
-					// Deduplicate: server reload via use:enhance may have already added this message
-					if (!messages.some((m) => m.id === latestMessage.id)) {
-						messages = [...messages, latestMessage];
-					}
-				} catch (error) {
-					console.error('Failed to fetch last message record:', error);
+			try {
+				latestMessage = await pb.collection('messages').getOne(lastMessageId);
+				// Deduplicate: server reload via use:enhance may have already added this message
+				if (!messages.some((m) => m.id === latestMessage.id)) {
+					messages = [...messages, latestMessage];
 				}
+			} catch (error) {
+				console.error('Failed to fetch last message record:', error);
 			}
 		}
 	}
 
 	// Set up real-time subscription.
-	// data.conversation.id is read with untrack so this $effect only re-runs when pb changes
-	// (once, after onMount). Without untrack, invalidateAll() from MessageForm would cause
-	// the subscription to tear down and re-subscribe on every message send, which triggers
-	// PocketBase's submitSubscriptions and auto-cancels concurrent getList calls in the layout.
+	// Uses the $derived conversationId so the subscription re-targets when navigating
+	// between conversations, but does NOT re-subscribe on invalidateAll() (same id).
 	$effect(() => {
 		if (!pb) return;
-		const id = untrack(() => data.conversation.id);
 		return subscribeRealtime({
 			collection: 'conversations',
-			topic: id,
+			topic: conversationId,
 			handler: handleConversationEvent,
 			// Messages sent while the stream was down (e.g. the phone was asleep)
 			// aren't replayed by realtime — refetch the conversation on reconnect
@@ -166,6 +165,25 @@
 			// party" symptom in #435.
 			onReconnect: () => invalidateAll(),
 		});
+	});
+
+	// Presence heartbeat: periodically update the lastSeenAt timestamp so the backend
+	// knows the user is actively viewing this conversation and can suppress email notifications.
+	$effect(() => {
+		if (!pb) return;
+		const field = loggedInUserIsItemOwner ? 'ownerLastSeenAt' : 'requesterLastSeenAt';
+
+		const ping = () => {
+			if (document.visibilityState !== 'visible') return;
+			pb!.collection('conversations').update(conversationId, {
+				[field]: new Date().toISOString(),
+			}).catch(() => {});
+		};
+
+		// Ping immediately on mount, then every 15 seconds
+		ping();
+		const interval = setInterval(ping, 15_000);
+		return () => clearInterval(interval);
 	});
 </script>
 

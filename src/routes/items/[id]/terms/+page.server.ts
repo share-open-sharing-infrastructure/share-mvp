@@ -171,6 +171,7 @@ async function startConversationForItem(
 			lendingStatus: 'pending',
 			readByRequester: true,
 			readByOwner: false,
+			lastMessageAt: new Date().toISOString(),
 		});
 		targetConversationId = conversation.id;
 

@@ -18,7 +18,7 @@ export async function sendMessage(
 ): Promise<FailResult | void> {
 	let createdMessage: Message;
 	try {
-		createdMessage = await pb.collection('messages').create({ messageContent, from: fromUserId, to: toUserId });
+		createdMessage = await pb.collection('messages').create({ messageContent, from: fromUserId, to: toUserId, conversation: conversationId });
 	} catch (err) {
 		const e = err as Partial<ClientResponseError>;
 		return fail(e.status ?? 500, { fail: true, message: e.data?.message ?? texts.errors.failedToSendMessage });
@@ -38,6 +38,7 @@ export async function sendMessage(
 	try {
 		await pb.collection('conversations').update(conversationId, {
 			messages: updatedMessages,
+			lastMessageAt: new Date().toISOString(),
 			...(recipientIsRequester ? { readByRequester: false } : { readByOwner: false }),
 		});
 	} catch (err) {

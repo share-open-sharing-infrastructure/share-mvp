@@ -398,6 +398,9 @@ export interface Message extends PocketBaseEntity {
 
 	/** Foreign key: recipient user id */
 	to: UserId;
+
+	/** Foreign key: the conversation this message belongs to */
+	conversation?: string;
 }
 
 export type CounterfactualAnswer =
@@ -418,6 +421,9 @@ export interface Conversation extends PocketBaseEntity {
 	readByOwner: boolean;
 	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
 	counterfactual?: CounterfactualAnswer;
+	lastMessageAt?: string;
+	requesterLastSeenAt?: string;
+	ownerLastSeenAt?: string;
 }
 
 // --- NOTIFICATION ---

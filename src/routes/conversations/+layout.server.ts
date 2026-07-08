@@ -13,7 +13,7 @@ export async function load({ locals }) {
 				userId: currentUserId,
 			}),
 			expand: 'requester, itemOwner, requestedItem',
-			sort: '-updated', // sort by newest first
+			sort: '-lastMessageAt,-updated', // sort by latest message, fall back to updated for conversations without messages yet
 		});
 	} catch (err) {
 		console.error('Failed to load conversation', err);
