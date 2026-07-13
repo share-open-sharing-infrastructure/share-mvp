@@ -4,6 +4,7 @@
 	import { texts } from '$lib/texts';
 	import ItemModal from './ItemModal.svelte';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { itemOwnFileUrls } from '$lib/utils/utils';
 	import { resolve } from '$app/paths';
 	import type { ActionData } from './$types';
 
@@ -28,9 +29,7 @@
 	$effect(() => { optimisticTrusteesOnly = item.trusteesOnly; });
 
 	function getRealImageUrl(i: Item): string | null {
-		const first = i.image?.[0];
-		if (first) return `${PB_URL}api/files/${i.collectionId}/${i.id}/${first}`;
-		return i.externalImgUrl ?? null;
+		return itemOwnFileUrls(PB_URL, i)[0] ?? i.externalImgUrl ?? null;
 	}
 
 	// Names of the groups this item is shared with (for the indicator tooltip).
@@ -166,6 +165,7 @@
 	bind:isVisible={showEditModal}
 	type="edit"
 	editingItem={item}
+	pbUrl={PB_URL}
 	{groups}
 	{form}
 	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories ?? []) ?? ''}

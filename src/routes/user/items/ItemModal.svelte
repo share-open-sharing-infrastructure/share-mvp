@@ -21,6 +21,7 @@
 	import { resolve } from '$app/paths';
 	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import { compressImage } from '$lib/utils/imageUtils';
+	import { itemOwnFileUrls } from '$lib/utils/utils';
 	import type { ActionData } from './$types';
 
 	interface Props {
@@ -29,6 +30,8 @@
 		editingItem?: Item | null;
 		/** Existing cover image URL, shown in edit mode until new files are chosen. */
 		imgUrl?: string;
+		/** PocketBase base URL — needed to build file URLs for an item's existing images. */
+		pbUrl?: string;
 		groups?: { id: string; name: string; isPublic?: boolean }[];
 		form?: ActionData;
 	}
@@ -38,6 +41,7 @@
 		type,
 		editingItem,
 		imgUrl,
+		pbUrl,
 		groups = [],
 		form
 	}: Props = $props();
@@ -57,6 +61,10 @@
 	// Newly chosen images (a multi-file field). previews mirrors selectedFiles for display.
 	let selectedFiles = $state<File[]>([]);
 	let previews = $state<{ url: string; name: string }[]>([]);
+	// Images already saved on the item (edit mode). Shown so the owner sees the full
+	// set — not just the cover — but display-only: picking new files replaces the whole
+	// set (see imageReplaceHint), so these are not individually removable.
+	let existingImageUrls = $state<string[]>([]);
 
 	function clearPreviews() {
 		// Guard against a no-op write: this runs inside an $effect that reads `previews`,
@@ -74,6 +82,10 @@
 			trusteesOn = editingItem?.trusteesOnly ?? true;
 			isDirty = false;
 			imageError = null;
+			// Seed the existing-image gallery so editing an item with several photos shows
+			// them all. Needs pbUrl to build the file URLs; empty for add / external-only items.
+			existingImageUrls =
+				pbUrl && editingItem?.image?.length ? itemOwnFileUrls(pbUrl, editingItem) : [];
 		}
 	});
 
@@ -241,6 +253,17 @@
 								</svg>
 							</button>
 						</div>
+					{/each}
+				</div>
+			{:else if existingImageUrls.length > 0}
+				<!-- Existing images (edit mode), display-only: new uploads replace the whole set. -->
+				<div class="grid grid-cols-2 gap-2">
+					{#each existingImageUrls as url (url)}
+						<img
+							src={url}
+							alt={editingItem?.name ?? ''}
+							class="h-24 w-full rounded-md object-cover"
+						/>
 					{/each}
 				</div>
 			{:else}

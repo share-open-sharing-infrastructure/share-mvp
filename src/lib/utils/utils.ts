@@ -67,6 +67,21 @@ export function itemImageUrls(
 	return item.externalImgUrl ? [item.externalImgUrl] : [];
 }
 
+/**
+ * Display URLs for an item's uploaded image files served from the record's OWN
+ * collection (`collectionId`), in order. Use this for base-`items` records the owner
+ * reads directly (their item list, the edit modal) — unlike {@link itemImageUrls}, which
+ * serves via the `items_searchable` view for records loaded from a public view. Returns
+ * only real uploaded files (no external-image fallback); empty when there are none.
+ */
+export function itemOwnFileUrls(
+	pbUrl: string,
+	item: { id: string; collectionId: string; image?: string | string[] | null }
+): string[] {
+	const files = Array.isArray(item.image) ? item.image : item.image ? [item.image] : [];
+	return files.map((f) => `${pbUrl}api/files/${item.collectionId}/${item.id}/${f}`);
+}
+
 export function formatTimestamp(
 	timestamp: string,
 	includeYear: boolean = false

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { itemImageUrl, itemImageUrls, buildMailtoHref, buildItemRedirectHref } from './utils';
+import {
+	itemImageUrl,
+	itemImageUrls,
+	itemOwnFileUrls,
+	buildMailtoHref,
+	buildItemRedirectHref,
+} from './utils';
 import { texts } from '$lib/texts';
 
 const PB_URL = 'https://pb.example.com/';
@@ -85,6 +91,32 @@ describe('itemImageUrls', () => {
 	it('returns an empty list when there is nothing to show', () => {
 		expect(itemImageUrls(PB_URL, { id: 'item123', image: [] })).toEqual([]);
 		expect(itemImageUrls(PB_URL, { id: 'item123', image: null, externalImgUrl: '' })).toEqual([]);
+	});
+});
+
+describe('itemOwnFileUrls', () => {
+	it('serves every uploaded file from the record own collection, in order', () => {
+		const urls = itemOwnFileUrls(PB_URL, {
+			id: 'item123',
+			collectionId: 'items',
+			image: ['a.jpg', 'b.jpg'],
+		});
+		expect(urls).toEqual([
+			'https://pb.example.com/api/files/items/item123/a.jpg',
+			'https://pb.example.com/api/files/items/item123/b.jpg',
+		]);
+	});
+
+	it('accepts a legacy single-string image', () => {
+		const urls = itemOwnFileUrls(PB_URL, { id: 'item123', collectionId: 'items', image: 'only.jpg' });
+		expect(urls).toEqual(['https://pb.example.com/api/files/items/item123/only.jpg']);
+	});
+
+	it('returns an empty list (no external fallback) when there are no uploaded files', () => {
+		expect(itemOwnFileUrls(PB_URL, { id: 'item123', collectionId: 'items', image: [] })).toEqual([]);
+		expect(itemOwnFileUrls(PB_URL, { id: 'item123', collectionId: 'items', image: null })).toEqual(
+			[]
+		);
 	});
 });
 
