@@ -28,7 +28,6 @@ erDiagram
         bool contactPublic "issue #438 — when true the contact CTA is shown to unauthenticated browsing too"
         string inviteCode
         string invitedBy FK
-        User[] trusts FK
         string leihbackendUrl "leihbackend instance origin, for institutional sync"
         string leihbackendItemUrlTemplate "deep-link template, {id}/{iid} placeholders"
         string tosAcceptedVersion "legal-consent cache (Issue #399) — server-only"
@@ -40,7 +39,15 @@ erDiagram
         date updated
     }
 
-    USER 1 to zero or more USER: "trusts"
+    TRUSTS{
+        string id PK
+        User truster FK "cascadeDelete — grants the trust"
+        User trustee FK "cascadeDelete — gains visibility of the truster's restricted items"
+        date created
+    }
+
+    USER 1 to zero or more TRUSTS: "trusts (as truster)"
+    USER 1 to zero or more TRUSTS: "trusted by (as trustee)"
 
     USER_LEGAL_ACCEPTANCE{
         string id PK
@@ -273,7 +280,28 @@ Coordinates are **not** stored on `users` — they live in a separate `user_geol
 
 ## user_contacts
 
-Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
+Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller (a `trusts` row `{truster: owner, trustee: caller}`) — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
+
+## trusts
+
+The trust graph is an n:m **join collection** (not the old self-referencing `users.trusts[]`
+array), modeled on `group_members`. A row `{truster, trustee}` means **"truster trusts trustee"**:
+the trustee may see the truster's `trusteesOnly` items and trusted-only contact handles. Trust is
+**directional and 1-hop** — see [domain-model.md](domain-model.md). Both relations are
+`cascadeDelete: true` and a `UNIQUE (truster, trustee)` index prevents duplicates. `created` is an
+autodate.
+
+API rules: `listRule`/`viewRule` = `@request.auth.id = truster || @request.auth.id = trustee` (both
+parties may read an edge — the trustee needs to see who trusts them); `createRule`/`deleteRule` =
+`@request.auth.id = truster` (only the granter adds or revokes); `updateRule` = `null`. A backend
+hook (`trust.pb.js`) rejects a self-trust edge. The frontend reads/writes it exclusively through
+`$lib/server/trust.ts` (`isTrusting`, `addTrust`, `removeTrust`, `getTrustees`, `getTrusters`).
+
+Item/search/conversation visibility rules match trust via the back-relation
+`…trusts_via_truster.trustee.id ?= @request.auth.id` (rows where the owner is the truster; see the
+view rules below). Because deletion is *anonymize-in-place* (the `users` row is kept), the relation
+cascade does not fire on account deletion — `anonymizeAccount` deletes an account's trust edges
+explicitly in both directions.
 
 ## lending_requirements
 
@@ -397,20 +425,21 @@ leaks — logged-in viewers read those from the base `users` record instead.
 
 Used by the search page (and the profile and sitemap, to stay leak-free). Its
 row-level rule
-`(trusteesOnly = false && groups:length = 0) || (@request.auth.id != "" && (@request.auth.id = userId || (trusteesOnly = true && userId.trusts.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id))`
+`(trusteesOnly = false && groups:length = 0) || (@request.auth.id != "" && (@request.auth.id = userId || (trusteesOnly = true && userId.trusts_via_truster.trustee.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id))`
 returns public items to everyone, and restricted items only to the owner, the
 owner's trustees (when `trusteesOnly`), and members of an attached group. Content
 is **not** masked here, because rows a viewer may not see are filtered out
 entirely. The `groups` column **is** part of the view's `SELECT` (so the rule can
 traverse the membership back-relation); search/profile/sitemap callers simply
-ignore it, and the owner's `trusts` list is never selected. Note this view
-carries **no** conversation clause (below), so conversation access never leaks an
-item into search/profile/sitemap.
+ignore it. Trust is resolved the same way — the rule traverses the `trusts` join
+via `userId.trusts_via_truster.trustee` — so no trust edges are selected into the
+view either. Note this view carries **no** conversation clause (below), so
+conversation access never leaks an item into search/profile/sitemap.
 
 | Field | Source | Notes |
 |---|---|---|
 | id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared) |
-| userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (`trusts` is **not** exposed) |
+| userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (no trust data is exposed — trust lives in the separate `trusts` collection) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 | ownerContactMethod, ownerContactEmail, ownerContactUrl | SQL expression on `users` | `items_public` only — the owner's off-platform contact (#438), NULL unless `contactPublic` **and** the item is unmasked; raw contact fields never selected |
 
@@ -426,7 +455,7 @@ surfaces an anonymized account name.
 ### Base `items` trust rule
 
 The base `items` collection's `listRule`/`viewRule` are
-`@request.auth.id != "" && (@request.auth.id = owner || (trusteesOnly = false && groups:length = 0) || (trusteesOnly = true && owner.trusts.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id || (@collection.conversations.requestedItem ?= id && @collection.conversations.requester ?= @request.auth.id))`,
+`@request.auth.id != "" && (@request.auth.id = owner || (trusteesOnly = false && groups:length = 0) || (trusteesOnly = true && owner.trusts_via_truster.trustee.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id || (@collection.conversations.requestedItem ?= id && @collection.conversations.requester ?= @request.auth.id))`,
 so a restricted item's full record is readable by the owner, the owner's trustees
 (when `trusteesOnly`), members of an attached group, and the requester of a
 conversation about the item. The last clause keeps a borrower's chat working after

@@ -13,12 +13,19 @@ vi.mock('$env/static/public', () => ({
 	PUBLIC_VAPID_PUBLIC_KEY:
 		'BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
 }));
+// The inviter-relationship path fires a notification + push; stub them so the test
+// exercises only the trust-edge creation.
+vi.mock('$lib/server/notifications', () => ({
+	createNotification: vi.fn(),
+	sendPushToUser: vi.fn(),
+}));
 
 import {
 	validateRegistrationForm,
 	resolveInviter,
 	buildCreateUserPayload,
 	createUserAndAuthenticate,
+	handleInviterRelationship,
 } from './registration';
 import type { User } from '$lib/types/models';
 import { texts } from '$lib/texts';
@@ -64,7 +71,7 @@ const validFormFields = {
 	userConsent: 'on',
 };
 
-const stubUser: User = { id: 'u1', username: 'inviter', email: '', created: '', updated: '', trusts: [] };
+const stubUser: User = { id: 'u1', username: 'inviter', email: '', created: '', updated: '' };
 
 // ---------------------------------------------------------------------------
 // validateRegistrationForm
@@ -301,5 +308,24 @@ describe('createUserAndAuthenticate', () => {
 		const pb = makeMockPb(() => ({ create: mockCreate }));
 		const result = await createUserAndAuthenticate(pb, payload, 'a@b.com', 'pw');
 		expect(result).toEqual({ ok: false, error: 'unknown' });
+	});
+});
+
+// ---------------------------------------------------------------------------
+// handleInviterRelationship
+// ---------------------------------------------------------------------------
+
+describe('handleInviterRelationship', () => {
+	it('creates a trusts edge so the new user trusts their inviter', async () => {
+		const trustsCreate = vi.fn().mockResolvedValue({ id: 't1' });
+		const pb = makeMockPb((name) =>
+			name === 'trusts'
+				? { getFirstListItem: vi.fn().mockRejectedValue(new Error('none')), create: trustsCreate }
+				: {}
+		);
+
+		await handleInviterRelationship(pb, { ...stubUser, id: 'new1', username: 'newbie' }, { id: 'inv1' });
+
+		expect(trustsCreate).toHaveBeenCalledWith({ truster: 'new1', trustee: 'inv1' });
 	});
 });

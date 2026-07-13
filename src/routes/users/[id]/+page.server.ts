@@ -4,6 +4,7 @@ import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
+import { addTrust as addTrustEdge, removeTrust as removeTrustEdge, isTrusting } from '$lib/server/trust';
 
 export async function load({ params, locals }) {
 
@@ -47,23 +48,14 @@ export async function load({ params, locals }) {
 
 	const currentUser = locals.user;
 	const isOwnProfile = currentUser?.id === profileUser.id;
-	const viewerTrustsProfile = currentUser?.trusts?.includes(profileUser.id) ?? false;
-	// Does the profile owner trust the viewer? Resolved server-side so the owner's
-	// full trusts list never leaves the server (users_public no longer exposes it).
-	let profileTrustsViewer = false;
-	if (currentUser) {
-		try {
-			await locals.pb
-				.collection('users')
-				.getFirstListItem(
-					locals.pb.filter('id = {:pid} && trusts.id ?= {:vid}', { pid: profileUser.id, vid: currentUser.id }),
-					{ fields: 'id' }
-				);
-			profileTrustsViewer = true;
-		} catch {
-			profileTrustsViewer = false;
-		}
-	}
+	// Directional trust, both resolved server-side against the `trusts` join so no
+	// trust list ever leaves the server.
+	const viewerTrustsProfile = currentUser
+		? await isTrusting(locals.pb, currentUser.id, profileUser.id)
+		: false;
+	const profileTrustsViewer = currentUser
+		? await isTrusting(locals.pb, profileUser.id, currentUser.id)
+		: false;
 
 	// items_public masks RESTRICTED items (trustees-only OR group-shared): their
 	// name comes back NULL. Unmasked rows are public.
@@ -104,7 +96,7 @@ export async function load({ params, locals }) {
 
 	// Strip fields that must not reach the client: sensitive data and fields not used by this page.
 	const fieldsToStrip = [
-		'email', 'trusts', 'geolocation', 'inviteCode', 'invitedBy',
+		'email', 'geolocation', 'inviteCode', 'invitedBy',
 		'hasOnboarded', 'telegramUsername', 'signalLink',
 		'telegramVisibleToTrustedOnly', 'signalVisibleToTrustedOnly',
 	];
@@ -140,9 +132,8 @@ export const actions = {
 		}
 
 		const profileUserId = params.id;
-		const updatedTrusts = [...(locals.user.trusts || []), profileUserId];
 		try {
-			await locals.pb.collection('users').update(locals.user.id, { trusts: updatedTrusts });
+			await addTrustEdge(locals.pb, locals.user.id, profileUserId);
 		} catch (err) {
 			console.error('Failed to add trust', err);
 		}
@@ -162,9 +153,8 @@ export const actions = {
 		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
 
 		const profileUserId = params.id;
-		const updatedTrusts = (locals.user.trusts || []).filter((id: string) => id !== profileUserId);
 		try {
-			await locals.pb.collection('users').update(locals.user.id, { trusts: updatedTrusts });
+			await removeTrustEdge(locals.pb, locals.user.id, profileUserId);
 		} catch (err) {
 			console.error('Failed to remove trust', err);
 		}

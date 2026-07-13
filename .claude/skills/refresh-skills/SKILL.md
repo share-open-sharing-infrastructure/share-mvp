@@ -8,9 +8,11 @@ description: Audit and update this repo's own .claude/skills against the current
 Skills encode real file paths, function signatures, `texts.ts` keys and commands — and the code
 moves underneath them. A stale skill is worse than none: it leads confidently to code that doesn't
 compile or, worse, silently breaks a guardrail (we have already shipped a skill with a wrong
-`filterTrustedItems` signature). This skill treats the skills like code: extract their checkable
+function signature). This skill treats the skills like code: extract their checkable
 claims, verify each against the current repo, and fix what drifted — without changing what a skill
-is *for*.
+is *for*. (Concrete example: when trust moved from `users.trusts[]` to the `trusts` join collection,
+the `filterTrustedItems` helper was deleted — several skills still referenced it and had to be
+repointed at the view rules + `$lib/server/trust.ts`.)
 
 ## 1. Scope
 
@@ -22,8 +24,8 @@ claims against that repo too). Don't touch skills in other repos otherwise.
 
 For each `SKILL.md`, pull out every statement that can rot — these are facts, not prose:
 
-- **File/dir paths** (`src/lib/server/itemFilters.ts`, `scripts/seed/scenarios/`).
-- **Imported symbols + signatures** (`filterTrustedItems(items, userId, loggedIn)`,
+- **File/dir paths** (`src/lib/server/trust.ts`, `scripts/seed/scenarios/`).
+- **Imported symbols + signatures** (`isTrusting(pb, trusterId, trusteeId)`,
   `createNotification(pb, recipient, sender?, type, relatedId, body)`).
 - **`texts.ts` keys** (`texts.errors.changesNotSaved`, `texts.notifications.pushTitle`).
 - **Route paths / endpoints** (`/legal/accept`, `/api/contact/{id}`).
@@ -62,7 +64,7 @@ Output a compact drift table and the fixes you made:
 
 ```
 skill            claim                                   status     action
-new-route        filterTrustedItems(pb, items, user)     DRIFTED    → fixed to (items, userId, loggedIn)
+new-route        filterTrustedItems(items,userId,...)    DRIFTED    → helper deleted; trust is view-rule enforced, use $lib/server/trust.ts
 seed-scenario    npm run seed                             ok         —
 add-notification texts.notifications.pushTitle            ok         —
 schema-change    allerleih-backend/pb_migrations/         ok         —

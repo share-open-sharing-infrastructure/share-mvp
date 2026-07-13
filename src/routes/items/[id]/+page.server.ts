@@ -6,6 +6,7 @@ import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
 import { evaluateUnmetRequirements, requirementRegistry } from '$lib/server/lendingRequirements';
+import { isTrusting } from '$lib/server/trust';
 
 export async function load({ params, locals }) {
 	let item: ItemPublic;
@@ -19,25 +20,15 @@ export async function load({ params, locals }) {
 	const currentUserId = locals.user?.id ?? null;
 	const isAuthenticated = locals.pb.authStore.isValid;
 	const isOwnItem = currentUserId === item.userId;
-	const viewerTrustsOwner = locals.user?.trusts?.includes(item.userId) ?? false;
+	// Viewer → Owner direction (does the viewer trust this owner).
+	const viewerTrustsOwner = currentUserId
+		? await isTrusting(locals.pb, currentUserId, item.userId)
+		: false;
 
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
-	// Resolved server-side so the owner's trusts list never reaches the client
-	// (items_public no longer exposes it).
-	let ownerTrustsViewer = false;
-	if (currentUserId && !isOwnItem) {
-		try {
-			await locals.pb
-				.collection('users')
-				.getFirstListItem(
-					locals.pb.filter('id = {:oid} && trusts.id ?= {:vid}', { oid: item.userId, vid: currentUserId }),
-					{ fields: 'id' }
-				);
-			ownerTrustsViewer = true;
-		} catch {
-			ownerTrustsViewer = false;
-		}
-	}
+	// Resolved server-side against the `trusts` join so no trust list reaches the client.
+	const ownerTrustsViewer =
+		currentUserId && !isOwnItem ? await isTrusting(locals.pb, item.userId, currentUserId) : false;
 
 	// items_public masks RESTRICTED items (trustees-only OR shared with a group):
 	// name/image/description come back NULL. The owner, trusted viewers and members

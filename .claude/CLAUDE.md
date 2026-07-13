@@ -71,9 +71,13 @@ These prevent the most common bugs/security issues here — follow them without 
 - **Use Svelte 5 runes** (`$state`, `$derived`, `$props`, `$effect`, `$bindable`). No `export let`.
 - **All mutations go through form actions** (`action="?/name"`). `/api/*` endpoints exist only
   for external integrations + client helpers — there is no REST layer for app data.
-- **Trust visibility:** call `filterTrustedItems()` (`$lib/server/itemFilters`) after fetching
-  items. Unauthenticated browsing uses the `*_public` views — never leak email, raw coordinates,
-  trusted items, or trust-graph data through them.
+- **Trust visibility is enforced at the data layer**, not in app code: the `items` /
+  `items_searchable` rules only return a trustees-only item to the owner's trustees (via the
+  `trusts` join back-relation `owner.trusts_via_truster.trustee.id ?= @request.auth.id`). Read
+  trust through `$lib/server/trust.ts` (`isTrusting` / `getTrustees` / `getTrusters`; `addTrust` /
+  `removeTrust` for mutations); never re-implement trust filtering client-side. Unauthenticated
+  browsing uses the `*_public` views — never leak email, raw coordinates, trusted items, or
+  trust-graph data through them.
 - **All user-facing strings go in `src/lib/texts.ts`** (+ `ITEM_CATEGORIES`), never inline.
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.
