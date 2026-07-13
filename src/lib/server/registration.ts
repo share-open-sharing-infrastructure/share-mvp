@@ -3,6 +3,7 @@ import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
+import { normalizeUsername, validateUsername } from '$lib/utils/username';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,8 +27,6 @@ export type CreateUserResult = { ok: true; user: User } | { ok: false; error: 'e
 // Form validation
 // ---------------------------------------------------------------------------
 
-const USERNAME_REGEX = /^[\w\p{L}][\w\p{L}.-]*$/u;
-
 export function validateRegistrationForm(data: FormData): ValidationResult {
 	const email = data.get('email');
 	const password = data.get('password');
@@ -44,15 +43,17 @@ export function validateRegistrationForm(data: FormData): ValidationResult {
 		return { ok: false, status: 400, fields: { fail: true, message: texts.errors.userConsentRequired } };
 	}
 
-	const username = data.get('username')?.toString().trim();
+	const username = normalizeUsername(data.get('username')?.toString() ?? '');
 	if (!username) {
 		return { ok: false, status: 400, fields: { fail: true, message: texts.errors.usernameRequired } };
 	}
-	if (username.includes(' ')) {
-		return { ok: false, status: 400, fields: { fail: true, message: texts.errors.usernameNoSpaces } };
-	}
-	if (!USERNAME_REGEX.test(username)) {
-		return { ok: false, status: 400, fields: { fail: true, message: texts.errors.usernameInvalidFormat } };
+	switch (validateUsername(username)) {
+		case 'too_short':
+			return { ok: false, status: 400, fields: { fail: true, message: texts.errors.usernameTooShort } };
+		case 'too_long':
+			return { ok: false, status: 400, fields: { fail: true, message: texts.errors.usernameTooLong } };
+		case 'invalid':
+			return { ok: false, status: 400, fields: { fail: true, message: texts.errors.usernameInvalidFormat } };
 	}
 
 	return {

@@ -22,6 +22,7 @@ import {
 } from './registration';
 import type { User } from '$lib/types/models';
 import { texts } from '$lib/texts';
+import { USERNAME_MAX_LENGTH } from '$lib/utils/username';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -150,13 +151,40 @@ describe('validateRegistrationForm', () => {
 		expect(result.fields).toMatchObject({ message: texts.errors.usernameRequired });
 	});
 
-	it('fails when username contains spaces', () => {
+	it('accepts usernames with internal spaces (e.g. institution names)', () => {
 		const result = validateRegistrationForm(
-			makeFormData({ ...validFormFields, username: 'user name' })
+			makeFormData({ ...validFormFields, username: 'Ratsbücherei Lüneburg' })
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.username).toBe('Ratsbücherei Lüneburg');
+	});
+
+	it('collapses repeated internal whitespace', () => {
+		const result = validateRegistrationForm(
+			makeFormData({ ...validFormFields, username: 'AStA   Lüneburg' })
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.username).toBe('AStA Lüneburg');
+	});
+
+	it('fails when username is too short', () => {
+		const result = validateRegistrationForm(
+			makeFormData({ ...validFormFields, username: 'ab' })
 		);
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
-		expect(result.fields).toMatchObject({ message: texts.errors.usernameNoSpaces });
+		expect(result.fields).toMatchObject({ message: texts.errors.usernameTooShort });
+	});
+
+	it('fails when username is too long', () => {
+		const result = validateRegistrationForm(
+			makeFormData({ ...validFormFields, username: 'a'.repeat(USERNAME_MAX_LENGTH + 1) })
+		);
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.fields).toMatchObject({ message: texts.errors.usernameTooLong });
 	});
 
 	it('fails when username contains invalid characters', () => {
