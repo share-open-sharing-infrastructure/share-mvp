@@ -2,6 +2,7 @@ import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { ItemPublic } from '$lib/types/models';
 import { parseSearchParameters, buildItemFilter, type SearchParameters } from './searchFilter';
 import type { ListResult } from 'pocketbase';
+import { upsertUserPreferences } from '$lib/server/userPreferences';
 
 export async function load({ locals, url }) {
 	// 1. Parse search parameters from URL
@@ -60,9 +61,11 @@ export const actions = {
 		const formData = await request.formData();
 		const mode = formData.get('mode')?.toString();
 		if (mode === 'foot' || mode === 'bicycle' || mode === 'car') {
-			locals.pb
-				.collection('users')
-				.update(locals.user.id, { preferredTransportMode: mode });
+			// Fire-and-forget: the search UX doesn't wait on the save. The upsert is a
+			// two-step (read then create/update), so swallow any rejection explicitly.
+			void upsertUserPreferences(locals.pb, locals.user.id, { preferredTransportMode: mode }).catch(
+				() => {}
+			);
 		}
 	},
 };

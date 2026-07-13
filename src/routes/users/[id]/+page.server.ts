@@ -97,7 +97,7 @@ export async function load({ params, locals }) {
 	// Strip fields that must not reach the client: sensitive data and fields not used by this page.
 	const fieldsToStrip = [
 		'email', 'geolocation', 'inviteCode', 'invitedBy',
-		'hasOnboarded', 'telegramUsername', 'signalLink',
+		'telegramUsername', 'signalLink',
 		'telegramVisibleToTrustedOnly', 'signalVisibleToTrustedOnly',
 	];
 	for (const field of fieldsToStrip) {

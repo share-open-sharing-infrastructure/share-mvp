@@ -190,7 +190,7 @@
 		onNotificationGranted={setupPushSubscription}
 		{installPromptEvent}
 	/>
-	<OnboardingPrompt show={!!data.currentUser && !data.currentUser.hasOnboarded} />
+	<OnboardingPrompt show={!!data.currentUser && !data.currentUserPreferences?.hasOnboarded} />
 
 	{#if page.url.pathname !== '/onboarding'}
 		<FooterComponent />

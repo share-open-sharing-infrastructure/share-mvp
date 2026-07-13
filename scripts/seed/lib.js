@@ -55,16 +55,33 @@ export async function teardown(pb) {
 
 // --- Factories -------------------------------------------------------------
 
-export function createUser(pb, username, overrides = {}) {
-	return pb.collection('users').create({
+export async function createUser(pb, username, overrides = {}) {
+	// Preference fields live in the user_preferences sidecar (issue #426), not on the
+	// users row. Peel them off `overrides` and write them to the sidecar. `hasOnboarded`
+	// defaults to true so seeded accounts don't get the onboarding prompt when clicking through.
+	const {
+		hasOnboarded = true,
+		preferredTransportMode,
+		// emailNotifications is opt-out: default the created row to true so a seeded user
+		// matches a real "no row" user (opted in), consistent with the copy migration.
+		emailNotifications = true,
+		...userOverrides
+	} = overrides;
+
+	const user = await pb.collection('users').create({
 		username,
 		email: `${username}${SEED_DOMAIN}`,
 		password: USER_PASSWORD,
 		passwordConfirm: USER_PASSWORD,
 		verified: true,
-		hasOnboarded: true,
-		...overrides,
+		...userOverrides,
 	});
+
+	const prefs = { user: user.id, hasOnboarded, emailNotifications };
+	if (preferredTransportMode !== undefined) prefs.preferredTransportMode = preferredTransportMode;
+	await pb.collection('user_preferences').create(prefs);
+
+	return user;
 }
 
 // Tiny dependency-free PNG encoder so seeded items carry a real (offline, deterministic)

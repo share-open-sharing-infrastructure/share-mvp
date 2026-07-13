@@ -10,6 +10,7 @@ import {
 	requirementFields,
 	upsertOwnerRequirements
 } from '$lib/server/lendingRequirements';
+import { getUserPreferences, upsertUserPreferences } from '$lib/server/userPreferences';
 
 export async function load({ locals, url }) {
 	// Fetch directly so the profile page always has fresh data regardless of
@@ -26,11 +27,20 @@ export async function load({ locals, url }) {
 	const inviteUrl = `${url.origin}/invite/${inviteCode}`;
 	const contact = await getOwnContact(locals.pb, locals.user.id);
 	const lendingRequirements = await getOwnerRequirements(locals.pb, locals.user.id);
+	// Fetch preferences fresh too (same freshness reason as currentUser above); returned
+	// under the same key the layout uses so the page value wins for this route (#426).
+	// Distinct requestKey from the layout's fetch to avoid PB SSR auto-cancellation.
+	const currentUserPreferences = await getUserPreferences(
+		locals.pb,
+		locals.user.id,
+		'user-preferences-profile'
+	);
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl,
 		currentUser,
+		currentUserPreferences,
 		contact,
 		requirementSettings: getRequirementSettings(lendingRequirements),
 	};
@@ -166,11 +176,12 @@ export const actions = {
 			geo = null;
 		}
 
-		// Handle preferred transport mode
-		const preferredTransportMode = formData?.get('preferredTransportMode')?.toString();
-		if (preferredTransportMode === 'foot' || preferredTransportMode === 'bicycle' || preferredTransportMode === 'car') {
-			updateData['preferredTransportMode'] = preferredTransportMode;
-		}
+		// Preferred transport mode → user_preferences sidecar (issue #426), not users.
+		const rawTransportMode = formData?.get('preferredTransportMode')?.toString();
+		const preferredTransportMode =
+			rawTransportMode === 'foot' || rawTransportMode === 'bicycle' || rawTransportMode === 'car'
+				? rawTransportMode
+				: undefined;
 
 		// Handle bio
 		const bio = formData?.get('bio')?.toString();
@@ -222,6 +233,9 @@ export const actions = {
 			// returns a spurious "nothing to update".
 			await upsertOwnContact(locals.pb, locals.user.id, contact);
 			await upsertOwnerRequirements(locals.pb, locals.user.id, requirementData);
+			if (preferredTransportMode) {
+				await upsertUserPreferences(locals.pb, locals.user.id, { preferredTransportMode });
+			}
 			return {
 				success: true,
 				message: texts.success.dataUpdated,
