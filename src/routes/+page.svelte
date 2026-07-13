@@ -113,10 +113,11 @@
 					{/each}
 				</div>
 			</div>
+			
 			<div class="aspect-video w-full overflow-hidden rounded-2xl">
 				<iframe
 					class="h-full w-full"
-					src="https://fair.tube/videos/embed/8B7gwMzz6AbyDBgF1Uu6fg"
+					src="https://fair.tube/videos/embed/je8G5fGCLmsM6mspzPN1tm"
 					title={landingTexts.howVideoTitle}
 					frameborder="0"
 					allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
