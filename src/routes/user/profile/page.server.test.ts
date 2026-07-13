@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { texts } from '$lib/texts';
+import { USERNAME_MAX_LENGTH } from '$lib/utils/username';
 
 // hooks.server.ts (reached via +page.server's import chain) reads these.
 vi.mock('$env/static/public', () => ({
@@ -47,13 +48,46 @@ function callSave(fields: Record<string, string>) {
 describe('profile: saveProfile action', () => {
 	beforeEach(() => vi.clearAllMocks());
 
-	it('rejects a username containing spaces without writing anything', async () => {
-		const { result, update } = callSave({ username: 'foo bar' });
+	it('rejects a username with invalid characters without writing anything', async () => {
+		const { result, update } = callSave({ username: 'foo@bar' });
 
-		expect(await result).toMatchObject({ error: true });
+		expect(await result).toMatchObject({ error: true, message: texts.errors.usernameInvalidFormat });
 		expect(update).not.toHaveBeenCalled();
 		expect(upsertOwnContact).not.toHaveBeenCalled();
 		expect(upsertOwnerRequirements).not.toHaveBeenCalled();
+	});
+
+	it('accepts an institution username with spaces and writes it normalized', async () => {
+		const { result, update } = callSave({ username: 'Ratsbücherei  Lüneburg' });
+
+		expect(await result).toMatchObject({ success: true });
+		expect(update).toHaveBeenCalledTimes(1);
+		const pbFormData = update.mock.calls[0][1] as FormData;
+		expect(pbFormData.get('username')).toBe('Ratsbücherei Lüneburg');
+	});
+
+	it('rejects a too-short username without writing anything', async () => {
+		const { result, update } = callSave({ username: 'ab' });
+
+		expect(await result).toMatchObject({ error: true, message: texts.errors.usernameTooShort });
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('rejects a too-long username without writing anything', async () => {
+		const { result, update } = callSave({ username: 'a'.repeat(USERNAME_MAX_LENGTH + 1) });
+
+		expect(await result).toMatchObject({ error: true, message: texts.errors.usernameTooLong });
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('treats a whitespace-only username as "unchanged" — succeeds, writes no username', async () => {
+		// The action always writes the (unconditional) contact fields, so `update` still
+		// runs — but a whitespace-only username normalizes to '' and must NOT be included.
+		const { result, update } = callSave({ username: '   ' });
+
+		expect(await result).toMatchObject({ success: true });
+		const pbFormData = update.mock.calls[0]?.[1] as FormData | undefined;
+		expect(pbFormData?.get('username') ?? null).toBeNull();
 	});
 
 	it('rejects an invalid Telegram handle', async () => {

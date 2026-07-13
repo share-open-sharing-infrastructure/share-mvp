@@ -1,3 +1,5 @@
+import { USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH } from '$lib/utils/username';
+
 export const ITEM_CATEGORIES = [
 	'Freizeit und Sport',
 	'Werkzeug und Garten',
@@ -31,7 +33,9 @@ export const texts = {
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',
 		passwordPlaceholder: '••••••••••',
-		usernamePlaceholder: 'z.B. NoahLüni',
+		usernamePlaceholder: 'z.B. Noah Lüni',
+		usernameHint: 'Öffentlich sichtbarer Anzeigename – Leerzeichen sind erlaubt. Anmelden kannst du dich mit deiner E-Mail-Adresse.',
+		loginWithEmailHint: 'Anmelden mit deiner E-Mail-Adresse.',
 		loginFailed: 'Login fehlgeschlagen.',
 		resetPassword: 'Setze mein Passwort zurück!',
 		register: 'Registrieren',
@@ -87,8 +91,10 @@ export const texts = {
 		failedToDeleteConversation: 'Failed to delete conversation.',
 		conversationNotFound: 'Unterhaltung wurde nicht gefunden.',
 		loginFailed: 'E-Mail-Adresse oder Passwort falsch.',
-		usernameNoSpaces: 'Nutzername darf keine Leerzeichen enthalten.',
-		usernameInvalidFormat: 'Nutzername darf nur Buchstaben, Zahlen, Punkte, Bindestriche und Unterstriche enthalten.',
+		usernameInvalidFormat:
+			'Nutzername darf nur Buchstaben, Zahlen, Leerzeichen, Punkte, Bindestriche und Unterstriche enthalten und nicht mit einem Leerzeichen beginnen oder enden.',
+		usernameTooShort: `Der Nutzername muss mindestens ${USERNAME_MIN_LENGTH} Zeichen lang sein.`,
+		usernameTooLong: `Der Nutzername darf höchstens ${USERNAME_MAX_LENGTH} Zeichen lang sein.`,
 		emailAlreadyTaken: 'Diese E-Mail-Adresse wird bereits verwendet.',
 		usernameRequired: 'Bitte gib einen Nutzernamen ein.',
 		usernameTaken: 'Dieser Nutzername ist bereits vergeben.',

@@ -4,7 +4,7 @@ Short checklist for bringing a new institution onto AllerLeih.
 
 ## Steps
 
-1. **Create the account** — sign up at `/auth/register` using the institution's official email address. Choose a `username` matching the institution's display name (e.g. `RatsbüchereiLüneburg`).
+1. **Create the account** — sign up at `/auth/register` using the institution's official email address. Choose a `username` matching the institution's display name; spaces are allowed, up to 50 characters (e.g. `Ratsbücherei Lüneburg`). Login is always via the email address, not the username.
 
 2. **Set `isInstitution = true`** — in the PocketBase admin dashboard, open the `users` collection, find the new record, and toggle `isInstitution` to `true`. This cannot be done from the UI.
 
