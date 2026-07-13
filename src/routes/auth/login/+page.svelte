@@ -44,6 +44,7 @@
 						autocomplete="email"
 						required
 					/>
+					<p class="text-sm text-tinte-500 dark:text-tinte-400">{texts.auth.loginWithEmailHint}</p>
 				</Label>
 				<PasswordInput autocomplete="current-password" />
 

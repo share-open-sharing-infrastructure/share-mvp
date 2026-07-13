@@ -23,27 +23,28 @@ There is **no REST layer for app data** — every read goes through `load()`, ev
 
 ```ts
 import type { PageServerLoad } from './$types';
-import { filterTrustedItems } from '$lib/server/itemFilters';
 import { PUBLIC_PB_URL } from '$env/static/public';
 
 export const load: PageServerLoad = async ({ locals }) => {
   const items = await locals.pb.collection('items').getFullList({
     filter: locals.pb.filter('owner = {:ownerId}', { ownerId: locals.user.id }),
     sort: '-updated',
-    expand: 'owner', // required: filterTrustedItems reads item.expand.owner.trusts
   });
-  return { items: filterTrustedItems(items, locals.user.id, true), PB_URL: PUBLIC_PB_URL };
+  return { items, PB_URL: PUBLIC_PB_URL };
 };
 ```
 
 Guardrails (these prevent the bugs we actually hit):
 - **Every interpolated value goes through `locals.pb.filter('… = {:x}', { x })`** — never a template
   literal, even for `locals.user.id` or a route param. A raw `"` in a value is filter injection.
-- **Call `filterTrustedItems(items, locals.user?.id ?? null, !!locals.user)`** (synchronous; from
-  `$lib/server/itemFilters`) after fetching items that aren't exclusively the current user's own —
-  skipping it **leaks** `trusteesOnly` items to non-trusted viewers. It checks
-  `item.expand?.owner?.trusts`, so the same fetch **must** `expand: 'owner'`, or trusted viewers are
-  wrongly denied (it fails closed).
+- **Trust/group visibility is enforced at the data layer — do NOT filter in app code.** When you list
+  items that aren't exclusively the current user's own, read from a trust/group-filtered surface: the
+  base `items` collection (its list/view rule returns a `trusteesOnly` item only to the owner's
+  trustees + group members — via the `trusts` join back-relation `owner.trusts_via_truster.trustee`),
+  or the `items_searchable` view (search/profile/sitemap). Unauthenticated browsing uses the masked
+  `items_public` view. There is **no** `filterTrustedItems` helper. If you need the trust
+  *relationship* itself (e.g. "does the owner trust the viewer"), use `$lib/server/trust.ts`
+  (`isTrusting` / `getTrustees` / `getTrusters`) — never re-implement trust filtering client-side.
 - `locals.pb` is the server client; `locals.user` is the auth record (null if unauthenticated).
 - Pass `PUBLIC_PB_URL` (from `$env/static/public`) down as `PB_URL` so the client can build file URLs.
 
@@ -162,5 +163,5 @@ showing whatever the previous page's title was.
   **`write-tests`** skill; it knows the PocketBase-mock pattern and how to capture thrown redirects.
 - **Auth is on by default.** `src/hooks.server.ts` protects every path except the `unprotectedPrefix`
   list. A new route requires login automatically. To make it public, add its prefix to
-  `unprotectedPrefix` (and remember the `*_public` views + `filterTrustedItems` for unauthenticated
-  reads). Authenticated users who haven't accepted the current legal docs are gated to `/legal/accept`.
+  `unprotectedPrefix` (and remember unauthenticated reads must go through the masked `*_public`
+  views). Authenticated users who haven't accepted the current legal docs are gated to `/legal/accept`.

@@ -4,6 +4,7 @@ import { texts } from '$lib/texts';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
+import { addTrust, removeTrust, getTrustees } from '$lib/server/trust';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { getUserGeolocation, upsertUserGeolocation } from '$lib/server/geolocation';
 import { getOwnContact, upsertOwnContact } from '$lib/server/contacts';
@@ -17,20 +18,21 @@ export async function load({ locals, url }) {
 
 	// Exclude deleted (anonymized) accounts from the trustee picker. Project to only the
 	// fields the picker uses (id + username), so private base-`users` fields (contactEmail,
-	// login email, inviteCode, trusts, …) are never serialized to the client (#438 hardening).
+	// login email, inviteCode, …) are never serialized to the client (#438 hardening).
 	const users = await locals.pb.collection('users').getFullList<User>({
 		filter: locals.pb.filter('deleted != true'),
 		fields: 'id,username',
 	});
 	const geolocation = await getUserGeolocation(locals.pb, locals.user.id);
 	const contact = await getOwnContact(locals.pb, locals.user.id);
+	const trustIds = (await getTrustees(locals.pb, locals.user.id)).map((t) => t.trustee);
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl: `${url.origin}/invite/${inviteCode}`,
 		username: locals.user.username as string,
 		users,
-		trustIds: (locals.user.trusts as string[]) ?? [],
+		trustIds,
 		geolocation,
 		contact,
 	};
@@ -71,12 +73,10 @@ export const actions = {
 
 	addTrustee: async ({ locals, request }) => {
 		const formData = await request.formData();
-		const newTrusteeId = formData.get('trusteeId');
+		const newTrusteeId = formData.get('trusteeId') as string;
 
 		try {
-			await locals.pb.collection('users').update(locals.user.id, {
-				trusts: [...(locals.user.trusts || []), newTrusteeId],
-			});
+			await addTrust(locals.pb, locals.user.id, newTrusteeId);
 		} catch (error: Error | any) {
 			console.error(error?.message ?? error);
 		}
@@ -122,12 +122,9 @@ export const actions = {
 
 	removeTrustee: async ({ locals, request }) => {
 		const formData = await request.formData();
-		const toRemoveTrusteeId = formData.get('trusteeId');
+		const toRemoveTrusteeId = formData.get('trusteeId') as string;
 		try {
-			const updatedTrusts = (locals.user.trusts || []).filter(
-				(id: string) => id !== toRemoveTrusteeId
-			);
-			await locals.pb.collection('users').update(locals.user.id, { trusts: updatedTrusts });
+			await removeTrust(locals.pb, locals.user.id, toRemoveTrusteeId);
 		} catch (error: Error | any) {
 			console.error(error?.message ?? error);
 		}

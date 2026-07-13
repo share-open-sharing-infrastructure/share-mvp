@@ -16,9 +16,13 @@ classDiagram
         +string email
         +string city
         +bool isInstitution
-        +UserId[] trusts
     }
-    User --> User : trusts
+    class Trust{
+        +User truster
+        +User trustee
+    }
+    User "1" <-- "n" Trust : truster
+    User "1" <-- "n" Trust : trustee
 
     class Item{
         +string name
@@ -74,8 +78,8 @@ classDiagram
 
 ## User entity
 
-- A user can "trust" 0 to n other users. Building on this, they can select some of their items to only be visible to their "trustees".
-- **Trust is explicit and 1-hop only.** If A trusts B and B trusts C, A does **not** automatically gain visibility of C's trustees-only items. The trust check is based on the item owner's `trusts` list — there is no transitive or graph-based trust resolution.
+- A user can "trust" 0 to n other users. Building on this, they can select some of their items to only be visible to their "trustees". Trust is stored as an n:m **`trusts` join collection** (`truster` → `trustee`), replacing the earlier `users.trusts[]` array; a row means "truster trusts trustee". See [data-model.md](data-model.md#trusts).
+- **Trust is explicit, directional and 1-hop only.** A trusting B lets **B** see A's trustees-only items, not the reverse; and if A trusts B and B trusts C, A does **not** automatically gain visibility of C's trustees-only items. The check matches a single `trusts` edge (owner = truster, viewer = trustee) — there is no transitive or graph-based trust resolution.
 
 ## Item
 
@@ -171,7 +175,7 @@ Institutions (public libraries, lending shops, tool libraries) are regular `User
 **Account deletion & anonymization**
 - A user can delete their own account (GDPR Art. 17) from `/user/account`; deletion is refused while a loan is still open (`accepted`/`active`/`return_requested`)
 - Deletion is *anonymize-in-place*: the `User` record is kept but its PII is scrubbed and `deleted` is set, so shared `Conversation`/`Message` history and `TermAcceptance` audit records stay referentially intact and render as "Gelöschtes Konto" to the counterparty
-- Personal-only data (contacts, geolocation, push subscriptions, owned `Item`s, own notifications) is hard-deleted; the user is removed from every other user's `trusts[]`
+- Personal-only data (contacts, geolocation, push subscriptions, owned `Item`s, own notifications) is hard-deleted; every `trusts` edge involving the account is deleted (both directions — cascade doesn't fire on anonymize-in-place)
 - The original email + username are retained in a restricted `deleted_accounts` record for the dispute-resolution window, then purged by a future scheduled job (see [data-model.md](data-model.md))
 
 **Automated data retention (issue #461)**

@@ -8,6 +8,7 @@ export type UserId = string;
 export type ItemId = string;
 export type MessageId = string;
 export type GroupId = string;
+export type TrustId = string;
 
 // --- Base entity shared by all records ---
 
@@ -43,11 +44,6 @@ export interface User extends PocketBaseEntity {
 	 * City / location of the user
 	 */
 	city?: string;
-
-	/**
-	 * List of trusted user ids (friends, family, ...) to whom the user is willing to lend certain items
-	 */
-	trusts: UserId[];
 
 	/**
 	 * Telegram username (without @ prefix)
@@ -216,6 +212,21 @@ export interface UserPublic extends PocketBaseEntity {
 	signalVisibleToTrustedOnly: boolean;
 	/** True if this account has been deleted/anonymized — used to mask the username. */
 	deleted?: boolean;
+}
+
+/**
+ * Join-table row for the trust graph (replaces the old self-referencing
+ * users.trusts[] multi-relation). A row means "truster trusts trustee": the
+ * trustee may see the truster's trusteesOnly items and trusted-only contact
+ * handles. Unique per (truster, trustee); both relations cascadeDelete. Only the
+ * truster may create/revoke an edge. Queried via `$lib/server/trust`.
+ */
+export interface Trust extends PocketBaseEntity {
+	/** Foreign key: the user who grants the trust. */
+	truster: UserId;
+
+	/** Foreign key: the user being trusted (gains visibility of the truster's restricted items). */
+	trustee: UserId;
 }
 
 // --- ITEM ---

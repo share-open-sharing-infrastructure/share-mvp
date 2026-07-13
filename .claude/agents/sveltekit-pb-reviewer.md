@@ -21,14 +21,18 @@ user names files, review those. Read enough surrounding context to judge correct
    `pb.filter(raw, {params})` / `locals.pb.filter(...)`. Flag ANY template-literal or string
    concatenation in a filter — including values that look "safe" like `locals.user.id` or route
    params. `grep` for `filter:` and backtick filter strings.
-2. **Item visibility & data leakage.** After fetching items, `filterTrustedItems(items, userId, loggedIn)`
-   (`$lib/server/itemFilters`, synchronous) must be applied so `trusteesOnly` items don't reach
-   non-trusted users — and the fetch must `expand: 'owner'`, or it can't read the owner's `trusts[]`
-   and silently mis-filters. Items can also be shared with **groups** (`groups[]` + `group_members`),
-   an audience independent of trust; a visibility change must hold for *both* the trust and group
-   audiences. Check the **`items_searchable`** view (search/profile) as well as the `*_public` views:
-   verify no email, raw coordinates, contact data, `trusts[]`, or a group-only item leaks to anyone
-   outside its audience — and that `items_searchable`'s `groups` column isn't surfaced to clients.
+2. **Item visibility & data leakage.** Trust/group visibility is enforced at the **data layer**, not
+   in app code (there is no `filterTrustedItems` helper). A `trusteesOnly` item must reach only the
+   owner's trustees — via the `trusts` join back-relation `owner.trusts_via_truster.trustee.id ?=
+   @request.auth.id` in the base `items` and `items_searchable` rules. Confirm any route listing
+   others' items reads a trust/group-filtered surface (base `items`, `items_searchable`, or masked
+   `items_public` for guests) rather than re-implementing filtering, and that trust reads/writes go
+   through `$lib/server/trust.ts` (`isTrusting`/`getTrustees`/`getTrusters`/`addTrust`/`removeTrust`).
+   Items can also be shared with **groups** (`groups[]` + `group_members`), an audience independent of
+   trust; a visibility change must hold for *both* audiences. Check the **`items_searchable`** view
+   (search/profile) as well as the `*_public` views: verify no email, raw coordinates, contact data,
+   trust-graph data (the `trusts` collection / edges), or a group-only item leaks to anyone outside
+   its audience — and that `items_searchable`'s `groups` column isn't surfaced to clients.
 3. **Auth / route protection.** New routes outside the `unprotectedPrefix` set in
    `src/hooks.server.ts` must require auth; confirm anything newly made public is intentional and
    leaks nothing sensitive. Mutations belong in form actions, not unauthenticated `/api/*`.

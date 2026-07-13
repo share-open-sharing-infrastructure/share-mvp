@@ -13,15 +13,23 @@ vi.mock('$env/static/public', () => ({
 	PUBLIC_VAPID_PUBLIC_KEY:
 		'BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
 }));
+// The inviter-relationship path fires a notification + push; stub them so the test
+// exercises only the trust-edge creation.
+vi.mock('$lib/server/notifications', () => ({
+	createNotification: vi.fn(),
+	sendPushToUser: vi.fn(),
+}));
 
 import {
 	validateRegistrationForm,
 	resolveInviter,
 	buildCreateUserPayload,
 	createUserAndAuthenticate,
+	handleInviterRelationship,
 } from './registration';
 import type { User } from '$lib/types/models';
 import { texts } from '$lib/texts';
+import { USERNAME_MAX_LENGTH } from '$lib/utils/username';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -63,7 +71,7 @@ const validFormFields = {
 	userConsent: 'on',
 };
 
-const stubUser: User = { id: 'u1', username: 'inviter', email: '', created: '', updated: '', trusts: [] };
+const stubUser: User = { id: 'u1', username: 'inviter', email: '', created: '', updated: '' };
 
 // ---------------------------------------------------------------------------
 // validateRegistrationForm
@@ -150,13 +158,40 @@ describe('validateRegistrationForm', () => {
 		expect(result.fields).toMatchObject({ message: texts.errors.usernameRequired });
 	});
 
-	it('fails when username contains spaces', () => {
+	it('accepts usernames with internal spaces (e.g. institution names)', () => {
 		const result = validateRegistrationForm(
-			makeFormData({ ...validFormFields, username: 'user name' })
+			makeFormData({ ...validFormFields, username: 'Ratsbücherei Lüneburg' })
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.username).toBe('Ratsbücherei Lüneburg');
+	});
+
+	it('collapses repeated internal whitespace', () => {
+		const result = validateRegistrationForm(
+			makeFormData({ ...validFormFields, username: 'AStA   Lüneburg' })
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.username).toBe('AStA Lüneburg');
+	});
+
+	it('fails when username is too short', () => {
+		const result = validateRegistrationForm(
+			makeFormData({ ...validFormFields, username: 'ab' })
 		);
 		expect(result.ok).toBe(false);
 		if (result.ok) return;
-		expect(result.fields).toMatchObject({ message: texts.errors.usernameNoSpaces });
+		expect(result.fields).toMatchObject({ message: texts.errors.usernameTooShort });
+	});
+
+	it('fails when username is too long', () => {
+		const result = validateRegistrationForm(
+			makeFormData({ ...validFormFields, username: 'a'.repeat(USERNAME_MAX_LENGTH + 1) })
+		);
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.fields).toMatchObject({ message: texts.errors.usernameTooLong });
 	});
 
 	it('fails when username contains invalid characters', () => {
@@ -273,5 +308,24 @@ describe('createUserAndAuthenticate', () => {
 		const pb = makeMockPb(() => ({ create: mockCreate }));
 		const result = await createUserAndAuthenticate(pb, payload, 'a@b.com', 'pw');
 		expect(result).toEqual({ ok: false, error: 'unknown' });
+	});
+});
+
+// ---------------------------------------------------------------------------
+// handleInviterRelationship
+// ---------------------------------------------------------------------------
+
+describe('handleInviterRelationship', () => {
+	it('creates a trusts edge so the new user trusts their inviter', async () => {
+		const trustsCreate = vi.fn().mockResolvedValue({ id: 't1' });
+		const pb = makeMockPb((name) =>
+			name === 'trusts'
+				? { getFirstListItem: vi.fn().mockRejectedValue(new Error('none')), create: trustsCreate }
+				: {}
+		);
+
+		await handleInviterRelationship(pb, { ...stubUser, id: 'new1', username: 'newbie' }, { id: 'inv1' });
+
+		expect(trustsCreate).toHaveBeenCalledWith({ truster: 'new1', trustee: 'inv1' });
 	});
 });

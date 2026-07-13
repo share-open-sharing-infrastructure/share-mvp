@@ -47,7 +47,7 @@ see **"When there's no factory"** below.
 | `createItem` | `(pb, ownerId, name, categories, opts?)` → **record** | `categories` is an **array of valid `ITEM_CATEGORIES`** strings from `src/lib/texts.ts` (e.g. `['Werkzeug und Garten']`). `opts`: `description`, `place`, `status`, `trusteesOnly`. **Images:** each item gets a generated colour placeholder PNG by default — pass `withImage: false` to skip it, or `image: <File/Blob>` to upload your own. |
 | `createMessage` | `(pb, fromId, toId, content)` → **message id** (string, not a record) | Pass these ids into a conversation's `messages` array. |
 | `createConversation` | `(pb, data)` → **record** | `data` is the full object: `requester`, `itemOwner`, `requestedItem`, `messages: [ids]`, `readByRequester`, `readByOwner`, `lendingStatus`. |
-| `setTrust` | `(pb, userId, trustedIds[])` | Sets the user's `trusts[]`. Trust is directional — set both sides if you want mutual trust. |
+| `setTrust` | `async (pb, userId, trustedIds[])` | Replaces `userId`'s outgoing trust edges (creates rows in the `trusts` join collection: `truster = userId`, `trustee = each id`; drops existing ones first). `await` it. Trust is directional — call for both sides if you want mutual trust. |
 
 `createUser`/`createItem`/`createConversation` return the **record** (use `.id`); `createMessage`
 returns just the **id**. A conversation's `lendingStatus` is one of `pending`, `accepted`, `rejected`,
