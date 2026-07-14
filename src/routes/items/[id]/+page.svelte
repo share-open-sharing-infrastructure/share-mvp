@@ -5,7 +5,7 @@
 	import { HeartSolid } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
-	import { itemImageUrl } from '$lib/utils/utils';
+	import { itemImageUrl, itemImageUrls } from '$lib/utils/utils';
 	import type { ItemPublic, UserPublic } from '$lib/types/models';
 	import ItemImage from './ItemImage.svelte';
 	import ItemTravelTime from './ItemTravelTime.svelte';
@@ -34,7 +34,7 @@
 
 	const shareUrl = $derived(`${page.url.origin}/items/${item.id}`);
 
-	const imageUrl = $derived(itemImageUrl(data.PB_IMG_URL, item));
+	const imageUrls = $derived(itemImageUrls(data.PB_IMG_URL, item));
 
 	const ownerImageUrl = $derived(
 		owner.profileImage
@@ -66,7 +66,7 @@
 		</Alert>
 	{/if}
 
-	<ItemImage {imageUrl} {ownerImageUrl} {categoryPlaceholder} itemName={item.name} status={item.status} />
+	<ItemImage {imageUrls} {ownerImageUrl} {categoryPlaceholder} itemName={item.name} status={item.status} />
 
 	<!-- Item name -->
 	<div class="flex items-center justify-between gap-3">

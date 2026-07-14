@@ -199,6 +199,7 @@ export const texts = {
 	forms: {
 		username: 'Nutzername',
 		location: 'Standort/Postleitzahl',
+		nameLabel: 'Name:',
 		itemName: 'Name des Gegenstands',
 		itemDescription: 'Beschreibe den Gegenstand, z.B. Zustand, Marke, Größe oder was dir beim Verleihen wichtig ist. ',
 		itemPlace: 'Ort des Gegenstands',
@@ -605,6 +606,17 @@ export const texts = {
 			countNone: 'Du verleihst noch keine Ding(e)...',
 			addSingle: 'Dinge einzeln hochladen',
 			addBulk: 'Mit KI-Bilderkennung hochladen',
+			addTitle: 'Neuer Gegenstand',
+			editTitle: 'Gegenstand bearbeiten',
+			unsavedLeaveConfirm:
+				'Du hast ungespeicherte Änderungen. Möchtest du das Fenster wirklich schließen? Deine Eingaben gehen dann verloren.',
+			imageUploadAria: 'Bilder hochladen oder hierher ziehen',
+			imageDropHintMulti: 'Bilder hierher ziehen oder klicken zum Auswählen',
+			imageFormatsHint: 'Alle gängigen Bildformate (JPG, PNG, GIF, WebP)',
+			imageRemove: 'Bild entfernen',
+			imageMaxReached: (n: number) => `Maximal ${n} Bilder pro Gegenstand.`,
+			imageReplaceHint: 'Neue Bilder ersetzen die vorhandenen.',
+			saveFailed: 'Der Gegenstand konnte nicht gespeichert werden. Bitte versuche es erneut.',
 			search: 'Suchen...',
 			filterAll: 'Alle',
 			filterAvailable: 'Verfügbar',
@@ -691,6 +703,7 @@ export const texts = {
 			trustRestrictedTooltip: 'Dieser Gegenstand wird nur an vertraute Nutzer verliehen.',
 			locationLabel: 'Ort',
 			noImage: 'Kein Bild vorhanden',
+			showImage: (n: number) => `Bild ${n} anzeigen`,
 			calculateTravelTime: 'Wegzeit berechnen',
 			unknownRequester: 'Jemand',
 			unknownItem: 'einem Gegenstand',
@@ -744,6 +757,8 @@ export const texts = {
 		noPhotosSelected: 'Bitte wähle mindestens ein Foto aus.',
 		uploadFailed: 'Keiner der Gegenstände konnte erstellt werden. Bitte versuche es erneut.',
 		uploadError: 'Fehler beim Hochladen. Bitte prüfe deine Verbindung und versuche es erneut.',
+		imageFormatUnsupported:
+			'Dieses Bildformat konnte nicht verarbeitet werden (z.B. HEIC von iPhones). Bitte lade das Bild als JPG oder PNG hoch.',
 		howItWorksHeader: 'Wie funktioniert das?',
 		howItWorksBody: 'Die KI erkennt deine Gegenstände und schlägt dir Titel, Kategorie(n) und Beschreibung vor. \
 			Das spart dir Zeit — kostet aber pro Bild etwas Strom (ca. 1–3 Wattstunden), Wasser (ca. 5–30 Milliliter), CO₂ (ca. 0,1–0,3 Gramm) und basiert auf einer Industrie mit ethischen Problemen.\
