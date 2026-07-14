@@ -617,6 +617,8 @@ export const texts = {
 			imageMaxReached: (n: number) => `Maximal ${n} Bilder pro Gegenstand.`,
 			imageReplaceHint: 'Neue Bilder ersetzen die vorhandenen.',
 			saveFailed: 'Der Gegenstand konnte nicht gespeichert werden. Bitte versuche es erneut.',
+			validationFailed:
+				'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
 			search: 'Suchen...',
 			filterAll: 'Alle',
 			filterAvailable: 'Verfügbar',
