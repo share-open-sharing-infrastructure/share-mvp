@@ -100,8 +100,7 @@ export const actions = {
 			return fail(400, {
 				fail: true,
 				missingFields: validationResult.errors,
-				message:
-					'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
+				message: texts.pages.items.validationFailed,
 			});
 		}
 
@@ -144,8 +143,7 @@ export const actions = {
 			return fail(400, {
 				fail: true,
 				missingFields: validationResult.errors,
-				message:
-					'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
+				message: texts.pages.items.validationFailed,
 			});
 		}
 
