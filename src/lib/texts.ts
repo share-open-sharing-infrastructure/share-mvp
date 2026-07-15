@@ -73,6 +73,7 @@ export const texts = {
 		guide: "Wie funktioniert's?",
 		privacy: 'Datenschutz',
 		tos: 'AGB',
+		app: 'App',
 	},
 
 	// Footer
@@ -524,6 +525,116 @@ export const texts = {
 					a: 'Wir sind noch im Aufbau und es gibt noch Allerlei(h) zu tun, deswegen läuft hier vielleicht noch nicht alles 100% rund. Aber digitale Freiheitsrechte (Persönlichkeitsrecht, Datenschutz, Teilhabe) sind für uns unverhandelbare Grundwerte und wir werden AllerLeih so entwickeln, dass ihr die volle Kontrolle über eure Daten habt. Zu jeder Zeit. Für immer. Das heißt: wir verkaufen keine Daten, Daten liegen auf Servern in Deutschland oder maximal der EU, und wir schützen eure Daten bestmöglich. Falls ihr feststellt, dass das nicht der Fall ist, meldet euch gerne sofort bei uns! Wir wollen transparent sein und Fehler schnellstmöglich beheben.',
 				},
 			],
+		},
+		app: {
+			title: 'AllerLeih als App',
+			intro:
+				'AllerLeih ist eine sogenannte Progressive Web App (PWA). Das heißt: Du kannst AllerLeih mit einem Tippen auf deinen Startbildschirm legen und wie eine ganz normale App nutzen – ganz ohne App-Store und ohne großen Download.',
+			installNow: 'Jetzt installieren',
+			installNowHint: 'Dein Browser unterstützt die Installation mit einem Klick.',
+			alreadyInstalled: 'AllerLeih ist auf diesem Gerät bereits als App installiert. 🎉',
+			followStepsHint:
+				'Wähle unten deinen Browser aus – dort steht Schritt für Schritt, wie du AllerLeih installierst.',
+			whatIs: {
+				title: 'Was bringt mir die App?',
+				intro:
+					'Einmal installiert, verhält sich AllerLeih wie eine App aus dem Store – nur eben direkt aus deinem Browser heraus:',
+				features: [
+					{
+						title: 'Eigenes Icon',
+						text: 'AllerLeih bekommt ein eigenes Symbol auf deinem Startbildschirm – ein Tipp und du bist drin.',
+					},
+					{
+						title: 'Benachrichtigungen',
+						text: 'Du wirst über neue Nachrichten und Anfragen informiert, auch wenn AllerLeih gerade nicht offen ist.',
+					},
+					{
+						title: 'Vollbild ohne Browserleiste',
+						text: 'Die App öffnet sich im Vollbild, ohne Adress- und Menüleiste – mehr Platz zum Stöbern.',
+					},
+					{
+						title: 'Schnell & sparsam',
+						text: 'Die Installation belegt kaum Speicherplatz und AllerLeih startet spürbar schneller.',
+					},
+					{
+						title: 'Immer aktuell',
+						text: 'Updates kommen automatisch – du musst nie etwas nachladen oder aktualisieren.',
+					},
+				],
+			},
+			howTo: {
+				title: 'So installierst du AllerLeih',
+				intro:
+					'Die Schritte unterscheiden sich je nach Gerät und Browser. Wir haben deinen Browser markiert – wenn das nicht passt, klapp einfach den passenden auf.',
+				detectedNote: 'Das ist vermutlich dein Gerät:',
+				platforms: [
+					{
+						id: 'ios',
+						label: 'iPhone / iPad (Safari)',
+						steps: [
+							'Öffne allerleih.org in Safari.',
+							'Tippe unten auf das Teilen-Symbol (Quadrat mit Pfeil nach oben).',
+							'Wähle „Zum Home-Bildschirm".',
+							'Tippe oben rechts auf „Hinzufügen".',
+						],
+					},
+					{
+						id: 'android-chrome',
+						label: 'Android (Chrome, Edge, Brave)',
+						steps: [
+							'Öffne allerleih.org im Browser.',
+							'Tippe oben rechts auf das Menü (⋮).',
+							'Wähle „App installieren" oder „Zum Startbildschirm hinzufügen".',
+							'Bestätige mit „Installieren".',
+						],
+					},
+					{
+						id: 'android-firefox',
+						label: 'Android (Firefox)',
+						steps: [
+							'Öffne allerleih.org in Firefox.',
+							'Tippe oben rechts auf das Menü (⋮).',
+							'Wähle „Zum Startbildschirm hinzufügen". Möglicherweise musst du zuerst auf „Mehr" tippen, bevor dieser Menüpunkt erscheint.',
+							'Bestätige mit „Hinzufügen".',
+						],
+					},
+					{
+						id: 'desktop-chromium',
+						label: 'Computer (Chrome, Edge)',
+						steps: [
+							'Öffne allerleih.org im Browser.',
+							'Klicke rechts in der Adressleiste auf das Installations-Symbol (Bildschirm mit Pfeil nach unten).',
+							'Alternativ: Menü (⋮) → „AllerLeih installieren".',
+							'Bestätige mit „Installieren".',
+						],
+					},
+					{
+						id: 'desktop-firefox',
+						label: 'Computer (Firefox)',
+						steps: [
+							'Firefox am Computer bietet keine Installation an.',
+							'Du kannst AllerLeih trotzdem als Lesezeichen speichern – oder nutze am Handy einen der anderen Browser.',
+						],
+					},
+					{
+						id: 'other',
+						label: 'Anderer Browser',
+						steps: [
+							'Öffne allerleih.org im Browser.',
+							'Öffne das Browser-Menü.',
+							'Suche nach „App installieren" oder „Zum Startbildschirm hinzufügen".',
+						],
+					},
+				],
+			},
+			whyNoNative: {
+				title: 'Warum gibt es (noch) keine eigene App im Store?',
+				paragraphs: [
+					'Wir sind ein kleines, gemeinnütziges Team und entwickeln AllerLeih als Open-Source-Software. Eine eigene App für iOS und Android würde bedeuten, gleich drei Programme parallel zu pflegen – das kostet Zeit und Geld, die wir lieber in die Plattform selbst stecken.',
+					'Native Apps müssen außerdem durch die Stores von Apple und Google, die Gebühren verlangen und eigene Regeln vorgeben. Als PWA bleiben wir unabhängig, und du bekommst Updates sofort, ohne etwas herunterzuladen.',
+					'Das Beste: Eine PWA fühlt sich schon heute fast wie eine echte App an – mit eigenem Icon, Vollbild und Benachrichtigungen. Sollte der Bedarf wachsen, schließen wir eine App im Store für die Zukunft nicht aus.',
+				],
+			},
 		},
 		search: {
 			title: 'Suche',
@@ -1018,6 +1129,11 @@ export const texts = {
 			description:
 				'Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen auf AllerLeih. Tipps, FAQs und erste Schritte.',
 		},
+		app: {
+			title: 'AllerLeih als App installieren',
+			description:
+				'Lege AllerLeih als App auf deinen Startbildschirm – ohne App-Store. So installierst du die Progressive Web App Schritt für Schritt auf iPhone, Android und Computer.',
+		},
 		contact: {
 			title: 'Kontakt – AllerLeih',
 			description: 'Schreib uns! Fragen, Feedback oder Kooperationsanfragen sind herzlich willkommen.',
@@ -1083,10 +1199,8 @@ export const texts = {
 		notifDismiss: 'Später',
 		installBannerText: 'Installiere AllerLeih für das beste Erlebnis.',
 		installButton: 'Installieren',
-		installDismiss: 'Nicht jetzt',
-		installManualFirefox: 'Tippe auf ⋮ → „Zum Startbildschirm hinzufügen"',
-		installManualIos: 'Tippe auf ⬆ → „Zum Home-Bildschirm"',
-		installManualGeneric: 'Tippe im Browser-Menü auf „Zum Startbildschirm hinzufügen"',
+		installLearnMore: 'So geht’s',
+		installManualLink: 'So installierst du AllerLeih',
 	},
 
 	// Flash messages and alerts
