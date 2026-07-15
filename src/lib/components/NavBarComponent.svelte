@@ -87,7 +87,6 @@
 		}}
 	>
 		<NavLi href={resolve('/search')}>{texts.nav.search}</NavLi>
-		<NavLi href={resolve('/misc/app')}>{texts.nav.app}</NavLi>
 		{#if !loggedIn}
 			<NavLi href={resolve('/auth/login')}>{texts.nav.login}</NavLi>
 			<NavLi href={resolve('/auth/register')}>{texts.nav.register}</NavLi>

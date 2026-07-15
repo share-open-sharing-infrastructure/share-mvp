@@ -587,7 +587,7 @@ export const texts = {
 						steps: [
 							'Öffne allerleih.org in Firefox.',
 							'Tippe oben rechts auf das Menü (⋮).',
-							'Wähle „Zum Startbildschirm hinzufügen".',
+							'Wähle „Zum Startbildschirm hinzufügen". Möglicherweise musst du zuerst auf „Mehr" tippen, bevor dieser Menüpunkt erscheint.',
 							'Bestätige mit „Hinzufügen".',
 						],
 					},
