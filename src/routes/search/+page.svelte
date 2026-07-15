@@ -16,7 +16,7 @@
 	const { data } = $props();
 
 	const preferredMode = $derived(
-		(data.currentUser?.preferredTransportMode || undefined) as TransportMode | undefined
+		(data.currentUserPreferences?.preferredTransportMode || undefined) as TransportMode | undefined
 	);
 
 	let transportMode = $state<TransportMode | null>(null);

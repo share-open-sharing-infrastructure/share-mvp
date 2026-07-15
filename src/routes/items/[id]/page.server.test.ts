@@ -60,6 +60,7 @@ function makePb(opts: {
 	masked?: boolean;
 	itemExtra?: Record<string, unknown>;
 	conversationsGetFirstListItem?: ReturnType<typeof vi.fn>;
+	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
 }) {
 	const usersGetOne = vi.fn().mockResolvedValue({
 		contactMethod: opts.contactMethod ?? '',
@@ -68,6 +69,14 @@ function makePb(opts: {
 	});
 	const convGetFirstListItem =
 		opts.conversationsGetFirstListItem ?? vi.fn().mockRejectedValue(new Error('none'));
+	// getUserPreferences() probes here; a rejection means "no row" (→ 'bicycle' fallback).
+	const prefsGetFirstListItem = opts.preferredTransportMode
+		? vi.fn().mockResolvedValue({
+				id: 'pref1',
+				user: VIEWER_ID,
+				preferredTransportMode: opts.preferredTransportMode,
+			})
+		: vi.fn().mockRejectedValue(new Error('none'));
 	const base = publicItem(opts.itemExtra);
 	const itemRow = opts.masked ? { ...base, name: null } : base;
 	const pb = {
@@ -88,6 +97,8 @@ function makePb(opts: {
 					return { getOne: usersGetOne };
 				case 'conversations':
 					return { getFirstListItem: convGetFirstListItem };
+				case 'user_preferences':
+					return { getFirstListItem: prefsGetFirstListItem };
 				default:
 					return {};
 			}
@@ -97,7 +108,7 @@ function makePb(opts: {
 		// callLoad() from whether a user is passed, so the anonymous path is faithful.
 		authStore: { isValid: true },
 	};
-	return { pb, usersGetOne, convGetFirstListItem };
+	return { pb, usersGetOne, convGetFirstListItem, prefsGetFirstListItem };
 }
 
 function callLoad(
@@ -238,6 +249,37 @@ describe('items/[id] load — off-platform-contact owners (#438)', () => {
 		expect(usersGetOne).not.toHaveBeenCalled();
 		// A guest never reaches the trust-restricted state (that requires authentication).
 		expect(data.isTrustRestricted).toBe(false);
+	});
+});
+
+describe('items/[id] load — preferred transport mode (#426, from user_preferences)', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		getActiveTerms.mockResolvedValue(null);
+		hasAcceptedActiveTerms.mockResolvedValue(true);
+		evaluateUnmetRequirements.mockResolvedValue([]);
+	});
+
+	it("passes the viewer's saved transport mode through from user_preferences", async () => {
+		const { pb, prefsGetFirstListItem } = makePb({ preferredTransportMode: 'foot' });
+		const data = await callLoad(pb);
+		expect(data.preferredTransportMode).toBe('foot');
+		// The authenticated path DOES query user_preferences.
+		expect(prefsGetFirstListItem).toHaveBeenCalledTimes(1);
+	});
+
+	it('falls back to bicycle when the viewer has no preferences row', async () => {
+		const { pb } = makePb({});
+		const data = await callLoad(pb);
+		expect(data.preferredTransportMode).toBe('bicycle');
+	});
+
+	it('falls back to bicycle for an anonymous viewer without querying user_preferences', async () => {
+		const { pb, prefsGetFirstListItem } = makePb({});
+		const data = await callLoad(pb, null);
+		expect(data.preferredTransportMode).toBe('bicycle');
+		// The `currentUserId ? … : null` guard must short-circuit — no query for a guest.
+		expect(prefsGetFirstListItem).not.toHaveBeenCalled();
 	});
 });
 

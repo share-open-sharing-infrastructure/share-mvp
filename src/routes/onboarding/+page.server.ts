@@ -8,6 +8,7 @@ import { addTrust, removeTrust, getTrustees } from '$lib/server/trust';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { getUserGeolocation, upsertUserGeolocation } from '$lib/server/geolocation';
 import { getOwnContact, upsertOwnContact } from '$lib/server/contacts';
+import { upsertUserPreferences } from '$lib/server/userPreferences';
 
 export async function load({ locals, url }) {
 	let inviteCode = locals.user.inviteCode as string | undefined;
@@ -112,7 +113,7 @@ export const actions = {
 		const mode = formData.get('mode')?.toString();
 		if (mode === 'foot' || mode === 'bicycle' || mode === 'car') {
 			try {
-				await locals.pb.collection('users').update(locals.user.id, { preferredTransportMode: mode });
+				await upsertUserPreferences(locals.pb, locals.user.id, { preferredTransportMode: mode });
 			} catch {
 				// non-critical — proceed regardless
 			}
@@ -164,7 +165,7 @@ export const actions = {
 		}
 
 		try {
-			await locals.pb.collection('users').update(locals.user.id, { hasOnboarded: true });
+			await upsertUserPreferences(locals.pb, locals.user.id, { hasOnboarded: true });
 			await upsertOwnContact(locals.pb, locals.user.id, contact);
 			return { success: true };
 		} catch {
