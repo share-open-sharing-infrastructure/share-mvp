@@ -95,8 +95,22 @@
 		submitting = true;
 		uploadError = null;
 		for (let i = 0; i < drafts.length; i++) {
-			const compressed = await compressImage(drafts[i].file);
-			formData.set(`image_${i}`, compressed, drafts[i].file.name);
+			const file = drafts[i].file;
+			// SVGs can't be drawn to a canvas reliably; upload them as-is. Everything else
+			// is compressed — surface a clear error if the browser can't decode it (e.g.
+			// iPhone HEIC) instead of failing silently.
+			let image: Blob = file;
+			if (file.type !== 'image/svg+xml') {
+				try {
+					image = await compressImage(file);
+				} catch {
+					uploadError = texts.bulkUpload.imageFormatUnsupported;
+					submitting = false;
+					cancel();
+					return;
+				}
+			}
+			formData.set(`image_${i}`, image, file.name);
 			formData.set(`name_${i}`, drafts[i].name);
 			formData.set(`description_${i}`, drafts[i].description);
 			formData.set(`categories_${i}`, JSON.stringify(drafts[i].categories));

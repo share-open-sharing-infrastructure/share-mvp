@@ -61,7 +61,7 @@
 <div
 	role="region"
 	aria-label="Foto-Upload-Bereich"
-	class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-tinte-300 bg-papier p-10 dark:border-tinte-600 dark:bg-tinte-800"
+	class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-tinte-300 bg-transparent p-10 dark:border-tinte-600"
 	ondragover={(e) => e.preventDefault()}
 	ondrop={(e) => {
 		e.preventDefault();

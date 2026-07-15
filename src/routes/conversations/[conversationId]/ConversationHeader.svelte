@@ -33,6 +33,13 @@
 
 	const chatPartnerName = $derived(displayName(chatPartner));
 
+	// `image` is a multi-file field; the first entry is the cover thumbnail.
+	const requestedItemCoverUrl = $derived(
+		conversation.requestedItem.image?.[0]
+			? `${PB_URL}api/files/${conversation.requestedItem.collectionId}/${conversation.requestedItem.id}/${conversation.requestedItem.image[0]}`
+			: null
+	);
+
 	const chatPartnerAvatarUrl = $derived(
 		chatPartner.profileImage
 			? `${PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}`
@@ -70,7 +77,7 @@
 		class="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
 	>
 		<img
-			src={`${PB_URL}api/files/${conversation.requestedItem.collectionId}/${conversation.requestedItem.id}/${conversation.requestedItem.image}`}
+			src={requestedItemCoverUrl ?? ''}
 			class="w-10 h-10 rounded-full object-cover shrink-0"
 			alt={conversation.requestedItem.name}
 		/>

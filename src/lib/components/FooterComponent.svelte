@@ -42,6 +42,9 @@
 						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/guide')}
 							>{texts.nav.guide}</FooterLink
 						>
+						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/app')}
+							>{texts.nav.app}</FooterLink
+						>
 						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
 							>{texts.nav.newsletter}</FooterLink
 						>

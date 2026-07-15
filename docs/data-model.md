@@ -103,7 +103,7 @@ erDiagram
     ITEM{
         string id PK
         string name
-        string image "filename in PocketBase Files"
+        string image "filename(s) in PocketBase Files (multi-select, cover first)"
         string externalImgUrl "for imported items"
         string description
         string place
@@ -470,7 +470,7 @@ conversation access never leaks an item into search/profile/sitemap.
 
 | Field | Source | Notes |
 |---|---|---|
-| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared) |
+| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared). `image` is a **multi-select** file field → an array of filenames (cover first); serve each via `api/files/items_searchable/{id}/{filename}` |
 | userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (no trust data is exposed — trust lives in the separate `trusts` collection) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 | ownerContactMethod, ownerContactEmail, ownerContactUrl | SQL expression on `users` | `items_public` only — the owner's off-platform contact (#438), NULL unless `contactPublic` **and** the item is unmasked; raw contact fields never selected |

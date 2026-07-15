@@ -6,6 +6,9 @@ import type { Item } from '$lib/types/models';
 import { getAttachableGroups } from '$lib/server/groups';
 import { deleteItem, deleteMultipleItems, setItemStatus } from '$lib/server/items';
 
+/** Max images per item — mirrors the items.image maxSelect in the backend migration. */
+const MAX_IMAGES = 5;
+
 /**
  * Keep only the submitted group ids the user is actually allowed to attach
  * (groups they own or are a member of), so a tampered form can't share an item
@@ -59,9 +62,12 @@ export async function load({ locals, url }) {
 function validateItemData(data: FormData, isImageRequired: boolean = true) {
 	const name = data.get('itemName');
 	const description = data.get('itemDescription');
-	const image = data.get('itemImage');
+	// `image` is a multi-file field: an item can carry several photos.
+	const images = data
+		.getAll('itemImage')
+		.filter((f): f is File => f instanceof File && f.size > 0);
 
-	// Check if image is a valid image file
+	// Check that every uploaded file is a valid image type.
 	const validImageTypes = [
 		'image/jpeg',
 		'image/jpg',
@@ -70,22 +76,19 @@ function validateItemData(data: FormData, isImageRequired: boolean = true) {
 		'image/webp',
 		'image/svg+xml',
 	];
-	const isValidImage =
-		image instanceof File &&
-		image.size > 0 &&
-		validImageTypes.includes(image.type);
+	const hasInvalidImage = images.some((img) => !validImageTypes.includes(img.type));
 
 	const errors = {
 		nameIsMissing: !name,
 		descriptionIsMissing: !description,
-		imageIsMissing: isImageRequired
-			? !image || !(image instanceof File) || image.size === 0
-			: false,
-		imageInvalidType:
-			image instanceof File && image.size > 0 ? !isValidImage : false,
+		imageIsMissing: isImageRequired ? images.length === 0 : false,
+		imageInvalidType: hasInvalidImage,
+		// Keep in sync with the items.image maxSelect in the backend migration; PocketBase
+		// rejects more, so guard here too (defends against a direct/tampered POST).
+		tooManyImages: images.length > MAX_IMAGES,
 	};
 
-	return { isValid: Object.values(errors).every((e) => !e), errors };
+	return { isValid: Object.values(errors).every((e) => !e), errors, images };
 }
 
 export const actions = {
@@ -118,16 +121,18 @@ export const actions = {
 				name: formData.get('itemName'),
 				description: formData.get('itemDescription'),
 				place: formData.get('itemPlace'),
-				image: formData.get('itemImage'),
+				image: validationResult.images,
 				owner: locals.user.id,
 				trusteesOnly,
 				groups: createGroups,
 				status: 'available',
 				categories: createCategories,
 			});
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (error: Error | any) {
-			console.error(error ? error.message : error);
+		} catch (error) {
+			// Surface the failure instead of swallowing it — otherwise the modal treats a
+			// rejected create (e.g. too many images / size limit) as success and closes.
+			console.error(error instanceof Error ? error.message : error);
+			return fail(500, { fail: true, message: texts.pages.items.saveFailed });
 		}
 	},
 
@@ -166,19 +171,20 @@ export const actions = {
 			categories: updateCategories,
 		};
 
-		// Check if a new image was uploaded
-		const image = formData.get('itemImage');
-		if (image && image instanceof File && image.size > 0) {
-			updateData.image = image;
+		// Only touch the image field when new files were uploaded; a submit without
+		// new files keeps the existing images. New files replace the whole set.
+		if (validationResult.images.length > 0) {
+			updateData.image = validationResult.images;
 		}
 
 		const itemId = formData?.get('itemId')?.toString();
 		if (itemId) {
 			try {
 				await locals.pb.collection('items').update(itemId, updateData);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (err: Error | any) {
-				console.error(err ? err.message : err);
+			} catch (err) {
+				// Surface the failure instead of swallowing it (see create above).
+				console.error(err instanceof Error ? err.message : err);
+				return fail(500, { fail: true, message: texts.pages.items.saveFailed });
 			}
 		}
 	},
