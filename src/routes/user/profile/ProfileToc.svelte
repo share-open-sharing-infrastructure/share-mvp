@@ -111,9 +111,11 @@
 	</ul>
 </nav>
 
-<!-- Mobile: horizontal, scrollable chip strip pinned below the nav bar -->
+<!-- Mobile: horizontal, scrollable chip strip pinned to the top of the viewport.
+     The app header (NavBarComponent) is not fixed, so it scrolls away with the page;
+     top-0 pins the strip flush instead of leaving a 64px gap for a header that isn't there. -->
 <nav
-	class="lg:hidden sticky top-16 z-20 -mx-4 px-4 py-2 bg-secondary-100/95 dark:bg-tinte-900/95 backdrop-blur border-b border-tinte-200 dark:border-tinte-700 overflow-x-auto"
+	class="lg:hidden sticky top-0 z-20 -mx-4 px-4 py-2 bg-secondary-100/95 dark:bg-tinte-900/95 backdrop-blur border-b border-tinte-200 dark:border-tinte-700 overflow-x-auto"
 	aria-label={title}
 >
 	<ul class="flex gap-2 w-max">
