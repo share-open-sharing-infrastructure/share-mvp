@@ -5,33 +5,17 @@
 	import { subscribeConversationList } from './conversationListRealtime';
 	import { page } from '$app/state';
 	import { invalidateAll } from '$app/navigation';
-	import { onMount, untrack } from 'svelte';
+	import { onMount } from 'svelte';
 	import type { Conversation } from '$lib/types/models';
 
 	let { data, children } = $props();
 
+	// Filter state — written ONLY by the click handlers below, never by effects or
+	// navigation. The filters affect the sidebar list only: the open conversation stays
+	// open even when they hide it from the list.
 	// null = no filter selected, show both lending and borrowing conversations.
 	let activeFilter: 'lending' | 'borrowing' | null = $state(null);
 	let showOnlyActive = $state(true);
-
-	// Clear a filter that would hide a conversation opened directly (e.g. from a
-	// notification or deep link). untrack(conversations) prevents real-time list updates
-	// from re-running this and overriding a filter the user manually selected while a
-	// conversation is open.
-	$effect(() => {
-		const id = page.params.conversationId;
-		if (!id) return;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const match = untrack(() => conversations.find((c: any) => c.id === id));
-		if (!match) return;
-		const matchRole = match.itemOwner === data.currentUser.id ? 'lending' : 'borrowing';
-		if (activeFilter !== null && activeFilter !== matchRole) {
-			activeFilter = null;
-		}
-		if (showOnlyActive && match.lendingStatus && ['rejected', 'completed'].includes(match.lendingStatus)) {
-			showOnlyActive = false;
-		}
-	});
 
 	const hasConversation = $derived(!!page.params.conversationId);
 
@@ -99,41 +83,30 @@
 		};
 	});
 
-	// Local mutable copy so realtime updates can clear the unread dots.
-	// Initialized from data directly (not []) so the auto-switch $effect finds a match on first run.
+	// Local writable derived: re-derives from data.conversations whenever load() reruns
+	// (e.g. invalidateAll on realtime reconnect) and also accepts direct writes from the
+	// realtime handler below (clearing unread dots).
 	let conversations: Conversation[] = $derived([...data.conversations]);
 
-	$effect(() => {
-		conversations = [...data.conversations];
-	});
-
-	const lendingConversations = $derived(
-		conversations.filter(
-			(c: Conversation) => c.itemOwner === data.currentUser.id
-		)
-	);
-	const borrowingConversations = $derived(
-		conversations.filter(
-			(c: Conversation) => c.requester === data.currentUser.id
-		)
-	);
-
-	const isActiveStatus = (c: Conversation) =>
+	// Role/status predicates shared by the tab counts and the visibility filter.
+	const isLending = (c: Conversation) => c.itemOwner === data.currentUser.id;
+	const isActive = (c: Conversation) =>
 		!c.lendingStatus || !['rejected', 'completed'].includes(c.lendingStatus);
+	const matchesRole = (c: Conversation) =>
+		activeFilter === null || (activeFilter === 'lending') === isLending(c);
+
+	const lendingConversations = $derived(conversations.filter(isLending));
+	const borrowingConversations = $derived(conversations.filter((c) => !isLending(c)));
 
 	// Conversations after the lending/borrowing filter, before the "only active" checkbox —
 	// used to tell whether an empty result is due to the active-only filter or to genuinely
 	// having no conversations of that type.
-	const conversationsByFilter = $derived(
-		activeFilter === 'lending'
-			? lendingConversations
-			: activeFilter === 'borrowing'
-				? borrowingConversations
-				: conversations
-	);
+	const conversationsByFilter = $derived(conversations.filter(matchesRole));
 
+	// The filters apply strictly to the list — a conversation they hide stays open in the
+	// chat panel but is not shown (or highlighted) in the sidebar.
 	const visibleConversations = $derived(
-		showOnlyActive ? conversationsByFilter.filter(isActiveStatus) : conversationsByFilter
+		conversationsByFilter.filter((c) => !showOnlyActive || isActive(c))
 	);
 
 	const emptyReason = $derived(
@@ -196,7 +169,7 @@
 						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
 							{activeFilter === 'borrowing'
 							? 'bg-white dark:bg-tinte-700 text-primary shadow-sm'
-							: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
+							: 'text-primary-300 dark:text-primary-400/70 hover:text-primary'}"
 					>
 						{texts.pages.conversations.borrowing}
 						{#if borrowingConversations.length > 0}
@@ -215,7 +188,7 @@
 						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
 							{activeFilter === 'lending'
 							? 'bg-white dark:bg-tinte-700 text-accent shadow-sm'
-							: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
+							: 'text-accent-300 dark:text-accent-400/70 hover:text-accent'}"
 					>
 						{texts.pages.conversations.lending}
 						{#if lendingConversations.length > 0}
@@ -237,7 +210,8 @@
 				<label class="flex items-center gap-2 text-xs text-tinte-500 dark:text-tinte-400 hover:cursor-pointer">
 					<input
 						type="checkbox"
-						bind:checked={showOnlyActive}
+						checked={showOnlyActive}
+						onchange={(e) => (showOnlyActive = e.currentTarget.checked)}
 						class="w-3.5 h-3.5 rounded border-tinte-300 dark:border-tinte-600 text-primary focus:ring-primary"
 					/>
 					{texts.pages.conversations.onlyActiveLabel}
