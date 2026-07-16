@@ -42,7 +42,8 @@ export function buildSearchFilter(raw: string): string | null {
 /**
  * Parses and validates all search-related URL parameters into a typed `SearchParams` object.
  * Invalid or missing values fall back to safe defaults; unrecognised category values are silently dropped.
- * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `op`, `onlyAvailable`, `ownerType`)
+ * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `op`, `onlyAvailable`, `ownerType`).
+ *   `onlyAvailable` defaults to `false` (show all items) unless explicitly set to `true`.
  * @returns a fully typed `SearchParams` object with all fields guaranteed to be valid
  */
 export function parseSearchParameters(url: URL): SearchParameters {
@@ -57,7 +58,7 @@ export function parseSearchParameters(url: URL): SearchParameters {
 		.filter((s): s is ItemCategory => ITEM_CATEGORIES.includes(s as ItemCategory));
 
 	const op: 'or' | 'and' = url.searchParams.get('op') === 'and' ? 'and' : 'or';
-	const onlyAvailable = url.searchParams.get('onlyAvailable') !== 'false';
+	const onlyAvailable = url.searchParams.get('onlyAvailable') === 'true';
 
 	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
 	const ownerType: 'all' | 'institution' | 'private' =
