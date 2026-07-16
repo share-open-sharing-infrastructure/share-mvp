@@ -54,6 +54,13 @@
 	// and the input bar rides up just above the keyboard, matching native chat apps.
 	// The scroll-lock above keeps the page itself from scrolling, so the keyboard only
 	// reflows this container.
+	// On a cold load (push/share link, reload) the mobile visual viewport isn't settled
+	// yet — the browser toolbar is still expanded, so a single mount-time measurement
+	// fixes too small a height and the scroll-lock stops a correcting event from firing.
+	// So we re-measure across the settle window: after first paint (rAF), after the
+	// toolbar collapses (timeout), and on window `load` / `orientationchange`, on top of
+	// the live resize/scroll listeners. On internal navigation the viewport is already
+	// settled → the extra passes are harmless no-ops.
 	$effect(() => {
 		if (!outerEl) return;
 
@@ -66,10 +73,18 @@
 		};
 
 		update();
+		const rafId = requestAnimationFrame(update);
+		const timeoutId = setTimeout(update, 250);
+		window.addEventListener('load', update);
+		window.addEventListener('orientationchange', update);
 		window.addEventListener('resize', update);
 		vv?.addEventListener('resize', update);
 		vv?.addEventListener('scroll', update);
 		return () => {
+			cancelAnimationFrame(rafId);
+			clearTimeout(timeoutId);
+			window.removeEventListener('load', update);
+			window.removeEventListener('orientationchange', update);
 			window.removeEventListener('resize', update);
 			vv?.removeEventListener('resize', update);
 			vv?.removeEventListener('scroll', update);
@@ -113,8 +128,11 @@
 	});
 </script>
 
-<!-- Height is set dynamically via $effect to fill viewport below the navbar -->
-<div bind:this={outerEl} class="flex flex-col">
+<!-- Height is set dynamically via $effect to fill viewport below the navbar; the
+	100dvh inline baseline covers the JS-lag window on cold load (before the $effect
+	measures) so the footer never blitzes through — the $effect then overwrites
+	style.height with the exact px value. -->
+<div bind:this={outerEl} class="flex flex-col" style="height: 100dvh">
 	<div class="flex-1 min-h-0 mx-auto w-full max-w-5xl flex gap-3 px-3 py-3">
 		<!-- SIDEBAR — full width on mobile when no conversation open, fixed width on desktop -->
 		<div
