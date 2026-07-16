@@ -12,6 +12,8 @@ const unprotectedPrefix = [
 	'/auth/login',
 	'/auth/register',
 	'/auth/reset',
+	'/auth/confirm-verification',
+	'/auth/confirm-email-change',
 	'/auth/account-deleted',
 	'/search',
 	'/items',

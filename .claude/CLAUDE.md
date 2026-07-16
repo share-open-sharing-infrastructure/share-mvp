@@ -85,7 +85,8 @@ These prevent the most common bugs/security issues here — follow them without 
   `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
   Authentication loads PocketBase auth from cookies and refreshes the token. Authorization
   redirects unauthenticated users to `/auth/login` (preserving `redirectTo`). Unprotected
-  prefixes: `/auth/login`, `/auth/register`, `/auth/reset`, `/search`, `/items`, `/users`,
+  prefixes: `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/confirm-verification`,
+  `/auth/confirm-email-change`, `/search`, `/items`, `/users`,
   `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`,
   `/auth/account-deleted`. Everything else — including `/` (home) — requires authentication.
 

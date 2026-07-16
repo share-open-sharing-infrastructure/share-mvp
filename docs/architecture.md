@@ -46,7 +46,7 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 
 | Group | Routes | Auth required |
 |---|---|---|
-| Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/logout` | No |
+| Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/reset/confirm`, `/auth/confirm-verification`, `/auth/confirm-email-change`, `/auth/logout` | No |
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
 | API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync`, `/api/refresh` | Varies |
