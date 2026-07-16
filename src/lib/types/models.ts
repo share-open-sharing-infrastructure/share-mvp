@@ -431,7 +431,7 @@ export interface Conversation extends PocketBaseEntity {
 	messages: Message[];
 	readByRequester: boolean;
 	readByOwner: boolean;
-	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
+	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed' | 'aborted';
 	counterfactual?: CounterfactualAnswer;
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;
@@ -449,7 +449,8 @@ export type NotificationType =
 	| 'request_rejected'
 	| 'handover_confirmed'
 	| 'return_requested'
-	| 'return_confirmed';
+	| 'return_confirmed'
+	| 'request_aborted';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
