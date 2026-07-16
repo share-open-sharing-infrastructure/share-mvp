@@ -100,6 +100,16 @@ export interface User extends PocketBaseEntity {
 	contactPublic?: boolean;
 
 	/**
+	 * Issue #368: per-institution free-text explanation of how to borrow this owner's
+	 * external/integrated items (owner has `isInstitution = true`, item carries an
+	 * `externalUrl`). Belongs to the institution (one process explanation, not per item),
+	 * self-maintained via the profile form. Public help text (no PII); reaches
+	 * unauthenticated browsing via `items_public.ownerExternalLendingInfo` (masked like the
+	 * item's content columns). Empty → the UI shows a shared default text. Max 1000 chars.
+	 */
+	externalLendingInfo?: string;
+
+	/**
 	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
 	 * Zero value {"lon":0,"lat":0} means no location set (Null Island).
 	 */
@@ -338,6 +348,14 @@ export interface ItemPublic extends PocketBaseEntity {
 	ownerContactMethod?: '' | 'email' | 'link' | null;
 	ownerContactEmail?: string | null;
 	ownerContactUrl?: string | null;
+	/**
+	 * Issue #368 — the owner's per-institution "how the lending works" explanation
+	 * (`users.externalLendingInfo`), surfaced to UNauthenticated browsing. Bound to the
+	 * view SELECT: masked to NULL for restricted (trustees-only/group-shared) items, like
+	 * the item's own content columns. No `contactPublic` gate (public help text, no PII).
+	 * NULL when the owner set no text.
+	 */
+	ownerExternalLendingInfo?: string | null;
 }
 
 // --- GROUPS ---

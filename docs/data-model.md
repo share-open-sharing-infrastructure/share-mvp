@@ -24,6 +24,7 @@ erDiagram
         string contactEmail "dedicated contact address (contactMethod=email) — raw value never in a *_public view"
         string contactUrl "external lending-form link (contactMethod=link) — raw value never in a *_public view"
         bool contactPublic "issue #438 — when true the contact CTA is shown to unauthenticated browsing too"
+        string externalLendingInfo "issue #368 — per-institution 'how borrowing works' text for external items (max 1000); public help text surfaced via items_public.ownerExternalLendingInfo"
         string inviteCode
         string invitedBy FK
         string leihbackendUrl "leihbackend instance origin, for institutional sync"
@@ -453,6 +454,14 @@ account. Each is `NULL` unless the owner set `contactPublic = true` **and** the 
 `*_public`/`items_searchable` view, so the members-only case (`contactPublic = false`) never
 leaks — logged-in viewers read those from the base `users` record instead.
 
+For issue #368 the view also surfaces the owner's per-institution **lending explanation** as
+`ownerExternalLendingInfo` (from `users.externalLendingInfo`) — the item-detail page shows it in
+a permanent "how borrowing works" box on external/institution items. Unlike the `ownerContact*`
+columns there is **no** `contactPublic` gate (it is a public help text, no PII); it is masked to
+`NULL` with the same condition as the item's own content columns, so a restricted item's help
+text never rides along. `externalLendingInfo` is **not** added to `users_public` or
+`items_searchable`.
+
 ### `items_searchable` — audience-filtered, unmasked
 
 Used by the search page (and the profile and sitemap, to stay leak-free). Its
@@ -474,6 +483,7 @@ conversation access never leaks an item into search/profile/sitemap.
 | userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (no trust data is exposed — trust lives in the separate `trusts` collection) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 | ownerContactMethod, ownerContactEmail, ownerContactUrl | SQL expression on `users` | `items_public` only — the owner's off-platform contact (#438), NULL unless `contactPublic` **and** the item is unmasked; raw contact fields never selected |
+| ownerExternalLendingInfo | SQL expression on `users` | `items_public` only — the owner's per-institution lending explanation (#368), masked to `NULL` for restricted items (no `contactPublic` gate; public help text); not in `users_public`/`items_searchable` |
 
 > **A view returns only the columns in its `viewQuery` SELECT — nothing else.** The TS
 > `ItemPublic` type extends `PocketBaseEntity`, so it *declares* `id`, `created` and `updated`,

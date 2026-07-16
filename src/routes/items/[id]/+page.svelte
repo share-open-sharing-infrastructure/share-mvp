@@ -2,7 +2,7 @@
 	import { Badge, Alert, Tooltip } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { HeartSolid } from 'flowbite-svelte-icons';
+	import { HeartSolid, InfoCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 	import { itemImageUrl, itemImageUrls } from '$lib/utils/utils';
@@ -114,6 +114,18 @@
 	<!-- Request error feedback (e.g. lender requirements not met on submit) -->
 	{#if form?.fail && form?.message}
 		<CustomAlert type="error" message={form.message} />
+	{/if}
+
+	<!-- Issue #368: permanent explanation of how borrowing works for external/institution
+	     items. Owner-provided text (data.externalLendingInfo) or a shared default fallback. -->
+	{#if isExternal}
+		<Alert color="blue" class="items-start">
+			{#snippet icon()}<InfoCircleOutline class="h-5 w-5 shrink-0" />{/snippet}
+			<p class="font-semibold">{texts.institutional.externalLendingInfoTitle}</p>
+			<p class="mt-1 whitespace-pre-line font-normal">
+				{data.externalLendingInfo ?? texts.institutional.externalLendingInfoDefault}
+			</p>
+		</Alert>
 	{/if}
 
 	<!-- Travel Time + CTA -->
