@@ -59,6 +59,10 @@ export async function teardown(pb) {
 	}
 	// Memberships the seed users hold in any (incl. non-seed) group.
 	await deleteWhere(pb, 'group_members', anyOf('user'));
+	// Invites authored by a seed user that the by-group sweep above missed — e.g. an
+	// orphaned invite whose group was already deleted. `group_invites.createdBy` does not
+	// cascade on user delete, so any leftover would pin the user row and break re-seeding.
+	await deleteWhere(pb, 'group_invites', anyOf('createdBy'));
 
 	// Records keyed to seed users. deleteWhere swallows unknown-collection errors, so
 	// naming a collection that a given schema lacks is harmless.
