@@ -10,19 +10,27 @@
 
 	let { data, children } = $props();
 
-	let activeTab: 'lending' | 'borrowing' = $state('borrowing');
+	// null = no filter selected, show both lending and borrowing conversations.
+	let activeFilter: 'lending' | 'borrowing' | null = $state(null);
+	let showOnlyActive = $state(true);
 
-	// Auto-switch the tab when a conversation is opened directly (e.g. from a notification).
-	// untrack(conversations) prevents real-time list updates from re-running this and
-	// overriding a tab the user manually selected while a conversation is open.
+	// Clear a filter that would hide a conversation opened directly (e.g. from a
+	// notification or deep link). untrack(conversations) prevents real-time list updates
+	// from re-running this and overriding a filter the user manually selected while a
+	// conversation is open.
 	$effect(() => {
 		const id = page.params.conversationId;
 		if (!id) return;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const match = untrack(() => conversations.find((c: any) => c.id === id));
 		if (!match) return;
-		activeTab =
-			match.itemOwner === data.currentUser.id ? 'lending' : 'borrowing';
+		const matchRole = match.itemOwner === data.currentUser.id ? 'lending' : 'borrowing';
+		if (activeFilter !== null && activeFilter !== matchRole) {
+			activeFilter = null;
+		}
+		if (showOnlyActive && match.lendingStatus && ['rejected', 'completed'].includes(match.lendingStatus)) {
+			showOnlyActive = false;
+		}
 	});
 
 	const hasConversation = $derived(!!page.params.conversationId);
@@ -110,8 +118,36 @@
 		)
 	);
 
-	function switchTab(tab: 'lending' | 'borrowing') {
-		activeTab = tab;
+	const isActiveStatus = (c: Conversation) =>
+		!c.lendingStatus || !['rejected', 'completed'].includes(c.lendingStatus);
+
+	// Conversations after the lending/borrowing filter, before the "only active" checkbox —
+	// used to tell whether an empty result is due to the active-only filter or to genuinely
+	// having no conversations of that type.
+	const conversationsByFilter = $derived(
+		activeFilter === 'lending'
+			? lendingConversations
+			: activeFilter === 'borrowing'
+				? borrowingConversations
+				: conversations
+	);
+
+	const visibleConversations = $derived(
+		showOnlyActive ? conversationsByFilter.filter(isActiveStatus) : conversationsByFilter
+	);
+
+	const emptyReason = $derived(
+		conversationsByFilter.length > 0
+			? 'active'
+			: activeFilter === 'lending'
+				? 'lending'
+				: activeFilter === 'borrowing'
+					? 'borrowing'
+					: 'none'
+	);
+
+	function toggleFilter(filter: 'lending' | 'borrowing') {
+		activeFilter = activeFilter === filter ? null : filter;
 	}
 
 	onMount(() => {
@@ -151,13 +187,14 @@
 				</h2>
 			</div>
 
-			<!-- Segmented tab control -->
+			<!-- Segmented filter control — a click selects that filter, clicking the
+				already-selected one deselects it back to "show all" -->
 			<div class="px-3 py-2.5 shrink-0">
 				<div class="flex p-1 bg-tinte-100 dark:bg-tinte-800 rounded-xl gap-1">
 					<button
-						onclick={() => switchTab('borrowing')}
+						onclick={() => toggleFilter('borrowing')}
 						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
-							{activeTab === 'borrowing'
+							{activeFilter === 'borrowing'
 							? 'bg-white dark:bg-tinte-700 text-primary shadow-sm'
 							: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
 					>
@@ -165,7 +202,7 @@
 						{#if borrowingConversations.length > 0}
 							<span
 								class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
-								{activeTab === 'borrowing'
+								{activeFilter === 'borrowing'
 									? 'bg-primary text-white'
 									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}"
 							>
@@ -174,9 +211,9 @@
 						{/if}
 					</button>
 					<button
-						onclick={() => switchTab('lending')}
+						onclick={() => toggleFilter('lending')}
 						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
-							{activeTab === 'lending'
+							{activeFilter === 'lending'
 							? 'bg-white dark:bg-tinte-700 text-accent shadow-sm'
 							: 'text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200'}"
 					>
@@ -184,7 +221,7 @@
 						{#if lendingConversations.length > 0}
 							<span
 								class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
-								{activeTab === 'lending'
+								{activeFilter === 'lending'
 									? 'bg-accent text-white'
 									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}"
 							>
@@ -195,11 +232,22 @@
 				</div>
 			</div>
 
+			<!-- Only-active-conversations checkbox -->
+			<div class="px-3 pb-2.5 shrink-0">
+				<label class="flex items-center gap-2 text-xs text-tinte-500 dark:text-tinte-400 hover:cursor-pointer">
+					<input
+						type="checkbox"
+						bind:checked={showOnlyActive}
+						class="w-3.5 h-3.5 rounded border-tinte-300 dark:border-tinte-600 text-primary focus:ring-primary"
+					/>
+					{texts.pages.conversations.onlyActiveLabel}
+				</label>
+			</div>
+
 			<!-- Conversation list fills remaining sidebar height -->
 			<ConversationList
-				{activeTab}
-				{lendingConversations}
-				{borrowingConversations}
+				conversations={visibleConversations}
+				{emptyReason}
 				currentUser={data.currentUser}
 				PB_IMG_URL={data.PB_IMG_URL}
 			/>
