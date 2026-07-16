@@ -164,6 +164,11 @@
 			// so the missing messages appear. Fixes the "doesn't update for one
 			// party" symptom in #435.
 			onReconnect: () => invalidateAll(),
+			// The 15 s presence ping below (conversations.update on lastSeenAt) is
+			// echoed back over SSE, so a healthy stream delivers an event at least
+			// every ~15 s while this chat is open. That lets the client-pb watchdog
+			// treat a longer silence as a silently frozen connection and reconnect (#528).
+			expectsHeartbeat: true,
 		});
 	});
 
