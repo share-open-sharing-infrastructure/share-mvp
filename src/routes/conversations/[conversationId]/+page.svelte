@@ -102,6 +102,10 @@
 		// and leave the latest messages hidden below the raised input bar. Defer with rAF
 		// so we scroll after the resize + reflow, then once more after the open/close
 		// animation settles.
+		// Also re-scroll after the layout's cold-load height correction (push/share link,
+		// reload): that correction fires on window `load` / `orientationchange` — not
+		// necessarily via a vv resize — so mirror those triggers here to land at the bottom
+		// once the container has grown to its settled height.
 		const vv = window.visualViewport;
 		let settleTimer: ReturnType<typeof setTimeout>;
 		const keepAtBottom = () => {
@@ -110,8 +114,12 @@
 			settleTimer = setTimeout(() => scrollToBottom(false), 150);
 		};
 		vv?.addEventListener('resize', keepAtBottom);
+		window.addEventListener('load', keepAtBottom);
+		window.addEventListener('orientationchange', keepAtBottom);
 		return () => {
 			vv?.removeEventListener('resize', keepAtBottom);
+			window.removeEventListener('load', keepAtBottom);
+			window.removeEventListener('orientationchange', keepAtBottom);
 			clearTimeout(settleTimer);
 		};
 	});
