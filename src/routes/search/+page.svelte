@@ -5,6 +5,7 @@
 	import ResultsList from './ResultsList.svelte';
 	import Pagination from './Pagination.svelte';
 	import CategoryFilter from './CategoryFilter.svelte';
+	import GroupFilter from './GroupFilter.svelte';
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
 	import { ArrowsRepeatOutline } from 'flowbite-svelte-icons';
@@ -32,6 +33,7 @@
 			op: data.op,
 			onlyAvailable: overrides.onlyAvailable ?? data.onlyAvailable,
 			ownerType: overrides.ownerType ?? data.ownerType,
+			group: data.selectedGroup ?? undefined,
 		});
 	}
 	const filteredItems = $derived.by(() => {
@@ -72,6 +74,7 @@
 			op={data.op}
 			onlyAvailable={data.onlyAvailable}
 			ownerType={data.ownerType}
+			group={data.selectedGroup}
 		/>
 	{/if}
 {/snippet}
@@ -95,7 +98,20 @@
 		perPage={data.perPage}
 		onlyAvailable={data.onlyAvailable}
 		ownerType={data.ownerType}
+		group={data.selectedGroup}
 	/>
+
+	{#if data.attachableGroups.length > 0}
+		<GroupFilter
+			groups={data.attachableGroups}
+			selectedGroup={data.selectedGroup}
+			q={data.q}
+			cats={data.selectedCategories}
+			op={data.op}
+			onlyAvailable={data.onlyAvailable}
+			ownerType={data.ownerType}
+		/>
+	{/if}
 
 	<hr class="border-tinte-300 max-w-100! my-2 mx-auto"/>
 
@@ -127,7 +143,7 @@
 	<TravelTimeFilter
 		{preferredMode}
 		isLoggedIn={!!data.currentUser}
-		hasQuery={data.q.length > 0 || data.selectedCategories.length > 0}
+		hasQuery={data.q.length > 0 || data.selectedCategories.length > 0 || !!data.selectedGroup}
 		items={data.items ?? []}
 		bind:transportMode
 		bind:travelTimes
@@ -135,7 +151,7 @@
 	/>
 
 	<div class="w-full items-center justify-center text-center mt-2">
-		{#if data.q || data.selectedCategories.length > 0}
+		{#if data.q || data.selectedCategories.length > 0 || data.selectedGroup}
 			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
 		{:else}
 			<h5>{texts.pages.search.newestItemsHeading}</h5>

@@ -6,6 +6,7 @@ export interface SearchUrlParams {
 	op?: 'or' | 'and';
 	onlyAvailable?: boolean;
 	ownerType?: string;
+	group?: string;
 	page?: number;
 	perPage?: number;
 }
@@ -19,5 +20,6 @@ export function buildSearchUrl(params: SearchUrlParams): string {
 	if (params.op === 'and') parts.push('op=and');
 	if (params.onlyAvailable === false) parts.push('onlyAvailable=false');
 	if (params.ownerType && params.ownerType !== 'all') parts.push(`ownerType=${params.ownerType}`);
+	if (params.group) parts.push(`group=${encodeURIComponent(params.group)}`);
 	return resolve('/search') + (parts.length ? '?' + parts.join('&') : '');
 }

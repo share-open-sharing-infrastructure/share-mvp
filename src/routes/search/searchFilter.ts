@@ -9,6 +9,14 @@ export type SearchParameters = {
 	op: 'or' | 'and';
 	onlyAvailable: boolean;
 	ownerType: 'all' | 'institution' | 'private';
+	/**
+	 * Raw, format-plausible group id parsed from the URL (or `null`). This is NOT yet a
+	 * proven-membership id: `parseSearchParameters` stays pure/sync and only shape-checks it.
+	 * The actual authorization — accept the group only if the user is a member — happens in the
+	 * `load` (see `+page.server.ts`), which nulls it out otherwise. Building the filter clause on
+	 * a validated value is therefore the caller's responsibility.
+	 */
+	selectedGroup: string | null;
 };
 
 /**
@@ -64,7 +72,14 @@ export function parseSearchParameters(url: URL): SearchParameters {
 	const ownerType: 'all' | 'institution' | 'private' =
 		ownerTypeParam === 'institution' || ownerTypeParam === 'private' ? ownerTypeParam : 'all';
 
-	return { query, page, perPage, selectedCategories, op, onlyAvailable, ownerType };
+	// Shape-check only: a PocketBase record id is 15 alphanumerics. Garbage is dropped to `null`
+	// here (keeps injection/nonsense out of the load); the real authorization is the membership
+	// check in the load. Not-a-member ids are also dropped there, mirroring how unknown `cats`
+	// values are silently ignored.
+	const groupParam = url.searchParams.get('group')?.trim() ?? '';
+	const selectedGroup = /^[a-z0-9]{15}$/i.test(groupParam) ? groupParam : null;
+
+	return { query, page, perPage, selectedCategories, op, onlyAvailable, ownerType, selectedGroup };
 }
 
 /**
@@ -100,8 +115,19 @@ export function buildItemFilter(params: SearchParameters, userId?: string): stri
 				? `${validateFilterField('isInstitution')} != true`
 				: null;
 
+	// `groups` is deliberately NOT part of `ItemPublic` — the column is never returned to
+	// clients (see the `fields` allowlist in +page.server.ts), so `validateFilterField` can't be
+	// used and we reference it as a string literal. Operator `~` matches the shipped group-detail
+	// page (src/routes/user/groups/[id]/+page.server.ts) filtering the same `items_searchable`
+	// view: PocketBase types the view's `groups` column as a relation, and `~` is the any-of
+	// membership match. `params.selectedGroup` is already membership-validated by the load; the
+	// quote-escape is defense-in-depth (the parser already restricts it to a 15-char id).
+	const groupFilter = params.selectedGroup
+		? `groups ~ "${params.selectedGroup.replace(/"/g, '\\"')}"`
+		: null;
+
 	return (
-		[nameFilter, ownerFilter, categoryFilter, availabilityFilter, institutionFilter]
+		[nameFilter, ownerFilter, categoryFilter, availabilityFilter, institutionFilter, groupFilter]
 			.filter(Boolean)
 			.join(' && ') || undefined
 	);
