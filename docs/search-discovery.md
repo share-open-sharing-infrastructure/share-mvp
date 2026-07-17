@@ -70,3 +70,14 @@ All discovery state lives in the URL (deep-linkable, server-rendered). Defaults 
   already loaded for the current page, so pagination is hidden while that filter is active
   (see `durationFilter.paginationHidden` in `texts.ts`).
 - **All user-facing strings** belong in `src/lib/texts.ts` under `pages.search`.
+- **Search-bar focus & debounce** ([`SearchBar.svelte`](../src/routes/search/SearchBar.svelte)):
+  typing auto-searches after a `SEARCH_DELAY_MS` (1200 ms) pause. Every programmatic `goto` uses
+  `{ keepFocus: true, noScroll: true }` so the input keeps focus across the client-side
+  navigation (SvelteKit otherwise resets focus to `<body>`, dropping it mid-type) and the results
+  list doesn't jump to the top while typing. The debounced auto-search and the `<3`-char reset
+  additionally pass `replaceState: true` so a stream of keystrokes collapses into one history
+  entry; the explicit submit (Enter/button) and the clear (×) button keep their own entries
+  (no `replaceState`). Initial mount focus is applied **only on desktop** — gated behind
+  `window.matchMedia('(hover: hover) and (pointer: fine)')` in an `$effect`, not an `autofocus`
+  attribute — so touch devices don't pop the on-screen keyboard on page load (#429/#453).
+  Regression coverage: [`e2e/tests/search-focus.spec.ts`](../e2e/tests/search-focus.spec.ts).
