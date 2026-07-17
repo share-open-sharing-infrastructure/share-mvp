@@ -84,7 +84,9 @@
 				{itemName}
 			</p>
 			<p class="text-xs text-tinte-400 dark:text-tinte-500 truncate leading-tight mt-0.5">
-				{role === 'borrowing' ? 'von' : 'an'} {displayName(otherUser)}
+				{role === 'borrowing'
+					? texts.pages.conversations.fromUserPrefix
+					: texts.pages.conversations.toUserPrefix} {displayName(otherUser)}
 			</p>
 			{#if lendingStatusLabel}
 				<span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium mt-0.5

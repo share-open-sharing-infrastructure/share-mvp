@@ -94,9 +94,16 @@
 		!c.lendingStatus || !['rejected', 'completed'].includes(c.lendingStatus);
 	const matchesRole = (c: Conversation) =>
 		activeFilter === null || (activeFilter === 'lending') === isLending(c);
+	const matchesActive = (c: Conversation) => !showOnlyActive || isActive(c);
 
-	const lendingConversations = $derived(conversations.filter(isLending));
-	const borrowingConversations = $derived(conversations.filter((c) => !isLending(c)));
+	// Tab badge counts respect the active-only checkbox so the badge always matches
+	// what selecting that tab would show in the list.
+	const lendingConversations = $derived(
+		conversations.filter((c) => isLending(c) && matchesActive(c))
+	);
+	const borrowingConversations = $derived(
+		conversations.filter((c) => !isLending(c) && matchesActive(c))
+	);
 
 	// Conversations after the lending/borrowing filter, before the "only active" checkbox —
 	// used to tell whether an empty result is due to the active-only filter or to genuinely
@@ -105,9 +112,7 @@
 
 	// The filters apply strictly to the list — a conversation they hide stays open in the
 	// chat panel but is not shown (or highlighted) in the sidebar.
-	const visibleConversations = $derived(
-		conversationsByFilter.filter((c) => !showOnlyActive || isActive(c))
-	);
+	const visibleConversations = $derived(conversationsByFilter.filter(matchesActive));
 
 	const emptyReason = $derived(
 		conversationsByFilter.length > 0
@@ -210,8 +215,7 @@
 				<label class="flex items-center gap-2 text-xs text-tinte-500 dark:text-tinte-400 hover:cursor-pointer">
 					<input
 						type="checkbox"
-						checked={showOnlyActive}
-						onchange={(e) => (showOnlyActive = e.currentTarget.checked)}
+						bind:checked={showOnlyActive}
 						class="w-3.5 h-3.5 rounded border-tinte-300 dark:border-tinte-600 text-primary focus:ring-primary"
 					/>
 					{texts.pages.conversations.onlyActiveLabel}

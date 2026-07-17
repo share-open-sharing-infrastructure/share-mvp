@@ -709,6 +709,10 @@ export const texts = {
 			lending: 'Verleihen',
 			borrowing: 'Ausleihen',
 			onlyActiveLabel: 'Nur aktive Unterhaltungen zeigen',
+			// Prefix before the other user's name in a list item: "von <Verleiher:in>" when
+			// borrowing, "an <Ausleiher:in>" when lending.
+			fromUserPrefix: 'von',
+			toUserPrefix: 'an',
 			noConversations: 'Du hast noch keine Unterhaltungen.',
 			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
