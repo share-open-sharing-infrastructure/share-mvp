@@ -113,6 +113,11 @@ AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat 
 - Returns an unsubscribe function suitable for `$effect()` cleanup in Svelte 5
 - Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the connection (the httpOnly cookie is inaccessible to JS)
 
-Domain-specific reconciliation (e.g. keeping the conversation sidebar list in sync) lives next to its route — see `src/routes/conversations/conversationListRealtime.ts` — rather than in the components themselves.
+Domain-specific reconciliation lives next to its route in rune-free helper modules rather than in the components themselves:
+
+- `src/routes/conversations/conversationListRealtime.ts` — keeps the conversation sidebar list in sync.
+- `src/routes/conversations/[conversationId]/conversationRealtime.ts` — keeps a single open conversation in sync (lending status, counterfactual, and the fetch/dedupe of newly appended messages). State is read/written through accessor closures so the page keeps ownership of the reactive state.
+
+Pages hold "server-load data that a realtime handler also writes to" in a `realtimeSynced()` box (`src/lib/stores/realtimeSynced.svelte.ts`) — a writable `$derived` that re-syncs from `load()` while staying directly assignable by the handler (issue #469).
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.
