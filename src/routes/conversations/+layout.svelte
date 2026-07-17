@@ -40,6 +40,11 @@
 		const body = document.body;
 		const prevHtml = html.style.overflow;
 		const prevBody = body.style.overflow;
+		// Reset to the top before locking: on a cold load the document can already be
+		// scrolled down (e.g. the input focus dragging the too-tall page into view), and
+		// locking `overflow: hidden` would otherwise freeze it there — footer showing,
+		// view trapped (#529). The input now focuses with preventScroll, this is the belt.
+		window.scrollTo(0, 0);
 		html.style.overflow = 'hidden';
 		body.style.overflow = 'hidden';
 		return () => {
