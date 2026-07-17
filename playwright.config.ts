@@ -40,7 +40,12 @@ export default defineConfig({
 		{
 			name: 'public',
 			use: { browserName: 'chromium' },
-			testMatch: ['tests/smoke.spec.ts', 'tests/auth.spec.ts'],
+			testMatch: [
+				'tests/smoke.spec.ts',
+				'tests/auth.spec.ts',
+				'tests/search-focus.spec.ts',
+				'tests/search-focus.mobile.spec.ts',
+			],
 		},
 		{
 			name: 'authenticated',
