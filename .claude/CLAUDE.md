@@ -78,6 +78,12 @@ These prevent the most common bugs/security issues here — follow them without 
   `removeTrust` for mutations); never re-implement trust filtering client-side. Unauthenticated
   browsing uses the `*_public` views — never leak email, raw coordinates, trusted items, or
   trust-graph data through them.
+- **Lending status values & groupings come only from `$lib/lending.ts`** (`LendingStatus`,
+  `LENDING_LIFECYCLE`, `ACTIVE_LENDING_STATES`, `OPEN_LENDING_STATES`, `lendingStatusFilter`,
+  `isLendingStatusIn`) — never re-list status literals inline or in filter strings. The backend
+  keeps a deliberate mirror in `allerleih-backend/pb_hooks/services/account.js`
+  (`BLOCKING_LOAN_FILTER` = `ACTIVE_LENDING_STATES`); adding/changing a status means updating
+  `$lib/lending.ts` + `texts.lending.statusLabel` **and** that backend mirror in the same effort.
 - **All user-facing strings go in `src/lib/texts.ts`** (+ `ITEM_CATEGORIES`), never inline.
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.

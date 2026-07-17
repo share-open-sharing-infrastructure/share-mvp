@@ -1,4 +1,5 @@
 import type PocketBase from 'pocketbase';
+import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 import { deleteConversation } from '../../routes/conversations/[conversationId]/conversation.server';
 
 export type DeleteItemResult =
@@ -9,7 +10,8 @@ export type DeleteItemResult =
 
 /**
  * Deletes an item and all related closed conversations (with their notifications).
- * Refuses if any conversation is still open (pending/accepted/active/return_requested).
+ * Refuses if any conversation is still open (OPEN_LENDING_STATES:
+ * pending/accepted/active/return_requested).
  * Checks ownership before acting.
  */
 export async function deleteItem(
@@ -28,7 +30,7 @@ export async function deleteItem(
 
 	const open = await pb.collection('conversations').getFullList({
 		filter: pb.filter(
-			'requestedItem = {:itemId} && (lendingStatus = "pending" || lendingStatus = "accepted" || lendingStatus = "active" || lendingStatus = "return_requested")',
+			'requestedItem = {:itemId} && ' + lendingStatusFilter(OPEN_LENDING_STATES),
 			{ itemId }
 		),
 	});

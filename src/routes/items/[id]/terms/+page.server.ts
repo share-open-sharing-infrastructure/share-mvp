@@ -9,6 +9,7 @@ import {
 	cleanTermsHtml,
 } from '$lib/server/lendingTerms';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
+import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 
 export async function load({ params, locals, url }) {
 	// Auth is required to accept terms. Bounce through login if needed.
@@ -151,7 +152,8 @@ async function startConversationForItem(
 	try {
 		existingConversations = await locals.pb.collection('conversations').getFullList({
 			filter: locals.pb.filter(
-				'requester = {:requesterId} && requestedItem = {:itemId} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+				'requester = {:requesterId} && requestedItem = {:itemId} && ' +
+					lendingStatusFilter(OPEN_LENDING_STATES),
 				{ requesterId, itemId: itemRecord.id }
 			),
 			sort: '-created',

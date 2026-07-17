@@ -2,6 +2,7 @@ import type PocketBase from 'pocketbase';
 import type { ClientResponseError } from 'pocketbase';
 import { fail } from '@sveltejs/kit';
 import type { NotificationType } from '$lib/types/models.js';
+import type { LendingStatus } from '$lib/lending';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 
@@ -27,7 +28,7 @@ async function loadAndValidateConversation(
 	conversationId: string,
 	userId: string,
 	requiredRole: 'owner' | 'requester',
-	requiredStatus: string | string[]
+	requiredStatus: LendingStatus | LendingStatus[]
 ): Promise<{ conv: Record<string, unknown> } | { error: FailResult }> {
 	let conversation: Record<string, unknown>;
 	try {
@@ -39,7 +40,7 @@ async function loadAndValidateConversation(
 	const roleField = requiredRole === 'owner' ? 'itemOwner' : 'requester';
 	if (conversation[roleField] !== userId) return { error: fail(403, { fail: true, message: texts.lending.errors.noPermission }) };
 	const validStatuses = Array.isArray(requiredStatus) ? requiredStatus : [requiredStatus];
-	if (!validStatuses.includes(conversation.lendingStatus as string)) return { error: fail(400, { fail: true, message: texts.lending.errors.invalidState }) };
+	if (!(validStatuses as string[]).includes(conversation.lendingStatus as string)) return { error: fail(400, { fail: true, message: texts.lending.errors.invalidState }) };
 	return { conv: conversation };
 }
 

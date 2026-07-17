@@ -3,10 +3,9 @@ import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import { requireGroupMembership, isGroupOwner } from '$lib/server/groups';
 import { displayName } from '$lib/utils/utils';
-
-// Lending states in which the borrower currently holds (or is arranging to hold)
-// one of the owner's items — used to warn before removing such a member.
-const ACTIVE_LENDING_STATES = ['accepted', 'active', 'return_requested'];
+// ACTIVE_LENDING_STATES = the borrower currently holds (or is arranging to hold) one of the
+// owner's items — used to warn before removing such a member. Canonical source: $lib/lending.
+import { ACTIVE_LENDING_STATES, isLendingStatusIn } from '$lib/lending';
 
 export async function load({ locals, params }) {
 	const { group, isOwner, memberRows } = await requireGroupMembership(
@@ -27,7 +26,7 @@ export async function load({ locals, params }) {
 					fields: 'requester,lendingStatus',
 				});
 			for (const c of convs) {
-				if (ACTIVE_LENDING_STATES.includes(c.lendingStatus ?? '')) {
+				if (isLendingStatusIn(ACTIVE_LENDING_STATES, c.lendingStatus)) {
 					activeBorrowerIds.add(c.requester);
 				}
 			}
