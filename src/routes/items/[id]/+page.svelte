@@ -30,6 +30,12 @@
 	const isTrustRestricted = $derived(data.isTrustRestricted);
 	const isOwnItem = $derived(data.isOwnItem);
 	const isExternal = $derived(!!item.externalUrl);
+	// Issue #368 (review): the "how the lending works" box must appear whenever the
+	// borrower is sent off-platform — not only for externalUrl deep-links, but also when
+	// an institution routes requests to an off-platform contact (#438: mailto / external
+	// link, no externalUrl). Scoped to institutions, since the box and its override text
+	// are institution-specific.
+	const showLendingInfo = $derived(isExternal || (!!data.ownerContact && item.isInstitution));
 	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
 	const isArchived = $derived(item.description?.startsWith('[Nicht mehr im Bestand]') ?? false);
 
@@ -117,8 +123,10 @@
 	{/if}
 
 	<!-- Issue #368: permanent explanation of how borrowing works for external/institution
-	     items. Owner-provided text (data.externalLendingInfo) or a shared default fallback. -->
-	{#if isExternal}
+	     items. Shown for externalUrl deep-links AND institutions that route requests to an
+	     off-platform contact (#438). Owner-provided text (data.externalLendingInfo) or a
+	     shared default fallback. -->
+	{#if showLendingInfo}
 		<Alert color="blue" class="items-start">
 			{#snippet icon()}<InfoCircleOutline class="h-5 w-5 shrink-0" />{/snippet}
 			<p class="font-semibold">{texts.institutional.externalLendingInfoTitle}</p>
