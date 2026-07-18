@@ -53,10 +53,10 @@
 	// plain chats with no lending status at all. It stays hidden for pending/accepted
 	// (abortable) AND for active/return_requested (a loan in progress).
 	const isAbortable = $derived(
-		lendingStatus === 'pending' || lendingStatus === 'accepted'
+		lendingStatus.value === 'pending' || lendingStatus.value === 'accepted'
 	);
 	const isLoanInProgress = $derived(
-		lendingStatus === 'active' || lendingStatus === 'return_requested'
+		lendingStatus.value === 'active' || lendingStatus.value === 'return_requested'
 	);
 	const canDelete = $derived(!isAbortable && !isLoanInProgress);
 	let showCounterfactualModal = $derived(
