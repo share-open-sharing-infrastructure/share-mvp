@@ -101,17 +101,7 @@
 		group={data.selectedGroup}
 	/>
 
-	{#if data.attachableGroups.length > 0}
-		<GroupFilter
-			groups={data.attachableGroups}
-			selectedGroup={data.selectedGroup}
-			q={data.q}
-			cats={data.selectedCategories}
-			op={data.op}
-			onlyAvailable={data.onlyAvailable}
-			ownerType={data.ownerType}
-		/>
-	{/if}
+
 
 	<hr class="border-tinte-300 max-w-100! my-2 mx-auto"/>
 
@@ -135,7 +125,17 @@
 			href={searchUrl({ ownerType: ownerTypeNext[data.ownerType as keyof typeof ownerTypeNext] })}
 			class="flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary"
 		><ArrowsRepeatOutline class="mr-1 h-4 w-4 shrink-0" />{texts.pages.search.ownerTypePrefix}: {ownerTypeLabel[data.ownerType as keyof typeof ownerTypeLabel]}</a>
-
+		{#if data.attachableGroups.length > 0}
+			<GroupFilter
+				groups={data.attachableGroups}
+				selectedGroup={data.selectedGroup}
+				q={data.q}
+				cats={data.selectedCategories}
+				op={data.op}
+				onlyAvailable={data.onlyAvailable}
+				ownerType={data.ownerType}
+			/>
+		{/if}
 	</div>
 
 	<hr class="border-tinte-300 max-w-100! my-2 mx-auto"/>

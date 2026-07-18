@@ -27,10 +27,7 @@
 </script>
 
 <!-- Only rendered when the user has groups (implies logged in); guests never see it. -->
-<div class="mt-3 flex flex-wrap items-center justify-center gap-2">
-	<label for="group-filter" class="text-sm text-tinte-600 dark:text-tinte-400">
-		{texts.pages.search.groupFilterLabel}
-	</label>
+<div class="flex flex-wrap items-center justify-center gap-2">
 	<!-- Styled as a pill matching the category chips / owner-type toggle: highlighted (primary)
 	     when a group is active, native arrow removed via appearance-none + custom chevron. -->
 	<div class="relative inline-flex">
