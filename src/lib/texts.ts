@@ -1033,6 +1033,10 @@ export const texts = {
 		handoverConfirmed: (item: string) => `Übergabe von „${item}" wurde bestätigt`,
 		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
 		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
+		groupMemberAdded: (from: string, group: string) =>
+			`${from} hat dich zur Gruppe „${group}" hinzugefügt`,
+		groupMemberJoined: (username: string, group: string) =>
+			`${username} ist deiner Gruppe „${group}" beigetreten`,
 	},
 
 	// Lending process

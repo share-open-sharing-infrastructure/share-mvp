@@ -176,6 +176,24 @@ Three new collections plus one new field on `items` (see
 | Self-join | Allowed only for public groups, only for yourself, and only as `member` (never `admin`); idempotent. |
 | Invite expired / used up | Preview and join both return `410` with a clear message. |
 
+### Benachrichtigungen bei Mitgliedschafts-Events
+
+Zwei Mitgliedschafts-Ereignisse erzeugen jeweils eine In-App-Benachrichtigung **und** einen
+Web-Push (kein E-Mail-Versand — bewusst wie bei den Lending-Events):
+
+| Ereignis | Empfänger | Typ | Klickziel |
+|---|---|---|---|
+| Owner nimmt jemanden über die Mitglieder-Seite auf (`addMember`) | der/die Hinzugefügte | `group_member_added` | `/user/groups/{id}` |
+| Beitritt per Einladungslink (`join`) | Group-Owner | `group_member_joined` | `/user/groups/{id}` |
+
+- Beide werden **im Frontend** ausgelöst (die auslösende Session erzeugt die Notification für
+  die/den Anderen) — der Join-Fall lädt dazu die Owner-ID per `getOne` nach, weil die
+  Join-Response sie nicht enthält.
+- **Nur echte Neuzugänge** benachrichtigen: der idempotente Already-Member-Pfad (doppeltes
+  Hinzufügen, erneuter Link-Klick, Owner klickt eigenen Link) löst nichts aus.
+- `relatedId` ist die Gruppen-ID; wer die Notification anklickt, landet auf der Gruppenseite
+  (`requireGroupMembership` lässt Owner und Mitglieder rein).
+
 ---
 
 ## How to test it

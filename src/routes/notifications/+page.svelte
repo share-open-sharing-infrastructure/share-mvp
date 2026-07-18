@@ -5,7 +5,7 @@
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { enhance } from '$app/forms';
-	import { BellOutline, EnvelopeOutline, UserAddOutline } from 'flowbite-svelte-icons';
+	import { BellOutline, EnvelopeOutline, UserAddOutline, UsersGroupOutline } from 'flowbite-svelte-icons';
 	import type { Notification } from '$lib/types/models';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	let { data } = $props();
@@ -20,12 +20,17 @@
 		'return_confirmed',
 	]);
 
+	const groupNotificationTypes = new Set(['group_member_added', 'group_member_joined']);
+
 	function notificationHref(n: Notification): string {
 		if (conversationNotificationTypes.has(n.type)) {
 			return resolve(`/conversations/${n.relatedId}`);
 		}
 		if (n.type === 'trust_added' || n.type === 'invite_accepted') {
 			return resolve(`/users/${n.relatedId}`);
+		}
+		if (groupNotificationTypes.has(n.type)) {
+			return resolve(`/user/groups/${n.relatedId}`);
 		}
 		return resolve('/notifications');
 	}
@@ -74,6 +79,8 @@
 								<EnvelopeOutline class="h-5 w-5" />
 							{:else if notification.type === 'trust_added' || notification.type === 'invite_accepted'}
 								<UserAddOutline class="h-5 w-5" />
+							{:else if groupNotificationTypes.has(notification.type)}
+								<UsersGroupOutline class="h-5 w-5" />
 							{/if}
 						</div>
 						<div class="flex-1 min-w-0">
