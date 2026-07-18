@@ -83,6 +83,37 @@ export const actions = {
 
 Here, we see the counter-part to the "addtrustee"-submit action of the form. You can get the form data via the request object, and in this case have to update the list of users that the logged-in user trusts. We have found that this works smoothest by creating an updateData object which - in this case - appends the id of the newly-to-be-trusted user to the existing ones and then calls the underlying database accordingly. After this, there is actually nothing you have to take care of - SvelteKit and the enhance-function take care of updating the UI in reaction to any underlying DB changes.
 
+### Shared server form helpers
+
+When the *same* entity is created/edited from more than one form, don't duplicate the
+FormData-to-payload logic in each action — extract it into a `$lib/server/*` module and keep the
+actions thin. Field **extraction**, **validation** and **sanitization** belong in the helper; the
+action only orchestrates (validate → sanitize → `pb.create/update` → `fail`/`redirect`). This way a
+new field is wired **once**, both flows stay consistent, and the payload is typed instead of a
+`Record<string, any>`.
+
+The canonical example is **`$lib/server/itemForm.ts`**, shared by the single add/edit action
+(`user/items/+page.server.ts`) and the bulk add action (`user/items/bulk-add/+page.server.ts`):
+
+- `extractItemForm(data)` / `extractBulkItemDraft(data, i)` — read each form's own wire format
+  (the wire formats stay flow-specific; only the logic between "FormData in" and "payload out" is
+  shared).
+- `validateItemFields(input, { requireImage })` — one validator for both flows. Its error-flag
+  keys (`nameIsMissing` … `tooManyImages`) are **API**: `ItemModal.svelte` and the route tests key
+  off them, so don't rename them.
+- `sanitizeCategories` and `sanitizeGroups` / `filterAttachableGroups` — the **security-relevant**
+  bits. `sanitizeGroups` filters submitted group ids against `getAttachableGroups` (owned + member)
+  so a tampered form can't share an item into arbitrary groups; never weaken this. In a per-row
+  loop (bulk), load the attachable set **once** per request and reuse `filterAttachableGroups`,
+  rather than re-querying per row.
+- `ItemWritePayload` — the typed create/update payload; `image` is only set when new files were
+  uploaded (on update, omitting it keeps the existing images).
+
+Characterize before you extract: the single-flow route test is the no-behavior-change anchor (it
+must stay green *unchanged*), and the bulk flow got a characterization test written **before** the
+refactor. Any deliberate behavior change (here: the MIME whitelist now also applies to bulk rows)
+is called out in a test comment.
+
 ### Data (Re-)Loading
 
 The load function passes the data to the UI component:

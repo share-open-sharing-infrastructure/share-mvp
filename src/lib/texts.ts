@@ -708,6 +708,13 @@ export const texts = {
 			title: 'Unterhaltungen',
 			lending: 'Verleihen',
 			borrowing: 'Ausleihen',
+			onlyActiveLabel: 'Nur aktive Unterhaltungen zeigen',
+			// Prefix before the other user's name in a list item: "von <Verleiher:in>" when
+			// borrowing, "an <Ausleiher:in>" when lending.
+			fromUserPrefix: 'von',
+			toUserPrefix: 'an',
+			noConversations: 'Du hast noch keine Unterhaltungen.',
+			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
 			noBorrowingConversations: 'Du hast noch nichts angefragt.',
 		},
@@ -1033,6 +1040,7 @@ export const texts = {
 		handoverConfirmed: (item: string) => `Übergabe von „${item}" wurde bestätigt`,
 		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
 		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
+		requestAborted: (item: string) => `Die Anfrage für „${item}" wurde abgebrochen`,
 		groupMemberAdded: (from: string, group: string) =>
 			`${from} hat dich zur Gruppe „${group}" hinzugefügt`,
 		groupMemberJoined: (username: string, group: string) =>
@@ -1050,6 +1058,7 @@ export const texts = {
 			active: 'Unterwegs',
 			return_requested: 'Rückgabe gemeldet',
 			completed: 'Abgeschlossen',
+			aborted: 'Abgebrochen',
 		},
 		actions: {
 			accept: 'Annehmen',
@@ -1057,6 +1066,13 @@ export const texts = {
 			confirmHandover: 'Übergabe bestätigen',
 			requestReturn: 'Rückgabe melden',
 			confirmReturn: 'Rückgabe bestätigen',
+			abort: 'Anfrage abbrechen',
+		},
+		// Confirmation modal shown before aborting (mirrors the delete modal).
+		confirmAbort: {
+			title: 'Anfrage abbrechen',
+			body: 'Willst du diese Anfrage wirklich abbrechen? Die andere Person wird benachrichtigt und der Gegenstand wird wieder freigegeben.',
+			confirm: 'Anfrage abbrechen',
 		},
 		statusDescription: {
 			pending: {
@@ -1079,6 +1095,7 @@ export const texts = {
 			},
 			completed: 'Die Ausleihe ist abgeschlossen.',
 			rejected: 'Diese Anfrage wurde abgelehnt.',
+			aborted: 'Diese Anfrage wurde abgebrochen.',
 		},
 		goToConversation: 'Zur laufenden Anfrage →',
 		errors: {

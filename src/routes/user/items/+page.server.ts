@@ -1,28 +1,17 @@
 import { fail } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
-import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
+import { texts } from '$lib/texts';
 import type { Item } from '$lib/types/models';
 import { getAttachableGroups } from '$lib/server/groups';
 import { deleteItem, deleteMultipleItems, setItemStatus } from '$lib/server/items';
-
-/** Max images per item — mirrors the items.image maxSelect in the backend migration. */
-const MAX_IMAGES = 5;
-
-/**
- * Keep only the submitted group ids the user is actually allowed to attach
- * (groups they own or are a member of), so a tampered form can't share an item
- * with arbitrary groups.
- */
-async function sanitizeGroups(
-	pb: App.Locals['pb'],
-	userId: string,
-	submitted: string[]
-): Promise<string[]> {
-	if (submitted.length === 0) return [];
-	const allowed = new Set((await getAttachableGroups(pb, userId)).map((g) => g.id));
-	return submitted.filter((id) => allowed.has(id));
-}
+import {
+	extractItemForm,
+	sanitizeCategories,
+	sanitizeGroups,
+	validateItemFields,
+	type ItemWritePayload,
+} from '$lib/server/itemForm';
 
 export async function load({ locals, url }) {
 	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
@@ -59,74 +48,38 @@ export async function load({ locals, url }) {
 	};
 }
 
-function validateItemData(data: FormData, isImageRequired: boolean = true) {
-	const name = data.get('itemName');
-	const description = data.get('itemDescription');
-	// `image` is a multi-file field: an item can carry several photos.
-	const images = data
-		.getAll('itemImage')
-		.filter((f): f is File => f instanceof File && f.size > 0);
-
-	// Check that every uploaded file is a valid image type.
-	const validImageTypes = [
-		'image/jpeg',
-		'image/jpg',
-		'image/png',
-		'image/gif',
-		'image/webp',
-		'image/svg+xml',
-	];
-	const hasInvalidImage = images.some((img) => !validImageTypes.includes(img.type));
-
-	const errors = {
-		nameIsMissing: !name,
-		descriptionIsMissing: !description,
-		imageIsMissing: isImageRequired ? images.length === 0 : false,
-		imageInvalidType: hasInvalidImage,
-		// Keep in sync with the items.image maxSelect in the backend migration; PocketBase
-		// rejects more, so guard here too (defends against a direct/tampered POST).
-		tooManyImages: images.length > MAX_IMAGES,
-	};
-
-	return { isValid: Object.values(errors).every((e) => !e), errors, images };
-}
-
 export const actions = {
 	create: async ({ locals, request }) => {
 		const formData = await request.formData();
-		const validationResult = validateItemData(formData, true);
+		const { name, description, place, images, rawCategories, rawGroups, trusteesOnly } =
+			extractItemForm(formData);
+		const validation = validateItemFields({ name, description, images }, { requireImage: true });
 
-		if (!validationResult.isValid) {
+		if (!validation.isValid) {
 			return fail(400, {
 				fail: true,
-				missingFields: validationResult.errors,
+				missingFields: validation.errors,
 				message: texts.pages.items.validationFailed,
 			});
 		}
 
-		const createCategories = (formData.getAll('categories') as string[]).filter((c) =>
-			ITEM_CATEGORIES.includes(c as ItemCategory)
-		);
-		const trusteesOnly = formData.get('trusteesOnly') === 'on';
 		// Trustees and groups are independent audiences — save groups regardless.
-		const createGroups = await sanitizeGroups(
-			locals.pb,
-			locals.user.id,
-			formData.getAll('groups') as string[]
-		);
+		const createGroups = await sanitizeGroups(locals.pb, locals.user.id, rawGroups);
+
+		const payload: ItemWritePayload = {
+			name,
+			description,
+			place,
+			image: images,
+			owner: locals.user.id,
+			trusteesOnly,
+			groups: createGroups,
+			status: 'available',
+			categories: sanitizeCategories(rawCategories),
+		};
 
 		try {
-			await locals.pb.collection('items').create({
-				name: formData.get('itemName'),
-				description: formData.get('itemDescription'),
-				place: formData.get('itemPlace'),
-				image: validationResult.images,
-				owner: locals.user.id,
-				trusteesOnly,
-				groups: createGroups,
-				status: 'available',
-				categories: createCategories,
-			});
+			await locals.pb.collection('items').create(payload);
 		} catch (error) {
 			// Surface the failure instead of swallowing it — otherwise the modal treats a
 			// rejected create (e.g. too many images / size limit) as success and closes.
@@ -137,48 +90,41 @@ export const actions = {
 
 	update: async ({ locals, request }) => {
 		const formData = await request.formData();
-		const validationResult = validateItemData(formData, false);
+		const { name, description, place, images, rawCategories, rawGroups, trusteesOnly } =
+			extractItemForm(formData);
+		const validation = validateItemFields({ name, description, images }, { requireImage: false });
 
-		if (!validationResult.isValid) {
+		if (!validation.isValid) {
 			return fail(400, {
 				fail: true,
-				missingFields: validationResult.errors,
+				missingFields: validation.errors,
 				message: texts.pages.items.validationFailed,
 			});
 		}
 
-		const updateCategories = (formData.getAll('categories') as string[]).filter((c) =>
-			ITEM_CATEGORIES.includes(c as ItemCategory)
-		);
-		const trusteesOnly = formData.get('trusteesOnly') === 'on';
 		// Trustees and groups are independent audiences — save groups regardless.
-		const updateGroups = await sanitizeGroups(
-			locals.pb,
-			locals.user.id,
-			formData.getAll('groups') as string[]
-		);
+		const updateGroups = await sanitizeGroups(locals.pb, locals.user.id, rawGroups);
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const updateData: Record<string, any> = {
-			name: formData.get('itemName'),
-			description: formData.get('itemDescription'),
-			place: formData.get('itemPlace'),
+		const payload: ItemWritePayload = {
+			name,
+			description,
+			place,
 			trusteesOnly,
 			groups: updateGroups,
 			status: formData.get('isAvailable') === 'on' ? 'available' : 'unavailable',
-			categories: updateCategories,
+			categories: sanitizeCategories(rawCategories),
 		};
 
 		// Only touch the image field when new files were uploaded; a submit without
 		// new files keeps the existing images. New files replace the whole set.
-		if (validationResult.images.length > 0) {
-			updateData.image = validationResult.images;
+		if (images.length > 0) {
+			payload.image = images;
 		}
 
 		const itemId = formData?.get('itemId')?.toString();
 		if (itemId) {
 			try {
-				await locals.pb.collection('items').update(itemId, updateData);
+				await locals.pb.collection('items').update(itemId, payload);
 			} catch (err) {
 				// Surface the failure instead of swallowing it (see create above).
 				console.error(err instanceof Error ? err.message : err);
@@ -199,9 +145,8 @@ export const actions = {
 						conversationIds: result.conversationIds,
 					});
 				}
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (err: Error | any) {
-				console.error(err ? err.message : err);
+			} catch (err: unknown) {
+				console.error(err instanceof Error ? err.message : err);
 			}
 		}
 	},
@@ -218,9 +163,8 @@ export const actions = {
 		for (const itemId of itemIds) {
 			try {
 				await setItemStatus(locals.pb, itemId, locals.user.id, newStatus);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (err: Error | any) {
-				console.error(err?.message ?? err);
+			} catch (err: unknown) {
+				console.error(err instanceof Error ? err.message : err);
 			}
 		}
 	},

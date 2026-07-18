@@ -441,7 +441,7 @@ export interface Conversation extends PocketBaseEntity {
 	messages: Message[];
 	readByRequester: boolean;
 	readByOwner: boolean;
-	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
+	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed' | 'aborted';
 	counterfactual?: CounterfactualAnswer;
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;
@@ -460,6 +460,7 @@ export type NotificationType =
 	| 'handover_confirmed'
 	| 'return_requested'
 	| 'return_confirmed'
+	| 'request_aborted'
 	| 'group_member_added'
 	| 'group_member_joined'
 	| 'group_member_removed';
