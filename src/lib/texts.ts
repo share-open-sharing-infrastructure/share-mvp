@@ -1037,6 +1037,8 @@ export const texts = {
 			`${from} hat dich zur Gruppe „${group}" hinzugefügt`,
 		groupMemberJoined: (username: string, group: string) =>
 			`${username} ist deiner Gruppe „${group}" beigetreten`,
+		groupMemberRemoved: (from: string, group: string) =>
+			`${from} hat dich aus der Gruppe „${group}" entfernt`,
 	},
 
 	// Lending process

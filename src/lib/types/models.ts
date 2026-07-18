@@ -461,7 +461,8 @@ export type NotificationType =
 	| 'return_requested'
 	| 'return_confirmed'
 	| 'group_member_added'
-	| 'group_member_joined';
+	| 'group_member_joined'
+	| 'group_member_removed';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */

@@ -20,7 +20,11 @@
 		'return_confirmed',
 	]);
 
-	const groupNotificationTypes = new Set(['group_member_added', 'group_member_joined']);
+	const groupNotificationTypes = new Set([
+		'group_member_added',
+		'group_member_joined',
+		'group_member_removed',
+	]);
 
 	function notificationHref(n: Notification): string {
 		if (conversationNotificationTypes.has(n.type)) {
