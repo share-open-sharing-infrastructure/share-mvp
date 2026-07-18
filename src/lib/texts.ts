@@ -1041,6 +1041,12 @@ export const texts = {
 		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
 		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
 		requestAborted: (item: string) => `Die Anfrage für „${item}" wurde abgebrochen`,
+		groupMemberAdded: (from: string, group: string) =>
+			`${from} hat dich zur Gruppe „${group}" hinzugefügt`,
+		groupMemberJoined: (username: string, group: string) =>
+			`${username} ist deiner Gruppe „${group}" beigetreten`,
+		groupMemberRemoved: (from: string, group: string) =>
+			`${from} hat dich aus der Gruppe „${group}" entfernt`,
 	},
 
 	// Lending process

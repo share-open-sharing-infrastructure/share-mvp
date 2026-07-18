@@ -460,7 +460,10 @@ export type NotificationType =
 	| 'handover_confirmed'
 	| 'return_requested'
 	| 'return_confirmed'
-	| 'request_aborted';
+	| 'request_aborted'
+	| 'group_member_added'
+	| 'group_member_joined'
+	| 'group_member_removed';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
