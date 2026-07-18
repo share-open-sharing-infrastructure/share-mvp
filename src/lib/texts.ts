@@ -674,6 +674,8 @@ export const texts = {
 			ownerTypeAll: 'Alle',
 			ownerTypeInstitution: 'Institutionen',
 			ownerTypePrivate: 'Personen',
+			groupFilterLabel: 'Gruppe',
+			groupFilterAll: 'Alle Gruppen',
 		},
 		logout: {
 			message: 'Ausloggen...',
