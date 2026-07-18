@@ -33,6 +33,7 @@ erDiagram
         bool legalLocked "decline lock — set/cleared only by backend hooks"
         date lastLoginAt "stamped on auth (throttled 24h) — drives inactive-account retention; hidden field, superuser-only"
         date retentionNotifiedAt "last open-loan skip-notice (retention job); hidden field, superuser-only"
+        date deletionWarnedAt "last inactivity-deletion warning email (once per inactivity cycle); hidden field, superuser-only"
         date created
         date updated
     }
@@ -376,7 +377,7 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
 
 **Phase 2 — purge** (partially implemented, issue #461): purging `deleted_accounts` rows and the
 anonymized `users` rows after their dispute-resolution window is still open. **Automated retention
-is implemented** as four nightly cron jobs in the backend (`pb_hooks/retention.pb.js` +
+is implemented** as five nightly cron jobs in the backend (`pb_hooks/retention.pb.js` +
 `pb_hooks/jobs/retention.js`), enforcing the privacy policy (DSE v2.8):
 
 - **Inactive accounts** (6 months without login, keyed on `users.lastLoginAt`, stamped on auth and
@@ -388,6 +389,11 @@ is implemented** as four nightly cron jobs in the backend (`pb_hooks/retention.p
   `messages`, and notifications whose `relatedId` points at it are deleted — regardless of
   `lendingStatus` (product decision in #461).
 - **Notifications** older than 90 days and **feedback** older than 6 months are deleted.
+- **Inactivity warning**: `RETENTION_INACTIVE_WARN_DAYS` (default 30) days before an account
+  reaches the deletion threshold, the user is emailed the concrete deletion date and that logging
+  in prevents it — at most once per inactivity cycle (stamped in `users.deletionWarnedAt`; a login
+  re-arms the warning because the stamp then predates `lastLoginAt`). Accounts with open loans are
+  warned too. The warning runs independently of the deletion job and never delays it.
 
 Windows are configurable per deployment via `RETENTION_*` env vars (0 disables a job); jobs are
 idempotent and log counts only, never personal data.

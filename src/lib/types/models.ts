@@ -172,6 +172,15 @@ export interface User extends PocketBaseEntity {
 	lastLoginAt?: string;
 
 	/**
+	 * ISO datetime the "your account will be deleted on <date>" inactivity warning
+	 * email was last sent (backend retention job; once per inactivity cycle — a stamp
+	 * older than `lastLoginAt` is stale). `hidden: true` on the collection — only
+	 * readable via the superuser context, so it never reaches a client (kept here to
+	 * document the schema).
+	 */
+	deletionWarnedAt?: string;
+
+	/**
 	 * Cache of the latest platform ToS version this user has accepted (Issue #399).
 	 * Authoritative record lives in `user_legal_acceptances`; this mirror lets the
 	 * consent gate decide from the already-loaded auth record without a DB query.
