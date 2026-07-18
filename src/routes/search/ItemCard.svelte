@@ -44,7 +44,7 @@
 	<!-- Image area always in slot so we can overlay the availability badge -->
 	<div class="relative w-24 max-w-36 shrink-0 self-stretch rounded-s-lg overflow-hidden">
 		{#if hasRealImage}
-			<img src={imgUrl} alt={item.name} class="w-full h-full max-h-36 object-cover" />
+			<img src={imgUrl} alt={item.name} loading="lazy" decoding="async" class="w-full h-full max-h-36 object-cover" />
 		{:else}
 			<div class="w-full h-full bg-gray-100 flex items-center justify-center">
 				{#if categoryPlaceholder}
@@ -96,7 +96,7 @@
 					class="relative inline-flex items-center rounded-full border hover:cursor-pointer pl-1 pr-2 py-0.5 bg-white/90 text-tinte-700 border-tinte-300 hover:bg-tinte-50/90"
 				>
 					{#if ownerImgUrl}
-						<img src={ownerImgUrl} alt="" class="h-6 w-6 rounded-full object-cover" />
+						<img src={ownerImgUrl} alt="" loading="lazy" decoding="async" class="h-6 w-6 rounded-full object-cover" />
 					{:else if isInstitution}
 						<HomeOutline class="h-6 w-6 inline" />
 					{:else}

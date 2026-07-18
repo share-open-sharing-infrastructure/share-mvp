@@ -38,14 +38,21 @@ export function displayName(
  * to everyone and trustees-only items only to authorized viewers. Use this for any item
  * loaded from a public view; base-`items` records (their own `collectionId` already resolves)
  * don't need it.
+ *
+ * `thumb` requests a downscaled variant (e.g. '0x300') from PocketBase. The size must be
+ * whitelisted in the `items.image` field's `thumbs` option (backend migration
+ * `1784402877_image_thumbs.js`), otherwise PocketBase silently serves the original. It is
+ * never appended to the `externalImgUrl` fallback — external hosts don't understand it.
  */
 export function itemImageUrl(
 	pbUrl: string,
-	item: { id: string; image?: string | string[] | null; externalImgUrl?: string | null }
+	item: { id: string; image?: string | string[] | null; externalImgUrl?: string | null },
+	thumb?: string
 ): string | null {
 	const first = Array.isArray(item.image) ? item.image[0] : item.image;
 	if (first) {
-		return `${pbUrl}api/files/items_searchable/${item.id}/${first}`;
+		const url = `${pbUrl}api/files/items_searchable/${item.id}/${first}`;
+		return thumb ? `${url}?thumb=${thumb}` : url;
 	}
 	return item.externalImgUrl || null;
 }
