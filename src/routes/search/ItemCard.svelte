@@ -20,6 +20,8 @@
 		/** Travel time in minutes. undefined = not yet fetched, null = owner has no location */
 		travelMinutes?: number | null;
 		transportMode?: TransportMode;
+		/** Load the cover image eagerly (for above-the-fold cards). */
+		eager?: boolean;
 	}
 	let {
 		item,
@@ -28,11 +30,24 @@
 		profileView = false,
 		travelMinutes,
 		transportMode = 'bicycle',
+		eager = false,
 	}: Props = $props();
 
 	const isInstitution = $derived(!!item.isInstitution);
 	const hasRealImage = $derived(!!imgUrl);
 	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
+
+	// The cover image is never hidden — the browser paints it the moment it decodes,
+	// independent of hydration. The category placeholder sits BEHIND it (so a pending
+	// image shows the placeholder, not an empty box) and is removed on load purely as
+	// cleanup, so it can't shine through photos with transparency.
+	let imgEl = $state<HTMLImageElement | null>(null);
+	let imgLoaded = $state(false);
+	$effect(() => {
+		// Covers images that completed before hydration attached the onload listener
+		// (e.g. served from the browser cache).
+		if (imgEl?.complete && imgEl.naturalWidth > 0) imgLoaded = true;
+	});
 </script>
 
 <Card
@@ -44,7 +59,25 @@
 	<!-- Image area always in slot so we can overlay the availability badge -->
 	<div class="relative w-24 max-w-36 shrink-0 self-stretch rounded-s-lg overflow-hidden">
 		{#if hasRealImage}
-			<img src={imgUrl} alt={item.name} loading="lazy" decoding="async" class="w-full h-full max-h-36 object-cover" />
+			{#if !imgLoaded}
+				<div class="absolute inset-0 bg-gray-100 flex items-center justify-center">
+					{#if categoryPlaceholder}
+						<img src={categoryPlaceholder} alt="" class="w-full h-full object-contain p-3 opacity-30" />
+					{/if}
+				</div>
+			{/if}
+			<!-- `relative` stacks the image above the absolutely-positioned placeholder;
+			     `text-transparent` hides the alt-text flash while loading (screen readers
+			     are unaffected — only the glyphs are invisible). -->
+			<img
+				bind:this={imgEl}
+				src={imgUrl}
+				alt={item.name}
+				loading={eager ? 'eager' : 'lazy'}
+				decoding="async"
+				onload={() => (imgLoaded = true)}
+				class="relative w-full h-full max-h-36 object-cover text-transparent"
+			/>
 		{:else}
 			<div class="w-full h-full bg-gray-100 flex items-center justify-center">
 				{#if categoryPlaceholder}
