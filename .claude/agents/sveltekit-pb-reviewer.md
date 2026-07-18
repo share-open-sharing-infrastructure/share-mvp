@@ -40,7 +40,7 @@ user names files, review those. Read enough surrounding context to judge correct
    **Never destructure the `data` prop** (e.g. `const { data } = $props(); let x = data.x`) — it
    breaks `use:enhance` reactivity. Markup must read `data.x` directly.
 5. **German strings.** New user-facing text must come from `src/lib/texts.ts`
-   (+ `ITEM_CATEGORIES`), not be hardcoded inline in components.
+   (item categories from `src/lib/categories.ts`), not be hardcoded inline in components.
 6. **Tests.** New/changed server logic should have co-located `*.test.ts` mocking PocketBase per
    `docs/testing-strategy.md` (a `mockLocals` with `pb.collection()` returning `vi.fn()` stubs).
 7. **Deleted accounts & realtime.** Never render `user.username` directly for a user that might be

@@ -282,6 +282,45 @@ erDiagram
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
 ```
 
+## Item categories
+
+The item categories are **fixed and shared across all AllerLeih instances** (decision
+recorded in issue #472; no per-instance configuration, no `categories` collection).
+There is exactly one authoritative definition per repo:
+
+- **Frontend:** `ITEM_CATEGORIES` in `src/lib/categories.ts` (array order = UI display
+  order for filter pills and form checkboxes; `ItemCategory` is derived from it).
+- **Backend:** the `items` collection's `categories` select-field values, enforced by
+  `allerleih-backend/tests/categories.test.mjs`, which hardcodes the canonical list once
+  and fails when the live schema (base collection or the `items_public` /
+  `items_searchable` view metadata) drifts from it.
+
+The `items_public` / `items_searchable` view SQL does **not** embed the category values —
+the views pass `items.categories` through and PocketBase re-derives the view field
+metadata from the base column, so view migrations are never needed for a category change.
+
+### Changing the category list
+
+1. **Backend migration** (use the backend `new-migration` skill): update the `items`
+   collection's `categories` select `values` (fetch collection → mutate field → save;
+   mirror in `down`). Never edit historical snapshot migrations
+   (`1781551136_collections_snapshot.js` and the original view-creation migrations —
+   their embedded copies are inert). If a value is removed or renamed, plan a data
+   migration for existing item records.
+2. **Backend test:** update `CANONICAL_CATEGORIES` in `tests/categories.test.mjs`; run
+   `npm test`.
+3. **Frontend:** update `ITEM_CATEGORIES` in `src/lib/categories.ts` (order = UI order).
+4. **Compile-time ripples** surface via `npm run check`:
+   `src/lib/utils/categoryPlaceholder.ts` needs a placeholder SVG per category, and
+   `CATEGORY_MAP` in `src/lib/server/integrations/leihbackend/mapping.ts` must be
+   reviewed (`'Sonstiges'` is its fallback and must always exist).
+5. **Auto-following consumers** need no edits: the AI prompt in
+   `src/routes/api/analyze-item/+server.ts` joins the array, and the WINBIAP CSV import
+   validates against it.
+6. **Docs:** update this section and any doc citing the values or their count.
+7. Run both suites: frontend `npm run check && npm run lint && npx vitest run`; backend
+   `npm test`.
+
 ## user_geolocations
 
 Coordinates are **not** stored on `users` — they live in a separate `user_geolocations` collection so they can be locked to the owner. All API rules (`listRule`/`viewRule`/`createRule`/`updateRule`/`deleteRule`) are `@request.auth.id = user`, so a user can only ever read/write **their own** row; no account can query another user's coordinates. The `users` collection no longer has a `geolocation` field at all. Travel-time computation reads coordinates with backend privileges via the `/api/travel-times` hook (see below).

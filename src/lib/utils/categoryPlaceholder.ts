@@ -1,4 +1,4 @@
-import { ITEM_CATEGORIES } from '$lib/texts';
+import { ITEM_CATEGORIES } from '$lib/categories';
 
 const PLACEHOLDERS: Record<(typeof ITEM_CATEGORIES)[number], string> = {
 	'Freizeit und Sport': '/category-placeholders/Freizeit-und-Sport.svg',

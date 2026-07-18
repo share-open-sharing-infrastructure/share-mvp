@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { Button, Checkbox, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
-	import { texts, ITEM_CATEGORIES } from '$lib/texts';
+	import { texts } from '$lib/texts';
+	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { compressImage } from '$lib/utils/imageUtils';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 

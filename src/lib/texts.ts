@@ -1,19 +1,5 @@
 import { USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH } from '$lib/utils/username';
 
-export const ITEM_CATEGORIES = [
-	'Freizeit und Sport',
-	'Werkzeug und Garten',
-	'Reisen und Outdoor',
-	'Bücher',
-	'Spiele',
-	'Küche',
-	'Ton und Licht',
-	'Elektronik',
-	'Für Kinder',
-	'Sonstiges',
-] as const;
-export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
-
 /** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
 const APP_NAME = 'AllerLeih';
 
