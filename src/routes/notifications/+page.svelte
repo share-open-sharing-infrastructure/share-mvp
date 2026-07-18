@@ -18,6 +18,7 @@
 		'handover_confirmed',
 		'return_requested',
 		'return_confirmed',
+		'request_aborted',
 	]);
 
 	function notificationHref(n: Notification): string {

@@ -3,6 +3,7 @@
 	import type PocketBase from 'pocketbase';
 	import type { RecordSubscription } from 'pocketbase';
 	import { onMount } from 'svelte';
+	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { getClientPB, subscribeRealtime } from '$lib/client-pb';
@@ -68,6 +69,20 @@
 
 	// UI state variables
 	let deleteConversationModal = $state(false);
+	let abortRequestModal = $state(false);
+
+	// #373 decision 1: while a request is abortable (pending/accepted) the Delete
+	// affordance is replaced by "Anfrage abbrechen". Delete is available ONLY in the
+	// terminal lending states (rejected/completed/aborted, to clear history) and for
+	// plain chats with no lending status at all. It stays hidden for pending/accepted
+	// (abortable) AND for active/return_requested (a loan in progress).
+	const isAbortable = $derived(
+		lendingStatus === 'pending' || lendingStatus === 'accepted'
+	);
+	const isLoanInProgress = $derived(
+		lendingStatus === 'active' || lendingStatus === 'return_requested'
+	);
+	const canDelete = $derived(!isAbortable && !isLoanInProgress);
 	let showCounterfactualModal = $derived(
 		counterfactual === 'pending' && !loggedInUserIsItemOwner
 	);
@@ -201,7 +216,7 @@
 	{chatPartner}
 	conversation={data.conversation}
 	PB_URL={PUBLIC_PB_URL}
-	onDelete={() => (deleteConversationModal = true)}
+	onDelete={canDelete ? () => (deleteConversationModal = true) : undefined}
 	{loggedInUserIsItemOwner}
 	partnerContact={data.partnerContact}
 />
@@ -210,6 +225,7 @@
 	{lendingStatus}
 	isOwner={loggedInUserIsItemOwner}
 	itemOwnerUsername={displayName(data.conversation.itemOwner)}
+	onAbort={() => (abortRequestModal = true)}
 />
 
 <!-- Messages list -->
@@ -255,5 +271,23 @@
 	>
 		<Input name="conversationId" value={data.conversation.id} hidden></Input>
 		<Button class="bg-danger min-button" type="submit">Anfrage löschen</Button>
+	</form>
+</Modal>
+
+<Modal title={texts.lending.confirmAbort.title} form bind:open={abortRequestModal}>
+	{texts.lending.confirmAbort.body}
+
+	<form
+		class="flex justify-end gap-2 ml-2"
+		method="POST"
+		action="?/abortRequest"
+		use:enhance={() =>
+			async ({ update }) => {
+				abortRequestModal = false;
+				await update();
+			}}
+	>
+		<Input name="conversationId" value={data.conversation.id} hidden></Input>
+		<Button class="bg-danger min-button" type="submit">{texts.lending.confirmAbort.confirm}</Button>
 	</form>
 </Modal>

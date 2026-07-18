@@ -133,6 +133,11 @@ export const actions = {
 		return lending.rejectRequest(locals.pb, params.conversationId, locals.user.id);
 	},
 
+	abortRequest: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
+		return lending.abortRequest(locals.pb, params.conversationId, locals.user.id);
+	},
+
 	confirmHandover: async ({ locals, params }) => {
 		if (!locals.user) return fail(401, { fail: true, message: texts.lending.errors.noPermission });
 		return lending.confirmHandover(locals.pb, params.conversationId, locals.user.id);
