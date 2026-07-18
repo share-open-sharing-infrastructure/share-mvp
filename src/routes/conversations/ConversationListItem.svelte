@@ -4,9 +4,16 @@
 	import { texts } from '$lib/texts';
 	import { displayName } from '$lib/utils/utils';
 
-	let { conversation, currentUser, PB_IMG_URL, activeTab } = $props();
+	let { conversation, currentUser, PB_IMG_URL } = $props();
 
 	const isActive = $derived(page.params.conversationId === conversation.id);
+
+	// Role of the current user in this specific conversation — since the list now mixes
+	// lending and borrowing conversations together, this replaces the old activeTab prop
+	// (which used to reflect a single selected tab) for per-item styling.
+	const role = $derived(
+		conversation.itemOwner === currentUser.id ? 'lending' : 'borrowing'
+	);
 
 	const otherUser = $derived(
 		conversation.requester === currentUser.id
@@ -41,11 +48,12 @@
 <li class="w-full">
 	<a
 		href={resolve(`/conversations/${conversation.id}`)}
-		class="flex items-center gap-3 rounded-xl px-2.5 py-2.5 transition-all min-h-14
+		class="flex items-center gap-3 rounded-xl border-l-4 px-2.5 py-2.5 transition-all min-h-14
+			{role === 'borrowing' ? 'border-primary' : 'border-accent'}
 			{isActive
 				? 'bg-white dark:bg-tinte-800 shadow-sm'
 				: isUnread
-					? activeTab === 'borrowing'
+					? role === 'borrowing'
 						? 'bg-primary-100 dark:bg-primary-900/20 hover:bg-primary-200/60'
 						: 'bg-accent-100 dark:bg-accent-900/20 hover:bg-accent-200/60'
 					: 'hover:bg-white dark:hover:bg-tinte-800 hover:shadow-sm'}"
@@ -67,7 +75,7 @@
 		<div class="flex-1 min-w-0">
 			<p class="text-sm truncate leading-tight
 				{isActive
-					? activeTab === 'borrowing'
+					? role === 'borrowing'
 						? 'font-semibold text-primary'
 						: 'font-semibold text-accent'
 					: isUnread
@@ -76,7 +84,9 @@
 				{itemName}
 			</p>
 			<p class="text-xs text-tinte-400 dark:text-tinte-500 truncate leading-tight mt-0.5">
-				{activeTab === 'borrowing' ? 'von' : 'an'} {displayName(otherUser)}
+				{role === 'borrowing'
+					? texts.pages.conversations.fromUserPrefix
+					: texts.pages.conversations.toUserPrefix} {displayName(otherUser)}
 			</p>
 			{#if lendingStatusLabel}
 				<span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium mt-0.5
@@ -91,7 +101,7 @@
 		<!-- Unread dot -->
 		{#if isUnread}
 			<div class="shrink-0 w-2 h-2 rounded-full
-				{activeTab === 'borrowing' ? 'bg-primary' : 'bg-accent'}">
+				{role === 'borrowing' ? 'bg-primary' : 'bg-accent'}">
 			</div>
 		{/if}
 	</a>
