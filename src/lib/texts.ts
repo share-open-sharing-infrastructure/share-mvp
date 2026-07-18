@@ -103,6 +103,13 @@ export const texts = {
 		passwordsDoNotMatch: 'Die Passwörter stimmen nicht überein.',
 		invalidOrExpiredResetToken:
 			'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link zum Zurücksetzen des Passworts an.',
+		invalidOrExpiredVerificationToken:
+			'Dieser Bestätigungslink ist ungültig oder abgelaufen. Bitte fordere eine neue Bestätigungs-E-Mail an.',
+		invalidOrExpiredEmailChangeToken:
+			'Dieser Link zur Änderung der E-Mail-Adresse ist ungültig oder abgelaufen.',
+		emailChangeFailed:
+			'Die E-Mail-Adresse konnte nicht geändert werden. Der Link ist ungültig oder abgelaufen, oder das Passwort ist falsch.',
+		passwordRequired: 'Bitte gib dein aktuelles Passwort ein.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		contactEmailRequired:
@@ -130,6 +137,9 @@ export const texts = {
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
 		passwordResetConfirmed:
 			'Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt anmelden.',
+		emailVerified: 'Deine E-Mail-Adresse wurde bestätigt. Du kannst dich jetzt anmelden.',
+		emailChanged:
+			'Deine E-Mail-Adresse wurde geändert. Bitte melde dich mit deiner neuen E-Mail-Adresse an.',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
 		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
 		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
@@ -698,6 +708,17 @@ export const texts = {
 				backToReset: 'Neuen Link anfordern',
 			},
 		},
+		confirmVerification: {
+			title: 'E-Mail-Adresse bestätigen',
+			submitButton: 'E-Mail-Adresse bestätigen',
+			backToLogin: 'Zurück zur Anmeldung',
+		},
+		confirmEmailChange: {
+			title: 'Neue E-Mail-Adresse bestätigen',
+			passwordLabel: 'Aktuelles Passwort',
+			submitButton: 'E-Mail-Adresse bestätigen',
+			backToLogin: 'Zurück zur Anmeldung',
+		},
 		updatemail: {
 			title: 'Mailadresse ändern',
 			newEmailLabel: 'Deine neue E-Mail Adresse:',
@@ -1191,6 +1212,14 @@ export const texts = {
 		resetConfirm: {
 			title: 'Neues Passwort festlegen – AllerLeih',
 			description: 'Lege ein neues Passwort für dein AllerLeih-Konto fest.',
+		},
+		confirmVerification: {
+			title: 'E-Mail-Adresse bestätigen – AllerLeih',
+			description: 'Bestätige deine E-Mail-Adresse, um dein AllerLeih-Konto zu aktivieren.',
+		},
+		confirmEmailChange: {
+			title: 'Neue E-Mail-Adresse bestätigen – AllerLeih',
+			description: 'Bestätige die Änderung deiner E-Mail-Adresse für dein AllerLeih-Konto.',
 		},
 		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
 		itemDetailDescription: (name: string, owner: string) =>
