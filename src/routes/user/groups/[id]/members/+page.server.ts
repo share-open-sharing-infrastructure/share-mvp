@@ -1,7 +1,8 @@
 import { fail } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
-import { requireGroupMembership, isGroupOwner } from '$lib/server/groups';
+import { requireGroupMembership } from '$lib/server/groups';
+import { createNotification, sendPushToUser } from '$lib/server/notifications';
 import { displayName } from '$lib/utils/utils';
 
 // Lending states in which the borrower currently holds (or is arranging to hold)
@@ -89,9 +90,21 @@ export async function load({ locals, params }) {
 
 export const actions = {
 	addMember: async ({ locals, params, request }) => {
-		// Managing members is owner-only; assert it here too (defense-in-depth on top of
-		// the backend collection rule) for a clean 403 instead of a generic failure.
-		if (!(await isGroupOwner(locals.pb, locals.user!.id, params.id)))
+		// Load the group once: the owner check (defense-in-depth on top of the backend
+		// collection rule) and the group name the notification body needs both come from
+		// this single read. A missing/unreadable group (e.g. deleted in a race with the
+		// request) yields a clean fail instead of a generic 500.
+		let group: { id: string; owner: string; name: string };
+		try {
+			group = await locals.pb
+				.collection('groups')
+				.getOne<{ id: string; owner: string; name: string }>(params.id, {
+					fields: 'id,owner,name',
+				});
+		} catch {
+			return fail(404, { fail: true, message: texts.errors.somethingWentWrong });
+		}
+		if (group.owner !== locals.user!.id)
 			return fail(403, { fail: true, message: texts.errors.noPermission });
 
 		const formData = await request.formData();
@@ -120,6 +133,13 @@ export const actions = {
 			await locals.pb
 				.collection('group_members')
 				.create({ group: params.id, user: user.id, role: 'member' });
+			// Only a genuine new membership reaches this point (a duplicate create throws
+			// and is handled below) — notify the added user in-app + via push. Both helpers
+			// swallow their own errors, so a notification hiccup can never fail the add.
+			const body = texts.notifications.groupMemberAdded(locals.user!.username, group.name);
+			const notifUrl = `/user/groups/${params.id}`;
+			await createNotification(locals.pb, user.id, locals.user!.id, 'group_member_added', params.id, body);
+			await sendPushToUser(locals.pb, user.id, texts.notifications.pushTitle, body, notifUrl);
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
 			// A 400 is most likely the unique (group,user) index firing because the
@@ -140,7 +160,20 @@ export const actions = {
 	},
 
 	removeMember: async ({ locals, params, request }) => {
-		if (!(await isGroupOwner(locals.pb, locals.user!.id, params.id)))
+		// Load the group once: the owner check and the group name the removal
+		// notification needs both come from this single read (as in addMember). A
+		// missing/unreadable group yields a clean fail instead of a generic 500.
+		let group: { id: string; owner: string; name: string };
+		try {
+			group = await locals.pb
+				.collection('groups')
+				.getOne<{ id: string; owner: string; name: string }>(params.id, {
+					fields: 'id,owner,name',
+				});
+		} catch {
+			return fail(404, { fail: true, message: texts.errors.somethingWentWrong });
+		}
+		if (group.owner !== locals.user!.id)
 			return fail(403, { fail: true, message: texts.errors.noPermission });
 
 		const membershipId = (await request.formData()).get('membershipId')?.toString();
@@ -148,13 +181,24 @@ export const actions = {
 
 		try {
 			// Ensure the membership really belongs to this (owned) group before deleting.
-			const m = await locals.pb.collection('group_members').getOne<{ group: string; role?: string }>(membershipId);
+			const m = await locals.pb
+				.collection('group_members')
+				.getOne<{ user: string; group: string; role?: string }>(membershipId);
 			if (m.group !== params.id) return fail(403, { fail: true, message: texts.errors.noPermission });
 			// The owner's own admin membership cannot be removed (would orphan the
 			// group) — they must delete the whole group instead. The backend rule
 			// enforces this too; surface a friendly message here.
 			if (m.role === 'admin') return fail(400, { fail: true, message: texts.groups.cannotRemoveAdmin });
 			await locals.pb.collection('group_members').delete(membershipId);
+			// Genuine removal → tell the removed user (in-app + push), unless they somehow
+			// removed themselves (no self-notification). Both helpers swallow their own
+			// errors, so a notification hiccup can never fail the removal.
+			if (m.user !== locals.user!.id) {
+				const body = texts.notifications.groupMemberRemoved(locals.user!.username, group.name);
+				const notifUrl = `/user/groups/${params.id}`;
+				await createNotification(locals.pb, m.user, locals.user!.id, 'group_member_removed', params.id, body);
+				await sendPushToUser(locals.pb, m.user, texts.notifications.pushTitle, body, notifUrl);
+			}
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });

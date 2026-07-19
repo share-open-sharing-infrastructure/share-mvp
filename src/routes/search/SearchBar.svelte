@@ -34,6 +34,14 @@
 		}
 	});
 
+	$effect(() => {
+		// Initial autofocus only on devices with a precise pointer (desktop). On touch
+		// devices focusing would pop the on-screen keyboard on page load (#429/#453).
+		if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+			inputEl?.focus();
+		}
+	});
+
 	async function handleInput() {
 		if (debounceTimer) clearTimeout(debounceTimer);
 		debounceTimer = null;
@@ -43,7 +51,7 @@
 		if (value.length < MINIMAL_SEARCHSTRING_LENGTH) {
 			isDebouncing = false;
 			if (q) {
-				await goto(resolve('/search'));
+				await goto(resolve('/search'), { keepFocus: true, noScroll: true, replaceState: true });
 			}
 			return;
 		}
@@ -52,7 +60,11 @@
 		debounceTimer = setTimeout(async () => {
 			isDebouncing = false;
 			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			await goto(`/search?q=${encodeURIComponent(value)}`);
+			await goto(`/search?q=${encodeURIComponent(value)}`, {
+				keepFocus: true,
+				noScroll: true,
+				replaceState: true
+			});
 		}, SEARCH_DELAY_MS);
 	}
 
@@ -65,7 +77,10 @@
 		isDebouncing = false;
 		const value = inputValue.trim();
 		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl);
+		await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl, {
+			keepFocus: true,
+			noScroll: true
+		});
 	}
 
 	async function clearSearch() {
@@ -75,7 +90,7 @@
 			debounceTimer = null;
 		}
 		isDebouncing = false;
-		await goto(resolve('/search'));
+		await goto(resolve('/search'), { keepFocus: true, noScroll: true });
 	}
 </script>
 

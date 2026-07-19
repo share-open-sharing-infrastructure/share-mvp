@@ -2,6 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { load, actions } from './+page.server';
 import { texts } from '$lib/texts';
 import { ME, params, r, req, makeLocals } from '../groupTestHelpers';
+import { createNotification, sendPushToUser } from '$lib/server/notifications';
+
+// The trigger site fires both notification helpers; mock them so we can assert the
+// exact type/recipient/relatedId/url without touching web-push or PocketBase.
+vi.mock('$lib/server/notifications', () => ({
+	createNotification: vi.fn(),
+	sendPushToUser: vi.fn(),
+}));
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -54,6 +62,20 @@ describe('members — addMember', () => {
 		expect(create).not.toHaveBeenCalled();
 	});
 
+	it('fails cleanly (404, no create/notify) when the group is missing or unreadable', async () => {
+		const create = vi.fn();
+		const locals = makeLocals({
+			groups: { getOne: vi.fn().mockRejectedValue({ status: 404 }) },
+			group_members: { create },
+		});
+		const res = await actions.addMember({ locals, params, request: req({ userId: 'u2' }) } as never);
+		expect(r(res).status).toBe(404);
+		expect(r(res).data).toMatchObject({ message: texts.errors.somethingWentWrong });
+		expect(create).not.toHaveBeenCalled();
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
+	});
+
 	it('rejects an empty submission (neither userId nor username)', async () => {
 		const create = vi.fn();
 		const locals = makeLocals({ group_members: { create } });
@@ -78,7 +100,38 @@ describe('members — addMember', () => {
 		expect(create).toHaveBeenCalledWith({ group: 'g1', user: 'u2', role: 'member' });
 	});
 
-	it('is idempotent: a duplicate (already-member) create still reports success', async () => {
+	it('notifies the added user (in-app + push) on a genuine add, linking to the group page', async () => {
+		const create = vi.fn().mockResolvedValue({ id: 'm1' });
+		const locals = makeLocals({
+			groups: { getOne: vi.fn().mockResolvedValue({ id: 'g1', owner: ME, name: 'Nordstadt' }) },
+			users: { getFirstListItem: vi.fn().mockResolvedValue({ id: 'u2' }) },
+			group_members: { create },
+		});
+		locals.user.username = 'Chef';
+		const res = await actions.addMember({ locals, params, request: req({ username: 'bob' }) } as never);
+		expect(res).toMatchObject({ success: true });
+
+		const body = texts.notifications.groupMemberAdded('Chef', 'Nordstadt');
+		// recipient = added user, sender = owner, type + relatedId = group id.
+		expect(createNotification).toHaveBeenCalledWith(
+			locals.pb,
+			'u2',
+			ME,
+			'group_member_added',
+			'g1',
+			body
+		);
+		// Push carries the same body and the consistent /user/groups/<id> url (footgun 3.3).
+		expect(sendPushToUser).toHaveBeenCalledWith(
+			locals.pb,
+			'u2',
+			texts.notifications.pushTitle,
+			body,
+			'/user/groups/g1'
+		);
+	});
+
+	it('is idempotent: a duplicate (already-member) create still reports success without notifying', async () => {
 		const locals = makeLocals({
 			users: { getFirstListItem: vi.fn().mockResolvedValue({ id: 'u2' }) },
 			group_members: {
@@ -88,9 +141,12 @@ describe('members — addMember', () => {
 		});
 		const res = await actions.addMember({ locals, params, request: req({ username: 'bob' }) } as never);
 		expect(res).toMatchObject({ success: true });
+		// Already a member -> no spam on repeat submits.
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
 	});
 
-	it('surfaces a real failure when create fails AND no membership exists', async () => {
+	it('surfaces a real failure when create fails AND no membership exists, without notifying', async () => {
 		const locals = makeLocals({
 			users: { getFirstListItem: vi.fn().mockResolvedValue({ id: 'u2' }) },
 			group_members: {
@@ -100,35 +156,95 @@ describe('members — addMember', () => {
 		});
 		const res = await actions.addMember({ locals, params, request: req({ username: 'bob' }) } as never);
 		expect(r(res).data).toMatchObject({ message: texts.errors.somethingWentWrong });
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
 	});
 });
 
 describe('members — removeMember', () => {
-	it('refuses to delete a membership that belongs to a different group', async () => {
+	it('refuses to delete a membership that belongs to a different group, without notifying', async () => {
 		const del = vi.fn();
 		const locals = makeLocals({
-			group_members: { getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'OTHER' }), delete: del },
+			group_members: { getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'OTHER', user: 'u2' }), delete: del },
 		});
 		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
 		expect(r(res).status).toBe(403);
 		expect(del).not.toHaveBeenCalled();
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
 	});
 
 	it('deletes a membership that belongs to this group', async () => {
 		const del = vi.fn().mockResolvedValue(true);
 		const locals = makeLocals({
-			group_members: { getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1' }), delete: del },
+			group_members: { getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', user: 'u2' }), delete: del },
 		});
 		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
 		expect(res).toMatchObject({ success: true });
 		expect(del).toHaveBeenCalledWith('m1');
 	});
 
-	it('refuses to remove an admin membership (the owner must delete the group)', async () => {
+	it('notifies the removed user (in-app + push) on a genuine removal, linking to the group page', async () => {
+		const del = vi.fn().mockResolvedValue(true);
+		const locals = makeLocals({
+			groups: { getOne: vi.fn().mockResolvedValue({ id: 'g1', owner: ME, name: 'Nordstadt' }) },
+			group_members: { getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', user: 'u2', role: 'member' }), delete: del },
+		});
+		locals.user.username = 'Chef';
+		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
+		expect(res).toMatchObject({ success: true });
+		expect(del).toHaveBeenCalledWith('m1');
+
+		const body = texts.notifications.groupMemberRemoved('Chef', 'Nordstadt');
+		// recipient = removed user, sender = owner, type + relatedId = group id.
+		expect(createNotification).toHaveBeenCalledWith(
+			locals.pb,
+			'u2',
+			ME,
+			'group_member_removed',
+			'g1',
+			body
+		);
+		expect(sendPushToUser).toHaveBeenCalledWith(
+			locals.pb,
+			'u2',
+			texts.notifications.pushTitle,
+			body,
+			'/user/groups/g1'
+		);
+	});
+
+	it('does not self-notify if the removed member is the acting owner', async () => {
+		const del = vi.fn().mockResolvedValue(true);
+		const locals = makeLocals({
+			group_members: { getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', user: ME, role: 'member' }), delete: del },
+		});
+		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
+		expect(res).toMatchObject({ success: true });
+		expect(del).toHaveBeenCalledWith('m1');
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
+	});
+
+	it('fails cleanly (404, no delete/notify) when the group is missing or unreadable', async () => {
+		const del = vi.fn();
+		const locals = makeLocals({
+			groups: { getOne: vi.fn().mockRejectedValue({ status: 404 }) },
+			group_members: { getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', user: 'u2' }), delete: del },
+		});
+		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
+		expect(r(res).status).toBe(404);
+		expect(r(res).data).toMatchObject({ message: texts.errors.somethingWentWrong });
+		expect(del).not.toHaveBeenCalled();
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
+	});
+
+	it('refuses to remove an admin membership (the owner must delete the group), without notifying', async () => {
 		const del = vi.fn();
 		const locals = makeLocals({
 			group_members: {
-				getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', role: 'admin' }),
+				getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', user: 'u2', role: 'admin' }),
 				delete: del,
 			},
 		});
@@ -136,6 +252,8 @@ describe('members — removeMember', () => {
 		expect(r(res).status).toBe(400);
 		expect(r(res).data).toMatchObject({ message: texts.groups.cannotRemoveAdmin });
 		expect(del).not.toHaveBeenCalled();
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
 	});
 
 	it('rejects a missing membershipId', async () => {
@@ -145,17 +263,21 @@ describe('members — removeMember', () => {
 		expect(r(res).status).toBe(400);
 		expect(r(res).data).toMatchObject({ message: texts.errors.missingId });
 		expect(del).not.toHaveBeenCalled();
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
 	});
 
-	it('surfaces a failure when the delete rejects', async () => {
+	it('surfaces a failure when the delete rejects, without notifying', async () => {
 		const locals = makeLocals({
 			group_members: {
-				getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', role: 'member' }),
+				getOne: vi.fn().mockResolvedValue({ id: 'm1', group: 'g1', user: 'u2', role: 'member' }),
 				delete: vi.fn().mockRejectedValue({ status: 500 }),
 			},
 		});
 		const res = await actions.removeMember({ locals, params, request: req({ membershipId: 'm1' }) } as never);
 		expect(r(res).data).toMatchObject({ message: texts.errors.somethingWentWrong });
+		expect(createNotification).not.toHaveBeenCalled();
+		expect(sendPushToUser).not.toHaveBeenCalled();
 	});
 });
 

@@ -16,10 +16,7 @@
 	import { dev } from '$app/environment';
 	import { fade } from 'svelte/transition';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
-	interface BeforeInstallPromptEvent extends Event {
-		prompt(): Promise<void>;
-		userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-	}
+	import { pwaInstall, type BeforeInstallPromptEvent } from '$lib/stores/pwaInstall.svelte';
 
 	let { children, data } = $props();
 
@@ -38,7 +35,6 @@
 
 	// svelte-ignore state_referenced_locally
 	let unreadCount = $state(data.unreadNotificationCount ?? 0);
-	let installPromptEvent = $state<BeforeInstallPromptEvent | null>(null);
 
 	// Sync from server when the layout load genuinely re-runs (navigation).
 	// Using a plain variable prevents spurious resets when only the page load
@@ -78,11 +74,14 @@
 	});
 
 	onMount(() => {
-		// Capture Chrome/Edge's install prompt before it shows the mini-infobar
+		// Capture Chrome/Edge's install prompt before it shows the mini-infobar, and stash it
+		// in the shared store so both the PwaPrompts banner and the /misc/app page can use it.
 		window.addEventListener('beforeinstallprompt', (e) => {
 			e.preventDefault();
-			installPromptEvent = e as BeforeInstallPromptEvent;
+			pwaInstall.capture(e as BeforeInstallPromptEvent);
 		});
+		// Reflect a completed install (from any surface, incl. the browser's own UI).
+		window.addEventListener('appinstalled', () => pwaInstall.markInstalled());
 
 		// The realtime notification subscription below is set up once at mount, not in
 		// an $effect: an $effect's cleanup/re-run cycle would tear it down and recreate
@@ -185,12 +184,8 @@
 		</div>
 	{/if}
 
-	<PwaPrompts
-		loggedIn={!!data.currentUser}
-		onNotificationGranted={setupPushSubscription}
-		{installPromptEvent}
-	/>
-	<OnboardingPrompt show={!!data.currentUser && !data.currentUser.hasOnboarded} />
+	<PwaPrompts loggedIn={!!data.currentUser} onNotificationGranted={setupPushSubscription} />
+	<OnboardingPrompt show={!!data.currentUser && !data.currentUserPreferences?.hasOnboarded} />
 
 	{#if page.url.pathname !== '/onboarding'}
 		<FooterComponent />
