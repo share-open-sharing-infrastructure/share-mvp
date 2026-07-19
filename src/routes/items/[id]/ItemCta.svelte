@@ -102,7 +102,7 @@
 		<!-- Disabled buttons suppress pointer events, so the tooltip must be anchored
 		     to the surrounding span instead of the button itself. -->
 		<span id="anfragen-disabled" class="cursor-not-allowed">
-			<Button disabled class="pointer-events-none">
+			<Button disabled>
 				<MessagesOutline class="h-4 w-4" />
 				{texts.pages.itemDetail.requestButton}
 			</Button>

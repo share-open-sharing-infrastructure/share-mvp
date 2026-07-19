@@ -37,7 +37,7 @@
 						required
 					/>
 				</Label>
-				<Button type="submit" formaction="?/updatemail" class="me-2 mb-2"
+				<Button type="submit" formaction="?/updatemail"
 					>{texts.pages.updatemail.updateButton}</Button
 				>
 			</form>

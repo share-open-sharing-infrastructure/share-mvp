@@ -16,7 +16,7 @@
 	<p>{texts.pages.search.welcome}</p>
 	<!-- to set bg color assign class="bg-primary-500"-->
 
-	<Button href={resolve('/user/items')} fullWidth class="me-2 mb-2">
+	<Button href={resolve('/user/items')} fullWidth>
 		{texts.buttons.offerSomething}
 		<ArrowUpOutline class="h-6 w-6" />
 	</Button>

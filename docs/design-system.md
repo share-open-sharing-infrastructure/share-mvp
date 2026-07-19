@@ -80,6 +80,12 @@ All other native attributes (`onclick`, `name`, `value`, `formaction`, `aria-*`,
 - ❌ Not allowed: colors, borders, radii, font, padding overrides. If a design need isn't
   covered, extend the variant/size maps in `Button.svelte` so every button benefits.
 
+If you find yourself reaching for `class` to get a look outside those bounds, that's the
+signal to add a variant or size to `Button.svelte` instead — so the need is shared by
+every future button, not solved once and re-solved differently next time. A page-specific
+`class` override that changes how a button *looks* (rather than where it sits) is exactly
+the kind of one-off drift this component exists to prevent.
+
 There is deliberately no class-merging library: appended conflicting utilities do not
 reliably win (Tailwind specificity is stylesheet order, not class order), so color
 overrides via `class` will misbehave — another reason not to try.
@@ -111,9 +117,12 @@ children snippet — the button's `gap-2` spaces them; no `mr-2` needed. Icon-on
 
 - **Filter chips / toggles** (search filters, travel-time chips): stateful
   selected/unselected controls — a different component family (future `ui/Chip.svelte`).
-- **`SparkleButton`**: intentionally special feedback CTA; already consumes
-  `var(--color-*)` tokens, so it white-labels correctly.
-- **Landing-page hero CTA**: marketing styling, scoped locally in `src/routes/+page.svelte`.
+- **`SparkleButton`** (used by `FeedbackButton`, the site-wide feedback nudge): the **one
+  deliberate exception** to "always use `Button`". Its animated gradient/shimmer/sparkle
+  treatment is the intended effect — an eye-catching nudge, not a missed migration — and
+  it already consumes `var(--color-*)` tokens, so it white-labels correctly. Any future
+  exception needs the same bar: a real, reasoned need to look different, documented here —
+  not a silent bypass of the component.
 
 ## White-Labeling
 

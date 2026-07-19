@@ -49,7 +49,7 @@
 				</Label>
 				<PasswordInput autocomplete="current-password" />
 
-				<Button type="submit" fullWidth class="me-2 mb-2">{texts.auth.loginButton}</Button>
+				<Button type="submit" fullWidth>{texts.auth.loginButton}</Button>
 				<p class="mt-2 text-sm font-light text-tinte-500 dark:text-tinte-400">
 					<a
 						href={resolve('/auth/reset')}

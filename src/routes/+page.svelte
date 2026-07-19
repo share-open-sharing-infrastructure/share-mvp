@@ -2,6 +2,7 @@
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	const landingTexts = texts.pages.landing;
 	const siteUrl = 'https://allerleih.org';
@@ -28,12 +29,12 @@
 		{
 			href: resolve('/search'),
 			label: landingTexts.ctaButtonSearch,
-			color: 'bg-primary-300 hover:bg-primary',
+			variant: 'primary' as const,
 		},
 		{
 			href: resolve('/user/items'),
 			label: landingTexts.ctaButtonUpload,
-			color: 'bg-accent-300 hover:bg-accent',
+			variant: 'accent' as const,
 		},
 	];
 
@@ -68,10 +69,7 @@
 	] as const;
 
 	// Shared styling — adjust the look here without touching the markup below.
-	// `cta-button` is landing-only marketing styling, defined in the style block below;
-	// app buttons use $lib/components/ui/Button.svelte instead (docs/design-system.md).
 	const styles = {
-		ctaButton: 'cta-button inline-flex items-center justify-center w-full sm:w-auto',
 		card: 'bg-white rounded-2xl shadow-sm border border-primary-200 p-6 flex flex-col gap-3',
 		cardTitle: 'text-xl font-bold text-tinte-900 ',
 		cardBody: 'text-base text-tinte-500',
@@ -107,12 +105,9 @@
 				</p>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
-						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- cta.href is resolve()d in the ctaButtons array; the rule can't see through the constant -->
-						<a href={cta.href} class="{styles.ctaButton} {cta.color}">
-							<span class="relative flex w-full items-center justify-center">
-								{cta.label}
-							</span>
-						</a>
+						<Button href={cta.href} variant={cta.variant} size="lg" class="w-full sm:w-auto">
+							{cta.label}
+						</Button>
 					{/each}
 				</div>
 			</div>
@@ -149,18 +144,3 @@
 		</div>
 	</section>
 </div>
-
-<style>
-	/* Landing-hero marketing CTA — deliberately outside the app design system. */
-	.cta-button {
-		color: black;
-		border: 1px solid black;
-		font-size: larger;
-		font-weight: bold;
-		font-family: 'Verdana', sans-serif;
-		border-radius: 50px;
-		cursor: pointer;
-		padding: 15px 20px;
-		min-width: 18rem;
-	}
-</style>
