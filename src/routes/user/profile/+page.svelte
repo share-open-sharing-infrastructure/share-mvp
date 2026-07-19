@@ -22,7 +22,7 @@
 	let { data, form } = $props();
 
 	let selectedTransportMode = $state<TransportMode>(
-		(data.currentUser.preferredTransportMode as TransportMode | undefined) ??
+		(data.currentUserPreferences?.preferredTransportMode as TransportMode | undefined) ??
 			'bicycle'
 	);
 
@@ -121,7 +121,7 @@
 			{texts.pages.profile.title}
 		</h1>
 
-		{#if !data.currentUser.hasOnboarded}
+		{#if !data.currentUserPreferences?.hasOnboarded}
 			<a
 				href={resolve('/onboarding')}
 				class="flex items-center justify-center gap-2 w-full mb-6 py-3 px-6 min-button bg-primary-200 hover:bg-primary-300 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"

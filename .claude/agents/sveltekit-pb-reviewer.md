@@ -1,5 +1,6 @@
 ---
 name: sveltekit-pb-reviewer
+model: sonnet
 description: AllerLeih-specific code & security reviewer for SvelteKit + PocketBase changes. Use to review a diff or set of files for PocketBase filter injection, trust- & group-visibility and public-view / items_searchable leakage, auth, Svelte 5 runes correctness, deleted-account masking, realtime subscriptions, German-string placement, and test conventions. Complements the generic built-in /code-review and /security-review — invoke when you want a project-aware review of the current branch.
 tools: Read, Grep, Glob, Bash
 ---

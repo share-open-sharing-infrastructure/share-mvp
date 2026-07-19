@@ -176,6 +176,32 @@ Three new collections plus one new field on `items` (see
 | Self-join | Allowed only for public groups, only for yourself, and only as `member` (never `admin`); idempotent. |
 | Invite expired / used up | Preview and join both return `410` with a clear message. |
 
+### Benachrichtigungen bei Mitgliedschafts-Events
+
+Drei Mitgliedschafts-Ereignisse erzeugen jeweils eine In-App-Benachrichtigung **und** einen
+Web-Push (kein E-Mail-Versand — bewusst wie bei den Lending-Events):
+
+| Ereignis | Empfänger | Typ | Klickziel |
+|---|---|---|---|
+| Owner nimmt jemanden über die Mitglieder-Seite auf (`addMember`) | der/die Hinzugefügte | `group_member_added` | `/user/groups/{id}` |
+| Beitritt per Einladungslink (`join`) | Group-Owner | `group_member_joined` | `/user/groups/{id}` |
+| Owner entfernt jemanden aus der Gruppe (`removeMember`) | der/die Entfernte | `group_member_removed` | `/user/groups/{id}` |
+
+- Alle drei werden **im Frontend** ausgelöst (die auslösende Session erzeugt die Notification
+  für die/den Anderen) — der Join-Fall lädt dazu die Owner-ID per `getOne` nach, weil die
+  Join-Response sie nicht enthält.
+- **Nur echte Änderungen** benachrichtigen: der idempotente Already-Member-Pfad (doppeltes
+  Hinzufügen, erneuter Link-Klick, Owner klickt eigenen Link) und ein No-op-Remove lösen nichts
+  aus; beim Entfernen gibt es zudem keine Self-Notification (Sender ≠ Empfänger).
+- `relatedId` ist die Gruppen-ID; wer die Notification anklickt, landet auf der Gruppenseite
+  (`requireGroupMembership` lässt Owner und Mitglieder rein). Beim `group_member_removed` hat
+  der/die Entfernte keinen Zugriff mehr — der Klick auf `/user/groups/{id}` endet dann auf einer
+  **404 „Group not found"** (akzeptierter Grenzfall): `requireGroupMembership` liest die Gruppe
+  zuerst per `getOne`, was die `groups`-Viewrule für Nicht-Mitglieder verweigert → `error(404)`,
+  noch bevor der Mitgliedschafts-Redirect greifen könnte. Dasselbe vorbestehende Verhalten trifft
+  jede/n Nicht-Berechtigte/n, der/die eine private Gruppen-URL öffnet. Die Konsistenzregel
+  relatedId → url → href bleibt intakt (alle drei Gruppen-Typen → `/user/groups/{id}`).
+
 ---
 
 ## How to test it

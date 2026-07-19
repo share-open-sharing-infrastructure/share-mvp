@@ -5,6 +5,7 @@
 	import ResultsList from './ResultsList.svelte';
 	import Pagination from './Pagination.svelte';
 	import CategoryFilter from './CategoryFilter.svelte';
+	import GroupFilter from './GroupFilter.svelte';
 	import TravelTimeFilter from './TravelTimeFilter.svelte';
 	import { texts } from '$lib/texts';
 	import { ArrowsRepeatOutline } from 'flowbite-svelte-icons';
@@ -16,7 +17,7 @@
 	const { data } = $props();
 
 	const preferredMode = $derived(
-		(data.currentUser?.preferredTransportMode || undefined) as TransportMode | undefined
+		(data.currentUserPreferences?.preferredTransportMode || undefined) as TransportMode | undefined
 	);
 
 	let transportMode = $state<TransportMode | null>(null);
@@ -32,6 +33,7 @@
 			op: data.op,
 			onlyAvailable: overrides.onlyAvailable ?? data.onlyAvailable,
 			ownerType: overrides.ownerType ?? data.ownerType,
+			group: data.selectedGroup ?? undefined,
 		});
 	}
 	const filteredItems = $derived.by(() => {
@@ -72,6 +74,7 @@
 			op={data.op}
 			onlyAvailable={data.onlyAvailable}
 			ownerType={data.ownerType}
+			group={data.selectedGroup}
 		/>
 	{/if}
 {/snippet}
@@ -95,7 +98,10 @@
 		perPage={data.perPage}
 		onlyAvailable={data.onlyAvailable}
 		ownerType={data.ownerType}
+		group={data.selectedGroup}
 	/>
+
+
 
 	<hr class="border-tinte-300 max-w-100! my-2 mx-auto"/>
 
@@ -119,7 +125,17 @@
 			href={searchUrl({ ownerType: ownerTypeNext[data.ownerType as keyof typeof ownerTypeNext] })}
 			class="flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary"
 		><ArrowsRepeatOutline class="mr-1 h-4 w-4 shrink-0" />{texts.pages.search.ownerTypePrefix}: {ownerTypeLabel[data.ownerType as keyof typeof ownerTypeLabel]}</a>
-
+		{#if data.attachableGroups.length > 0}
+			<GroupFilter
+				groups={data.attachableGroups}
+				selectedGroup={data.selectedGroup}
+				q={data.q}
+				cats={data.selectedCategories}
+				op={data.op}
+				onlyAvailable={data.onlyAvailable}
+				ownerType={data.ownerType}
+			/>
+		{/if}
 	</div>
 
 	<hr class="border-tinte-300 max-w-100! my-2 mx-auto"/>
@@ -127,7 +143,7 @@
 	<TravelTimeFilter
 		{preferredMode}
 		isLoggedIn={!!data.currentUser}
-		hasQuery={data.q.length > 0 || data.selectedCategories.length > 0}
+		hasQuery={data.q.length > 0 || data.selectedCategories.length > 0 || !!data.selectedGroup}
 		items={data.items ?? []}
 		bind:transportMode
 		bind:travelTimes
@@ -135,7 +151,7 @@
 	/>
 
 	<div class="w-full items-center justify-center text-center mt-2">
-		{#if data.q || data.selectedCategories.length > 0}
+		{#if data.q || data.selectedCategories.length > 0 || data.selectedGroup}
 			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
 		{:else}
 			<h5>{texts.pages.search.newestItemsHeading}</h5>

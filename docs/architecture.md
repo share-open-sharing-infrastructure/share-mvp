@@ -46,7 +46,7 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 
 | Group | Routes | Auth required |
 |---|---|---|
-| Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/logout` | No |
+| Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/reset/confirm`, `/auth/confirm-verification`, `/auth/confirm-email-change`, `/auth/logout` | No |
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
 | API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync`, `/api/refresh` | Varies |
@@ -113,6 +113,11 @@ AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat 
 - Returns an unsubscribe function suitable for `$effect()` cleanup in Svelte 5
 - Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the connection (the httpOnly cookie is inaccessible to JS)
 
-Domain-specific reconciliation (e.g. keeping the conversation sidebar list in sync) lives next to its route — see `src/routes/conversations/conversationListRealtime.ts` — rather than in the components themselves.
+Domain-specific reconciliation lives next to its route in rune-free helper modules rather than in the components themselves:
+
+- `src/routes/conversations/conversationListRealtime.ts` — keeps the conversation sidebar list in sync.
+- `src/routes/conversations/[conversationId]/conversationRealtime.ts` — keeps a single open conversation in sync (lending status, counterfactual, and the fetch/dedupe of newly appended messages). State is read/written through accessor closures so the page keeps ownership of the reactive state.
+
+Pages hold "server-load data that a realtime handler also writes to" in a `realtimeSynced()` box (`src/lib/stores/realtimeSynced.svelte.ts`) — a writable `$derived` that re-syncs from `load()` while staying directly assignable by the handler (issue #469).
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.

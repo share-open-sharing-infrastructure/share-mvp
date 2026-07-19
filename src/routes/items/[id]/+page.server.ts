@@ -7,6 +7,7 @@ import { createNotification, sendPushToUser } from '$lib/server/notifications.js
 import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
 import { evaluateUnmetRequirements, requirementRegistry } from '$lib/server/lendingRequirements';
 import { isTrusting } from '$lib/server/trust';
+import { getUserPreferences } from '$lib/server/userPreferences';
 
 export async function load({ params, locals }) {
 	let item: ItemPublic;
@@ -152,6 +153,17 @@ export async function load({ params, locals }) {
 		}
 	}
 
+	// Transport mode lives in the user_preferences sidecar (issue #426), not on the
+	// auth record — fetch it directly (only when authenticated) rather than via the
+	// layout's `parent()`, so this already query-heavy load doesn't serialize behind it.
+	// Distinct requestKey from the layout's fetch so the two concurrent reads don't
+	// auto-cancel each other (PB keys by method+path).
+	const preferredTransportMode =
+		(currentUserId
+			? (await getUserPreferences(locals.pb, currentUserId, 'user-preferences-item'))
+					?.preferredTransportMode
+			: null) || 'bicycle';
+
 	return {
 		item,
 		PB_IMG_URL: PUBLIC_PB_URL,
@@ -162,7 +174,7 @@ export async function load({ params, locals }) {
 		viewerTrustsOwner,
 		ownerTrustsViewer,
 		ownerItemCount,
-		preferredTransportMode: locals.user?.preferredTransportMode || 'bicycle',
+		preferredTransportMode,
 		existingConversation,
 		requiresTermsAcceptance,
 		unmetRequirements,

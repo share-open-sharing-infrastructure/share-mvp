@@ -73,6 +73,7 @@ export const texts = {
 		guide: "Wie funktioniert's?",
 		privacy: 'Datenschutz',
 		tos: 'AGB',
+		app: 'App',
 	},
 
 	// Footer
@@ -102,6 +103,13 @@ export const texts = {
 		passwordsDoNotMatch: 'Die Passwörter stimmen nicht überein.',
 		invalidOrExpiredResetToken:
 			'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link zum Zurücksetzen des Passworts an.',
+		invalidOrExpiredVerificationToken:
+			'Dieser Bestätigungslink ist ungültig oder abgelaufen. Bitte fordere eine neue Bestätigungs-E-Mail an.',
+		invalidOrExpiredEmailChangeToken:
+			'Dieser Link zur Änderung der E-Mail-Adresse ist ungültig oder abgelaufen.',
+		emailChangeFailed:
+			'Die E-Mail-Adresse konnte nicht geändert werden. Der Link ist ungültig oder abgelaufen, oder das Passwort ist falsch.',
+		passwordRequired: 'Bitte gib dein aktuelles Passwort ein.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		contactEmailRequired:
@@ -129,6 +137,9 @@ export const texts = {
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
 		passwordResetConfirmed:
 			'Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt anmelden.',
+		emailVerified: 'Deine E-Mail-Adresse wurde bestätigt. Du kannst dich jetzt anmelden.',
+		emailChanged:
+			'Deine E-Mail-Adresse wurde geändert. Bitte melde dich mit deiner neuen E-Mail-Adresse an.',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
 		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
 		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
@@ -525,6 +536,116 @@ export const texts = {
 				},
 			],
 		},
+		app: {
+			title: 'AllerLeih als App',
+			intro:
+				'AllerLeih ist eine sogenannte Progressive Web App (PWA). Das heißt: Du kannst AllerLeih mit einem Tippen auf deinen Startbildschirm legen und wie eine ganz normale App nutzen – ganz ohne App-Store und ohne großen Download.',
+			installNow: 'Jetzt installieren',
+			installNowHint: 'Dein Browser unterstützt die Installation mit einem Klick.',
+			alreadyInstalled: 'AllerLeih ist auf diesem Gerät bereits als App installiert. 🎉',
+			followStepsHint:
+				'Wähle unten deinen Browser aus – dort steht Schritt für Schritt, wie du AllerLeih installierst.',
+			whatIs: {
+				title: 'Was bringt mir die App?',
+				intro:
+					'Einmal installiert, verhält sich AllerLeih wie eine App aus dem Store – nur eben direkt aus deinem Browser heraus:',
+				features: [
+					{
+						title: 'Eigenes Icon',
+						text: 'AllerLeih bekommt ein eigenes Symbol auf deinem Startbildschirm – ein Tipp und du bist drin.',
+					},
+					{
+						title: 'Benachrichtigungen',
+						text: 'Du wirst über neue Nachrichten und Anfragen informiert, auch wenn AllerLeih gerade nicht offen ist.',
+					},
+					{
+						title: 'Vollbild ohne Browserleiste',
+						text: 'Die App öffnet sich im Vollbild, ohne Adress- und Menüleiste – mehr Platz zum Stöbern.',
+					},
+					{
+						title: 'Schnell & sparsam',
+						text: 'Die Installation belegt kaum Speicherplatz und AllerLeih startet spürbar schneller.',
+					},
+					{
+						title: 'Immer aktuell',
+						text: 'Updates kommen automatisch – du musst nie etwas nachladen oder aktualisieren.',
+					},
+				],
+			},
+			howTo: {
+				title: 'So installierst du AllerLeih',
+				intro:
+					'Die Schritte unterscheiden sich je nach Gerät und Browser. Wir haben deinen Browser markiert – wenn das nicht passt, klapp einfach den passenden auf.',
+				detectedNote: 'Das ist vermutlich dein Gerät:',
+				platforms: [
+					{
+						id: 'ios',
+						label: 'iPhone / iPad (Safari)',
+						steps: [
+							'Öffne allerleih.org in Safari.',
+							'Tippe unten auf das Teilen-Symbol (Quadrat mit Pfeil nach oben).',
+							'Wähle „Zum Home-Bildschirm".',
+							'Tippe oben rechts auf „Hinzufügen".',
+						],
+					},
+					{
+						id: 'android-chrome',
+						label: 'Android (Chrome, Edge, Brave)',
+						steps: [
+							'Öffne allerleih.org im Browser.',
+							'Tippe oben rechts auf das Menü (⋮).',
+							'Wähle „App installieren" oder „Zum Startbildschirm hinzufügen".',
+							'Bestätige mit „Installieren".',
+						],
+					},
+					{
+						id: 'android-firefox',
+						label: 'Android (Firefox)',
+						steps: [
+							'Öffne allerleih.org in Firefox.',
+							'Tippe oben rechts auf das Menü (⋮).',
+							'Wähle „Zum Startbildschirm hinzufügen". Möglicherweise musst du zuerst auf „Mehr" tippen, bevor dieser Menüpunkt erscheint.',
+							'Bestätige mit „Hinzufügen".',
+						],
+					},
+					{
+						id: 'desktop-chromium',
+						label: 'Computer (Chrome, Edge)',
+						steps: [
+							'Öffne allerleih.org im Browser.',
+							'Klicke rechts in der Adressleiste auf das Installations-Symbol (Bildschirm mit Pfeil nach unten).',
+							'Alternativ: Menü (⋮) → „AllerLeih installieren".',
+							'Bestätige mit „Installieren".',
+						],
+					},
+					{
+						id: 'desktop-firefox',
+						label: 'Computer (Firefox)',
+						steps: [
+							'Firefox am Computer bietet keine Installation an.',
+							'Du kannst AllerLeih trotzdem als Lesezeichen speichern – oder nutze am Handy einen der anderen Browser.',
+						],
+					},
+					{
+						id: 'other',
+						label: 'Anderer Browser',
+						steps: [
+							'Öffne allerleih.org im Browser.',
+							'Öffne das Browser-Menü.',
+							'Suche nach „App installieren" oder „Zum Startbildschirm hinzufügen".',
+						],
+					},
+				],
+			},
+			whyNoNative: {
+				title: 'Warum gibt es (noch) keine eigene App im Store?',
+				paragraphs: [
+					'Wir sind ein kleines, gemeinnütziges Team und entwickeln AllerLeih als Open-Source-Software. Eine eigene App für iOS und Android würde bedeuten, gleich drei Programme parallel zu pflegen – das kostet Zeit und Geld, die wir lieber in die Plattform selbst stecken.',
+					'Native Apps müssen außerdem durch die Stores von Apple und Google, die Gebühren verlangen und eigene Regeln vorgeben. Als PWA bleiben wir unabhängig, und du bekommst Updates sofort, ohne etwas herunterzuladen.',
+					'Das Beste: Eine PWA fühlt sich schon heute fast wie eine echte App an – mit eigenem Icon, Vollbild und Benachrichtigungen. Sollte der Bedarf wachsen, schließen wir eine App im Store für die Zukunft nicht aus.',
+				],
+			},
+		},
 		search: {
 			title: 'Suche',
 			welcome: 'Nutze einfach die Suche oben oder',
@@ -563,6 +684,8 @@ export const texts = {
 			ownerTypeAll: 'Alle',
 			ownerTypeInstitution: 'Institutionen',
 			ownerTypePrivate: 'Personen',
+			groupFilterLabel: 'Gruppe',
+			groupFilterAll: 'Alle Gruppen',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -585,6 +708,17 @@ export const texts = {
 				backToReset: 'Neuen Link anfordern',
 			},
 		},
+		confirmVerification: {
+			title: 'E-Mail-Adresse bestätigen',
+			submitButton: 'E-Mail-Adresse bestätigen',
+			backToLogin: 'Zurück zur Anmeldung',
+		},
+		confirmEmailChange: {
+			title: 'Neue E-Mail-Adresse bestätigen',
+			passwordLabel: 'Aktuelles Passwort',
+			submitButton: 'E-Mail-Adresse bestätigen',
+			backToLogin: 'Zurück zur Anmeldung',
+		},
 		updatemail: {
 			title: 'Mailadresse ändern',
 			newEmailLabel: 'Deine neue E-Mail Adresse:',
@@ -597,6 +731,13 @@ export const texts = {
 			title: 'Unterhaltungen',
 			lending: 'Verleihen',
 			borrowing: 'Ausleihen',
+			onlyActiveLabel: 'Nur aktive Unterhaltungen zeigen',
+			// Prefix before the other user's name in a list item: "von <Verleiher:in>" when
+			// borrowing, "an <Ausleiher:in>" when lending.
+			fromUserPrefix: 'von',
+			toUserPrefix: 'an',
+			noConversations: 'Du hast noch keine Unterhaltungen.',
+			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
 			noBorrowingConversations: 'Du hast noch nichts angefragt.',
 		},
@@ -617,6 +758,8 @@ export const texts = {
 			imageMaxReached: (n: number) => `Maximal ${n} Bilder pro Gegenstand.`,
 			imageReplaceHint: 'Neue Bilder ersetzen die vorhandenen.',
 			saveFailed: 'Der Gegenstand konnte nicht gespeichert werden. Bitte versuche es erneut.',
+			validationFailed:
+				'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
 			search: 'Suchen...',
 			filterAll: 'Alle',
 			filterAvailable: 'Verfügbar',
@@ -920,6 +1063,13 @@ export const texts = {
 		handoverConfirmed: (item: string) => `Übergabe von „${item}" wurde bestätigt`,
 		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
 		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
+		requestAborted: (item: string) => `Die Anfrage für „${item}" wurde abgebrochen`,
+		groupMemberAdded: (from: string, group: string) =>
+			`${from} hat dich zur Gruppe „${group}" hinzugefügt`,
+		groupMemberJoined: (username: string, group: string) =>
+			`${username} ist deiner Gruppe „${group}" beigetreten`,
+		groupMemberRemoved: (from: string, group: string) =>
+			`${from} hat dich aus der Gruppe „${group}" entfernt`,
 	},
 
 	// Lending process
@@ -931,6 +1081,7 @@ export const texts = {
 			active: 'Unterwegs',
 			return_requested: 'Rückgabe gemeldet',
 			completed: 'Abgeschlossen',
+			aborted: 'Abgebrochen',
 		},
 		actions: {
 			accept: 'Annehmen',
@@ -938,6 +1089,13 @@ export const texts = {
 			confirmHandover: 'Übergabe bestätigen',
 			requestReturn: 'Rückgabe melden',
 			confirmReturn: 'Rückgabe bestätigen',
+			abort: 'Anfrage abbrechen',
+		},
+		// Confirmation modal shown before aborting (mirrors the delete modal).
+		confirmAbort: {
+			title: 'Anfrage abbrechen',
+			body: 'Willst du diese Anfrage wirklich abbrechen? Die andere Person wird benachrichtigt und der Gegenstand wird wieder freigegeben.',
+			confirm: 'Anfrage abbrechen',
 		},
 		statusDescription: {
 			pending: {
@@ -960,6 +1118,7 @@ export const texts = {
 			},
 			completed: 'Die Ausleihe ist abgeschlossen.',
 			rejected: 'Diese Anfrage wurde abgelehnt.',
+			aborted: 'Diese Anfrage wurde abgebrochen.',
 		},
 		goToConversation: 'Zur laufenden Anfrage →',
 		errors: {
@@ -1018,6 +1177,11 @@ export const texts = {
 			description:
 				'Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen auf AllerLeih. Tipps, FAQs und erste Schritte.',
 		},
+		app: {
+			title: 'AllerLeih als App installieren',
+			description:
+				'Lege AllerLeih als App auf deinen Startbildschirm – ohne App-Store. So installierst du die Progressive Web App Schritt für Schritt auf iPhone, Android und Computer.',
+		},
 		contact: {
 			title: 'Kontakt – AllerLeih',
 			description: 'Schreib uns! Fragen, Feedback oder Kooperationsanfragen sind herzlich willkommen.',
@@ -1048,6 +1212,14 @@ export const texts = {
 		resetConfirm: {
 			title: 'Neues Passwort festlegen – AllerLeih',
 			description: 'Lege ein neues Passwort für dein AllerLeih-Konto fest.',
+		},
+		confirmVerification: {
+			title: 'E-Mail-Adresse bestätigen – AllerLeih',
+			description: 'Bestätige deine E-Mail-Adresse, um dein AllerLeih-Konto zu aktivieren.',
+		},
+		confirmEmailChange: {
+			title: 'Neue E-Mail-Adresse bestätigen – AllerLeih',
+			description: 'Bestätige die Änderung deiner E-Mail-Adresse für dein AllerLeih-Konto.',
 		},
 		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
 		itemDetailDescription: (name: string, owner: string) =>
@@ -1083,10 +1255,8 @@ export const texts = {
 		notifDismiss: 'Später',
 		installBannerText: 'Installiere AllerLeih für das beste Erlebnis.',
 		installButton: 'Installieren',
-		installDismiss: 'Nicht jetzt',
-		installManualFirefox: 'Tippe auf ⋮ → „Zum Startbildschirm hinzufügen"',
-		installManualIos: 'Tippe auf ⬆ → „Zum Home-Bildschirm"',
-		installManualGeneric: 'Tippe im Browser-Menü auf „Zum Startbildschirm hinzufügen"',
+		installLearnMore: 'So geht’s',
+		installManualLink: 'So installierst du AllerLeih',
 	},
 
 	// Flash messages and alerts

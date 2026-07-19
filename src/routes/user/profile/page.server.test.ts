@@ -24,10 +24,15 @@ vi.mock('$lib/server/lendingRequirements', () => ({
 	getOwnerRequirements: vi.fn(() => Promise.resolve({})),
 	getRequirementSettings: vi.fn(() => []),
 }));
+vi.mock('$lib/server/userPreferences', () => ({
+	upsertUserPreferences: vi.fn(() => Promise.resolve()),
+	getUserPreferences: vi.fn(() => Promise.resolve(null)),
+}));
 
 import { actions } from './+page.server';
 import { upsertOwnContact } from '$lib/server/contacts';
 import { upsertOwnerRequirements } from '$lib/server/lendingRequirements';
+import { upsertUserPreferences } from '$lib/server/userPreferences';
 
 type SaveEvent = Parameters<typeof actions.saveProfile>[0];
 
@@ -139,6 +144,22 @@ describe('profile: saveProfile action', () => {
 		expect(update).toHaveBeenCalledTimes(1);
 		const submitted = (update.mock.calls[0] as unknown[])[1] as FormData;
 		expect(submitted.get('profileImage')).toBe('');
+	});
+
+	it('upserts a valid transport mode to user_preferences (not the users row) (#426)', async () => {
+		const { result, pb } = callSave({ username: 'validname', preferredTransportMode: 'car' });
+
+		expect(await result).toMatchObject({ success: true });
+		expect(upsertUserPreferences).toHaveBeenCalledWith(pb, USER_ID, {
+			preferredTransportMode: 'car',
+		});
+	});
+
+	it('does not touch user_preferences when no valid transport mode is submitted (#426)', async () => {
+		const { result } = callSave({ username: 'validname', preferredTransportMode: 'spaceship' });
+
+		expect(await result).toMatchObject({ success: true });
+		expect(upsertUserPreferences).not.toHaveBeenCalled();
 	});
 });
 

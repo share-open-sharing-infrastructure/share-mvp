@@ -106,11 +106,6 @@ export interface User extends PocketBaseEntity {
 	geolocation?: { lon: number; lat: number };
 
 	/**
-	 * Preferred transport mode for distance-based search
-	 */
-	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
-
-	/**
 	 * Unique invite code for this user's invite link.
 	 * Generated lazily on first profile visit if not set.
 	 */
@@ -120,11 +115,6 @@ export interface User extends PocketBaseEntity {
 	 * Foreign key: the user who invited this user (set at registration via invite link).
 	 */
 	invitedBy?: UserId;
-
-	/**
-	 * Whether the user has completed the onboarding flow.
-	 */
-	hasOnboarded?: boolean;
 
 	/**
 	 * Whether the user has verified their email address.
@@ -227,6 +217,26 @@ export interface Trust extends PocketBaseEntity {
 
 	/** Foreign key: the user being trusted (gains visibility of the truster's restricted items). */
 	trustee: UserId;
+}
+
+/**
+ * Per-user preferences sidecar (issue #426), one row per user (unique index on
+ * `user`, owner-only rules, cascadeDelete). Holds settings pulled off the `users`
+ * table so it stays lean. A missing row means "all defaults". Queried via
+ * `$lib/server/userPreferences`.
+ */
+export interface UserPreferences extends PocketBaseEntity {
+	/** Foreign key: the user these preferences belong to. */
+	user: UserId;
+
+	/** Email notifications opt-in. Absent/true = opted in; only an explicit false opts out. */
+	emailNotifications?: boolean;
+
+	/** Preferred transport mode for distance-based search / travel-time UI. */
+	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
+
+	/** Whether the user has completed the onboarding flow (drives a soft prompt, no gate). */
+	hasOnboarded?: boolean;
 }
 
 // --- ITEM ---
@@ -431,7 +441,7 @@ export interface Conversation extends PocketBaseEntity {
 	messages: Message[];
 	readByRequester: boolean;
 	readByOwner: boolean;
-	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
+	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed' | 'aborted';
 	counterfactual?: CounterfactualAnswer;
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;
@@ -449,7 +459,11 @@ export type NotificationType =
 	| 'request_rejected'
 	| 'handover_confirmed'
 	| 'return_requested'
-	| 'return_confirmed';
+	| 'return_confirmed'
+	| 'request_aborted'
+	| 'group_member_added'
+	| 'group_member_joined'
+	| 'group_member_removed';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */

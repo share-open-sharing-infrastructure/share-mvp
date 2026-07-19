@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import { PaperPlaneSolid } from 'flowbite-svelte-icons';
+	import { onMount } from 'svelte';
 
 	let {
 		chatPartner,
@@ -12,6 +13,18 @@
 		isSubmitting: boolean;
 		messageText: string;
 	} = $props();
+
+	let inputEl: HTMLInputElement | undefined = $state();
+
+	// Focus the input on mount WITHOUT scrolling it into view. The HTML `autofocus`
+	// attribute always scrolls the focused element into the viewport; on a mobile cold
+	// load (deep link / reload) the document is taller than the visual viewport
+	// (min-h-screen root shell + footer), so that scroll drags the whole page down —
+	// and the conversation layout's scroll-lock then freezes it there, revealing the
+	// footer and trapping the view (#529). `preventScroll` keeps focus without scrolling.
+	onMount(() => {
+		inputEl?.focus({ preventScroll: true });
+	});
 </script>
 
 <form
@@ -28,15 +41,14 @@
 	}}
 >
 	<input name="chatPartnerId" value={chatPartner.id} hidden />
-	<!-- svelte-ignore a11y_autofocus -->
 	<input
+		bind:this={inputEl}
 		name="messageContent"
 		type="text"
 		placeholder={texts.forms.messagePlaceholder}
 		class="flex-1 rounded-full border border-tinte-200 dark:border-tinte-700 bg-papier dark:bg-tinte-800 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-300 dark:focus:ring-primary-700 transition"
 		required
 		autocomplete="off"
-		autofocus={true}
 		bind:value={messageText}
 	/>
 	<!-- preventDefault on mousedown keeps focus in the input so tapping send doesn't blur

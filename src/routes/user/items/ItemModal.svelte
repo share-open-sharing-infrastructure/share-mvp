@@ -57,6 +57,11 @@
 	// discarding the user's input.
 	let isDirty = $state(false);
 	let imageError = $state<string | null>(null);
+	// Submit-time failure message, shown inline right above the submit button. A bottom
+	// toast can't be used here: the Flowbite modal is a native <dialog> in the browser's
+	// top layer, which paints above any z-indexed toast overlay (#522). Local (not the
+	// shared page-level `form` prop) so it's scoped to THIS modal's own submit.
+	let submitError = $state<string | null>(null);
 	let fileInput = $state<HTMLInputElement | undefined>(undefined);
 	// Newly chosen images (a multi-file field). previews mirrors selectedFiles for display.
 	let selectedFiles = $state<File[]>([]);
@@ -174,6 +179,7 @@
 		if (!isVisible) {
 			form = null;
 			imageError = null;
+			submitError = null;
 			clearPreviews();
 		}
 	});
@@ -189,17 +195,6 @@
 		}
 	}}
 >
-	{#if form?.fail}
-		<div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
-			<p>{form.message}</p>
-			{#if form?.conversationIds?.length}
-				<a
-					href={resolve(`/conversations/${form.conversationIds[0]}`)}
-					class="mt-1 inline-block font-semibold underline"
-				>{texts.pages.items.linkToConversation}</a>
-			{/if}
-		</div>
-	{/if}
 	<form
 		class="flex flex-col gap-6 md:flex-row"
 		action="?/{type === 'edit' ? 'update' : 'create'}"
@@ -208,6 +203,7 @@
 		oninput={() => (isDirty = true)}
 		onchange={() => (isDirty = true)}
 		use:enhance={async ({ formData, cancel }) => {
+			submitError = null;
 			// Multi-file field: compress each chosen image and re-append under the same
 			// `itemImage` key. SVGs skip compression (canvas can't draw them reliably);
 			// anything the browser can't decode (e.g. iPhone HEIC) surfaces a clear error.
@@ -221,7 +217,7 @@
 					const compressed = await compressImage(file);
 					formData.append('itemImage', compressed, file.name);
 				} catch {
-					imageError = texts.bulkUpload.imageFormatUnsupported;
+					submitError = texts.bulkUpload.imageFormatUnsupported;
 					cancel();
 					return;
 				}
@@ -230,6 +226,12 @@
 				if (result.type === 'success') {
 					isDirty = false;
 					isVisible = false;
+				} else if (result.type === 'failure') {
+					// Show the failure inline right above the submit button (#522). Sourced
+					// from this form's own result — not the shared page-level `form` prop,
+					// which is fanned out to every row's modal and written by unrelated
+					// inline/bulk actions — so it stays tied to *this* submit.
+					submitError = (result.data as { message?: string } | undefined)?.message ?? null;
 				}
 				await update();
 			};
@@ -444,6 +446,17 @@
 				{/if}
 			{/if}
 
+			<!-- Submit failure shown right where the user is looking (next to the button),
+				 so it's never scrolled out of view like the old top-of-modal alert (#522). -->
+			{#if submitError}
+				<p
+					class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200"
+					role="alert"
+				>
+					{submitError}
+				</p>
+			{/if}
+
 			<!-- SUBMIT BUTTON -->
 			<Button class="min-button bg-primary-200 hover:bg-primary" type="submit">
 				{type === 'edit' ? texts.buttons.save : texts.buttons.add}
@@ -453,6 +466,17 @@
 
 	<!-- DELETE BUTTON -->
 	{#if type === 'edit'}
+		<!-- Delete-blocked alert sits by the delete button (not the modal top) so it's in
+			 view right after the click, and carries the actionable conversation link. -->
+		{#if form?.fail && form?.conversationIds?.length}
+			<div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200" role="alert">
+				<p>{form.message}</p>
+				<a
+					href={resolve(`/conversations/${form.conversationIds[0]}`)}
+					class="mt-1 inline-block font-semibold underline"
+				>{texts.pages.items.linkToConversation}</a>
+			</div>
+		{/if}
 		<form
 			method="POST"
 			action="?/delete"
