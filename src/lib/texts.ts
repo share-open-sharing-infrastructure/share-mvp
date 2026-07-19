@@ -1272,6 +1272,14 @@ export const texts = {
 		availabilityHintExternal: 'Aktuelle Verfügbarkeit beim Anbieter prüfen.',
 		availabilityHintUnknown: 'Verfügbarkeit unbekannt',
 		archivedBanner: 'Dieses Angebot ist nicht mehr Teil des Bestandes.',
+		// Issue #368 — permanent "how the lending works" box on external/institution items.
+		externalLendingInfoTitle: 'So funktioniert die Ausleihe',
+		externalLendingInfoDefault:
+			'Dieser Gegenstand wird von einer Partner-Institution bereitgestellt und kann nicht direkt über AllerLeih reserviert oder gebucht werden. Für die Ausleihe wendest du dich direkt an die Institution — meist brauchst du dort ein eigenes Konto, und die Abholung erfolgt vor Ort. Über den Button gelangst du zum Angebot der Institution mit allen Details.',
+		// Self-service editor (profile form, institutions only).
+		externalLendingInfoEditLabel: 'Ausleih-Hinweis',
+		externalLendingInfoEditHint:
+			'Erkläre, wie Interessierte einen deiner externen Gegenstände ausleihen können (z. B. eigenes Konto nötig, Abholung vor Ort). Dieser Text ist für alle öffentlich sichtbar – gib hier keine vertraulichen Daten ein. Bleibt das Feld leer, zeigen wir einen allgemeinen Standardtext. Max. 1000 Zeichen.',
 		imagePlaceholder: 'Foto folgt',
 		importNavLabel: 'Bestand importieren',
 		importTitle: 'Bestand als CSV importieren',

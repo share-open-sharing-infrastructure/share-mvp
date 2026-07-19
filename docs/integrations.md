@@ -99,6 +99,12 @@ The **core never imports a concrete integration.** Concrete integrations import 
 | `owner` | `owner` | The institution's `users` id. |
 | `trusteesOnly` | `trusteesOnly` | Synced items are typically `false`. |
 
+> **Lending explanation is per institution, not per item (#368).** The "how borrowing works"
+> text shown on an external item's detail page lives on the owner's `users` record
+> (`externalLendingInfo`), maintained by the institution in its profile — it is **not** part of
+> `MappedItem`, so importing/refresh never carries it. When empty, the item page shows a shared
+> default text.
+
 ---
 
 ## Triggering & operations
