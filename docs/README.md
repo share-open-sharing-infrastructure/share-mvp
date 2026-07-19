@@ -10,6 +10,7 @@ Documentation for [AllerLeih](https://github.com/share-open-sharing-infrastructu
 - [integrations.md](integrations.md) — how partner catalogues are ingested (leihbackend, WINBIAP) and how to add a new integration.
 - [leihbackend-integration-spec.md](leihbackend-integration-spec.md) — leihbackend-specific reference: its public API surface and the (not-yet-built) Phase 2 reservation-forwarding plan.
 - [best-practices.md](best-practices.md) — SvelteKit form patterns and Svelte 5 reactivity conventions used throughout the codebase.
+- [design-system.md](design-system.md) — theme tokens, the shared `Button` component (variants, sizes, loading pattern), and the `[data-theme]` white-labeling mechanism.
 - [testing-strategy.md](testing-strategy.md) — testing approach (Vitest unit tests), CI integration, and example patterns.
 - [text-management.md](text-management.md) — centralized German UI string system (`src/lib/texts.ts`) and full category reference.
 - [operations/onboarding-institutional-partner.md](operations/onboarding-institutional-partner.md) — step-by-step checklist for onboarding a new institutional partner (library, lending shop), including connecting an automatic integration.

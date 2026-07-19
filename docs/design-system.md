@@ -1,0 +1,137 @@
+# Design System
+
+How UI styling is centralized in AllerLeih: the theme token palette, the shared `Button`
+component, and the white-labeling mechanism. The goal is that every interactive element
+shares one look & feel, design changes happen in one place, and the whole platform can be
+re-skinned for other operators without touching markup.
+
+## Theme tokens
+
+The entire color palette lives as Tailwind CSS v4 `@theme` variables in `src/app.css`
+(there is no `tailwind.config.js` — Tailwind v4 is configured in CSS):
+
+| Token | Purpose |
+|---|---|
+| `primary` (+ 50–900 scale) | Brand color; default button fill, links |
+| `secondary` (+ scale) | Secondary brand color |
+| `accent` (+ scale) | Attention color: prompts, highlights |
+| `tinte` (+ scale) | Neutral ink scale: text, borders, subtle surfaces |
+| `danger` | Destructive actions |
+| `safety` | Positive/success signals |
+| `papier`, `sand` | Background surfaces |
+
+Rules:
+
+- **Components use only these tokens** — never `gray-*`/`blue-*` Tailwind default colors
+  and never hex values in markup. If a shade is missing, add it to `@theme`.
+- Dark mode uses the class strategy (`.dark` on an ancestor) via the `dark:` variant.
+
+## Button
+
+**Component:** `src/lib/components/ui/Button.svelte` — the single way to render a button
+or button-styled link in the app.
+
+```svelte
+<script lang="ts">
+	import Button from '$lib/components/ui/Button.svelte';
+	import { PenOutline } from 'flowbite-svelte-icons';
+</script>
+
+<Button type="submit" loading={submitting}>{texts.actions.save}</Button>
+<Button variant="secondary" onclick={cancel}>{texts.actions.cancel}</Button>
+<Button href="/items/{item.id}" size="lg" fullWidth>{texts.items.view}</Button>
+<Button variant="ghost" size="icon" aria-label={texts.actions.edit}>
+	<PenOutline class="h-4 w-4" />
+</Button>
+```
+
+### Props
+
+| Prop | Values | Default | Notes |
+|---|---|---|---|
+| `variant` | `primary` · `secondary` · `ghost` · `accent` · `danger` · `link` | `primary` | See table below |
+| `size` | `sm` · `md` · `lg` · `icon` · `icon-sm` | `md` | `icon*` sizes are square; require `aria-label` |
+| `loading` | `boolean` | `false` | Shows spinner, disables the button, sets `aria-busy` |
+| `fullWidth` | `boolean` | `false` | Adds `w-full` |
+| `href` | `string` | — | Renders an `<a>` instead of `<button>` (disabled → `aria-disabled` + `pointer-events-none`) |
+| `type` | native | `button` | Defaults to `button` (not `submit`) to prevent accidental form submits |
+| `class` | `string` | — | **Layout-only** — see policy below |
+
+All other native attributes (`onclick`, `name`, `value`, `formaction`, `aria-*`, `title`,
+`target`, `rel`, …) pass through typed.
+
+### Variants — when to use which
+
+| Variant | Look | Use for |
+|---|---|---|
+| `primary` | Soft `primary-200` fill, ink border, saturates on hover | The main action of a view (submit, CTA) |
+| `secondary` | Outlined, neutral | Cancel / secondary actions next to a primary |
+| `ghost` | Text-only, no border | Tertiary actions, icon buttons, dismiss |
+| `accent` | Solid accent, white text | Prompts/toasts that must stand out (PWA install, onboarding nudge) |
+| `danger` | Solid `danger`, white text | Destructive actions (delete account, remove) |
+| `link` | Inline text link styling | Button-in-prose, "show more", nav-like actions |
+
+### The `class` policy: layout only
+
+`class` exists so call sites can position the button — **never restyle it**:
+
+- ✅ Allowed: width/flex (`w-full sm:w-auto`, `shrink-0`), spacing (`mt-4`, `me-2`),
+  positioning (`fixed right-10 bottom-10 z-50`).
+- ❌ Not allowed: colors, borders, radii, font, padding overrides. If a design need isn't
+  covered, extend the variant/size maps in `Button.svelte` so every button benefits.
+
+There is deliberately no class-merging library: appended conflicting utilities do not
+reliably win (Tailwind specificity is stylesheet order, not class order), so color
+overrides via `class` will misbehave — another reason not to try.
+
+### Loading & disabled
+
+Bind your `use:enhance` submitting flag to `loading` — that is the unified pattern:
+
+```svelte
+<form method="POST" action="?/save" use:enhance={() => {
+	submitting = true;
+	return async ({ update }) => { await update(); submitting = false; };
+}}>
+	<Button type="submit" loading={submitting}>{texts.actions.save}</Button>
+</form>
+```
+
+`loading` handles the spinner, `disabled`, and `aria-busy` — no ad-hoc spinners or
+`disabled:opacity-*` classes at call sites.
+
+### Icons
+
+Put icon components (from `flowbite-svelte-icons`, `…Outline` set) directly in the
+children snippet — the button's `gap-2` spaces them; no `mr-2` needed. Icon-only buttons
+(`size="icon"` / `"icon-sm"`) must set `aria-label` with a German string from
+`src/lib/texts.ts`.
+
+### What is *not* a Button
+
+- **Filter chips / toggles** (search filters, travel-time chips): stateful
+  selected/unselected controls — a different component family (future `ui/Chip.svelte`).
+- **`SparkleButton`**: intentionally special feedback CTA; already consumes
+  `var(--color-*)` tokens, so it white-labels correctly.
+- **Landing-page hero CTA**: marketing styling, scoped locally in `src/routes/+page.svelte`.
+
+## White-Labeling
+
+Because Tailwind v4 emits every `@theme` token as a `:root` CSS custom property and
+utilities reference them via `var()`, re-skinning the platform is a pure CSS override —
+no markup or component changes:
+
+1. Add a `[data-theme='<operator>']` block in `src/app.css` next to the `@theme` block,
+   overriding the `--color-*` tokens the operator wants changed (at minimum the shades
+   the design system uses: base + `200`/`400`/`600` of `primary`, plus `accent` if used).
+2. Set `data-theme="<operator>"` on `<html>` in `src/app.html` (or dynamically on a
+   wrapper element).
+
+Every component built on the tokens — including `Button` — re-skins automatically. An
+`example` block in `app.css` documents the pattern.
+
+## Adding new design-system components
+
+New shared primitives (`Chip`, `Input`, …) go in `src/lib/components/ui/`, follow the
+same shape (typed variant/size maps of token-only Tailwind classes, Svelte 5 runes,
+snippet children), and get documented here.

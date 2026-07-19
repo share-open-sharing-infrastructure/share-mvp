@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 	import SeoHead from '$lib/components/SeoHead.svelte';
@@ -19,9 +18,10 @@
 			email: texts.names.mainContactMail,
 		},
 	});
-	// Assembled from two parts because a literal closing tag would end this script block.
+	// Assembled from parts because literal script tags inside this string confuse
+	// the Svelte script-block parsing (svelte2tsx) or would end the block early.
 	const jsonLdScriptTag =
-		`<script type="application/ld+json">${jsonLd}<` + `/script>`;
+		'<' + 'script type="application/ld+json">' + jsonLd + '<' + '/script>';
 
 	// Hero call-to-action buttons, rendered in order.
 	const ctaButtons = [
@@ -68,8 +68,10 @@
 	] as const;
 
 	// Shared styling — adjust the look here without touching the markup below.
+	// `cta-button` is landing-only marketing styling, defined in the style block below;
+	// app buttons use $lib/components/ui/Button.svelte instead (docs/design-system.md).
 	const styles = {
-		ctaButton: 'cta-button w-full sm:w-auto',
+		ctaButton: 'cta-button inline-flex items-center justify-center w-full sm:w-auto',
 		card: 'bg-white rounded-2xl shadow-sm border border-primary-200 p-6 flex flex-col gap-3',
 		cardTitle: 'text-xl font-bold text-tinte-900 ',
 		cardBody: 'text-base text-tinte-500',
@@ -105,11 +107,12 @@
 				</p>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
-						<Button href={cta.href} class="{styles.ctaButton} {cta.color}">
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- cta.href is resolve()d in the ctaButtons array; the rule can't see through the constant -->
+						<a href={cta.href} class="{styles.ctaButton} {cta.color}">
 							<span class="relative flex w-full items-center justify-center">
 								{cta.label}
 							</span>
-						</Button>
+						</a>
 					{/each}
 				</div>
 			</div>
@@ -146,3 +149,18 @@
 		</div>
 	</section>
 </div>
+
+<style>
+	/* Landing-hero marketing CTA — deliberately outside the app design system. */
+	.cta-button {
+		color: black;
+		border: 1px solid black;
+		font-size: larger;
+		font-weight: bold;
+		font-family: 'Verdana', sans-serif;
+		border-radius: 50px;
+		cursor: pointer;
+		padding: 15px 20px;
+		min-width: 18rem;
+	}
+</style>

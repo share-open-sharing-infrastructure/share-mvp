@@ -3,7 +3,7 @@
 	import { texts } from '$lib/texts';
 	import { Toggle } from 'flowbite-svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import OnboardingButton from './OnboardingButton.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import {
 		QuestionCircleSolid,
 	} from 'flowbite-svelte-icons';
@@ -152,12 +152,8 @@
 		</div>
 
 		<div class="flex flex-col gap-2 pt-2">
-			<OnboardingButton type="submit"
-				>{texts.onboarding.buttons.next}</OnboardingButton
-			>
-			<OnboardingButton type="submit" variant="ghost"
-				>{texts.onboarding.buttons.skip}</OnboardingButton
-			>
+			<Button type="submit" size="lg" fullWidth>{texts.onboarding.buttons.next}</Button>
+			<Button type="submit" variant="ghost" fullWidth>{texts.onboarding.buttons.skip}</Button>
 		</div>
 	</form>
 </div>

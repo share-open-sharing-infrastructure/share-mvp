@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import ShareButton from '$lib/components/ShareButton.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { UserAddOutline } from 'flowbite-svelte-icons';
 
 	interface Props {
@@ -22,15 +23,15 @@
 </div>
 
 <div class="flex flex-col gap-3">
-	<a href={resolve('/search')} class="min-button py-2 px-6 bg-primary-200 hover:bg-primary flex items-center justify-center gap-2">
+	<Button href={resolve('/search')} size="lg" fullWidth>
 		<span>🔍</span>
 		<span>{texts.onboarding.done.searchCta}</span>
-	</a>
+	</Button>
 
-	<a href={resolve('/user/items')} class="min-button py-2 px-6 bg-accent-200 hover:bg-accent flex items-center justify-center gap-2">
+	<Button href={resolve('/user/items')} variant="accent" size="lg" fullWidth>
 		<span>📦</span>
 		<span>{texts.onboarding.done.uploadCta}</span>
-	</a>
+	</Button>
 
 	<div class="flex justify-center">
 		<ShareButton
