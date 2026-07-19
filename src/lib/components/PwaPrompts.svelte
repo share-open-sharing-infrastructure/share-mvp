@@ -1,26 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { texts } from '$lib/texts';
+	import { pwaInstall } from '$lib/stores/pwaInstall.svelte';
 	import { BellOutline, MobilePhoneOutline, CloseOutline } from 'flowbite-svelte-icons';
-
-	interface BeforeInstallPromptEvent extends Event {
-		prompt(): Promise<void>;
-		userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-	}
 
 	let {
 		loggedIn,
 		onNotificationGranted,
-		installPromptEvent,
 	}: {
 		loggedIn: boolean;
 		onNotificationGranted: () => Promise<void>;
-		installPromptEvent: BeforeInstallPromptEvent | null;
 	} = $props();
+
+	const appPath = resolve('/misc/app');
 
 	let showNotifBanner = $state(false);
 	let showInstallBanner = $state(false);
-	let installManualHint = $state<string | null>(null);
 
 	function isMobileDevice(): boolean {
 		return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
@@ -29,7 +26,7 @@
 	// React when Chrome delivers the install prompt after mount
 	$effect(() => {
 		if (
-			installPromptEvent &&
+			pwaInstall.event &&
 			isMobileDevice() &&
 			!window.matchMedia('(display-mode: standalone)').matches &&
 			!localStorage.getItem('pwa-install-dismissed')
@@ -58,17 +55,10 @@
 			return;
 		}
 
-		// If beforeinstallprompt hasn't fired after 3 s, show the manual hint
+		// Show the banner even if beforeinstallprompt never fires: without the event it
+		// just links to /misc/app, where the per-browser install steps live. Give Chrome
+		// 3 s to fire first so users there get the one-tap "Installieren" button instead.
 		const timer = setTimeout(() => {
-			if (installPromptEvent) return; // Chrome fired it — handled by $effect
-			const ua = navigator.userAgent;
-			if (/Firefox/i.test(ua)) {
-				installManualHint = texts.pwa.installManualFirefox;
-			} else if (/iPhone|iPad/i.test(ua)) {
-				installManualHint = texts.pwa.installManualIos;
-			} else {
-				installManualHint = texts.pwa.installManualGeneric;
-			}
 			showInstallBanner = true;
 		}, 3000);
 
@@ -97,11 +87,11 @@
 	// ── Install handlers ──────────────────────────────────────────────────────
 
 	async function triggerInstall() {
-		if (!installPromptEvent) return;
-		await installPromptEvent.prompt();
-		await installPromptEvent.userChoice;
-		showInstallBanner = false;
-		localStorage.setItem('pwa-install-dismissed', '1');
+		try {
+			await pwaInstall.prompt();
+		} finally {
+			dismissInstallBanner();
+		}
 	}
 
 	function dismissInstallBanner() {
@@ -135,8 +125,8 @@
 		</div>
 	</div>
 
-<!-- Install banner — shown only when notification banner is gone -->
-{:else if showInstallBanner}
+<!-- Install banner — shown only when notification banner is gone and not already on the App page -->
+{:else if showInstallBanner && page.url.pathname !== appPath}
 	<div
 		class="fixed bottom-10 right-4 z-40 w-72 rounded-xl shadow-lg bg-sand border border-tinte-200 p-4 flex flex-col gap-3"
 	>
@@ -149,25 +139,29 @@
 				<CloseOutline class="h-4 w-4" />
 			</button>
 		</div>
-		{#if installManualHint}
-			<p class="text-xs text-tinte-500 bg-papier rounded px-2 py-1">{installManualHint}</p>
-		{/if}
-		<div class="flex gap-2 justify-end">
-			{#if !installManualHint}
-				<button
+		<div class="flex gap-2 justify-end items-center">
+			{#if pwaInstall.canPrompt}
+				<a
+					href={appPath}
 					onclick={dismissInstallBanner}
-					class="text-xs text-tinte-400 hover:text-tinte-600 px-2 py-1"
+					class="text-xs text-tinte-400 hover:text-accent px-2 py-1"
 				>
-					{texts.pwa.installDismiss}
-				</button>
-			{/if}
-			{#if installPromptEvent}
+					{texts.pwa.installLearnMore}
+				</a>
 				<button
 					onclick={triggerInstall}
 					class="text-xs font-semibold text-white bg-accent hover:bg-accent/90 rounded-lg px-3 py-1"
 				>
 					{texts.pwa.installButton}
 				</button>
+			{:else}
+				<a
+					href={appPath}
+					onclick={dismissInstallBanner}
+					class="text-xs font-semibold text-accent hover:underline px-2 py-1"
+				>
+					{texts.pwa.installManualLink} →
+				</a>
 			{/if}
 		</div>
 	</div>

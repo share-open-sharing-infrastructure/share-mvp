@@ -142,6 +142,8 @@ describe('user items: create action (multi-image)', () => {
 
 		expect(result?.status).toBe(400);
 		expect(failData(result).missingFields?.imageIsMissing).toBe(true);
+		// The message the modal surfaces inline by the submit button (#522) — pin it down.
+		expect(failData(result).message).toBe(texts.pages.items.validationFailed);
 		expect(createMock).not.toHaveBeenCalled();
 	});
 
@@ -260,6 +262,7 @@ describe('user items: create/update validation & guards', () => {
 
 		expect(result?.status).toBe(400);
 		expect(failData(result).missingFields?.nameIsMissing).toBe(true);
+		expect(failData(result).message).toBe(texts.pages.items.validationFailed);
 		expect(updateMock).not.toHaveBeenCalled();
 	});
 

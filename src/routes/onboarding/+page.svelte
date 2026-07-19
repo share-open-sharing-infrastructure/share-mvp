@@ -73,7 +73,7 @@
 				initialGeolocation={data.geolocation}
 			/>
 		{:else if step === 6}
-			<StepTransportMode onNext={next} preferredTransportMode={data.currentUser.preferredTransportMode} />
+			<StepTransportMode onNext={next} preferredTransportMode={data.currentUserPreferences?.preferredTransportMode} />
 		{:else if step === 7}
 			<StepContact onNext={next} currentUser={data.contact} />
 		{:else if step === 8}

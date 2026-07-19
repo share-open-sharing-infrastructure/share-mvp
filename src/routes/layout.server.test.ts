@@ -6,12 +6,14 @@ type LoadEvent = Parameters<typeof load>[0];
 
 describe('Root layout load', () => {
 	let getList: ReturnType<typeof vi.fn>;
+	let prefsGetFirstListItem: ReturnType<typeof vi.fn>;
 	let depends: ReturnType<typeof vi.fn>;
 	let filter: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
 		vi.clearAllMocks();
 		getList = vi.fn().mockResolvedValue({ totalItems: 3 });
+		prefsGetFirstListItem = vi.fn().mockResolvedValue({ hasOnboarded: true, preferredTransportMode: 'car' });
 		depends = vi.fn();
 		filter = vi.fn((raw: string) => raw);
 	});
@@ -22,7 +24,10 @@ describe('Root layout load', () => {
 			locals: {
 				user,
 				pb: {
-					collection: vi.fn(() => ({ getList })),
+					// notifications → getList; user_preferences → getFirstListItem (issue #426).
+					collection: vi.fn((name: string) =>
+						name === 'user_preferences' ? { getFirstListItem: prefsGetFirstListItem } : { getList }
+					),
 					filter,
 					authStore: { token: 'jwt-token' },
 				},
@@ -59,5 +64,22 @@ describe('Root layout load', () => {
 		// and that the dependency is still registered even when the query throws
 		expect(getList).toHaveBeenCalled();
 		expect(depends).toHaveBeenCalledWith(NOTIFICATIONS_DEP);
+	});
+
+	it('surfaces the user preferences with a distinct requestKey (issue #426)', async () => {
+		const result = await load(buildEvent({ id: 'user1' }));
+		expect(result.currentUserPreferences).toEqual({ hasOnboarded: true, preferredTransportMode: 'car' });
+		// Distinct requestKey so the concurrent item/profile fetch of the same collection
+		// doesn't auto-cancel this one under PocketBase SSR.
+		expect(prefsGetFirstListItem).toHaveBeenCalledTimes(1);
+		expect(prefsGetFirstListItem).toHaveBeenCalledWith('user = {:userId}', {
+			requestKey: 'user-preferences-layout',
+		});
+	});
+
+	it('does not query preferences and returns null for a guest (issue #426)', async () => {
+		const result = await load(buildEvent(null));
+		expect(result.currentUserPreferences).toBeNull();
+		expect(prefsGetFirstListItem).not.toHaveBeenCalled();
 	});
 });

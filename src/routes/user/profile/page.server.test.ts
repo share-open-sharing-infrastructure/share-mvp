@@ -24,22 +24,27 @@ vi.mock('$lib/server/lendingRequirements', () => ({
 	getOwnerRequirements: vi.fn(() => Promise.resolve({})),
 	getRequirementSettings: vi.fn(() => []),
 }));
+vi.mock('$lib/server/userPreferences', () => ({
+	upsertUserPreferences: vi.fn(() => Promise.resolve()),
+	getUserPreferences: vi.fn(() => Promise.resolve(null)),
+}));
 
 import { actions } from './+page.server';
 import { upsertOwnContact } from '$lib/server/contacts';
 import { upsertOwnerRequirements } from '$lib/server/lendingRequirements';
+import { upsertUserPreferences } from '$lib/server/userPreferences';
 
 type SaveEvent = Parameters<typeof actions.saveProfile>[0];
 
 const USER_ID = 'u1';
 
-function callSave(fields: Record<string, string>) {
+function callSave(fields: Record<string, string>, opts: { isInstitution?: boolean } = {}) {
 	const fd = new FormData();
 	for (const [k, v] of Object.entries(fields)) fd.set(k, v);
 	const update = vi.fn().mockResolvedValue({});
 	const pb = { collection: vi.fn(() => ({ update })) };
 	const result = actions.saveProfile({
-		locals: { pb, user: { id: USER_ID } },
+		locals: { pb, user: { id: USER_ID, isInstitution: opts.isInstitution ?? false } },
 		request: { formData: vi.fn().mockResolvedValue(fd) },
 	} as unknown as SaveEvent);
 	return { result, update, pb };
@@ -139,6 +144,22 @@ describe('profile: saveProfile action', () => {
 		expect(update).toHaveBeenCalledTimes(1);
 		const submitted = (update.mock.calls[0] as unknown[])[1] as FormData;
 		expect(submitted.get('profileImage')).toBe('');
+	});
+
+	it('upserts a valid transport mode to user_preferences (not the users row) (#426)', async () => {
+		const { result, pb } = callSave({ username: 'validname', preferredTransportMode: 'car' });
+
+		expect(await result).toMatchObject({ success: true });
+		expect(upsertUserPreferences).toHaveBeenCalledWith(pb, USER_ID, {
+			preferredTransportMode: 'car',
+		});
+	});
+
+	it('does not touch user_preferences when no valid transport mode is submitted (#426)', async () => {
+		const { result } = callSave({ username: 'validname', preferredTransportMode: 'spaceship' });
+
+		expect(await result).toMatchObject({ success: true });
+		expect(upsertUserPreferences).not.toHaveBeenCalled();
 	});
 });
 
@@ -246,5 +267,50 @@ describe('profile saveProfile — off-platform-contact opt-in (#438)', () => {
 		expect(sent.get('contactEmail')).toBe('');
 		expect(sent.get('contactUrl')).toBe('');
 		expect(sent.get('contactPublic')).toBe('false');
+	});
+});
+
+describe('profile saveProfile — external-item lending info (#368)', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('persists a trimmed externalLendingInfo for an institution', async () => {
+		const { result, update } = callSave(
+			{ externalLendingInfo: '  Abholung vor Ort im Rathaus.  ' },
+			{ isInstitution: true }
+		);
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('externalLendingInfo')).toBe('Abholung vor Ort im Rathaus.');
+	});
+
+	it('writes an empty string when an institution clears the field (falls back to default)', async () => {
+		const { result, update } = callSave({ externalLendingInfo: '   ' }, { isInstitution: true });
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('externalLendingInfo')).toBe('');
+	});
+
+	it('caps the stored text at 1000 characters', async () => {
+		const { result, update } = callSave(
+			{ externalLendingInfo: 'x'.repeat(1500) },
+			{ isInstitution: true }
+		);
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect((sent.get('externalLendingInfo') as string).length).toBe(1000);
+	});
+
+	it('never writes externalLendingInfo for a non-institution account', async () => {
+		const { result, update } = callSave(
+			{ externalLendingInfo: 'sollte ignoriert werden' },
+			{ isInstitution: false }
+		);
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('externalLendingInfo')).toBeNull();
 	});
 });

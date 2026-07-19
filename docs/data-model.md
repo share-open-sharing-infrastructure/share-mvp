@@ -20,12 +20,11 @@ erDiagram
         bool isInstitution
         string profileImage
         string bio
-        string preferredTransportMode "foot|bicycle|car"
-        bool hasOnboarded
         string contactMethod "issue #438 — ''|email|link: item CTA becomes a mailto:/external link instead of the in-app flow"
         string contactEmail "dedicated contact address (contactMethod=email) — raw value never in a *_public view"
         string contactUrl "external lending-form link (contactMethod=link) — raw value never in a *_public view"
         bool contactPublic "issue #438 — when true the contact CTA is shown to unauthenticated browsing too"
+        string externalLendingInfo "issue #368 — per-institution 'how borrowing works' text for external items (max 1000); public help text surfaced via items_public.ownerExternalLendingInfo"
         string inviteCode
         string invitedBy FK
         string leihbackendUrl "leihbackend instance origin, for institutional sync"
@@ -91,6 +90,16 @@ erDiagram
     }
 
     USER 1 to zero or one USER_CONTACT: "contact handles (private)"
+
+    USER_PREFERENCES{
+        string id PK
+        User user FK "owner only — unique"
+        bool emailNotifications "issue #233 — opt-out; absent/true = opted in"
+        string preferredTransportMode "issue #426 — foot|bicycle|car (was on users)"
+        bool hasOnboarded "issue #426 — onboarding-complete flag (was on users)"
+    }
+
+    USER 1 to zero or one USER_PREFERENCES: "settings (private)"
 
     ITEM{
         string id PK
@@ -282,6 +291,30 @@ Coordinates are **not** stored on `users` — they live in a separate `user_geol
 
 Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller (a `trusts` row `{truster: owner, trustee: caller}`) — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
 
+## user_preferences
+
+Per-user settings sidecar (issue #233 introduced it for `emailNotifications`; issue #426 pulled
+`preferredTransportMode` and `hasOnboarded` off the `users` table into it, so `users` stays lean).
+One row per user — a `UNIQUE` index on `user`, relation `cascadeDelete: true`. All API rules
+(`list`/`view`/`create`/`update`/`delete`) are `@request.auth.id = user`, so a user only ever
+reads/writes **their own** row. A **missing row means "all defaults"** (`emailNotifications` opted
+in, `preferredTransportMode` falls back to `bicycle` in the UI, `hasOnboarded` falsy → the
+onboarding prompt shows), so every reader must tolerate a null row. Fields:
+
+- `emailNotifications` (bool) — notification-email opt-out; absent/`true` = opted in, only an
+  explicit `false` opts out. Read server-side by the backend `notification.pb.js` / `digest.pb.js`
+  hooks (keyed on the `user` relation).
+- `preferredTransportMode` (`foot`|`bicycle`|`car`) — seeds the ORS travel-time UI on search and
+  item-detail.
+- `hasOnboarded` (bool) — drives a soft onboarding prompt (there is **no** redirect gate).
+
+Frontend access goes through the `getUserPreferences` / `upsertUserPreferences` helpers in
+`$lib/server/userPreferences.ts` (the row is surfaced app-wide as `currentUserPreferences` from the
+root `+layout.server.ts`). `NotificationSettings.svelte` additionally reads/writes
+`emailNotifications` client-side; the helper patches fields individually so the two paths coexist.
+The row is hard-deleted on account anonymization (personal-only data). No `*_public` view exposes
+any of these fields.
+
 ## trusts
 
 The trust graph is an n:m **join collection** (not the old self-referencing `users.trusts[]`
@@ -421,6 +454,14 @@ account. Each is `NULL` unless the owner set `contactPublic = true` **and** the 
 `*_public`/`items_searchable` view, so the members-only case (`contactPublic = false`) never
 leaks — logged-in viewers read those from the base `users` record instead.
 
+For issue #368 the view also surfaces the owner's per-institution **lending explanation** as
+`ownerExternalLendingInfo` (from `users.externalLendingInfo`) — the item-detail page shows it in
+a permanent "how borrowing works" box on external/institution items. Unlike the `ownerContact*`
+columns there is **no** `contactPublic` gate (it is a public help text, no PII); it is masked to
+`NULL` with the same condition as the item's own content columns, so a restricted item's help
+text never rides along. `externalLendingInfo` is **not** added to `users_public` or
+`items_searchable`.
+
 ### `items_searchable` — audience-filtered, unmasked
 
 Used by the search page (and the profile and sitemap, to stay leak-free). Its
@@ -442,6 +483,7 @@ conversation access never leaks an item into search/profile/sitemap.
 | userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (no trust data is exposed — trust lives in the separate `trusts` collection) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 | ownerContactMethod, ownerContactEmail, ownerContactUrl | SQL expression on `users` | `items_public` only — the owner's off-platform contact (#438), NULL unless `contactPublic` **and** the item is unmasked; raw contact fields never selected |
+| ownerExternalLendingInfo | SQL expression on `users` | `items_public` only — the owner's per-institution lending explanation (#368), masked to `NULL` for restricted items (no `contactPublic` gate; public help text); not in `users_public`/`items_searchable` |
 
 > **A view returns only the columns in its `viewQuery` SELECT — nothing else.** The TS
 > `ItemPublic` type extends `PocketBaseEntity`, so it *declares* `id`, `created` and `updated`,

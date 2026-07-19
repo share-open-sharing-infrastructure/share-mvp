@@ -100,15 +100,20 @@ export interface User extends PocketBaseEntity {
 	contactPublic?: boolean;
 
 	/**
+	 * Issue #368: per-institution free-text explanation of how to borrow this owner's
+	 * external/integrated items (owner has `isInstitution = true`, item carries an
+	 * `externalUrl`). Belongs to the institution (one process explanation, not per item),
+	 * self-maintained via the profile form. Public help text (no PII); reaches
+	 * unauthenticated browsing via `items_public.ownerExternalLendingInfo` (masked like the
+	 * item's content columns). Empty → the UI shows a shared default text. Max 1000 chars.
+	 */
+	externalLendingInfo?: string;
+
+	/**
 	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
 	 * Zero value {"lon":0,"lat":0} means no location set (Null Island).
 	 */
 	geolocation?: { lon: number; lat: number };
-
-	/**
-	 * Preferred transport mode for distance-based search
-	 */
-	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
 
 	/**
 	 * Unique invite code for this user's invite link.
@@ -120,11 +125,6 @@ export interface User extends PocketBaseEntity {
 	 * Foreign key: the user who invited this user (set at registration via invite link).
 	 */
 	invitedBy?: UserId;
-
-	/**
-	 * Whether the user has completed the onboarding flow.
-	 */
-	hasOnboarded?: boolean;
 
 	/**
 	 * Whether the user has verified their email address.
@@ -229,6 +229,26 @@ export interface Trust extends PocketBaseEntity {
 	trustee: UserId;
 }
 
+/**
+ * Per-user preferences sidecar (issue #426), one row per user (unique index on
+ * `user`, owner-only rules, cascadeDelete). Holds settings pulled off the `users`
+ * table so it stays lean. A missing row means "all defaults". Queried via
+ * `$lib/server/userPreferences`.
+ */
+export interface UserPreferences extends PocketBaseEntity {
+	/** Foreign key: the user these preferences belong to. */
+	user: UserId;
+
+	/** Email notifications opt-in. Absent/true = opted in; only an explicit false opts out. */
+	emailNotifications?: boolean;
+
+	/** Preferred transport mode for distance-based search / travel-time UI. */
+	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
+
+	/** Whether the user has completed the onboarding flow (drives a soft prompt, no gate). */
+	hasOnboarded?: boolean;
+}
+
 // --- ITEM ---
 
 export interface Item extends PocketBaseEntity {
@@ -328,6 +348,14 @@ export interface ItemPublic extends PocketBaseEntity {
 	ownerContactMethod?: '' | 'email' | 'link' | null;
 	ownerContactEmail?: string | null;
 	ownerContactUrl?: string | null;
+	/**
+	 * Issue #368 — the owner's per-institution "how the lending works" explanation
+	 * (`users.externalLendingInfo`), surfaced to UNauthenticated browsing. Bound to the
+	 * view SELECT: masked to NULL for restricted (trustees-only/group-shared) items, like
+	 * the item's own content columns. No `contactPublic` gate (public help text, no PII).
+	 * NULL when the owner set no text.
+	 */
+	ownerExternalLendingInfo?: string | null;
 }
 
 // --- GROUPS ---
@@ -431,7 +459,7 @@ export interface Conversation extends PocketBaseEntity {
 	messages: Message[];
 	readByRequester: boolean;
 	readByOwner: boolean;
-	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
+	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed' | 'aborted';
 	counterfactual?: CounterfactualAnswer;
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;
@@ -449,7 +477,11 @@ export type NotificationType =
 	| 'request_rejected'
 	| 'handover_confirmed'
 	| 'return_requested'
-	| 'return_confirmed';
+	| 'return_confirmed'
+	| 'request_aborted'
+	| 'group_member_added'
+	| 'group_member_joined'
+	| 'group_member_removed';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
