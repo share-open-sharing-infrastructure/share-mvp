@@ -78,7 +78,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 - **Model:** `pixtral-12b-2409` (multimodal vision)
 - **Input:** Base64-encoded image + MIME type
 - **Output:** `{ name: string, description: string, categories: string[] }`
-- **Prompt language:** German; instructs the model to name and describe the item, and select up to 3 categories from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`
+- **Prompt language:** German; instructs the model to name and describe the item, and select up to 3 categories from the fixed `ITEM_CATEGORIES` list in `src/lib/categories.ts`
 - **Rate limiting:** In-memory per-user limit of 300 requests/hour — resets on server restart, not safe for multi-instance deployments
 - **Data residency:** Mistral processes data in France under EU law; this is disclosed in the bulk upload UI
 

@@ -78,7 +78,8 @@ These prevent the most common bugs/security issues here — follow them without 
   `removeTrust` for mutations); never re-implement trust filtering client-side. Unauthenticated
   browsing uses the `*_public` views — never leak email, raw coordinates, trusted items, or
   trust-graph data through them.
-- **All user-facing strings go in `src/lib/texts.ts`** (+ `ITEM_CATEGORIES`), never inline.
+- **All user-facing strings go in `src/lib/texts.ts`**, never inline. Item categories live
+  in `src/lib/categories.ts` (fixed across instances; change via `docs/data-model.md` → "Item categories").
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).

@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { MISTRAL_API_KEY } from '$env/static/private';
 import { Mistral } from '@mistralai/mistralai';
-import { ITEM_CATEGORIES } from '$lib/texts';
+import { ITEM_CATEGORIES } from '$lib/categories';
 
 const client = new Mistral({ apiKey: MISTRAL_API_KEY });
 const imageRecognitionPrompt = `Du bist ein Assistent für eine offene Verleih-Plattform. Analysiere das Bild und erkenne den dargestellten Gegenstand. Antworte NUR mit einem JSON-Objekt ohne Markdown-Formatierung in der folgenden Form:

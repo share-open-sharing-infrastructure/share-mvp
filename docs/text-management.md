@@ -8,22 +8,9 @@ AllerLeih uses a centralized text management system to keep all German UI string
 
 ### Central Text Repository
 
-`src/lib/texts.ts` exports two things: the `ITEM_CATEGORIES` constant and the `texts` object. The top-level keys of `texts` map to functional areas of the app:
+`src/lib/texts.ts` exports the `texts` object. (The item categories are domain data, not UI copy — they live in `src/lib/categories.ts`; see `docs/data-model.md` → "Item categories".) The top-level keys of `texts` map to functional areas of the app:
 
 ```typescript
-export const ITEM_CATEGORIES = [
-    'Freizeit und Sport',
-    'Werkzeug und Garten',
-    'Reisen und Outdoor',
-    'Bücher',
-    'Spiele',
-    'Küche',
-    'Ton und Licht',
-    'Elektronik',
-    'Für Kinder',
-    'Sonstiges',
-] as const;
-
 export const texts = {
     names: { ... },           // App display name, contact email
     auth: { ... },            // Login, registration, password reset
@@ -90,7 +77,6 @@ return fail(400, {
 
 | Key | Contents |
 |---|---|
-| `ITEM_CATEGORIES` | Exported const array: the 10 fixed item categories used for filtering and AI prompts |
 | `names` | App display name, contact email |
 | `auth` | Login/register/reset form labels and placeholders |
 | `nav` | Navigation menu items |

@@ -1,5 +1,6 @@
 import Papa from 'papaparse';
-import { ITEM_CATEGORIES, texts } from '$lib/texts';
+import { texts } from '$lib/texts';
+import { ITEM_CATEGORIES } from '$lib/categories';
 import type { MappedItem } from '../core/types';
 
 const csvErrors = texts.institutional.importCsvErrors;

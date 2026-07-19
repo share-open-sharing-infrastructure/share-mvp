@@ -1,5 +1,5 @@
 import type PocketBase from 'pocketbase';
-import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import { ITEM_CATEGORIES, type ItemCategory } from '$lib/categories';
 import type { Item } from '$lib/types/models';
 import { getAttachableGroups } from '$lib/server/groups';
 
