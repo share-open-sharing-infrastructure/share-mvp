@@ -5,6 +5,7 @@ import type { User } from '$lib/types/models';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
 import { addTrust } from '$lib/server/trust';
 import { normalizeUsername, validateUsername } from '$lib/utils/username';
+import { normalizeEmail } from '$lib/server/email';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -59,7 +60,9 @@ export function validateRegistrationForm(data: FormData): ValidationResult {
 
 	return {
 		ok: true,
-		email: email.toString(),
+		// Normalize here so the created record, the immediate authWithPassword,
+		// verification mail, and newsletter signup all inherit the same form (#557).
+		email: normalizeEmail(email.toString()),
 		password: password.toString(),
 		username,
 		subscribeToNewsletter: data.get('subscribeToNewsletter') === 'on',

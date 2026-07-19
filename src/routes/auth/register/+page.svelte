@@ -91,6 +91,9 @@
 						placeholder={texts.auth.emailPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
 						autocomplete="email"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
 						required
 					/>
 				</Label>

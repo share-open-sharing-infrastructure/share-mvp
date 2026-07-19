@@ -41,6 +41,9 @@
 					type="email"
 					placeholder="deine@mail.de"
 					class="focus:border-primary-700 focus:ring-primary-700"
+					autocapitalize="none"
+					autocorrect="off"
+					spellcheck="false"
 					required
 				/>
 			</div>

@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { normalizeEmail } from '$lib/server/email';
 
 export async function load({ locals, url }) {
 	if (locals.user) {
@@ -28,7 +29,7 @@ export const actions = {
 		try {
 			await locals.pb
 				.collection('users')
-				.authWithPassword(email.toString(), password.toString()); // TODO: Is this encrypted / does it need to be?
+				.authWithPassword(normalizeEmail(email.toString()), password.toString()); // TODO: Is this encrypted / does it need to be?
 		} catch (err) {
 			// if error is "failed to authenticate", display error message
 			console.error('Failed to login', err);
