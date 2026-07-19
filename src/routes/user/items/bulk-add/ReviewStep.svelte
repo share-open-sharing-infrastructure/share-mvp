@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button, Checkbox, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
+	import { Checkbox, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { texts, ITEM_CATEGORIES } from '$lib/texts';
 	import { compressImage } from '$lib/utils/imageUtils';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -243,18 +244,13 @@
 	{/if}
 
 	<div class="mt-6 flex justify-end gap-3">
-		<Button type="button" color="alternative" class="rounded-full hover:cursor-pointer" onclick={onBack}>Zurück</Button>
+		<Button variant="secondary" onclick={onBack}>Zurück</Button>
 		<Button
 			type="submit"
-			class="bg-primary-400 rounded-full hover:bg-primary hover:cursor-pointer"
-			disabled={submitting || drafts.length === 0 || !allAnalyzed}
+			loading={submitting}
+			disabled={drafts.length === 0 || !allAnalyzed}
 		>
-			{#if submitting}
-				<Spinner size="4" class="mr-2" />
-				{texts.bulkUpload.creating}
-			{:else}
-				{texts.bulkUpload.createAll(drafts.length)}
-			{/if}
+			{submitting ? texts.bulkUpload.creating : texts.bulkUpload.createAll(drafts.length)}
 		</Button>
 	</div>
 </form>

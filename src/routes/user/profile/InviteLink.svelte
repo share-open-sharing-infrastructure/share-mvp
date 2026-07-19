@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { ClipboardOutline, CheckOutline } from 'flowbite-svelte-icons';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let { inviteUrl }: { inviteUrl: string } = $props();
 
@@ -27,17 +28,18 @@
 			value={inviteUrl}
 			class="w-full px-3 py-2 pr-10 bg-tinte-100 border border-tinte-200 rounded-lg text-sm text-tinte-600 cursor-default dark:bg-tinte-700 dark:border-tinte-600 dark:text-tinte-400 truncate"
 		/>
-		<button
-			type="button"
+		<Button
+			variant="ghost"
+			size="icon-sm"
 			onclick={copyInviteLink}
 			aria-label={texts.pages.invite.copyButton}
-			class="absolute right-2 top-1/2 -translate-y-1/2 text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200 transition-colors"
+			class="absolute right-2 top-1/2 -translate-y-1/2"
 		>
 			{#if inviteCopied}
-				<CheckOutline class="h-5 w-5 text-green-500 cursor-pointer" />
+				<CheckOutline class="h-5 w-5 text-safety" />
 			{:else}
-				<ClipboardOutline class="h-5 w-5 cursor-pointer" />
+				<ClipboardOutline class="h-5 w-5" />
 			{/if}
-		</button>
+		</Button>
 	</div>
 </div>

@@ -7,7 +7,7 @@
 
 	interface Props
 		extends HTMLButtonAttributes,
-			Pick<HTMLAnchorAttributes, 'href' | 'target' | 'rel'> {
+			Pick<HTMLAnchorAttributes, 'href' | 'target' | 'rel' | 'download'> {
 		children: Snippet;
 		variant?: Variant;
 		size?: Size;

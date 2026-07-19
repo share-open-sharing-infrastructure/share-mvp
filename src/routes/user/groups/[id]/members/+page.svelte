@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Input } from 'flowbite-svelte';
+	import { Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -123,7 +124,8 @@
 									<input type="hidden" name="membershipId" value={m.membershipId} />
 									<Button
 										type="submit"
-										class="bg-accent-200 hover:bg-danger min-button text-sm"
+										variant="danger"
+										size="sm"
 										onclick={(e) => {
 											const msg = m.hasActiveLending
 												? texts.groups.activeLendingWarning(m.username) + '\n\n' + texts.groups.removeMemberConfirm(m.username)
@@ -149,7 +151,7 @@
 				<input type="hidden" name="groupId" value={data.group.id} />
 				<Button
 					type="submit"
-					class="bg-accent-200 hover:bg-danger min-button"
+					variant="danger"
 					onclick={(e) => {
 						if (!confirm(texts.groups.leaveConfirm)) e.preventDefault();
 					}}

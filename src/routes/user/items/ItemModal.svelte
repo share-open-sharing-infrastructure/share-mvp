@@ -1,7 +1,6 @@
 <script lang="ts">
 	import {
 		Modal,
-		Button,
 		Input,
 		Label,
 		Helper,
@@ -10,6 +9,7 @@
 		Textarea,
 		Checkbox,
 	} from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
@@ -458,7 +458,7 @@
 			{/if}
 
 			<!-- SUBMIT BUTTON -->
-			<Button class="min-button bg-primary-200 hover:bg-primary" type="submit">
+			<Button type="submit">
 				{type === 'edit' ? texts.buttons.save : texts.buttons.add}
 			</Button>
 		</div>
@@ -492,9 +492,7 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button class="min-button bg-accent-200 hover:bg-danger" type="submit"
-				>{texts.buttons.delete}</Button
-			>
+			<Button variant="danger" type="submit">{texts.buttons.delete}</Button>
 		</form>
 	{/if}
 </Modal>

@@ -4,6 +4,7 @@
 	import { matchesItemSearch, isAvailable } from '$lib/utils/itemSearch';
 	import type { ItemPublic } from '$lib/types/models';
 	import ItemCard from '../../../search/ItemCard.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
 		items: ItemPublic[];
@@ -136,13 +137,9 @@
 			</div>
 			{#if displayedItems.length > pagedItems.length}
 				<div class="flex justify-center pt-2">
-					<button
-						type="button"
-						onclick={() => (visibleCount += PAGE_SIZE)}
-						class="rounded-full border border-tinte-300 bg-papier px-4 py-2 text-sm font-medium text-tinte-700 transition-colors hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-200 dark:hover:border-primary dark:hover:text-primary"
-					>
+					<Button variant="secondary" onclick={() => (visibleCount += PAGE_SIZE)}>
 						{texts.groups.showMore(displayedItems.length - pagedItems.length)}
-					</button>
+					</Button>
 				</div>
 			{/if}
 		{/if}

@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Accordion, AccordionItem, Button } from 'flowbite-svelte';
+	import { Accordion, AccordionItem } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { texts } from '$lib/texts';
 
 	type DraftStatus = 'pending' | 'analyzing' | 'done' | 'error';
@@ -153,8 +155,8 @@
 </Accordion>
 
 <div class="mt-6 flex justify-end gap-3">
-	<Button href="/user/items" color="alternative" class="rounded-full">Zurück</Button>
-	<Button onclick={onContinue} class="bg-primary-400 rounded-full hover:bg-primary hover:cursor-pointer" disabled={drafts.length === 0}>
+	<Button variant="secondary" href={resolve('/user/items')}>Zurück</Button>
+	<Button onclick={onContinue} disabled={drafts.length === 0}>
 		{texts.bulkUpload.continue}
 	</Button>
 </div>

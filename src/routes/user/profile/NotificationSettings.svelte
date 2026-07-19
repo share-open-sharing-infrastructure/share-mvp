@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { Toggle } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { onMount } from 'svelte';
 	import {
 		setupPushSubscription,
@@ -192,14 +193,14 @@
 				/>
 			</div>
 			{#if isPushSubscribed}
-				<button
-					type="button"
+				<Button
+					variant="link"
 					onclick={deactivateAllNotifications}
 					disabled={busy}
-					class="mt-3 text-sm font-medium text-primary hover:text-primary-800 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:text-primary-400 dark:hover:text-primary-300"
+					class="mt-3"
 				>
 					{texts.pages.profile.notifications.deactivateAllDevices}
-				</button>
+				</Button>
 			{/if}
 		{/if}
 
