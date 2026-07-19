@@ -47,6 +47,24 @@ describe('Button', () => {
 		expect(renderButton({ size: 'xl' })).toContain('px-10 py-4 text-lg');
 	});
 
+	it('color swaps the primary variant fill without changing border/text', () => {
+		const accent = renderButton({ color: 'accent' });
+		expect(accent).toContain('bg-accent-200');
+		expect(accent).toContain('hover:bg-accent');
+		expect(accent).toContain('border-tinte-900');
+		expect(accent).toContain('text-tinte-900');
+
+		const secondary = renderButton({ color: 'secondary' });
+		expect(secondary).toContain('bg-secondary-200');
+		expect(secondary).toContain('hover:bg-secondary');
+	});
+
+	it('color has no effect on non-primary variants', () => {
+		const html = renderButton({ variant: 'danger', color: 'accent' });
+		expect(html).not.toContain('bg-accent-200');
+		expect(html).toContain('bg-danger');
+	});
+
 	it('link variant has no padding box, only text size', () => {
 		const html = renderButton({ variant: 'link', size: 'md' });
 		expect(html).not.toContain('px-4 py-2');

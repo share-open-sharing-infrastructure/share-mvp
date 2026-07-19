@@ -24,17 +24,18 @@
 	const jsonLdScriptTag =
 		'<' + 'script type="application/ld+json">' + jsonLd + '<' + '/script>';
 
-	// Hero call-to-action buttons, rendered in order.
+	// Hero call-to-action buttons, rendered in order. Same shape (variant="primary"),
+	// distinguished only by hue.
 	const ctaButtons = [
 		{
 			href: resolve('/search'),
 			label: landingTexts.ctaButtonSearch,
-			variant: 'primary' as const,
+			color: 'primary' as const,
 		},
 		{
 			href: resolve('/user/items'),
 			label: landingTexts.ctaButtonUpload,
-			variant: 'accent' as const,
+			color: 'accent' as const,
 		},
 	];
 
@@ -105,7 +106,7 @@
 				</p>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
-						<Button href={cta.href} variant={cta.variant} size="xl" class="w-full sm:w-auto">
+						<Button href={cta.href} color={cta.color} size="xl" class="w-full sm:w-auto">
 							{cta.label}
 						</Button>
 					{/each}

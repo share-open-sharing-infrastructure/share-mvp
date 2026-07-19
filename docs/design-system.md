@@ -43,6 +43,7 @@ or button-styled link in the app.
 <Button variant="ghost" size="icon" aria-label={texts.actions.edit}>
 	<PenOutline class="h-4 w-4" />
 </Button>
+<Button color="accent" size="xl">{texts.pages.landing.ctaButtonUpload}</Button>
 ```
 
 ### Props
@@ -51,6 +52,7 @@ or button-styled link in the app.
 |---|---|---|---|
 | `variant` | `primary` · `secondary` · `ghost` · `accent` · `danger` · `link` | `primary` | See table below |
 | `size` | `sm` · `md` · `lg` · `xl` · `icon` · `icon-sm` | `md` | `icon*` sizes are square; require `aria-label`. `xl` is for rare, prominent single CTAs (landing hero) — reach for `lg` first |
+| `color` | `primary` · `secondary` · `accent` | `primary` | **Only affects `variant="primary"`.** Swaps the soft-fill hue only — border/text/shape stay identical. For cases like two side-by-side CTAs that should look the same except for color (see landing page). Has no effect on other variants — `danger`/`accent`/etc. keep their fixed, semantic colors. |
 | `loading` | `boolean` | `false` | Shows spinner, disables the button, sets `aria-busy` |
 | `fullWidth` | `boolean` | `false` | Adds `w-full` |
 | `href` | `string` | — | Renders an `<a>` instead of `<button>` (disabled → `aria-disabled` + `pointer-events-none`) |
@@ -64,7 +66,7 @@ All other native attributes (`onclick`, `name`, `value`, `formaction`, `aria-*`,
 
 | Variant | Look | Use for |
 |---|---|---|
-| `primary` | Soft `primary-200` fill, ink border, saturates on hover | The main action of a view (submit, CTA) |
+| `primary` | Soft `primary-200` fill, ink border, saturates on hover | The main action of a view (submit, CTA). Use `color` if you need the same soft-fill shape in `secondary`/`accent` hue instead — don't reach for `accent` variant just for the color, since that variant is a different (solid/loud) shape reserved for banners/prompts. |
 | `secondary` | Outlined, neutral | Cancel / secondary actions next to a primary |
 | `ghost` | Text-only, no border | Tertiary actions, icon buttons, dismiss |
 | `accent` | Solid accent, white text | Prompts/toasts that must stand out (PWA install, onboarding nudge) |
