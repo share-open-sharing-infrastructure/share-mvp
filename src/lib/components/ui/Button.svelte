@@ -39,7 +39,11 @@
 	}: Props = $props();
 
 	const base =
-		'inline-flex items-center justify-center gap-2 rounded-full transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+		'transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+	// The pill "box": every variant except `link` gets it. `link` renders inline
+	// inside prose (e.g. the register consent line), so it must stay a plain
+	// inline element rather than an atomic inline-flex box.
+	const box = 'inline-flex items-center justify-center gap-2 rounded-full';
 
 	const variants: Record<Variant, string> = {
 		primary: 'border border-tinte-900 text-tinte-900',
@@ -90,6 +94,7 @@
 	const classes = $derived(
 		[
 			base,
+			variant !== 'link' && box,
 			variants[variant],
 			variant === 'primary' && primaryFills[color],
 			variant === 'link' ? linkSizes[size] : sizes[size],
@@ -107,6 +112,7 @@
 		{href}
 		class="{classes}{isDisabled ? ' pointer-events-none opacity-60' : ''}"
 		aria-disabled={isDisabled || undefined}
+		tabindex={isDisabled ? -1 : undefined}
 		{...anchorRest}
 	>
 		{@render children()}

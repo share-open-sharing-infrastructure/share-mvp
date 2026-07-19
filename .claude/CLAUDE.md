@@ -81,7 +81,7 @@ These prevent the most common bugs/security issues here — follow them without 
 - **All user-facing strings go in `src/lib/texts.ts`** (+ `ITEM_CATEGORIES`), never inline.
 - **Never hand-style a button or import Flowbite `Button`** — use
   `$lib/components/ui/Button.svelte` (variants `primary|secondary|ghost|accent|danger|link`,
-  sizes `sm|md|lg|icon|icon-sm`, `loading`, `href`). Pass only layout classes (width/margin/
+  sizes `sm|md|lg|xl|icon|icon-sm`, `loading`, `href`). Pass only layout classes (width/margin/
   position) via `class`, never colors. → `docs/design-system.md`
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.
