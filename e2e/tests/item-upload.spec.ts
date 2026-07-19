@@ -46,7 +46,7 @@ test.describe('item modal', () => {
 		await dialog
 			.getByRole('textbox', { name: 'Beschreibung:' })
 			.fill('Playwright-Testgegenstand');
-		await dialog.locator('input[name="itemImage"]').setInputFiles({
+		await dialog.locator('input#itemImage').setInputFiles({
 			name: 'item.png',
 			mimeType: 'image/png',
 			buffer: PNG_1x1,
