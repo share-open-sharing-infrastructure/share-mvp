@@ -46,7 +46,7 @@
 		form
 	}: Props = $props();
 
-	let isAvailable = $derived(editingItem?.status === 'available' ? true : false);
+	let isAvailable = $state(true);
 
 	let selectedCategories = $state<string[]>([]);
 	let selectedGroups = $state<string[]>([]);
@@ -85,6 +85,7 @@
 			selectedCategories = [...(editingItem?.categories ?? [])];
 			selectedGroups = [...(editingItem?.groups ?? [])];
 			trusteesOn = editingItem?.trusteesOnly ?? true;
+			isAvailable = editingItem?.status === 'available';
 			isDirty = false;
 			imageError = null;
 			// Seed the existing-image gallery so editing an item with several photos shows
@@ -93,12 +94,6 @@
 				pbUrl && editingItem?.image?.length ? itemOwnFileUrls(pbUrl, editingItem) : [];
 		}
 	});
-
-	function toggleGroup(id: string, checked: boolean) {
-		selectedGroups = checked
-			? [...selectedGroups, id]
-			: selectedGroups.filter((g) => g !== id);
-	}
 
 	// Trustees and groups are independent audiences; an item is public only when
 	// neither is set.
@@ -109,19 +104,6 @@
 	let anyPublicGroupSelected = $derived(
 		groups.some((g) => g.isPublic && selectedGroups.includes(g.id))
 	);
-
-	function handleCategoryChange(e: Event) {
-		const cb = e.target as HTMLInputElement;
-		if (cb.checked) {
-			if (selectedCategories.length >= 3) {
-				cb.checked = false;
-				return;
-			}
-			selectedCategories = [...selectedCategories, cb.value];
-		} else {
-			selectedCategories = selectedCategories.filter((c) => c !== cb.value);
-		}
-	}
 
 	// Keep in sync with the `items.image` file field's maxSelect in the backend
 	// migration (1783500000_items_image_multi.js). Exceeding it makes PocketBase reject
@@ -342,9 +324,8 @@
 							<Checkbox
 								name="categories"
 								value={cat}
-								checked={selectedCategories.includes(cat)}
+								bind:group={selectedCategories}
 								disabled={selectedCategories.length >= 3 && !selectedCategories.includes(cat)}
-								onchange={handleCategoryChange}
 							/>
 							{cat}
 						</Label>
@@ -398,8 +379,7 @@
 								<Checkbox
 									name="groups"
 									value={g.id}
-									checked={selectedGroups.includes(g.id)}
-									onchange={(e) => toggleGroup(g.id, (e.target as HTMLInputElement).checked)}
+									bind:group={selectedGroups}
 								/>
 								{g.name}
 								{#if g.isPublic}
