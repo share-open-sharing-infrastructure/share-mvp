@@ -50,7 +50,7 @@ or button-styled link in the app.
 | Prop | Values | Default | Notes |
 |---|---|---|---|
 | `variant` | `primary` · `secondary` · `ghost` · `accent` · `danger` · `link` | `primary` | See table below |
-| `size` | `sm` · `md` · `lg` · `icon` · `icon-sm` | `md` | `icon*` sizes are square; require `aria-label` |
+| `size` | `sm` · `md` · `lg` · `xl` · `icon` · `icon-sm` | `md` | `icon*` sizes are square; require `aria-label`. `xl` is for rare, prominent single CTAs (landing hero) — reach for `lg` first |
 | `loading` | `boolean` | `false` | Shows spinner, disables the button, sets `aria-busy` |
 | `fullWidth` | `boolean` | `false` | Adds `w-full` |
 | `href` | `string` | — | Renders an `<a>` instead of `<button>` (disabled → `aria-disabled` + `pointer-events-none`) |

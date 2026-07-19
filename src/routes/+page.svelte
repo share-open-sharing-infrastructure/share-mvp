@@ -105,7 +105,7 @@
 				</p>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
-						<Button href={cta.href} variant={cta.variant} size="lg" class="w-full sm:w-auto">
+						<Button href={cta.href} variant={cta.variant} size="xl" class="w-full sm:w-auto">
 							{cta.label}
 						</Button>
 					{/each}

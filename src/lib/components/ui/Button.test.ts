@@ -44,6 +44,7 @@ describe('Button', () => {
 		expect(renderButton({ variant: 'danger' })).toContain('bg-danger');
 		expect(renderButton({ variant: 'secondary' })).toContain('border-tinte-300');
 		expect(renderButton({ size: 'icon' })).toContain('h-9 w-9');
+		expect(renderButton({ size: 'xl' })).toContain('px-10 py-4 text-lg');
 	});
 
 	it('link variant has no padding box, only text size', () => {
