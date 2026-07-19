@@ -2,6 +2,7 @@
 	import { texts } from '$lib/texts';
 	import { GithubSolid, LinkedinSolid, EnvelopeOutline } from 'flowbite-svelte-icons';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	const members = [
 		{
@@ -119,15 +120,14 @@
 				{texts.names.app} ist quelloffen. Das heißt, jeder kann den Quellcode einsehen, mitentwickeln und selber nutzen. Den Code findest du auf
 				GitHub. Wir freuen uns über Beiträge, Feedback und Unterstützung!
 			</p>
-			<a
+			<Button
 				href="https://github.com/share-open-sharing-infrastructure/share-mvp"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="inline-flex items-center gap-2 rounded-lg bg-tinte-900 px-5 py-2.5 font-medium text-white hover:opacity-80"
 			>
 				<GithubSolid class="h-5 w-5" />
 				Auf GitHub ansehen
-			</a>
+			</Button>
 		</div>
 	</div>
 </section>

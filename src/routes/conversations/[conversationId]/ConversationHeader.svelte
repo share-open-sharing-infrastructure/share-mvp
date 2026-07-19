@@ -6,6 +6,7 @@
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import type { User, Conversation } from '$lib/types/models';
 	import telegramLogo from '$lib/images/telegram-logo.svg';
 	import signalLogo from '$lib/images/Signal-Logo-White.svg';
@@ -63,13 +64,15 @@
 
 <div class="flex items-center gap-3 px-4 py-3 border-b border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 shrink-0 min-h-15">
 	<!-- Back button (mobile only) -->
-	<a
+	<Button
+		variant="ghost"
+		size="icon-sm"
 		href={resolve('/conversations')}
-		class="md:hidden p-1.5 rounded-lg text-gray-500 hover:text-gray-800 transition-colors shrink-0"
 		aria-label="Zurück"
+		class="md:hidden"
 	>
 		<ChevronLeftOutline class="w-5 h-5" />
-	</a>
+	</Button>
 
 	<!-- Item info (left) -->
 	<a
@@ -152,13 +155,9 @@
 
 		<!-- Delete button -->
 		{#if onDelete}
-			<button
-				onclick={onDelete}
-				class="p-1.5 rounded-lg text-tinte-400 hover:text-accent-500 hover:bg-accent-50 dark:hover:bg-accent-900 transition-colors"
-				aria-label="Anfrage löschen"
-			>
+			<Button variant="ghost" size="icon-sm" onclick={onDelete} aria-label="Anfrage löschen">
 				<TrashBinSolid class="w-4 h-4" />
-			</button>
+			</Button>
 		{/if}
 	</div>
 </div>

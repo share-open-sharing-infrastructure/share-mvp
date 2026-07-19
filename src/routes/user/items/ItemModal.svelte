@@ -244,16 +244,17 @@
 					{#each previews as p, i (p.url)}
 						<div class="relative">
 							<img src={p.url} alt={p.name} class="h-24 w-full rounded-md object-cover" />
-							<button
-								type="button"
+							<Button
+								variant="danger"
+								size="icon-sm"
 								onclick={() => removeFileAt(i)}
 								aria-label={texts.pages.items.imageRemove}
-								class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow hover:bg-red-600"
+								class="absolute -right-2 -top-2"
 							>
 								<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
 								</svg>
-							</button>
+							</Button>
 						</div>
 					{/each}
 				</div>
