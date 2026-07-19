@@ -39,7 +39,7 @@
 	}: Props = $props();
 
 	const base =
-		'inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+		'inline-flex items-center justify-center gap-2 rounded-full transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 	const variants: Record<Variant, string> = {
 		primary: 'border border-tinte-900 text-tinte-900',
@@ -58,21 +58,27 @@
 		accent: 'bg-accent-200 hover:bg-accent'
 	};
 
+	// font-weight lives here (not in `base`) so each size sets exactly one weight
+	// utility — two conflicting font-weight classes in the same string would leave
+	// the winner to stylesheet order, not DOM order (same reason `class` overrides
+	// can't reliably beat a variant's color, see docs/design-system.md).
 	const sizes: Record<Size, string> = {
-		sm: 'px-3 py-1.5 text-xs',
-		md: 'px-4 py-2 text-sm',
-		lg: 'px-6 py-2.5 text-base',
-		xl: 'px-10 py-4 text-lg',
-		icon: 'h-9 w-9',
-		'icon-sm': 'h-7 w-7'
+		sm: 'px-3 py-1.5 text-xs font-semibold',
+		md: 'px-4 py-2 text-sm font-semibold',
+		lg: 'px-6 py-2.5 text-base font-semibold',
+		// Wider + bolder: xl is for rare, prominent single CTAs (landing hero) that
+		// should read as a headline action, not just a scaled-up default button.
+		xl: 'px-12 py-4 text-xl font-bold min-w-[18rem]',
+		icon: 'h-9 w-9 font-semibold',
+		'icon-sm': 'h-7 w-7 font-semibold'
 	};
 
 	// 'link' renders inline with surrounding text: text size only, no padding box
 	const linkSizes: Record<Size, string> = {
-		sm: 'text-xs',
-		md: 'text-sm',
-		lg: 'text-base',
-		xl: 'text-lg',
+		sm: 'text-xs font-semibold',
+		md: 'text-sm font-semibold',
+		lg: 'text-base font-semibold',
+		xl: 'text-lg font-bold',
 		icon: '',
 		'icon-sm': ''
 	};
