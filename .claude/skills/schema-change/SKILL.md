@@ -73,8 +73,9 @@ migration adds it — and it usually shouldn't be. Confirm, don't assume:
   fields must be set; optional ones get a sensible test default). See the `seed-scenario` skill.
 - **Search** `src/routes/search/searchFilter.ts` — if the field is searchable/filterable, add it to
   `buildSearchFilter()` / `buildItemFilter()` (these are typed against `ItemPublic`).
-- **Texts** `src/lib/texts.ts` — German label for any user-visible field (and `ITEM_CATEGORIES` if
-  it's a category enum). Never inline strings.
+- **Texts** `src/lib/texts.ts` — German label for any user-visible field. Never inline strings.
+  (Item categories are separate domain data in `src/lib/categories.ts`; changing them follows
+  `docs/data-model.md` → "Item categories".)
 - **Create/edit route** (e.g. `src/routes/items/[id]/`) — add the field to the form + the action's
   validate/save logic if it's user-editable.
 - **Lending requirements** — if the field is a borrower gate, register it in both

@@ -9,6 +9,7 @@
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
 	import ContactSection from './ContactSection.svelte';
+	import ExternalLendingInfoSection from './ExternalLendingInfoSection.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
@@ -333,6 +334,14 @@
 							contactUrl={data.currentUser.contactUrl ?? ''}
 							contactPublic={data.currentUser.contactPublic ?? false}
 						/>
+
+						<!-- Ausleih-Hinweis for external items (#368): institutions only. Saves via
+						     the shared save bar. -->
+						{#if data.currentUser.isInstitution}
+							<ExternalLendingInfoSection
+								externalLendingInfo={data.currentUser.externalLendingInfo ?? ''}
+							/>
+						{/if}
 					</section>
 
 					<!-- VERLEIH-VORAUSSETZUNGEN: lender-defined borrower requirements (#443).

@@ -18,12 +18,13 @@ erDiagram
         string city
         bool verified
         bool isInstitution
-        string profileImage
+        string profileImage "thumb whitelist 100x100 (avatar chips)"
         string bio
         string contactMethod "issue #438 — ''|email|link: item CTA becomes a mailto:/external link instead of the in-app flow"
         string contactEmail "dedicated contact address (contactMethod=email) — raw value never in a *_public view"
         string contactUrl "external lending-form link (contactMethod=link) — raw value never in a *_public view"
         bool contactPublic "issue #438 — when true the contact CTA is shown to unauthenticated browsing too"
+        string externalLendingInfo "issue #368 — per-institution 'how borrowing works' text for external items (max 1000); public help text surfaced via items_public.ownerExternalLendingInfo"
         string inviteCode
         string invitedBy FK
         string leihbackendUrl "leihbackend instance origin, for institutional sync"
@@ -103,7 +104,7 @@ erDiagram
     ITEM{
         string id PK
         string name
-        string image "filename(s) in PocketBase Files (multi-select, cover first)"
+        string image "filename(s) in PocketBase Files (multi-select, cover first; thumb whitelist 0x300)"
         string externalImgUrl "for imported items"
         string description
         string place
@@ -282,6 +283,45 @@ erDiagram
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
 ```
 
+## Item categories
+
+The item categories are **fixed and shared across all AllerLeih instances** (decision
+recorded in issue #472; no per-instance configuration, no `categories` collection).
+There is exactly one authoritative definition per repo:
+
+- **Frontend:** `ITEM_CATEGORIES` in `src/lib/categories.ts` (array order = UI display
+  order for filter pills and form checkboxes; `ItemCategory` is derived from it).
+- **Backend:** the `items` collection's `categories` select-field values, enforced by
+  `allerleih-backend/tests/categories.test.mjs`, which hardcodes the canonical list once
+  and fails when the live schema (base collection or the `items_public` /
+  `items_searchable` view metadata) drifts from it.
+
+The `items_public` / `items_searchable` view SQL does **not** embed the category values —
+the views pass `items.categories` through and PocketBase re-derives the view field
+metadata from the base column, so view migrations are never needed for a category change.
+
+### Changing the category list
+
+1. **Backend migration** (use the backend `new-migration` skill): update the `items`
+   collection's `categories` select `values` (fetch collection → mutate field → save;
+   mirror in `down`). Never edit historical snapshot migrations
+   (`1781551136_collections_snapshot.js` and the original view-creation migrations —
+   their embedded copies are inert). If a value is removed or renamed, plan a data
+   migration for existing item records.
+2. **Backend test:** update `CANONICAL_CATEGORIES` in `tests/categories.test.mjs`; run
+   `npm test`.
+3. **Frontend:** update `ITEM_CATEGORIES` in `src/lib/categories.ts` (order = UI order).
+4. **Compile-time ripples** surface via `npm run check`:
+   `src/lib/utils/categoryPlaceholder.ts` needs a placeholder SVG per category, and
+   `CATEGORY_MAP` in `src/lib/server/integrations/leihbackend/mapping.ts` must be
+   reviewed (`'Sonstiges'` is its fallback and must always exist).
+5. **Auto-following consumers** need no edits: the AI prompt in
+   `src/routes/api/analyze-item/+server.ts` joins the array, and the WINBIAP CSV import
+   validates against it.
+6. **Docs:** update this section and any doc citing the values or their count.
+7. Run both suites: frontend `npm run check && npm run lint && npx vitest run`; backend
+   `npm test`.
+
 ## user_geolocations
 
 Coordinates are **not** stored on `users` — they live in a separate `user_geolocations` collection so they can be locked to the owner. All API rules (`listRule`/`viewRule`/`createRule`/`updateRule`/`deleteRule`) are `@request.auth.id = user`, so a user can only ever read/write **their own** row; no account can query another user's coordinates. The `users` collection no longer has a `geolocation` field at all. Travel-time computation reads coordinates with backend privileges via the `/api/travel-times` hook (see below).
@@ -453,6 +493,14 @@ account. Each is `NULL` unless the owner set `contactPublic = true` **and** the 
 `*_public`/`items_searchable` view, so the members-only case (`contactPublic = false`) never
 leaks — logged-in viewers read those from the base `users` record instead.
 
+For issue #368 the view also surfaces the owner's per-institution **lending explanation** as
+`ownerExternalLendingInfo` (from `users.externalLendingInfo`) — the item-detail page shows it in
+a permanent "how borrowing works" box on external/institution items. Unlike the `ownerContact*`
+columns there is **no** `contactPublic` gate (it is a public help text, no PII); it is masked to
+`NULL` with the same condition as the item's own content columns, so a restricted item's help
+text never rides along. `externalLendingInfo` is **not** added to `users_public` or
+`items_searchable`.
+
 ### `items_searchable` — audience-filtered, unmasked
 
 Used by the search page (and the profile and sitemap, to stay leak-free). Its
@@ -470,10 +518,11 @@ conversation access never leaks an item into search/profile/sitemap.
 
 | Field | Source | Notes |
 |---|---|---|
-| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared). `image` is a **multi-select** file field → an array of filenames (cover first); serve each via `api/files/items_searchable/{id}/{filename}` |
+| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared). `image` is a **multi-select** file field → an array of filenames (cover first); serve each via `api/files/items_searchable/{id}/{filename}`. Thumb whitelist `0x300` (backend `1784402877_image_thumbs.js`) — cards append `?thumb=0x300` for a downscaled variant; `users.profileImage` likewise whitelists `100x100` for avatar chips |
 | userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (no trust data is exposed — trust lives in the separate `trusts` collection) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
 | ownerContactMethod, ownerContactEmail, ownerContactUrl | SQL expression on `users` | `items_public` only — the owner's off-platform contact (#438), NULL unless `contactPublic` **and** the item is unmasked; raw contact fields never selected |
+| ownerExternalLendingInfo | SQL expression on `users` | `items_public` only — the owner's per-institution lending explanation (#368), masked to `NULL` for restricted items (no `contactPublic` gate; public help text); not in `users_public`/`items_searchable` |
 
 > **A view returns only the columns in its `viewQuery` SELECT — nothing else.** The TS
 > `ItemPublic` type extends `PocketBaseEntity`, so it *declares* `id`, `created` and `updated`,

@@ -96,7 +96,7 @@ classDiagram
   to the owner, the owner's trustees (when `trusteesOnly`), and members of an
   attached group. See [data-model.md](data-model.md).
 - `status` reflects current availability: `available`, `unavailable` (actively on loan), or `unknown`.
-- `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`.
+- `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/categories.ts`.
 
 ## Groups
 

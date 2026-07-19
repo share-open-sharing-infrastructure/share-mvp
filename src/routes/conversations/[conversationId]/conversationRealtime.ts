@@ -22,6 +22,10 @@ import type { Conversation, Message } from '$lib/types/models';
  *   messages sent while the stream was down are not replayed, so the caller
  *   should refetch (e.g. `invalidateAll()`). Fixes the "doesn't update for one
  *   party" symptom in #435.
+ * @param expectsHeartbeat  Set when the subscribing page pushes a periodic update
+ *   that is echoed back over SSE (the chat-detail presence heartbeat), so the
+ *   client-pb watchdog may treat a longer silence as a frozen stream and reconnect
+ *   (#528). Forwarded to {@link subscribeRealtime}.
  * @returns An unsubscribe function suitable for `$effect`/`onMount` cleanup.
  */
 export function subscribeConversation(
@@ -33,7 +37,8 @@ export function subscribeConversation(
 		setLendingStatus: (s: Conversation['lendingStatus']) => void;
 		setCounterfactual: (c: Conversation['counterfactual']) => void;
 	},
-	onReconnect?: () => void
+	onReconnect?: () => void,
+	expectsHeartbeat?: boolean
 ): () => void {
 	const { getMessages, setMessages, setLendingStatus, setCounterfactual } = accessors;
 
@@ -71,5 +76,6 @@ export function subscribeConversation(
 			}
 		},
 		onReconnect,
+		expectsHeartbeat,
 	});
 }

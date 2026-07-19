@@ -19,7 +19,8 @@
 	} from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { texts, ITEM_CATEGORIES } from '$lib/texts';
+	import { texts } from '$lib/texts';
+	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { compressImage } from '$lib/utils/imageUtils';
 	import { itemOwnFileUrls } from '$lib/utils/utils';
 	import type { ActionData } from './$types';

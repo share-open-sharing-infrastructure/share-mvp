@@ -189,6 +189,17 @@ export const actions = {
 			updateData['bio'] = bio.trim();
 		}
 
+		// External-item lending explanation (#368) → institutions only. Always written for
+		// an institution (so clearing the override works and falls back to the default text);
+		// capped at 1000 to mirror the DB field. Non-institutions never see the editor and
+		// their save must not touch the field.
+		if (locals.user?.isInstitution) {
+			const externalLendingInfo = (formData?.get('externalLendingInfo')?.toString() ?? '')
+				.trim()
+				.slice(0, 1000);
+			updateData['externalLendingInfo'] = externalLendingInfo;
+		}
+
 		// Handle profileImage file upload
 		const profileImageFile = formData?.get('profileImage');
 		const hasProfileImage = profileImageFile instanceof File && profileImageFile.size > 0;

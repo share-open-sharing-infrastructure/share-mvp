@@ -1,4 +1,4 @@
-import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import { ITEM_CATEGORIES, type ItemCategory } from '$lib/categories';
 import type { ItemPublic } from '$lib/types/models';
 
 export type SearchParameters = {
