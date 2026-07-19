@@ -9,6 +9,7 @@
 	import { fly } from 'svelte/transition';
 	import { toastStore, type ToastType } from '$lib/stores/toast.svelte';
 	import { texts } from '$lib/texts';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	// Map our semantic type to a Flowbite Toast colour + icon, mirroring CustomAlert.
 	const color: Record<ToastType, 'green' | 'red' | 'yellow'> = {
@@ -48,14 +49,15 @@
 					{/if}
 				{/snippet}
 				<span class="font-medium">{toast.message}</span>
-				<button
-					type="button"
+				<Button
+					variant="ghost"
+					size="icon-sm"
 					onclick={() => toastStore.dismiss(toast.id)}
 					aria-label={texts.buttons.close}
-					class="ms-auto -mr-1 inline-flex h-8 w-8 items-center justify-center rounded-lg text-tinte-400 hover:bg-tinte-100 hover:text-tinte-900 dark:hover:bg-tinte-700 dark:hover:text-white cursor-pointer"
+					class="ms-auto -mr-1"
 				>
 					<CloseOutline class="h-4 w-4" />
-				</button>
+				</Button>
 			</Toast>
 		</div>
 	{/each}

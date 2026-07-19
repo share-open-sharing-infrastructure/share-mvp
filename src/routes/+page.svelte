@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	const landingTexts = texts.pages.landing;
 	const siteUrl = 'https://allerleih.org';
@@ -19,21 +19,23 @@
 			email: texts.names.mainContactMail,
 		},
 	});
-	// Assembled from two parts because a literal closing tag would end this script block.
+	// Assembled from parts because literal script tags inside this string confuse
+	// the Svelte script-block parsing (svelte2tsx) or would end the block early.
 	const jsonLdScriptTag =
-		`<script type="application/ld+json">${jsonLd}<` + `/script>`;
+		'<' + 'script type="application/ld+json">' + jsonLd + '<' + '/script>';
 
-	// Hero call-to-action buttons, rendered in order.
+	// Hero call-to-action buttons, rendered in order. Same shape (variant="primary"),
+	// distinguished only by hue.
 	const ctaButtons = [
 		{
 			href: resolve('/search'),
 			label: landingTexts.ctaButtonSearch,
-			color: 'bg-primary-300 hover:bg-primary',
+			color: 'primary' as const,
 		},
 		{
 			href: resolve('/user/items'),
 			label: landingTexts.ctaButtonUpload,
-			color: 'bg-accent-300 hover:bg-accent',
+			color: 'accent' as const,
 		},
 	];
 
@@ -69,7 +71,6 @@
 
 	// Shared styling — adjust the look here without touching the markup below.
 	const styles = {
-		ctaButton: 'cta-button w-full sm:w-auto',
 		card: 'bg-white rounded-2xl shadow-sm border border-primary-200 p-6 flex flex-col gap-3',
 		cardTitle: 'text-xl font-bold text-tinte-900 ',
 		cardBody: 'text-base text-tinte-500',
@@ -105,10 +106,8 @@
 				</p>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
-						<Button href={cta.href} class="{styles.ctaButton} {cta.color}">
-							<span class="relative flex w-full items-center justify-center">
-								{cta.label}
-							</span>
+						<Button href={cta.href} color={cta.color} size="xl" class="w-full sm:w-auto">
+							{cta.label}
 						</Button>
 					{/each}
 				</div>

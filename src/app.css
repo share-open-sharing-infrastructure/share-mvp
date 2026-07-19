@@ -62,57 +62,19 @@
 	--color-sand:   #EBE6D9;
 }
 
-.theme-color-storage {
+/* White-labeling: set data-theme on <html> (src/app.html) and override ONLY @theme
+   tokens here. Tailwind v4 utilities like bg-primary-200 read var(--color-primary-200)
+   at runtime, so a [data-theme] block on a DOM ancestor re-skins the whole app —
+   including $lib/components/ui/Button.svelte — with no markup changes. Override at
+   least the shades the design system uses (base + 200/400/600 for buttons/links).
+   See docs/design-system.md → "White-Labeling". */
+[data-theme='example'] {
 	--color-primary: #4da2ff;
-	--color-primary-50: #deeeff;
 	--color-primary-200: #6ab2ff;
-	--color-secondary: #5ec900;
+	--color-primary-400: #2e8fe8;
+	--color-primary-600: #1a6fd4;
 	--color-accent: #fb4a03;
-	--color-accent-50: #fb490380;
-	--color-accent-200: #ff6122;
-
-	--color-primary: #ffd735;
-	--color-secondary: #c0ff32;
-	--color-accent: #4c0519;
-
-	--color-danger: #d9003d;
-	--color-light: #64748b;
-
-	--color-primary-700: #f6c501;
-	--color-primary-600: #239628; /* For some reason, the flowbite toggle element uses this color as its background */
-}
-
-.landing-img {
-	border-radius:5%;
-	overflow:hidden
-}
-
-.cta-button {
-	color: black;
-	border-color: black;
-	border: 1px solid;
-	font-size: larger;
-	font-weight: bold;
-	font-family: "Verdana", sans-serif;
-	border-radius: 50px;
-	cursor: pointer;
-	padding: 15px 20px;
-	min-width: 18rem;
-}
-
-.min-button {
-	color: black;
-	border-color: black;
-	border: 1px solid;
-	border-radius: 20px;
-	cursor: pointer;
-}
-
-.min-button:hover .cta-button:hover {
-	box-shadow: 0 0 11px rgba(33, 33, 33, 0.2);
-	cursor: pointer;
-	color: white;
-	border-color: black;
+	--color-accent-600: #d13c00;
 }
 
 .search-bar {
@@ -132,12 +94,6 @@
 
 .pulse-shadow {
   animation: pulse-shadow 5s infinite;
-}
-
-.timo-theme {
-	--color-primary: #ffd832;
-	--color-secondary: #fb4a03;
-	--color-accent: #4da2ff;
 }
 
 @source "../node_modules/flowbite-svelte/dist";

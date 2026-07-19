@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Label, Input } from 'flowbite-svelte';
+	import { Label, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
@@ -36,10 +37,7 @@
 						required
 					/>
 				</Label>
-				<Button
-					type="submit"
-					formaction="?/updatemail"
-					class="me-2 mb-2 min-button bg-primary"
+				<Button type="submit" formaction="?/updatemail"
 					>{texts.pages.updatemail.updateButton}</Button
 				>
 			</form>

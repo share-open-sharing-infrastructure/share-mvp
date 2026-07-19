@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { HeartOutline } from 'flowbite-svelte-icons';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 </script>
 
 <SeoHead title={texts.account.deleted.title} robots="noindex, nofollow" />
@@ -21,11 +22,8 @@
 		<p class="text-sm text-tinte-500 dark:text-tinte-400">
 			{texts.account.deleted.secondary}
 		</p>
-		<a
-			href={resolve('/')}
-			class="inline-block mt-2 py-3 px-6 min-button bg-primary-200 hover:bg-primary text-white font-semibold rounded-xl transition-opacity"
-		>
+		<Button href={resolve('/')} size="lg" class="mt-2">
 			{texts.account.deleted.backHome}
-		</a>
+		</Button>
 	</div>
 </main>

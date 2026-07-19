@@ -1,6 +1,6 @@
 <script lang="ts">
     import { texts } from '$lib/texts';
-    import OnboardingButton from './OnboardingButton.svelte';
+    import Button from '$lib/components/ui/Button.svelte';
 
     interface Props {
         onNext: () => void;
@@ -66,8 +66,8 @@
     ></iframe>
 </div>
 <div class="flex flex-col gap-2 pt-1">
-    <OnboardingButton type="button" variant="ghost" onclick={onNext}>
+    <Button variant="ghost" fullWidth onclick={onNext}>
         {texts.onboarding.buttons.skip}
-    </OnboardingButton>
+    </Button>
 </div>
 

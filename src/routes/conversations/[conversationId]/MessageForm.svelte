@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import { PaperPlaneSolid } from 'flowbite-svelte-icons';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { onMount } from 'svelte';
 
 	let {
@@ -54,12 +55,14 @@
 	<!-- preventDefault on mousedown keeps focus in the input so tapping send doesn't blur
 	     it and close/reopen the mobile keyboard — making a tap behave just like Enter.
 	     The click still fires and submits the form. -->
-	<button
+	<Button
 		type="submit"
+		size="icon"
 		disabled={isSubmitting}
 		onmousedown={(e) => e.preventDefault()}
-		class="flex items-center justify-center w-9 h-9 rounded-full bg-primary-400 text-white hover:bg-primary hover:cursor-pointer disabled:opacity-50 transition-colors shrink-0"
+		aria-label={texts.ui.sendMessage}
+		class="shrink-0"
 	>
 		<PaperPlaneSolid class="w-4 h-4" />
-	</button>
+	</Button>
 </form>

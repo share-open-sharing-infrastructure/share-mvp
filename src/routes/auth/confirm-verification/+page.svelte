@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { ActionData, PageData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, A } from 'flowbite-svelte';
+	import { A } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -34,11 +35,7 @@
 				     and the {:else} "no token" alert would show ON TOP of the form.fail alert. -->
 				<form class="flex flex-col space-y-5" action="?/confirm&token={data.token}" method="post">
 					<input type="hidden" name="token" value={data.token} />
-					<Button
-						type="submit"
-						class="min-button bg-primary-200 hover:bg-primary cursor-pointer w-full"
-						>{texts.pages.confirmVerification.submitButton}</Button
-					>
+					<Button type="submit" fullWidth>{texts.pages.confirmVerification.submitButton}</Button>
 				</form>
 			{:else}
 				<CustomAlert type="error" message={texts.errors.invalidOrExpiredVerificationToken} />

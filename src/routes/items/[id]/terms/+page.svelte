@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Alert, Button, Checkbox } from 'flowbite-svelte';
+	import { Alert, Checkbox } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -97,12 +98,7 @@
 		</Checkbox>
 
 		<div class="flex flex-wrap gap-3 items-center pt-2">
-			<Button
-				type="submit"
-				pill
-				disabled={!canSubmit}
-				class="cursor-pointer bg-primary-200 hover:bg-primary disabled:opacity-50"
-			>
+			<Button type="submit" disabled={!canSubmit}>
 				{texts.lendingTerms.acceptAndRequestButton}
 			</Button>
 			<a

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
-	import OnboardingButton from './OnboardingButton.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -49,7 +49,7 @@
 		</div>
 
 		<div class="flex flex-col gap-2 pt-2">
-			<OnboardingButton type="submit">{texts.onboarding.buttons.next} →</OnboardingButton>
+			<Button type="submit" size="lg" fullWidth>{texts.onboarding.buttons.next} →</Button>
 		</div>
 	</form>
 </div>

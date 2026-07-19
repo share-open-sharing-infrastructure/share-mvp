@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { Button, Modal, Input, Label } from 'flowbite-svelte';
+	import { Modal, Input, Label } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -39,13 +40,9 @@
 		<section class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6">
 			<h2 class="text-lg font-semibold text-tinte-900 dark:text-white">{texts.account.export.title}</h2>
 			<p class="mt-1 text-sm text-tinte-600 dark:text-tinte-400">{texts.account.export.description}</p>
-			<a
-				href={resolve('/user/account/export')}
-				download
-				class="mt-4 inline-flex items-center justify-center py-2.5 px-5 min-button bg-primary-200 hover:bg-primary text-white font-semibold rounded-xl transition-opacity"
-			>
+			<Button href={resolve('/user/account/export')} download size="lg" class="mt-4">
 				{texts.account.export.button}
-			</a>
+			</Button>
 		</section>
 
 		<!-- Danger zone — account deletion (Art. 17) -->
@@ -53,11 +50,7 @@
 			<h2 class="text-lg font-semibold text-accent-800 dark:text-accent-300">{texts.account.delete.title}</h2>
 			<p class="mt-1 text-sm text-tinte-700 dark:text-tinte-300">{texts.account.delete.description}</p>
 			<p class="mt-2 text-sm font-semibold text-accent-700 dark:text-accent-400">{texts.account.delete.warning}</p>
-			<Button
-				color="red"
-				class="mt-4"
-				onclick={() => (showDeleteModal = true)}
-			>
+			<Button variant="danger" class="mt-4" onclick={() => (showDeleteModal = true)}>
 				{texts.account.delete.openButton}
 			</Button>
 		</section>
@@ -104,10 +97,10 @@
 		</div>
 
 		<div class="flex justify-end gap-3 pt-2">
-			<Button color="alternative" type="button" onclick={closeModal}>
+			<Button variant="secondary" onclick={closeModal}>
 				{texts.account.delete.cancelButton}
 			</Button>
-			<Button color="red" type="submit" disabled={!canDelete || isDeleting}>
+			<Button variant="danger" type="submit" disabled={!canDelete} loading={isDeleting}>
 				{texts.account.delete.confirmButton}
 			</Button>
 		</div>

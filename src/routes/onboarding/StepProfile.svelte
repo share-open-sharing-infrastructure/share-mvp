@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import OnboardingButton from './OnboardingButton.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
 		onNext: () => void;
@@ -90,10 +90,10 @@
 		</div>
 
 		<div class="flex flex-col gap-2 pt-1">
-			<OnboardingButton type="submit">{texts.onboarding.buttons.next}</OnboardingButton>
-			<OnboardingButton type="button" variant="ghost" onclick={onNext}>
+			<Button type="submit" size="lg" fullWidth>{texts.onboarding.buttons.next}</Button>
+			<Button variant="ghost" fullWidth onclick={onNext}>
 				{texts.onboarding.buttons.skip}
-			</OnboardingButton>
+			</Button>
 		</div>
 	</form>
 </div>

@@ -2,7 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import { texts } from '$lib/texts';
 	import { PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
-	import OnboardingButton from './OnboardingButton.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
 		onNext: () => void;
@@ -105,11 +105,11 @@
 
 <div class="mt-10 flex flex-col gap-2">
 	{#if status !== 'granted' && status !== 'denied'}
-		<OnboardingButton onclick={request} disabled={status === 'loading'}>
-			{status === 'loading' ? '…' : texts.onboarding.pushNotifications.allow}
-		</OnboardingButton>
+		<Button size="lg" fullWidth onclick={request} loading={status === 'loading'}>
+			{texts.onboarding.pushNotifications.allow}
+		</Button>
 	{/if}
-	<OnboardingButton variant="ghost" onclick={onNext}>
+	<Button variant="ghost" fullWidth onclick={onNext}>
 		{status === 'denied' ? texts.onboarding.buttons.next + ' →' : texts.onboarding.buttons.skip}
-	</OnboardingButton>
+	</Button>
 </div>

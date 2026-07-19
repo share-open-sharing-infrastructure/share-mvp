@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import OnboardingButton from './OnboardingButton.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
 		onNext: () => void;
@@ -43,5 +43,5 @@
 </div>
 
 <div class="mt-10">
-	<OnboardingButton onclick={onNext}>{texts.onboarding.buttons.next} →</OnboardingButton>
+	<Button size="lg" fullWidth onclick={onNext}>{texts.onboarding.buttons.next} →</Button>
 </div>

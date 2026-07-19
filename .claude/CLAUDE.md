@@ -80,6 +80,10 @@ These prevent the most common bugs/security issues here — follow them without 
   trust-graph data through them.
 - **All user-facing strings go in `src/lib/texts.ts`**, never inline. Item categories live
   in `src/lib/categories.ts` (fixed across instances; change via `docs/data-model.md` → "Item categories").
+- **Never hand-style a button or import Flowbite `Button`** — use
+  `$lib/components/ui/Button.svelte` (variants `primary|secondary|ghost|accent|danger|link`,
+  sizes `sm|md|lg|xl|icon|icon-sm`, `loading`, `href`). Pass only layout classes (width/margin/
+  position) via `class`, never colors. → `docs/design-system.md`
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
@@ -101,6 +105,7 @@ These prevent the most common bugs/security issues here — follow them without 
 | Schema/view migrations (separate repo) | `allerleih-backend` README → "Writing migrations" |
 | Domain relationships / lending lifecycle | `docs/domain-model.md` |
 | Form / CRUD patterns & conventions | `docs/best-practices.md` |
+| Buttons, theme tokens, white-labeling (`[data-theme]`) | `docs/design-system.md` |
 | Writing tests + PocketBase mocks | `docs/testing-strategy.md` |
 | UI strings / categories | `docs/text-management.md`, `src/lib/texts.ts` |
 | Groups: roles, public/self-join, visibility model | `docs/groups.md` |
