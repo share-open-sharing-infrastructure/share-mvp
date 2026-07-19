@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let { show }: { show: boolean } = $props();
 
@@ -25,18 +26,12 @@
 			{texts.onboardingPrompt.text}
 		</p>
 		<div class="flex gap-2 justify-end">
-			<button
-				onclick={dismiss}
-				class="text-xs text-tinte-400 hover:text-tinte-600 dark:hover:text-tinte-200 px-2 py-1"
-			>
+			<Button variant="ghost" size="sm" onclick={dismiss}>
 				{texts.onboardingPrompt.dismiss}
-			</button>
-			<a
-				href={resolve('/onboarding')}
-				class="text-xs font-semibold text-white bg-primary hover:opacity-90 rounded-lg px-3 py-1"
-			>
+			</Button>
+			<Button href={resolve('/onboarding')} size="sm">
 				{texts.onboardingPrompt.cta}
-			</a>
+			</Button>
 		</div>
 	</div>
 {/if}

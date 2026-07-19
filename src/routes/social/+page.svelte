@@ -7,9 +7,9 @@
 		TableBody,
 		TableBodyRow,
 		TableBodyCell,
-		Button,
 		Tooltip
 	} from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { UserAddOutline, SearchOutline, ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
@@ -110,7 +110,7 @@
 				label={texts.pages.invite.shareButton}
 				copiedLabel={texts.pages.invite.linkCopied}
 				icon={UserAddOutline}
-				class="gap-2 min-button w-full bg-primary-300 hover:bg-primary whitespace-nowrap"
+				class="w-full whitespace-nowrap"
 			/>
 		</div>
 	</div>
@@ -169,15 +169,17 @@
 							>
 								<input type="hidden" name="trusteeId" value={potentialFriend.id} />
 								<input type="hidden" name="trusteeUsername" value={potentialFriend.username} />
-								<button
+								<Button
 									type="submit"
+									size="icon"
 									id="add-btn-{potentialFriend.id}"
-									class="mx-2 flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-white cursor-pointer hover:bg-primary-700 transition-colors"
+									aria-label={texts.pages.social.addTrustee}
+									class="mx-2"
 								>
 									<UserAddOutline class="h-6 w-6" />
-								</button>
+								</Button>
 								<Tooltip triggeredBy="#add-btn-{potentialFriend.id}" type="light" placement="left" trigger="click">
-									als Vertraute(n) hinzufügen
+									{texts.pages.social.addTrustee}
 								</Tooltip>
 							</form>
 						</div>
@@ -289,23 +291,13 @@
 	<!-- PAGINATION -->
 	{#if totalPages > 1}
 		<div class="flex items-center justify-between mt-4 px-1">
-			<Button
-				size="sm"
-				class="min-button bg-primary-200 hover:bg-primary"
-				disabled={currentPage === 0}
-				onclick={() => (currentPage -= 1)}
-			>
+			<Button size="sm" disabled={currentPage === 0} onclick={() => (currentPage -= 1)}>
 				← Zurück
 			</Button>
 			<span class="text-sm text-tinte-500 dark:text-tinte-400">
 				{currentPage + 1} / {totalPages}
 			</span>
-			<Button
-				size="sm"
-				class="min-button bg-primary-200 hover:bg-primary"
-				disabled={currentPage >= totalPages - 1}
-				onclick={() => (currentPage += 1)}
-			>
+			<Button size="sm" disabled={currentPage >= totalPages - 1} onclick={() => (currentPage += 1)}>
 				Weiter →
 			</Button>
 		</div>

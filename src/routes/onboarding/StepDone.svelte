@@ -40,7 +40,7 @@
 			label={texts.pages.invite.shareButton}
 			copiedLabel={texts.pages.invite.linkCopied}
 			icon={UserAddOutline}
-			class="gap-2 min-button w-full bg-primary-300 hover:bg-primary whitespace-nowrap"
+			class="w-full whitespace-nowrap"
 		/>
 	</div>
 </div>

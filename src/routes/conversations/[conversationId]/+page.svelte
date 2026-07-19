@@ -10,7 +10,8 @@
 	import { subscribeConversation } from './conversationRealtime';
 
 	// Other imports
-	import { Button, Modal, Input } from 'flowbite-svelte';
+	import { Modal, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import MessageElement from './MessageElement.svelte';
 	import { displayName } from '$lib/utils/utils';
 	import { texts } from '$lib/texts';
@@ -218,7 +219,7 @@
 		action="?/deleteConversation"
 	>
 		<Input name="conversationId" value={data.conversation.id} hidden></Input>
-		<Button class="bg-danger min-button" type="submit">Anfrage löschen</Button>
+		<Button variant="danger" type="submit">Anfrage löschen</Button>
 	</form>
 </Modal>
 
@@ -236,6 +237,6 @@
 			}}
 	>
 		<Input name="conversationId" value={data.conversation.id} hidden></Input>
-		<Button class="bg-danger min-button" type="submit">{texts.lending.confirmAbort.confirm}</Button>
+		<Button variant="danger" type="submit">{texts.lending.confirmAbort.confirm}</Button>
 	</form>
 </Modal>

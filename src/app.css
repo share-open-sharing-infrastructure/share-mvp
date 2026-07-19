@@ -77,21 +77,6 @@
 	--color-accent-600: #d13c00;
 }
 
-.min-button {
-	color: black;
-	border-color: black;
-	border: 1px solid;
-	border-radius: 20px;
-	cursor: pointer;
-}
-
-.min-button:hover .cta-button:hover {
-	box-shadow: 0 0 11px rgba(33, 33, 33, 0.2);
-	cursor: pointer;
-	color: white;
-	border-color: black;
-}
-
 .search-bar {
 	border-radius: 20px;
 	color: black;

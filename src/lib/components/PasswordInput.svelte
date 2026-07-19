@@ -2,6 +2,7 @@
 	import { Label, Input } from 'flowbite-svelte';
 	import { EyeOutline, EyeSlashOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let {
 		autocomplete = 'current-password',
@@ -23,17 +24,18 @@
 			{autocomplete}
 			required
 		/>
-		<button
-			type="button"
-			class="absolute inset-y-0 right-0 flex items-center pr-3 text-tinte-500 hover:text-tinte-700 dark:text-tinte-400 dark:hover:text-tinte-200"
+		<Button
+			variant="ghost"
+			size="icon-sm"
+			class="absolute right-1 top-1/2 -translate-y-1/2"
 			onclick={() => (showPassword = !showPassword)}
-			aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+			aria-label={showPassword ? texts.auth.hidePassword : texts.auth.showPassword}
 		>
 			{#if showPassword}
-				<EyeSlashOutline class="h-5 w-5 hover:cursor-pointer" />
+				<EyeSlashOutline class="h-5 w-5" />
 			{:else}
-				<EyeOutline class="h-5 w-5 hover:cursor-pointer" />
+				<EyeOutline class="h-5 w-5" />
 			{/if}
-		</button>
+		</Button>
 	</div>
 </Label>

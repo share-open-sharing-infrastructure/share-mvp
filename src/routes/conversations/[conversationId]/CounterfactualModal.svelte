@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Modal } from 'flowbite-svelte';
+	import { Modal } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 
@@ -50,10 +51,10 @@
 			{/if}
 		</div>
 		<div class="flex justify-between items-center">
-			<button type="submit" form="cf-skip" class="text-sm text-tinte-400 underline hover:text-tinte-600">
+			<Button variant="ghost" size="sm" type="submit" form="cf-skip">
 				{texts.counterfactual.skip}
-			</button>
-			<Button class="min-button bg-primary-200 hover:bg-primary hover:cursor-pointer" type="submit">{texts.counterfactual.submit}</Button>
+			</Button>
+			<Button type="submit">{texts.counterfactual.submit}</Button>
 		</div>
 	</form>
 </Modal>

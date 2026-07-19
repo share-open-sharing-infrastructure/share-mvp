@@ -3,6 +3,7 @@
 	import { MessageDotsOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 </script>
 
 <SeoHead title={texts.seo.conversations.title} robots="noindex, nofollow" />
@@ -17,10 +18,5 @@
 			Wähle eine Unterhaltung aus der Liste oder starte eine neue über die Suche.
 		</p>
 	</div>
-	<a
-		href={resolve('/search')}
-		class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium bg-primary-200 hover:bg-primary min-button transition-colors"
-	>
-		Zur Suche
-	</a>
+	<Button href={resolve('/search')}>Zur Suche</Button>
 </div>

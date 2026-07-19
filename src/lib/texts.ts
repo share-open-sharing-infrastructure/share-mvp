@@ -33,6 +33,8 @@ export const texts = {
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',
 		passwordPlaceholder: '••••••••••',
+		showPassword: 'Passwort anzeigen',
+		hidePassword: 'Passwort verbergen',
 		usernamePlaceholder: 'z.B. Noah Lüni',
 		usernameHint: 'Öffentlich sichtbarer Anzeigename – Leerzeichen sind erlaubt. Anmelden kannst du dich mit deiner E-Mail-Adresse.',
 		loginWithEmailHint: 'Anmelden mit deiner E-Mail-Adresse.',
@@ -362,6 +364,7 @@ export const texts = {
 
 	// General UI
 	ui: {
+		sendMessage: 'Nachricht senden',
 		resultsFound: (count: number) => `${count} Dinge gefunden`,
 		activeSince: (date: string) => `aktiv seit ${date}`,
 		itemsLent: (count: number) => `${count} Dinge`,
@@ -695,6 +698,7 @@ export const texts = {
 			searchPlaceholder: 'Netzwerk durchsuchen...',
 			searchNewUser: 'Noch nicht im Netzwerk? Suche',
 			noNewUsersFound: 'Keine neuen Nutzer:innen gefunden.',
+			addTrustee: 'Als Vertraute(n) hinzufügen',
 		},
 		reset: {
 			title: 'Passwort zurücksetzen',

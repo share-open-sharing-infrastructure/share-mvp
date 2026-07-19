@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Tooltip, Input } from 'flowbite-svelte';
+	import { Tooltip, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { MessagesOutline } from 'flowbite-svelte-icons';
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
@@ -63,16 +64,13 @@
 			</span>
 		{/if}
 		{#if !isArchived && item.externalUrl}
-			<!-- eslint-disable svelte/no-navigation-without-resolve -->
-			<a
+			<Button
 				href={buildItemRedirectHref(item.externalUrl, item.id)}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
 			>
 				{texts.institutional.externalLendCta(item.username ?? '')}
-			</a>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+			</Button>
 		{/if}
 	{:else if isOwnItem}
 		<!-- Own item: status toggle -->
@@ -104,8 +102,8 @@
 		<!-- Disabled buttons suppress pointer events, so the tooltip must be anchored
 		     to the surrounding span instead of the button itself. -->
 		<span id="anfragen-disabled" class="cursor-not-allowed">
-			<Button pill disabled class="min-button bg-primary-200 hover:bg-primary opacity-50 pointer-events-none">
-				<MessagesOutline class="h-4 w-4 mr-2" />
+			<Button disabled class="pointer-events-none">
+				<MessagesOutline class="h-4 w-4" />
 				{texts.pages.itemDetail.requestButton}
 			</Button>
 		</span>
@@ -115,27 +113,23 @@
 	{:else if existingConversation}
 		<!-- An in-progress conversation exists (incl. when the owner uses email contact):
 		     link straight into it rather than offering a new request / mailto. -->
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-		<a href={resolve(`/conversations/${existingConversation.id}`)} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
-			<MessagesOutline class="h-4 w-4 mr-2" />
+		<Button href={resolve(`/conversations/${existingConversation.id}`)}>
+			<MessagesOutline class="h-4 w-4" />
 			{texts.lending.goToConversation}
-		</a>
+		</Button>
 	{:else if ownerContact}
 		<!-- Owner opted into off-platform contact (#438): same "Anfragen" button, but it
 		     opens a prefilled mailto: (email) or links to the owner's external form (link)
 		     instead of starting the in-app request flow. The link opens in a new tab and
 		     is routed through /api/redirect (https guard + click tracking). -->
-		<!-- eslint-disable svelte/no-navigation-without-resolve -->
-		<a
+		<Button
 			href={contactHref}
 			target={ownerContact.method === 'link' ? '_blank' : undefined}
 			rel={ownerContact.method === 'link' ? 'noopener noreferrer' : undefined}
-			class="inline-flex items-center rounded-full border border-black px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors"
 		>
-			<MessagesOutline class="h-4 w-4 mr-2" />
+			<MessagesOutline class="h-4 w-4" />
 			{texts.pages.itemDetail.requestButton}
-		</a>
-		<!-- eslint-enable svelte/no-navigation-without-resolve -->
+		</Button>
 	{:else if hasUnmetRequirements}
 		<!-- Lender requirements not met (#423/#389): requesting is disabled; we offer
 		     the missing steps as quick-fix buttons (same style as the request button). -->
@@ -143,24 +137,22 @@
 			<p class="text-sm text-tinte-600 dark:text-tinte-400">{texts.lendingRequirements.blockedIntro}</p>
 			<div class="flex flex-wrap justify-end gap-2">
 				{#each unmetRequirements as req (req.key)}
-					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-					<a href={req.actionHref} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
+					<Button href={req.actionHref}>
 						{req.actionLabel} →
-					</a>
+					</Button>
 				{/each}
 			</div>
 		</div>
 	{:else if requiresTermsAcceptance}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-		<a href={resolve(`/items/${item.id}/terms`)} class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors">
-			<MessagesOutline class="h-4 w-4 mr-2" />
+		<Button href={resolve(`/items/${item.id}/terms`)}>
+			<MessagesOutline class="h-4 w-4" />
 			{texts.pages.itemDetail.requestButton}
-		</a>
+		</Button>
 	{:else}
 		<form method="POST" action="?/startConversation" use:enhance>
 			<Input name="itemId" value={item.id} hidden />
-			<Button pill type="submit" class="cursor-pointer min-button bg-primary-200 hover:bg-primary">
-				<MessagesOutline class="h-4 w-4 mr-2" />
+			<Button type="submit">
+				<MessagesOutline class="h-4 w-4" />
 				{texts.pages.itemDetail.requestButton}
 			</Button>
 		</form>
