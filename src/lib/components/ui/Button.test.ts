@@ -44,7 +44,7 @@ describe('Button', () => {
 		expect(renderButton({ variant: 'danger' })).toContain('bg-danger');
 		expect(renderButton({ variant: 'secondary' })).toContain('border-tinte-300');
 		expect(renderButton({ size: 'icon' })).toContain('h-9 w-9');
-		expect(renderButton({ size: 'xl' })).toContain('px-12 py-4 text-lg font-bold');
+		expect(renderButton({ size: 'xl' })).toContain('px-12 py-4 text-xl font-bold');
 	});
 
 	it('color swaps the primary variant fill without changing border/text', () => {
