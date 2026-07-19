@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let { data } = $props();
 
@@ -39,13 +40,8 @@
 			{ogDescription}
 		</p>
 
-		<!-- eslint-disable svelte/no-navigation-without-resolve -- registerUrl is resolve()d; the rule can't match the appended ?invite query string -->
-		<a
-			href={registerUrl}
-			class="block w-full min-button rounded-full bg-primary-200 px-5 py-3 text-center text-base font-medium text-white hover:bg-primary focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-		>
+		<Button href={registerUrl} size="lg" fullWidth>
 			{texts.pages.inviteLanding.cta}
-		</a>
-		<!-- eslint-enable svelte/no-navigation-without-resolve -->
+		</Button>
 	</div>
 </div>

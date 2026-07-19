@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { ActionData, PageData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, A } from 'flowbite-svelte';
+	import { A } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -42,11 +43,7 @@
 						label={texts.pages.reset.confirm.confirmPasswordLabel}
 						autocomplete="new-password"
 					/>
-					<Button
-						type="submit"
-						class="min-button bg-primary-200 hover:bg-primary cursor-pointer w-full"
-						>{texts.pages.reset.confirm.submitButton}</Button
-					>
+					<Button type="submit" fullWidth>{texts.pages.reset.confirm.submitButton}</Button>
 				</form>
 			{:else}
 				<CustomAlert type="error" message={texts.errors.invalidOrExpiredResetToken} />

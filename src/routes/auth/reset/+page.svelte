@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { ActionData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Label, Input } from 'flowbite-svelte';
+	import { Label, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	export let form: ActionData;
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -38,12 +39,7 @@
 						required
 					/>
 				</Label>
-				<Button
-					type="submit"
-					formaction="?/reset"
-					class="min-button bg-primary-200 hover:bg-primary cursor-pointer w-full"
-					>{texts.pages.reset.resetButton}</Button
-				>
+				<Button type="submit" formaction="?/reset" fullWidth>{texts.pages.reset.resetButton}</Button>
 			</form>
 		</div>
 	</Register>

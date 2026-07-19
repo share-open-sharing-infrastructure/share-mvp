@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Label, Input } from 'flowbite-svelte';
+	import { Label, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import PasswordInput from '$lib/components/PasswordInput.svelte';
 	import { texts } from '$lib/texts';
@@ -126,15 +127,13 @@
 				</Label>
 				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
 					<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-					<span>Ich habe die <button type="button" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openTos = true; }} class="cursor-pointer text-primary hover:underline">AGB{tosDoc ? ` (v${tosDoc.version})` : ''}</button> und die <button type="button" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openPrivacy = true; }} class="cursor-pointer text-primary hover:underline">Datenschutzerklärung{privacyDoc ? ` (v${privacyDoc.version})` : ''}</button> gelesen und stimme beiden zu.</span>
+					<span>Ich habe die <Button variant="link" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openTos = true; }}>AGB{tosDoc ? ` (v${tosDoc.version})` : ''}</Button> und die <Button variant="link" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openPrivacy = true; }}>Datenschutzerklärung{privacyDoc ? ` (v${privacyDoc.version})` : ''}</Button> gelesen und stimme beiden zu.</span>
 				</label>
 				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
 					<input type="checkbox" name="subscribeToNewsletter" checked class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
 					<span>{texts.auth.newsletterOptOut}</span>
 				</label>
-				<Button type="submit" class="min-button bg-primary-200 hover:bg-primary cursor-pointer"
-					>{texts.auth.register}</Button
-				>
+				<Button type="submit">{texts.auth.register}</Button>
 			</form>
 		</div>
 	</Register>
