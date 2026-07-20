@@ -88,3 +88,55 @@ test.describe('item modal', () => {
 		await expect(page.getByRole('region', { name: 'Foto-Upload-Bereich' })).toBeVisible();
 	});
 });
+
+// Regression for #546: in one SPA session (no reload), a category chosen on an item must
+// survive repeated edit-save cycles. Before the fix the edit modal's category checkbox went
+// stale after the first in-session edit, and the next save persisted categories=[].
+test.describe('item category staleness (#546)', () => {
+	const category = (dialog: Locator) => dialog.getByRole('checkbox', { name: 'Bücher' });
+
+	test('keeps a category checked across repeated edits without a page reload', async ({
+		page,
+	}) => {
+		await page.goto('/user/items');
+
+		// 1. Create an item with a name, description, image AND one category (Bücher).
+		const name = `E2E Kategorie ${Date.now()}`;
+		const addDialog = await openAddModal(page);
+		await addDialog.getByRole('textbox', { name: 'Name:' }).fill(name);
+		await addDialog
+			.getByRole('textbox', { name: 'Beschreibung:' })
+			.fill('Erste Beschreibung');
+		await addDialog.locator('input#itemImage').setInputFiles({
+			name: 'item.png',
+			mimeType: 'image/png',
+			buffer: PNG_1x1,
+		});
+		await category(addDialog).check();
+		await addDialog.getByRole('button', { name: 'Hinzufügen' }).click();
+		await expect(addDialog).toBeHidden();
+
+		// The new row's edit button, targeted via the item's unique name.
+		const row = page.locator('div.border-b', { has: page.getByRole('link', { name }) });
+		const editBtn = row.getByRole('button', { name: 'Bearbeiten' });
+
+		// 2. Open the edit modal — the category reflects the persisted state (checked).
+		let dialog = await openModalVia(page, editBtn);
+		await expect(category(dialog)).toBeChecked();
+
+		// 3. Change ONLY the description, then save.
+		await dialog.getByRole('textbox', { name: 'Beschreibung:' }).fill('Zweite Beschreibung');
+		await dialog.getByRole('button', { name: 'Speichern' }).click();
+		await expect(dialog).toBeHidden();
+
+		// 4. Reopen — the category must STILL be checked (the core #546 assertion), then save.
+		dialog = await openModalVia(page, editBtn);
+		await expect(category(dialog)).toBeChecked();
+		await dialog.getByRole('button', { name: 'Speichern' }).click();
+		await expect(dialog).toBeHidden();
+
+		// 5. Reopen once more — still checked (guards the "saved empty once, stays empty" state).
+		dialog = await openModalVia(page, editBtn);
+		await expect(category(dialog)).toBeChecked();
+	});
+});
