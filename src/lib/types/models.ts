@@ -473,6 +473,17 @@ export interface Conversation extends PocketBaseEntity {
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;
 	ownerLastSeenAt?: string;
+
+	/**
+	 * ISO datetime the FIRST transition into lendingStatus 'accepted' happened.
+	 * Server-stamped by the backend `lending_timestamps.pb.js` hook — never trust a
+	 * client-supplied value for this. Empty for conversations created before the
+	 * business-metrics project shipped (no backfill).
+	 */
+	acceptedAt?: string;
+
+	/** Same as `acceptedAt`, for the first transition into 'completed'. */
+	completedAt?: string;
 }
 
 // --- NOTIFICATION ---
@@ -667,4 +678,91 @@ export interface UserLegalAcceptance extends PocketBaseEntity {
 
 	/** User-Agent string at decision */
 	userAgent?: string;
+}
+
+// --- METRICS ---
+
+/** One {userId, username, count} row of a top-N-by-owner breakdown. */
+export interface MetricsOwnerCount {
+	userId: UserId;
+	username: string;
+	count: number;
+}
+
+/**
+ * Shape of the `metrics` JSON blob on one `metrics_daily` row, computed nightly by the
+ * backend `jobs/metrics.js` cron job. Superuser-only collection — read via
+ * `$lib/server/metrics.ts` (`getSuperuserClient`), never directly from the client.
+ * Every value is a count/aggregate; nothing here is per-user data. Time-based figures
+ * (the `*30d`/`*7d` fields, everything under `activeUsers`/`funnel`) only accumulate
+ * from when `conversations.acceptedAt`/`completedAt` started being stamped — no
+ * backfill, so they read as zero/null on old snapshots.
+ */
+export interface DailyMetrics {
+	users: {
+		total: number;
+		institutions: number;
+		verified: number;
+	};
+	items: {
+		available: number;
+		byPrivateUsers: number;
+		byInstitutionsNative: number;
+		external: number;
+		externalByInstitution: MetricsOwnerCount[];
+	};
+	loans: {
+		byStatus: Record<
+			'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed' | 'aborted',
+			number
+		>;
+		completedTotal: number;
+		accepted30d: number;
+		completed30d: number;
+	};
+	activeUsers: {
+		loans30d_1plus: number;
+		loans30d_2plus: number;
+		login7d: number;
+		login30d: number;
+	};
+	funnel: {
+		requests30d: number;
+		/** null when no request created in the window has been decided yet (accepted or rejected). */
+		acceptanceRate30d: number | null;
+		stalePending: number;
+	};
+	messages: {
+		total: number;
+		last30d: number;
+	};
+	impact: {
+		counterfactual: Record<CounterfactualAnswer, number>;
+	};
+	integrations: {
+		lastSyncByInstitution: Array<{
+			userId: UserId;
+			username: string;
+			itemCount: number;
+			newestUpdated: string | null;
+		}>;
+	};
+	outboundClicks: {
+		total: number;
+		last30d: number;
+		byItemOwner30d: MetricsOwnerCount[];
+	};
+	community: {
+		groups: { total: number; public: number; memberships: number };
+		trusts: { edges: number };
+		invites: { usersInvited: number };
+		push: { subscriptions: number; usersSubscribed: number };
+	};
+}
+
+/** One row of the `metrics_daily` collection (superuser-only; see `DailyMetrics`). */
+export interface MetricsDaily extends PocketBaseEntity {
+	/** "YYYY-MM-DD", unique per row. */
+	date: string;
+	metrics: DailyMetrics;
 }
