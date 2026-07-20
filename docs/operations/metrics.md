@@ -5,9 +5,8 @@ active users, items on offer, funnel/impact/integration/community aggregates). T
 **operational** runbook — what the job computes, how to re-run it, and how to add a metric. For
 the collection schema see [../data-model.md](../data-model.md) → "metrics_daily".
 
-> **Status:** the backend job and storage described here are live. The consuming frontend
-> (`/admin/metrics` admin dashboard, `/misc/stats` public page) is a separate, not-yet-shipped
-> piece — see the project plan for scope.
+> **Status:** backend job, storage, and both consuming frontend routes (`/admin/metrics`,
+> `/misc/stats`) are live.
 
 ## What runs, and when
 
@@ -71,6 +70,20 @@ keep it in sync with `computeDailyMetrics()` in `jobs/metrics.js` when the catal
   line — there is exactly one row per calendar day.
 - **`lastLoginAt` is 24h-throttled** (see the auth hook in `account.pb.js`), so `login7d`/`login30d`
   are day-granular, not exact.
+
+## Frontend routes
+
+- **`/admin/metrics`** — gated by `ADMIN_EMAILS` (comma-separated allowlist env var; empty/unset
+  → `error(404)`, not 403, so the route's existence isn't advertised). Shows live counts
+  (`getLiveCoreMetrics()` — users/items/loans, computed on request so they're current-day) plus
+  everything else from the latest `metrics_daily` row, and trend sparklines from the last 30 days
+  of snapshots.
+- **`/misc/stats`** — public, unauthenticated. Shows the whitelisted subset returned by
+  `getPublicStats()`: registered users, items available, completed loans, one impact number
+  (completed loans where the borrower said they'd have bought new otherwise). Cached in-process
+  for ~1h so it never hammers PocketBase.
+- Both read through `src/lib/server/metrics.ts` (`isAdmin`, `getLiveCoreMetrics`,
+  `getMetricsHistory`, `getPublicStats`), which reuses `getSuperuserClient()`.
 
 ## Adding a new metric
 

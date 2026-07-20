@@ -58,6 +58,8 @@ Required in `.env` (see `docs/architecture.md` for what each does; template: `.e
 `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
 `MISTRAL_API_KEY` (prod only). Integration sync (`/api/sync`, `/api/refresh`; see
 `docs/operations/integration-sync.md`): `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`.
+Admin metrics dashboard (`/admin/metrics`; see `docs/operations/metrics.md`): `ADMIN_EMAILS`
+(comma-separated allowlist; empty/unset disables the route — 404 for everyone).
 
 ## Guardrails (always apply)
 
@@ -113,6 +115,7 @@ These prevent the most common bugs/security issues here — follow them without 
 | Operating the sync/refresh endpoints (env vars, cron, failure modes) | `docs/operations/integration-sync.md` |
 | Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
 | Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
+| Business metrics (`/admin/metrics`, `/misc/stats`, the nightly `metrics_daily` snapshot) | `docs/operations/metrics.md`; helper in `$lib/server/metrics.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
 
 ## Project tooling (this repo's `.claude/`)
