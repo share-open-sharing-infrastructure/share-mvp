@@ -43,6 +43,7 @@ export default defineConfig({
 			testMatch: [
 				'tests/smoke.spec.ts',
 				'tests/auth.spec.ts',
+				'tests/email-case-insensitive.spec.ts',
 				'tests/misc.spec.ts',
 				'tests/search-focus.spec.ts',
 				'tests/search-focus.mobile.spec.ts',

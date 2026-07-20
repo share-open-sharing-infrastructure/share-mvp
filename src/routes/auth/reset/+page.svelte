@@ -3,11 +3,12 @@
 	import { Section, Register } from 'flowbite-svelte-blocks';
 	import { Label, Input } from 'flowbite-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	export let form: ActionData;
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+
+	let { form }: { form: ActionData } = $props();
 </script>
 
 <SeoHead
@@ -36,6 +37,9 @@
 						name="email"
 						placeholder={texts.forms.email}
 						class="focus:border-primary-700 focus:ring-primary-700"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
 						required
 					/>
 				</Label>

@@ -99,6 +99,15 @@ describe('validateRegistrationForm', () => {
 		expect(result.inviteCode).toBe('abc123');
 	});
 
+	it('normalizes a mixed-case/whitespace email to lowercase (#557)', () => {
+		const result = validateRegistrationForm(
+			makeFormData({ ...validFormFields, email: '  Julika7@Example.com ' })
+		);
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.email).toBe('julika7@example.com');
+	});
+
 	it('trims whitespace from username', () => {
 		const result = validateRegistrationForm(
 			makeFormData({ ...validFormFields, username: '  alice  ' })

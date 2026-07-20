@@ -43,6 +43,9 @@
 						placeholder={texts.auth.emailPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
 						autocomplete="email"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
 						required
 					/>
 					<p class="text-sm text-tinte-500 dark:text-tinte-400">{texts.auth.loginWithEmailHint}</p>
