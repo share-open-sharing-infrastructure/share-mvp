@@ -112,7 +112,7 @@
 			<h2 class="mb-2 text-lg font-semibold text-tinte-800 dark:text-tinte-200">{t.sections.impact}</h2>
 			<dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
 				{#each Object.entries(latest.metrics.impact.counterfactual) as [answer, count] (answer)}
-					{@render stat(answer, count)}
+					{@render stat(t.impactLabels[answer as keyof typeof t.impactLabels] ?? answer, count)}
 				{/each}
 			</dl>
 		</section>

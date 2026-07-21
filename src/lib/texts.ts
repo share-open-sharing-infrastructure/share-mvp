@@ -1491,6 +1491,15 @@ export const texts = {
 			noHistory: 'Noch keine Verlaufsdaten – die erste nächtliche Momentaufnahme läuft heute Nacht.',
 			topInstitutionsByItems: 'Externe Gegenstände je Institution',
 			noAcceptanceRate: 'noch keine Entscheidung',
+			impactLabels: {
+				pending: 'Antwort ausstehend',
+				would_buy: 'Hätte gekauft',
+				not_important: 'Hätte verzichtet',
+				too_expensive: 'Zu teuer',
+				borrow_elsewhere: 'Anderswo geliehen',
+				unsure: 'Unsicher',
+				skipped: 'Übersprungen',
+			},
 		},
 		public: {
 			title: 'AllerLeih in Zahlen',
