@@ -1433,7 +1433,10 @@ export const texts = {
 	metrics: {
 		admin: {
 			title: 'Kennzahlen',
-			liveNotice: 'Diese Zahlen sind aktuell (Live-Abfrage); alle anderen Bereiche zeigen den Stand der letzten nächtlichen Momentaufnahme.',
+			liveGroupTitle: 'Live-Daten',
+			liveBadge: 'Live',
+			snapshotGroupTitle: 'Nächtliche Momentaufnahme',
+			snapshotBadge: (date: string) => `Stand: ${date}`,
 			sections: {
 				users: 'Nutzer:innen',
 				items: 'Gegenstände',
