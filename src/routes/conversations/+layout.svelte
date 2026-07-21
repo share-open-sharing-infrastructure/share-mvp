@@ -7,6 +7,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import type { Conversation } from '$lib/types/models';
+	import { OPEN_LENDING_STATES, isLendingStatusIn } from '$lib/lending';
 
 	let { data, children } = $props();
 
@@ -95,8 +96,10 @@
 
 	// Role/status predicates shared by the tab counts and the visibility filter.
 	const isLending = (c: Conversation) => c.itemOwner === data.currentUser.id;
+	// Plain chats without lending status count as active; terminal states
+	// (rejected/aborted/completed) do not.
 	const isActive = (c: Conversation) =>
-		!c.lendingStatus || !['rejected', 'completed'].includes(c.lendingStatus);
+		!c.lendingStatus || isLendingStatusIn(OPEN_LENDING_STATES, c.lendingStatus);
 	const matchesRole = (c: Conversation) =>
 		activeFilter === null || (activeFilter === 'lending') === isLending(c);
 	const matchesActive = (c: Conversation) => !showOnlyActive || isActive(c);

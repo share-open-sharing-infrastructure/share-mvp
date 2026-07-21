@@ -14,6 +14,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import MessageElement from './MessageElement.svelte';
 	import { displayName } from '$lib/utils/utils';
+	import { ABORTABLE_LENDING_STATES, isLendingStatusIn } from '$lib/lending';
 	import { texts } from '$lib/texts';
 	import ConversationHeader from './ConversationHeader.svelte';
 	import MessageForm from './MessageForm.svelte';
@@ -53,9 +54,7 @@
 	// terminal lending states (rejected/completed/aborted, to clear history) and for
 	// plain chats with no lending status at all. It stays hidden for pending/accepted
 	// (abortable) AND for active/return_requested (a loan in progress).
-	const isAbortable = $derived(
-		lendingStatus.value === 'pending' || lendingStatus.value === 'accepted'
-	);
+	const isAbortable = $derived(isLendingStatusIn(ABORTABLE_LENDING_STATES, lendingStatus.value));
 	const isLoanInProgress = $derived(
 		lendingStatus.value === 'active' || lendingStatus.value === 'return_requested'
 	);

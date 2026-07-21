@@ -40,6 +40,16 @@ export const ACTIVE_LENDING_STATES = [
  */
 export const OPEN_LENDING_STATES = ['pending', ...ACTIVE_LENDING_STATES] as const;
 
+/**
+ * Zustände, in denen eine Anfrage abgebrochen werden kann (#373): in `pending`
+ * nur durch den Requester (der Owner nutzt Ablehnen), in `accepted` durch beide
+ * Seiten. Ab `active` ist der Gegenstand unterwegs — kein Abbruch mehr.
+ */
+export const ABORTABLE_LENDING_STATES = [
+	'pending',
+	'accepted',
+] as const satisfies readonly LendingStatus[];
+
 /** Type-Guard statt `as`-Casts/`?? ''`-Tricks an den Call-Sites. */
 export function isLendingStatusIn(states: readonly LendingStatus[], value: unknown): boolean {
 	return typeof value === 'string' && (states as readonly string[]).includes(value);

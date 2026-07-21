@@ -2,7 +2,7 @@ import type PocketBase from 'pocketbase';
 import type { ClientResponseError } from 'pocketbase';
 import { fail } from '@sveltejs/kit';
 import type { NotificationType } from '$lib/types/models.js';
-import type { LendingStatus } from '$lib/lending';
+import { ABORTABLE_LENDING_STATES, isLendingStatusIn, type LendingStatus } from '$lib/lending';
 import { texts } from '$lib/texts';
 import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
 
@@ -28,7 +28,7 @@ async function loadAndValidateConversation(
 	conversationId: string,
 	userId: string,
 	requiredRole: 'owner' | 'requester' | 'participant',
-	requiredStatus: LendingStatus | LendingStatus[]
+	requiredStatus: LendingStatus | readonly LendingStatus[]
 ): Promise<{ conv: Record<string, unknown> } | { error: FailResult }> {
 	let conversation: Record<string, unknown>;
 	try {
@@ -45,8 +45,9 @@ async function loadAndValidateConversation(
 			? isParticipant
 			: conversation[requiredRole === 'owner' ? 'itemOwner' : 'requester'] === userId;
 	if (!roleOk) return { error: fail(403, { fail: true, message: texts.lending.errors.noPermission }) };
-	const validStatuses = Array.isArray(requiredStatus) ? requiredStatus : [requiredStatus];
-	if (!(validStatuses as string[]).includes(conversation.lendingStatus as string)) return { error: fail(400, { fail: true, message: texts.lending.errors.invalidState }) };
+	const validStatuses: readonly LendingStatus[] =
+		typeof requiredStatus === 'string' ? [requiredStatus] : requiredStatus;
+	if (!isLendingStatusIn(validStatuses, conversation.lendingStatus)) return { error: fail(400, { fail: true, message: texts.lending.errors.invalidState }) };
 	return { conv: conversation };
 }
 
@@ -171,7 +172,7 @@ export async function abortRequest(
 	conversationId: string,
 	userId: string
 ): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'participant', ['pending', 'accepted']);
+	const result = await loadAndValidateConversation(pb, conversationId, userId, 'participant', ABORTABLE_LENDING_STATES);
 	if ('error' in result) return result.error;
 	const { conv } = result;
 
