@@ -124,7 +124,7 @@ Side effects handled entirely by leihbackend: item statuses flip to `reserved`, 
 | `status` | `status` + `is_protected` | `instock` → `available`; everything else → `unavailable`. `is_protected` does **not** affect Phase-1 status (protected items are lendable, just not online-reservable) |
 | `categories` | `category` | Keyword mapping to `ITEM_CATEGORIES` (see §4 WP1); fallback `['Sonstiges']` |
 | `externalImgUrl` | `images[0]` | `{base}/api/files/item/{id}/{images[0]}`; empty string if no images |
-| `externalUrl` | per-institution template | `users.leihbackendItemUrlTemplate` with `{id}`/`{iid}` placeholders, if configured (e.g. a commonszentrum.de catalogue anchor). If empty: leave `externalUrl` empty → item uses the normal in-platform request flow (conversation with the institution account). See decision note in §6 |
+| `externalUrl` | per-institution template | `sync_config.itemUrlTemplate` with `{id}`/`{iid}` placeholders, if configured (e.g. a commonszentrum.de catalogue anchor). If empty: leave `externalUrl` empty → item uses the normal in-platform request flow (conversation with the institution account). See decision note in §6 |
 | `place` | institution user | `user.city`, fallback empty |
 | `owner` | — | The institution user's id |
 | `trusteesOnly` | — | Always `false` |
@@ -173,7 +173,7 @@ Phase 1 shipped. The detailed work-package breakdown that used to live here has 
 | Schema drift in leihbackend (`item_public` view changes) | All leihbackend knowledge is isolated in `Allerleih-Backend/pb_hooks/integrations/leihbackend.js`; the mapping cases in `Allerleih-Backend/tests/integration-sync.test.mjs` double as a contract. Pin expectations to the view fields listed in §2.1 |
 | Double-reservation in the sync window (Phase 2) | leihbackend rejects; surface error; no inconsistency |
 | Superuser credentials in env | Same trust level as existing VAPID/API secrets on prod; scoped alternative (impersonation tokens) can replace it later without architectural change |
-| Conversation requests to unmonitored institution accounts | CZ is monitored by the team; for external operators (Starterkit), require either `leihbackendItemUrlTemplate` or Phase-2 reservations before onboarding |
+| Conversation requests to unmonitored institution accounts | CZ is monitored by the team; for external operators (Starterkit), require either a `sync_config.itemUrlTemplate` deep link or Phase-2 reservations before onboarding |
 | `iid` collisions after a leihbackend reinstall | Avoided: `externalId` is the PB record id, which changes on reinstall ⇒ old items archive, new ones created. Correct behavior |
 
 ## 6. Decisions made in this spec (transparent, revisitable)

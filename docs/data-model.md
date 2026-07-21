@@ -333,10 +333,10 @@ metadata from the base column, so view migrations are never needed for a categor
 2. **Backend test:** update `CANONICAL_CATEGORIES` in `tests/categories.test.mjs`; run
    `npm test`.
 3. **Frontend:** update `ITEM_CATEGORIES` in `src/lib/categories.ts` (order = UI order).
-4. **Compile-time ripples** surface via `npm run check`:
-   `src/lib/utils/categoryPlaceholder.ts` needs a placeholder SVG per category, and
-   `CATEGORY_MAP` in `src/lib/server/integrations/leihbackend/mapping.ts` must be
-   reviewed (`'Sonstiges'` is its fallback and must always exist).
+4. **Compile-time ripple** surfaces via `npm run check`:
+   `src/lib/utils/categoryPlaceholder.ts` needs a placeholder SVG per category. Separately,
+   `CATEGORY_MAP` in the backend `Allerleih-Backend/pb_hooks/integrations/leihbackend.js` must be
+   reviewed by hand (Goja, not type-checked here — `'Sonstiges'` is its fallback and must always exist).
 5. **Auto-following consumers** need no edits: the AI prompt in
    `src/routes/api/analyze-item/+server.ts` joins the array, and the WINBIAP CSV import
    validates against it.
