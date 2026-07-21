@@ -19,6 +19,12 @@
 
 	const latest = $derived(data.history.at(-1) ?? null);
 
+	// byDomain30d was added after metrics_daily's JSON shape was already in use — an
+	// older snapshot row (from before that change shipped) simply won't have it, since
+	// the blob has no migration to backfill new fields. Default to [] rather than
+	// crashing on `latest.metrics.outboundClicks.byDomain30d.length`.
+	const outboundClicksByDomain = $derived(latest?.metrics.outboundClicks.byDomain30d ?? []);
+
 	const usersTotalSeries = $derived(data.history.map((h) => h.metrics.users.total));
 	const itemsAvailableSeries = $derived(data.history.map((h) => h.metrics.items.available));
 	const loansCompletedSeries = $derived(data.history.map((h) => h.metrics.loans.completedTotal));
@@ -165,12 +171,12 @@
 						{/each}
 					</ul>
 				{/if}
-				{#if latest.metrics.outboundClicks.byDomain30d.length > 0}
+				{#if outboundClicksByDomain.length > 0}
 					<h4 class="mt-3 mb-1 text-sm font-medium text-tinte-700 dark:text-tinte-300">
 						{t.topOutboundDomains}
 					</h4>
 					<ul class="space-y-1 text-sm">
-						{#each latest.metrics.outboundClicks.byDomain30d as entry (entry.domain)}
+						{#each outboundClicksByDomain as entry (entry.domain)}
 							<li>{entry.domain}: {entry.count}</li>
 						{/each}
 					</ul>
