@@ -84,11 +84,20 @@ keep it in sync with `computeDailyMetrics()` in `jobs/metrics.js` when the catal
   The nav shows a link to admins only (computed once in the root `+layout.server.ts` and
   passed down, for the same hidden-field reason).
 - **`/misc/stats`** — public, unauthenticated. Shows the whitelisted subset returned by
-  `getPublicStats()`: registered users, items available, completed loans, one impact number
-  (completed loans where the borrower said they'd have bought new otherwise). Cached in-process
-  for ~1h so it never hammers PocketBase. The same subset is also teased on the home page
-  (`/`, via the shared `PublicStatsSection` component) — `getPublicStats()` fails soft
-  (`null`) instead of throwing so a transient hiccup never takes down the landing page.
+  `getPublicStats()`. Two tiers, both from the same call:
+  - Headline numbers (also teased on the home page `/`, via the shared `PublicStatsSection`
+    component): registered users, items available, completed loans, one impact number
+    (completed loans where the borrower said they'd have bought new otherwise) — cheap live
+    counts.
+  - A "Mehr aus der Community" block, **`/misc/stats` only** (not the home-page teaser):
+    groups, trust edges, messages exchanged, active users with >1 loan in the last 30 days.
+    These read the same latest-`metrics_daily`-row values `/admin/metrics` already shows
+    (`community.groups.total`, `community.trusts.edges`, `messages.total`,
+    `activeUsers.loans30d_2plus`) rather than recomputing them a second way — 0 if no
+    snapshot exists yet.
+
+  Cached in-process for ~1h so it never hammers PocketBase; fails soft (`null`) instead of
+  throwing so a transient hiccup never takes down the landing page either.
 - Both read through `src/lib/server/metrics.ts` (`isAdmin`, `getLiveCoreMetrics`,
   `getMetricsHistory`, `getPublicStats`), which reuses `getSuperuserClient()`.
 

@@ -12,6 +12,12 @@ import {
 	_resetPublicStatsCacheForTests,
 } from './metrics';
 
+const FAKE_SNAPSHOT_METRICS = {
+	community: { groups: { total: 7 }, trusts: { edges: 5 } },
+	messages: { total: 42 },
+	activeUsers: { loans30d_2plus: 4 },
+};
+
 function fakePb(getListImpl?: () => Promise<{ totalItems: number }>) {
 	return {
 		filter: vi.fn((raw: string) => raw),
@@ -19,6 +25,7 @@ function fakePb(getListImpl?: () => Promise<{ totalItems: number }>) {
 			getList: vi.fn(getListImpl ?? (() => Promise.resolve({ totalItems: 3 }))),
 			getFullList: vi.fn().mockResolvedValue([]),
 			getOne: vi.fn().mockResolvedValue({ id: 'unused', isAdmin: false }),
+			getFirstListItem: vi.fn().mockResolvedValue({ date: '2026-07-20', metrics: FAKE_SNAPSHOT_METRICS }),
 		})),
 	};
 }
@@ -110,8 +117,40 @@ describe('getPublicStats', () => {
 		const stats = await getPublicStats();
 
 		expect(Object.keys(stats!).sort()).toEqual(
-			['usersTotal', 'itemsAvailable', 'loansCompleted', 'impactWouldBuyCount'].sort()
+			[
+				'usersTotal',
+				'itemsAvailable',
+				'loansCompleted',
+				'impactWouldBuyCount',
+				'groupsTotal',
+				'trustEdges',
+				'messagesTotal',
+				'activeUsers30d',
+			].sort()
 		);
+	});
+
+	it('reads the community/messages/activeUsers fields from the latest snapshot row — same source as /admin/metrics', async () => {
+		const pb = fakePb();
+		getSuperuserClient.mockResolvedValue(pb);
+
+		const stats = await getPublicStats();
+
+		expect(stats).toMatchObject({ groupsTotal: 7, trustEdges: 5, messagesTotal: 42, activeUsers30d: 4 });
+	});
+
+	it('defaults the snapshot-sourced fields to 0 when no metrics_daily row exists yet', async () => {
+		const pb = fakePb();
+		pb.collection = vi.fn((name: string) =>
+			name === 'metrics_daily'
+				? { getFirstListItem: vi.fn().mockRejectedValue(new Error('no rows')) }
+				: { getList: vi.fn().mockResolvedValue({ totalItems: 3 }) }
+		) as unknown as typeof pb.collection;
+		getSuperuserClient.mockResolvedValue(pb);
+
+		const stats = await getPublicStats();
+
+		expect(stats).toMatchObject({ groupsTotal: 0, trustEdges: 0, messagesTotal: 0, activeUsers30d: 0 });
 	});
 
 	it('caches the result — a second call within the TTL does not re-query PocketBase', async () => {

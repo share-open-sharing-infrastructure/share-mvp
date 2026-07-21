@@ -1515,6 +1515,14 @@ export const texts = {
 			impactWouldBuyCount: 'Mal wurde geliehen statt neu gekauft',
 			unavailable: 'Die Zahlen sind gerade nicht verfügbar — bitte versuch es später noch einmal.',
 			linkToFullPage: 'Alle Zahlen ansehen',
+			// Same German labels as texts.metrics.admin.labels (groupsTotal, trustEdges,
+			// messagesTotal, loans30d2plus) — kept as literal duplicates, not a shared
+			// reference, since this object can't reference itself while being defined.
+			moreTitle: 'Mehr aus der Community',
+			groupsTotal: 'Gruppen',
+			trustEdges: 'Vertrauens-Beziehungen',
+			messagesTotal: 'Ausgetauschte Nachrichten',
+			activeUsers30d: 'Aktive Nutzer:innen (> 1 Ausleihe / 30 Tage)',
 		},
 	},
 };

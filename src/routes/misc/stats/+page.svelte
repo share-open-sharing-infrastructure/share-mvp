@@ -20,6 +20,26 @@
 
 	{#if data.stats}
 		<PublicStatsSection stats={data.stats} />
+
+		<h2 class="pt-2 text-lg font-semibold text-tinte-800 dark:text-tinte-200">{t.moreTitle}</h2>
+		<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			<div class="rounded-lg border border-tinte-200 bg-papier p-4 dark:border-tinte-700 dark:bg-tinte-900">
+				<dt class="text-sm text-tinte-500 dark:text-tinte-400">{t.groupsTotal}</dt>
+				<dd class="text-3xl font-semibold text-tinte-900 dark:text-tinte-100">{data.stats.groupsTotal}</dd>
+			</div>
+			<div class="rounded-lg border border-tinte-200 bg-papier p-4 dark:border-tinte-700 dark:bg-tinte-900">
+				<dt class="text-sm text-tinte-500 dark:text-tinte-400">{t.trustEdges}</dt>
+				<dd class="text-3xl font-semibold text-tinte-900 dark:text-tinte-100">{data.stats.trustEdges}</dd>
+			</div>
+			<div class="rounded-lg border border-tinte-200 bg-papier p-4 dark:border-tinte-700 dark:bg-tinte-900">
+				<dt class="text-sm text-tinte-500 dark:text-tinte-400">{t.messagesTotal}</dt>
+				<dd class="text-3xl font-semibold text-tinte-900 dark:text-tinte-100">{data.stats.messagesTotal}</dd>
+			</div>
+			<div class="rounded-lg border border-tinte-200 bg-papier p-4 dark:border-tinte-700 dark:bg-tinte-900">
+				<dt class="text-sm text-tinte-500 dark:text-tinte-400">{t.activeUsers30d}</dt>
+				<dd class="text-3xl font-semibold text-tinte-900 dark:text-tinte-100">{data.stats.activeUsers30d}</dd>
+			</div>
+		</dl>
 	{:else}
 		<p class="text-sm text-tinte-500">{t.unavailable}</p>
 	{/if}

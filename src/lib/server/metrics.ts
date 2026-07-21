@@ -118,10 +118,45 @@ export interface PublicStats {
 	loansCompleted: number;
 	/** Completed loans where the borrower said they'd have bought the item new otherwise. */
 	impactWouldBuyCount: number;
+	/** From the latest metrics_daily snapshot — same source as /admin/metrics's Community section. */
+	groupsTotal: number;
+	/** From the latest snapshot — same source as /admin/metrics's Community section. */
+	trustEdges: number;
+	/** From the latest snapshot — same source as /admin/metrics's Anfragen section. */
+	messagesTotal: number;
+	/**
+	 * Distinct users with >1 loan (accepted/completed) in the last 30 days. Not cheap
+	 * to compute live (same conversation-grouping aggregation as the backend job), and
+	 * /admin/metrics already sources it from the snapshot too — so this reads the same
+	 * value rather than recomputing it a second way. 0 if no snapshot exists yet.
+	 */
+	activeUsers30d: number;
 }
 
 const PUBLIC_STATS_CACHE_MS = 60 * 60 * 1000; // ~1h — /misc/stats must never hammer PocketBase
 let cachedPublicStats: { value: PublicStats; expiresAt: number } | null = null;
+
+const EMPTY_SNAPSHOT_STATS = { groupsTotal: 0, trustEdges: 0, messagesTotal: 0, activeUsers30d: 0 };
+
+/** Pulls the handful of snapshot-only public fields from the latest metrics_daily row in one fetch. */
+async function getLatestSnapshotStats(
+	pb: Awaited<ReturnType<typeof getSuperuserClient>>
+): Promise<typeof EMPTY_SNAPSHOT_STATS> {
+	try {
+		const latest = await pb.collection('metrics_daily').getFirstListItem<MetricsDaily>('', {
+			sort: '-date',
+			requestKey: null,
+		});
+		return {
+			groupsTotal: latest.metrics.community?.groups.total ?? 0,
+			trustEdges: latest.metrics.community?.trusts.edges ?? 0,
+			messagesTotal: latest.metrics.messages?.total ?? 0,
+			activeUsers30d: latest.metrics.activeUsers?.loans30d_2plus ?? 0,
+		};
+	} catch {
+		return EMPTY_SNAPSHOT_STATS; // no snapshot yet (fresh deployment) — same fallback as getMetricsHistory
+	}
+}
 
 /**
  * Whitelisted headline subset for the public /misc/stats page AND the landing page
@@ -140,14 +175,15 @@ export async function getPublicStats(): Promise<PublicStats | null> {
 
 	try {
 		const pb = await getSuperuserClient();
-		const [usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount] = await Promise.all([
+		const [usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount, snapshotStats] = await Promise.all([
 			count(pb, 'users', 'deleted != true'),
 			count(pb, 'items', 'status = "available"'),
 			count(pb, 'conversations', 'lendingStatus = "completed"'),
 			count(pb, 'conversations', 'lendingStatus = "completed" && counterfactual = "would_buy"'),
+			getLatestSnapshotStats(pb),
 		]);
 
-		const value: PublicStats = { usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount };
+		const value: PublicStats = { usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount, ...snapshotStats };
 		cachedPublicStats = { value, expiresAt: Date.now() + PUBLIC_STATS_CACHE_MS };
 		return value;
 	} catch (err) {
