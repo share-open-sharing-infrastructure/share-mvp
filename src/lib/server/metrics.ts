@@ -39,9 +39,14 @@ async function count(
 	filter: string,
 	params?: Record<string, unknown>
 ): Promise<number> {
+	// requestKey: null opts out of the SDK's auto-cancellation, which dedupes by
+	// collection+method regardless of filter — without this, the many concurrent
+	// counts against the same collection (e.g. one per lendingStatus) would cancel
+	// each other and throw "autocancelled" ClientResponseErrors.
 	const { totalItems } = await pb.collection(collection).getList(1, 1, {
 		filter: params ? pb.filter(filter, params) : filter,
 		fields: 'id',
+		requestKey: null,
 	});
 	return totalItems;
 }
@@ -81,6 +86,7 @@ export async function getMetricsHistory(days: number): Promise<MetricsDaily[]> {
 	return pb.collection('metrics_daily').getFullList<MetricsDaily>({
 		filter: pb.filter('date >= {:cutoff}', { cutoff }),
 		sort: 'date',
+		requestKey: null,
 	});
 }
 
