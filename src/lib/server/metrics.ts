@@ -79,15 +79,27 @@ export async function getLiveCoreMetrics(): Promise<LiveCoreMetrics> {
 	};
 }
 
-/** Nightly `metrics_daily` snapshots for the last `days` days, oldest first (for trend charts). */
+/**
+ * Nightly `metrics_daily` snapshots for the last `days` days, oldest first (for trend
+ * charts). Fails soft (returns `[]`) instead of throwing: the frontend and backend repos
+ * deploy independently, so this must not 500 `/admin/metrics` if the frontend lands
+ * before the backend migration that creates `metrics_daily` — the live tiles should
+ * still render. Any failure here (missing collection, auth hiccup, …) is logged but
+ * treated as "no history yet", same as a genuinely empty collection.
+ */
 export async function getMetricsHistory(days: number): Promise<MetricsDaily[]> {
-	const pb = await getSuperuserClient();
-	const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-	return pb.collection('metrics_daily').getFullList<MetricsDaily>({
-		filter: pb.filter('date >= {:cutoff}', { cutoff }),
-		sort: 'date',
-		requestKey: null,
-	});
+	try {
+		const pb = await getSuperuserClient();
+		const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+		return await pb.collection('metrics_daily').getFullList<MetricsDaily>({
+			filter: pb.filter('date >= {:cutoff}', { cutoff }),
+			sort: 'date',
+			requestKey: null,
+		});
+	} catch (err) {
+		console.error('getMetricsHistory failed — treating as no history yet', err);
+		return [];
+	}
 }
 
 export interface PublicStats {

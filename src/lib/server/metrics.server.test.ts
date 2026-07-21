@@ -83,6 +83,17 @@ describe('getMetricsHistory', () => {
 			cutoff: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
 		});
 	});
+
+	it('fails soft to [] instead of throwing — e.g. metrics_daily not migrated yet', async () => {
+		const pb = fakePb();
+		pb.collection = vi.fn(() => ({
+			getList: vi.fn().mockResolvedValue({ totalItems: 0 }),
+			getFullList: vi.fn().mockRejectedValue(new Error('Missing or invalid collection context.')),
+		}));
+		getSuperuserClient.mockResolvedValue(pb);
+
+		await expect(getMetricsHistory(30)).resolves.toEqual([]);
+	});
 });
 
 describe('getPublicStats', () => {
