@@ -165,6 +165,16 @@
 						{/each}
 					</ul>
 				{/if}
+				{#if latest.metrics.outboundClicks.byDomain30d.length > 0}
+					<h4 class="mt-3 mb-1 text-sm font-medium text-tinte-700 dark:text-tinte-300">
+						{t.topOutboundDomains}
+					</h4>
+					<ul class="space-y-1 text-sm">
+						{#each latest.metrics.outboundClicks.byDomain30d as entry (entry.domain)}
+							<li>{entry.domain}: {entry.count}</li>
+						{/each}
+					</ul>
+				{/if}
 			</section>
 
 			<section>

@@ -57,7 +57,7 @@ keep it in sync with `computeDailyMetrics()` in `jobs/metrics.js` when the catal
 | `messages` | `total`, `last30d` |
 | `impact` | `counterfactual` (count per `CounterfactualAnswer` among completed loans) |
 | `integrations` | `lastSyncByInstitution[]` (`{userId, username, itemCount, newestUpdated}`, one row per institution with a `leihbackendUrl`) |
-| `outboundClicks` | `total`, `last30d`, `byItemOwner30d[]` (top 20, `{userId, username, count}`) |
+| `outboundClicks` | `total`, `last30d`, `byItemOwner30d[]` (top 20, `{userId, username, count}`), `byDomain30d[]` (top 20, `{domain, count}` — destination **hostname**, e.g. `uber.space`, not the strict DNS top-level domain; clicks with an unparseable `destination` are excluded) |
 | `community` | `groups.{total,public,memberships}`, `trusts.edges`, `invites.usersInvited`, `push.{subscriptions,usersSubscribed}` |
 
 ## Known limitations

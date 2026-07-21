@@ -1493,6 +1493,7 @@ export const texts = {
 			},
 			noHistory: 'Noch keine Verlaufsdaten – die erste nächtliche Momentaufnahme läuft heute Nacht.',
 			topInstitutionsByItems: 'Externe Gegenstände je Institution',
+			topOutboundDomains: 'Externe Klicks nach Zieldomain',
 			noAcceptanceRate: 'noch keine Entscheidung',
 			impactLabels: {
 				pending: 'Antwort ausstehend',

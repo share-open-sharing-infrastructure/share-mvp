@@ -751,6 +751,8 @@ export interface DailyMetrics {
 		total: number;
 		last30d: number;
 		byItemOwner30d: MetricsOwnerCount[];
+		/** Destination hostname (e.g. "uber.space"), not the strict DNS top-level domain. */
+		byDomain30d: Array<{ domain: string; count: number }>;
 	};
 	community: {
 		groups: { total: number; public: number; memberships: number };
