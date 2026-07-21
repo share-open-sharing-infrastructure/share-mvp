@@ -142,9 +142,34 @@ Maintenance & review:
   texts keys, commands). Run after a change that touches code a skill references.
 - `/create-pr` — preflight (lint/check/test/build), draft, and open a PR to `main`.
 - `/accessibility-review` — audit changed Svelte files against the project's a11y patterns.
-- `sveltekit-pb-reviewer` agent — delegated AllerLeih-specific code/security review (pb.filter,
-  trust/group visibility, public-view & `items_searchable` leakage, deleted-account masking, runes,
-  texts.ts). Complements the built-in `/code-review` and `/security-review`.
+  These patterns are the repo truth; the `a11y-reviewer` agent reads this skill before judging.
+- `/review-all` — run the reviewer roles below in parallel against the current diff, then
+  consolidate, dedupe, and **fix** Blocking + Should-fix findings, ending with a change log
+  (`file:line — [severity, role] what` + why). No commit/push/PR. Cost-aware (see below).
+
+**Reviewer & implementation agents.** The review is split into **four narrow reviewer roles**
+instead of one catch-all checklist — each gets its own context window, they run in parallel, and
+findings don't duplicate. They share the contract in `.claude/review-contract.md` (scope,
+severity, output format, revier boundaries) and are all **read-only**; fixing happens in the
+orchestrating skill.
+
+- `sveltekit-pb-reviewer` — security & data protection: pb.filter injection, trust/group
+  visibility, public-view & `items_searchable` leakage, auth, PII/GDPR, realtime authorisation.
+- `code-quality-reviewer` — file length, complexity, duplication, abstraction altitude,
+  anti-patterns.
+- `a11y-reviewer` — WCAG 2.1 AA, on top of the `/accessibility-review` patterns.
+- `conventions-reviewer` — runes rules, `texts.ts`, `Button.svelte`, `displayName()`,
+  `subscribeRealtime()`, test conventions (runs on Haiku — it's checklist/grep-driven).
+- `allerleih-coder` — implementation agent used by `/review-all` (and the maintainer's local
+  issue pipeline) to carry out multi-file fixes. Does **not** commit, push, or open PRs.
+
+**Cost rules baked into `/review-all` — do not optimise them away:** (1) diff ≤ 40 lines over
+≤ 3 files ⇒ the orchestrator reviews it itself, no agents; (2) each role only starts when the
+diff touches its area (gates); (3) the orchestrator fetches the diff once and passes it in the
+prompt — the contract forbids the agents from re-deriving scope and caps them at ~15 tool calls.
+`/security-review` is a second lens only for genuinely security-critical diffs, not routine.
+
+These complement the built-in `/code-review` and `/security-review`.
 
 ## Keep in sync
 
