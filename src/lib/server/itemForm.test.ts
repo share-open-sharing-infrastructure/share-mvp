@@ -11,6 +11,7 @@ import {
 	extractItemForm,
 	extractBulkItemDraft,
 	MAX_ITEM_IMAGES,
+	MAX_DESCRIPTION_LENGTH,
 } from './itemForm';
 
 function imageFile(name = 'a.jpg', type = 'image/jpeg', body: BlobPart[] = ['x']) {
@@ -64,6 +65,22 @@ describe('validateItemFields', () => {
 	it('flags a missing description', () => {
 		const r = validateItemFields({ ...ok, description: null }, { requireImage: true });
 		expect(r.errors.descriptionIsMissing).toBe(true);
+	});
+
+	it(`accepts exactly ${MAX_DESCRIPTION_LENGTH} characters and rejects one more`, () => {
+		const atLimit = validateItemFields(
+			{ ...ok, description: 'x'.repeat(MAX_DESCRIPTION_LENGTH) },
+			{ requireImage: true }
+		);
+		expect(atLimit.errors.descriptionTooLong).toBe(false);
+		expect(atLimit.isValid).toBe(true);
+
+		const overLimit = validateItemFields(
+			{ ...ok, description: 'x'.repeat(MAX_DESCRIPTION_LENGTH + 1) },
+			{ requireImage: true }
+		);
+		expect(overLimit.errors.descriptionTooLong).toBe(true);
+		expect(overLimit.isValid).toBe(false);
 	});
 
 	it('flags a missing image only when requireImage is true', () => {

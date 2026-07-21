@@ -13,6 +13,7 @@
 	import OwnerCard from './OwnerCard.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import LinkifiedText from '$lib/components/LinkifiedText.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
@@ -52,7 +53,7 @@
 	const seoTitle = $derived(texts.seo.itemDetail(item.name, item.username ?? ''));
 	const seoDesc = $derived(
 		item.description
-			? item.description.slice(0, 155)
+			? item.description.replace(/\s+/g, ' ').trim().slice(0, 155)
 			: texts.seo.itemDetailDescription(
 					item.name,
 					item.username ?? ''
@@ -112,8 +113,8 @@
 
 	<!-- Description -->
 	{#if item.description}
-		<p class="leading-relaxed text-tinte-700 dark:text-tinte-300">
-			{item.description}
+		<p class="whitespace-pre-line leading-relaxed text-tinte-700 dark:text-tinte-300">
+			<LinkifiedText text={item.description} />
 		</p>
 	{/if}
 

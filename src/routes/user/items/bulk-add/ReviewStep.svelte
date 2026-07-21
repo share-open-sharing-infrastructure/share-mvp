@@ -169,6 +169,7 @@
 							<textarea
 								use:autoresize={draft.description}
 								rows={1}
+								maxlength={4000}
 								placeholder={texts.forms.itemDescription}
 								bind:value={draft.description}
 								class="block w-full resize-none overflow-hidden rounded-lg border border-tinte-300 bg-papier p-2.5 text-sm text-tinte-900 focus:border-primary-500 focus:ring-primary-500 dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"

@@ -213,8 +213,15 @@
 					// Show the failure inline right above the submit button (#522). Sourced
 					// from this form's own result — not the shared page-level `form` prop,
 					// which is fanned out to every row's modal and written by unrelated
-					// inline/bulk actions — so it stays tied to *this* submit.
-					submitError = (result.data as { message?: string } | undefined)?.message ?? null;
+					// inline/bulk actions — so it stays tied to *this* submit. A too-long
+					// description gets its own message instead of the generic one (the client
+					// maxlength normally prevents it; this covers a tampered/pasted submit).
+					const data = result.data as
+						| { message?: string; missingFields?: { descriptionTooLong?: boolean } }
+						| undefined;
+					submitError = data?.missingFields?.descriptionTooLong
+						? texts.pages.items.descriptionTooLong
+						: (data?.message ?? null);
 				}
 				await update();
 			};
@@ -313,6 +320,7 @@
 					placeholder={texts.forms.itemDescription}
 					value={editingItem?.description ? editingItem.description : ''}
 					autocomplete="off"
+					maxlength={4000}
 					required
 				/>
 			</Label>

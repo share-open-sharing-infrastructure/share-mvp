@@ -750,6 +750,7 @@ export const texts = {
 			saveFailed: 'Der Gegenstand konnte nicht gespeichert werden. Bitte versuche es erneut.',
 			validationFailed:
 				'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
+			descriptionTooLong: 'Die Beschreibung darf höchstens 4.000 Zeichen lang sein.',
 			search: 'Suchen...',
 			filterAll: 'Alle',
 			filterAvailable: 'Verfügbar',
