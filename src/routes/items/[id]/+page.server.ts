@@ -8,6 +8,7 @@ import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms
 import { evaluateUnmetRequirements, requirementRegistry } from '$lib/server/lendingRequirements';
 import { isTrusting } from '$lib/server/trust';
 import { getUserPreferences } from '$lib/server/userPreferences';
+import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 
 export async function load({ params, locals }) {
 	let item: ItemPublic;
@@ -106,7 +107,7 @@ export async function load({ params, locals }) {
 		try {
 			const conv = await locals.pb.collection('conversations').getFirstListItem(
 				locals.pb.filter(
-					'requester={:uid} && requestedItem={:iid} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+					'requester={:uid} && requestedItem={:iid} && ' + lendingStatusFilter(OPEN_LENDING_STATES),
 					{ uid: currentUserId, iid: item.id }
 				),
 				{ sort: '-created', fields: 'id,lendingStatus' }
@@ -239,7 +240,8 @@ export const actions = {
 		try {
 			existingConversations = await locals.pb.collection('conversations').getFullList({
 				filter: locals.pb.filter(
-					'requester = {:requesterId} && requestedItem = {:itemId} && lendingStatus!="rejected" && lendingStatus!="completed" && lendingStatus!=""',
+					'requester = {:requesterId} && requestedItem = {:itemId} && ' +
+						lendingStatusFilter(OPEN_LENDING_STATES),
 					{ requesterId, itemId: params.id }
 				),
 				sort: '-created',

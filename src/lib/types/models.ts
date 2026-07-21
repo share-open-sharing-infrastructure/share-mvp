@@ -1,3 +1,5 @@
+import type { LendingStatus } from '$lib/lending';
+
 // --- Geo types ---
 
 export type OwnerLocation = { id: string; lon: number; lat: number };
@@ -468,7 +470,7 @@ export interface Conversation extends PocketBaseEntity {
 	messages: Message[];
 	readByRequester: boolean;
 	readByOwner: boolean;
-	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed' | 'aborted';
+	lendingStatus?: LendingStatus;
 	counterfactual?: CounterfactualAnswer;
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;

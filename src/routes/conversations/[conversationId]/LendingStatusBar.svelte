@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import type { Conversation } from '$lib/types/models';
+	import { LENDING_LIFECYCLE, type LendingStatus } from '$lib/lending';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
@@ -38,13 +39,7 @@
 	);
 
 	// The five forward-progress steps. `rejected` is a dead-end handled separately below.
-	const steps: Array<NonNullable<Conversation['lendingStatus']>> = [
-		'pending',
-		'accepted',
-		'active',
-		'return_requested',
-		'completed',
-	];
+	const steps: readonly LendingStatus[] = LENDING_LIFECYCLE;
 
 	const currentStepIndex = $derived(status ? steps.indexOf(status) : -1);
 
