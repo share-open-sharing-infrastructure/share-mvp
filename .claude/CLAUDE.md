@@ -162,6 +162,9 @@ orchestrating skill.
   `subscribeRealtime()`, test conventions (runs on Haiku — it's checklist/grep-driven).
 - `allerleih-coder` — implementation agent used by `/review-all` (and the maintainer's local
   issue pipeline) to carry out multi-file fixes. Does **not** commit, push, or open PRs.
+- `allerleih-tester` — change-scoped QA agent: runs the Vitest/backend/e2e tests the diff impacts
+  and drives the changed flow in a real browser (Playwright + Chrome DevTools MCP). Read-only on
+  source. Invoke it directly to verify a change, or via the local `/review-and-test` pipeline.
 
 **Cost rules baked into `/review-all` — do not optimise them away:** (1) diff ≤ 40 lines over
 ≤ 3 files ⇒ the orchestrator reviews it itself, no agents; (2) each role only starts when the
