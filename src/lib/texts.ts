@@ -1507,7 +1507,7 @@ export const texts = {
 			},
 		},
 		public: {
-			title: 'AllerLeih in Zahlen',
+			title: 'AllerLeih Zahlen',
 			intro: 'Ein kleiner Einblick in die AllerLeih-Plattform.',
 			usersTotal: 'Registrierte Nutzer:innen',
 			itemsAvailable: 'Verfügbare Gegenstände',
