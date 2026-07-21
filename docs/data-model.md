@@ -284,7 +284,19 @@ erDiagram
         date updated
     }
 
+    SYNC_CONFIG{
+        string id PK
+        User institution FK "cascadeDelete — the institution this config belongs to"
+        string integration "select: leihbackend | winbiap"
+        string baseUrl "source base URL (leihbackend origin, or WINBIAP WebOPAC base ending /webopac)"
+        string itemUrlTemplate "optional deep-link template, {id}/{iid} placeholders"
+        bool enabled "false → backend cron skips this institution (manual endpoints ignore it until Phase 3)"
+        date created
+        date updated
+    }
+
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
+    USER 1 to zero or more SYNC_CONFIG: configures
 
     METRICS_DAILY{
         string id PK
@@ -333,6 +345,23 @@ metadata from the base column, so view migrations are never needed for a categor
 6. **Docs:** update this section and any doc citing the values or their count.
 7. Run both suites: frontend `npm run check && npm run lint && npx vitest run`; backend
    `npm test`.
+
+## sync_config
+
+Per-institution integration configuration (#487 Phase 2), the dedicated replacement for the
+overloaded `users.leihbackendUrl` discovery field. One row per source type per institution
+(unique index on `(institution, integration)`); `integration` is a select of
+`leihbackend | winbiap`. **Superuser-only** — all five API rules are `null` (not `""`), so no
+authenticated user can read or write it; rows are managed in the PocketBase admin UI (see
+`operations/onboarding-institutional-partner.md`). It is **not** exposed by any `*_public` view.
+
+As of Phase 2 the **backend cron** (`integration_sync` full pull + `integration_refresh` per-item)
+discovers institutions from `sync_config`. The **manual** frontend `/api/sync` + `/api/refresh` and
+the CSV import still read `users.leihbackendUrl` — a documented **dual-truth interim** until Phase 3
+drops `users.leihbackendUrl`/`leihbackendItemUrlTemplate`. `enabled=false` affects only the cron in
+Phase 2; the manual endpoints ignore it until Phase 3. A one-time backfill migration
+(`pb_hooks/services/syncConfig.js` → `backfillSyncConfigs`) seeds rows from the existing
+`users.leihbackendUrl` values (`/webopac` → `winbiap`, else `leihbackend`, `enabled=true`).
 
 ## user_geolocations
 

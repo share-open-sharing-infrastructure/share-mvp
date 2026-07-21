@@ -129,7 +129,7 @@ These prevent the most common bugs/security issues here — follow them without 
 | Groups: roles, public/self-join, visibility model | `docs/groups.md` |
 | Partner catalogue integrations (leihbackend, WINBIAP), `/api/sync` + `/api/refresh`, adding a new integration | `docs/integrations.md`; leihbackend API reference: `docs/leihbackend-integration-spec.md` |
 | Operating the sync/refresh endpoints (env vars, cron, failure modes) | `docs/operations/integration-sync.md` |
-| ⚠️ #487 Phase 1: the **scheduled** per-item refresh moved to the backend | see the double-truth note below; `Allerleih-Backend/pb_hooks/integrations/` |
+| ⚠️ #487 Phase 2: the **scheduled** full-sync AND per-item refresh moved to the backend (discovery via `sync_config`) | see the double-truth note below; `Allerleih-Backend/pb_hooks/integrations/` |
 | Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
 | Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
 | Business metrics (`/admin/metrics`, `/misc/stats`, the nightly `metrics_daily` snapshot) | `docs/operations/metrics.md`; helper in `$lib/server/metrics.ts` |
@@ -137,15 +137,22 @@ These prevent the most common bugs/security issues here — follow them without 
 | A backend-only issue (no frontend changes) | Still drive it through `/issue-to-pr` + `/create-pr` **here** — the plan gate and review dispatch (`sveltekit-pb-reviewer` covers `pb_hooks`/`pb_migrations`) live in this repo. The backend also has its own `allerleih-backend/.claude/skills/create-pr` for standalone use when working in that repo alone. |
 
 > **⚠️ Temporary double truth (until #487 Phase 3).** The integration diff/write logic now exists
-> **twice**: the Goja port in `Allerleih-Backend/pb_hooks/integrations/` (which runs the
-> **scheduled** per-item refresh — the backend `integration_refresh` cron no longer POSTs
-> `/api/refresh`) **and** the TS copy here in `src/lib/server/integrations/`, which still backs the
-> CSV import at `/user/import` and the manual `/api/sync` + `/api/refresh` endpoints. Keep the two
-> in lockstep: **`SYNCED_FIELDS`** (`core/types.ts` ↔ backend `integrations/types.js`) and
-> **`DESCRIPTION_PREFIX`** (`$lib/server/itemArchive.ts` ↔ backend `integrations/diff.js`) MUST
-> stay **byte-identical** across both repos — a prefix drift re-archives all existing stock (the
-> "already archived" skip matches on it). No frontend code is removed in Phase 1; Phase 3 removes
-> the frontend copy and this note.
+> **twice**: the Goja port in `Allerleih-Backend/pb_hooks/integrations/` (which runs **both**
+> **scheduled** cron jobs — the backend `integration_sync` + `integration_refresh` no longer POST
+> the frontend, and discover institutions from the new **`sync_config`** collection) **and** the TS
+> copy here in `src/lib/server/integrations/`, which still backs the CSV import at `/user/import`
+> and the **manual** `/api/sync` + `/api/refresh` endpoints (which still read
+> `users.leihbackendUrl`). Two consequences until Phase 3:
+> - **Keep the shared constants byte-identical across repos:** **`SYNCED_FIELDS`** (`core/types.ts`
+>   ↔ backend `integrations/types.js`) and **`DESCRIPTION_PREFIX`** (`$lib/server/itemArchive.ts` ↔
+>   backend `integrations/diff.js`) — a prefix drift re-archives all existing stock (the "already
+>   archived" skip matches on it).
+> - **Dual-truth discovery:** the cron reads `sync_config`; the manual endpoints read
+>   `users.leihbackendUrl`. A new partner needs **both** set, and `sync_config.enabled=false` pauses
+>   only the cron (the manual endpoints ignore it). See `docs/operations/onboarding-institutional-partner.md`.
+>
+> No frontend code is removed in Phase 2 (only the additive `SyncConfig` type in `models.ts`);
+> Phase 3 removes the frontend copy, `users.leihbackendUrl`, and this note.
 
 ## Project tooling (this repo's `.claude/`)
 
