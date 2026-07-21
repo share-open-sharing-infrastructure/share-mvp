@@ -140,3 +140,46 @@ test.describe('item category staleness (#546)', () => {
 		await expect(category(dialog)).toBeChecked();
 	});
 });
+
+// Regression for #395 + #455: the item description keeps its line breaks (rendered via a
+// `whitespace-pre-line` wrapper) and http(s) URLs are turned into safe, clickable links
+// (target=_blank + noopener/noreferrer/nofollow) on the public detail page.
+test.describe('item description line breaks & links (#395 #455)', () => {
+	test('renders newlines as pre-line and linkifies a URL on the detail page', async ({ page }) => {
+		await page.goto('/user/items');
+		const dialog = await openAddModal(page);
+
+		const name = `E2E Beschreibung ${Date.now()}`;
+		const url = 'https://example.com/anleitung';
+		await dialog.getByRole('textbox', { name: 'Name:' }).fill(name);
+		await dialog
+			.getByRole('textbox', { name: 'Beschreibung:' })
+			.fill(`Zeile eins\nZeile zwei\nMehr unter ${url}`);
+		await dialog.locator('input#itemImage').setInputFiles({
+			name: 'item.png',
+			mimeType: 'image/png',
+			buffer: PNG_1x1,
+		});
+		await dialog.getByRole('button', { name: 'Hinzufügen' }).click();
+
+		// Modal closes; open the new item's detail page from its list row.
+		await expect(dialog).toBeHidden();
+		const row = page.getByRole('link', { name });
+		await expect(row).toBeVisible();
+		await row.click();
+		await expect(page).toHaveURL(/\/items\/[^/]+$/);
+
+		// The URL became a clickable link with the exact href and safe target/rel.
+		const link = page.getByRole('link', { name: url });
+		await expect(link).toBeVisible();
+		await expect(link).toHaveAttribute('href', url);
+		await expect(link).toHaveAttribute('target', '_blank');
+		await expect(link).toHaveAttribute('rel', /noopener/);
+		await expect(link).toHaveAttribute('rel', /noreferrer/);
+		await expect(link).toHaveAttribute('rel', /nofollow/);
+
+		// The wrapping <p> preserves the entered line breaks (CSS, not stored markup).
+		const description = page.locator('p', { has: link });
+		await expect(description).toHaveCSS('white-space', 'pre-line');
+	});
+});

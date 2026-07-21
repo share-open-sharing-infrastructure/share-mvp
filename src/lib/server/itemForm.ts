@@ -18,6 +18,14 @@ import { getAttachableGroups } from '$lib/server/groups';
  */
 export const MAX_ITEM_IMAGES = 5;
 
+/**
+ * Max description length. Mirrors the import pipelines' cap
+ * (`integrations/leihbackend/mapping.ts` `MAX_DESCRIPTION_LENGTH` and
+ * `integrations/winbiap/csv.ts`) so manually entered and imported descriptions share one
+ * limit. Enforced server-side here; the item textareas also carry it as `maxlength` for UX.
+ */
+export const MAX_DESCRIPTION_LENGTH = 4000;
+
 /** Accepted image MIME types for uploaded item photos. */
 export const VALID_IMAGE_TYPES = [
 	'image/jpeg',
@@ -82,6 +90,7 @@ export async function sanitizeGroups(
 export interface ItemValidationErrors {
 	nameIsMissing: boolean;
 	descriptionIsMissing: boolean;
+	descriptionTooLong: boolean;
 	imageIsMissing: boolean;
 	imageInvalidType: boolean;
 	tooManyImages: boolean;
@@ -104,6 +113,8 @@ export function validateItemFields(
 	const errors: ItemValidationErrors = {
 		nameIsMissing: !input.name,
 		descriptionIsMissing: !input.description,
+		descriptionTooLong:
+			typeof input.description === 'string' && input.description.length > MAX_DESCRIPTION_LENGTH,
 		imageIsMissing: opts.requireImage ? input.images.length === 0 : false,
 		imageInvalidType: input.images.some(
 			(img) => !VALID_IMAGE_TYPES.includes(img.type as (typeof VALID_IMAGE_TYPES)[number])
