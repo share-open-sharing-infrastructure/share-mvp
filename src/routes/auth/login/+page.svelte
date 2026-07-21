@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Label, Input } from 'flowbite-svelte';
+	import { Label, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -42,22 +43,16 @@
 						placeholder={texts.auth.emailPlaceholder}
 						class="focus:border-primary-700 focus:ring-primary-700"
 						autocomplete="email"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
 						required
 					/>
 					<p class="text-sm text-tinte-500 dark:text-tinte-400">{texts.auth.loginWithEmailHint}</p>
 				</Label>
 				<PasswordInput autocomplete="current-password" />
 
-				<Button
-					type="submit"
-					class="
-						me-2 mb-2 w-full
-						min-button 
-						bg-primary-200 hover:bg-primary
-						cursor-pointer
-
-						">{texts.auth.loginButton}</Button
-				>
+				<Button type="submit" fullWidth>{texts.auth.loginButton}</Button>
 				<p class="mt-2 text-sm font-light text-tinte-500 dark:text-tinte-400">
 					<a
 						href={resolve('/auth/reset')}

@@ -23,13 +23,14 @@ SearchParameters  ──buildItemFilter()──►  PocketBase filter string
 | Concern | File | Notes |
 |---|---|---|
 | Parse & validate URL params | [`searchFilter.ts`](../src/routes/search/searchFilter.ts) `parseSearchParameters` | Returns a fully-typed `SearchParameters`; clamps `page`/`perPage`, drops unknown categories. |
-| Build the PB filter | [`searchFilter.ts`](../src/routes/search/searchFilter.ts) `buildItemFilter` / `buildSearchFilter` | Combines name, owner-exclusion, categories, availability, owner-type with `&&`. |
+| Build the PB filter | [`searchFilter.ts`](../src/routes/search/searchFilter.ts) `buildItemFilter` / `buildSearchFilter` | Combines name, owner-exclusion, categories, availability, owner-type and group with `&&`. |
 | Server load | [`+page.server.ts`](../src/routes/search/+page.server.ts) | Reads the `items_searchable` view, sorts, paginates, logs non-empty queries. |
 | Page shell + client filters | [`+page.svelte`](../src/routes/search/+page.svelte) | Wires search bar, filters, results, pagination. |
 | Results grid | [`ResultsList.svelte`](../src/routes/search/ResultsList.svelte) → [`ItemCard.svelte`](../src/routes/search/ItemCard.svelte) | Takes an `ItemPublic[]` and renders cards. |
 | Pagination UI | [`Pagination.svelte`](../src/routes/search/Pagination.svelte) | Page buttons + per-page selector; a GET form so no `goto()` is needed. |
 | URL building | [`searchUrl.ts`](../src/routes/search/searchUrl.ts) `buildSearchUrl` | Single source of truth for constructing `/search?...` links. |
 | Travel-time filter | [`TravelTimeFilter.svelte`](../src/routes/search/TravelTimeFilter.svelte) | Client-side; filters/sorts the **current page** by bucketed minutes (see below). |
+| Group filter | [`GroupFilter.svelte`](../src/routes/search/GroupFilter.svelte) | Single-select dropdown of the user's groups; navigates via `buildSearchUrl`. Rendered only when the user has groups (guests never see it). |
 
 ## Which view it reads
 
@@ -55,7 +56,28 @@ All discovery state lives in the URL (deep-linkable, server-rendered). Defaults 
 | `op` | `or` (default) / `and` — how multiple categories combine |
 | `onlyAvailable` | `true` (default); `false` includes unavailable items |
 | `ownerType` | `all` (default) / `institution` / `private` |
+| `group` | a single group id — restrict results to items shared with that group. Only groups the requester owns or is a member of are accepted (see the security note below); anything else is silently dropped |
 | `page` (1), `perPage` (20, max 50) | pagination |
+
+### Group filter (`group`) — security
+
+`buildItemFilter` appends a `groups ~ "<id>"` clause when a group is selected. The `~` operator
+is the any-of membership match PocketBase uses for the view's `groups` column — the same operator
+the group-detail page (`user/groups/[id]/+page.server.ts`) uses against the same `items_searchable`
+view. The clause is built by string concatenation (the whole filter string is, by design) with
+the id quote-escaped as defense-in-depth; the parser already restricts `group` to a 15-char id.
+
+The **authorization is server-side, not UI-side** (`+page.server.ts` load): the `group` param is
+only allowed to filter when the user is in `getAttachableGroups(pb, user.id)` (groups they own or
+belong to). A non-member, guest, or garbage id is dropped to `null` — a shared link with a foreign
+group id then just shows the unfiltered search, no error (mirroring how unknown `cats` are
+ignored). This matters because URLs are shareable/editable: without the check, filtering by a
+foreign group id would disclose which of the items a user can see are *also* in that group.
+
+The `items.groups` column stays out of the `fields` allowlist regardless — it is only traversed by
+the view's row rule and must never be serialized to a client (it would leak an item's *other*
+group memberships). The selected group id is also **not** written to the `searches` analytics log:
+it is a private social-graph datum, and the `hasQuery` logging condition is unchanged.
 
 ## Conventions / gotchas
 

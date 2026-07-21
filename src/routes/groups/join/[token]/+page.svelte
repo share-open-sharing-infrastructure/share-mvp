@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Card } from 'flowbite-svelte';
+	import { Card } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -23,12 +24,9 @@
 					? texts.groups.joinAlready(form.groupName)
 					: texts.groups.joinSuccess(form.groupName)}
 			/>
-			<a
-				href={resolve('/user/groups')}
-				class="inline-block w-full rounded-lg bg-primary-200 hover:bg-primary px-4 py-2 text-center font-medium"
-			>
+			<Button href={resolve('/user/groups')} fullWidth>
 				{texts.groups.goToGroups}
-			</a>
+			</Button>
 		{:else if data.state === 'valid'}
 			<p class="text-tinte-700">{texts.groups.joinInvitedTo(data.groupName)}</p>
 
@@ -38,21 +36,19 @@
 
 			{#if data.loggedIn}
 				<form method="POST" action="?/join" use:enhance>
-					<Button type="submit" class="bg-primary-200 hover:bg-primary min-button w-full">
+					<Button type="submit" fullWidth>
 						{texts.groups.joinButton}
 					</Button>
 				</form>
 			{:else}
 				<!-- Preview is public, but joining needs an account. Send guests to
 				     login and bring them straight back to this invite. -->
-				<!-- eslint-disable svelte/no-navigation-without-resolve -- path is resolve()d; the rule can't match the appended ?redirectTo query string -->
-				<a
+				<Button
 					href={`${resolve('/auth/login')}?redirectTo=${encodeURIComponent('/groups/join/' + data.token)}`}
-					class="inline-block w-full rounded-lg bg-primary-200 hover:bg-primary px-4 py-2 text-center font-medium"
+					fullWidth
 				>
 					{texts.groups.loginToJoin}
-				</a>
-				<!-- eslint-enable svelte/no-navigation-without-resolve -->
+				</Button>
 			{/if}
 		{:else if data.state === 'expired'}
 			<CustomAlert type="error" message={texts.groups.expiredInvite} />

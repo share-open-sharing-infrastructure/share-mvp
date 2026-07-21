@@ -1,12 +1,14 @@
 <script lang="ts">
 	import type { ActionData } from './$types';
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Label, Input } from 'flowbite-svelte';
-	export let form: ActionData;
+	import { Label, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+
+	let { form }: { form: ActionData } = $props();
 </script>
 
 <SeoHead
@@ -35,15 +37,13 @@
 						name="email"
 						placeholder={texts.forms.email}
 						class="focus:border-primary-700 focus:ring-primary-700"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
 						required
 					/>
 				</Label>
-				<Button
-					type="submit"
-					formaction="?/reset"
-					class="min-button bg-primary-200 hover:bg-primary cursor-pointer w-full"
-					>{texts.pages.reset.resetButton}</Button
-				>
+				<Button type="submit" formaction="?/reset" fullWidth>{texts.pages.reset.resetButton}</Button>
 			</form>
 		</div>
 	</Register>

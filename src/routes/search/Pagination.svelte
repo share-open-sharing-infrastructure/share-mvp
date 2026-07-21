@@ -13,14 +13,15 @@
 		op: 'or' | 'and';
 		onlyAvailable: boolean;
 		ownerType: string;
+		group: string | null;
 	}
 
-	let { page, totalPages, perPage, q, selectedCategories, op, onlyAvailable, ownerType }: Props = $props();
+	let { page, totalPages, perPage, q, selectedCategories, op, onlyAvailable, ownerType, group }: Props = $props();
 
 	const perPageOptions = [10, 20, 50];
 
 	function pageUrl(n: number): string {
-		return buildSearchUrl({ q, page: n, perPage, cats: selectedCategories, op, onlyAvailable, ownerType });
+		return buildSearchUrl({ q, page: n, perPage, cats: selectedCategories, op, onlyAvailable, ownerType, group: group ?? undefined });
 	}
 
 	function getPages(): (number | '...')[] {
@@ -98,6 +99,9 @@
 			{/if}
 			{#if ownerType !== 'all'}
 				<input type="hidden" name="ownerType" value={ownerType} />
+			{/if}
+			{#if group}
+				<input type="hidden" name="group" value={group} />
 			{/if}
 			<span>{texts.pages.search.perPage}</span>
 			<select

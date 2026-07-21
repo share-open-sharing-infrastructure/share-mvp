@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Card } from 'flowbite-svelte';
+	import { Card } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance, applyAction } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -22,12 +23,9 @@
 					? texts.groups.joinAlready(data.group?.name ?? '')
 					: texts.groups.joinedPublic(data.group?.name ?? '')}
 			/>
-			<a
-				href={resolve('/user/groups')}
-				class="inline-block w-full rounded-lg bg-primary-200 hover:bg-primary px-4 py-2 text-center font-medium"
-			>
+			<Button href={resolve('/user/groups')} fullWidth>
 				{texts.groups.goToGroups}
-			</a>
+			</Button>
 		{:else if data.state === 'valid' && data.group}
 			<p class="text-tinte-700">{texts.groups.joinPublicIntro(data.group.name)}</p>
 			{#if data.group.description}
@@ -47,7 +45,7 @@
 					await applyAction(result);
 				}}
 			>
-				<Button type="submit" class="bg-primary-200 hover:bg-primary min-button w-full">
+				<Button type="submit" fullWidth>
 					{texts.groups.joinPublic}
 				</Button>
 			</form>

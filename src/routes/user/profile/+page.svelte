@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { Button } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { beforeNavigate } from '$app/navigation';
@@ -9,6 +9,7 @@
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
 	import ContactSection from './ContactSection.svelte';
+	import ExternalLendingInfoSection from './ExternalLendingInfoSection.svelte';
 	import NotificationSettings from './NotificationSettings.svelte';
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
@@ -122,12 +123,9 @@
 		</h1>
 
 		{#if !data.currentUserPreferences?.hasOnboarded}
-			<a
-				href={resolve('/onboarding')}
-				class="flex items-center justify-center gap-2 w-full mb-6 py-3 px-6 min-button bg-primary-200 hover:bg-primary-300 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity"
-			>
+			<Button href={resolve('/onboarding')} size="lg" fullWidth class="mb-6">
 				{texts.pages.profile.completeOnboarding}
-			</a>
+			</Button>
 		{/if}
 
 		<div class="grid gap-8 lg:grid-cols-[200px_1fr]">
@@ -336,6 +334,14 @@
 							contactUrl={data.currentUser.contactUrl ?? ''}
 							contactPublic={data.currentUser.contactPublic ?? false}
 						/>
+
+						<!-- Ausleih-Hinweis for external items (#368): institutions only. Saves via
+						     the shared save bar. -->
+						{#if data.currentUser.isInstitution}
+							<ExternalLendingInfoSection
+								externalLendingInfo={data.currentUser.externalLendingInfo ?? ''}
+							/>
+						{/if}
 					</section>
 
 					<!-- VERLEIH-VORAUSSETZUNGEN: lender-defined borrower requirements (#443).
@@ -377,12 +383,9 @@
 							{texts.account.pageIntro}
 						</p>
 					</div>
-					<a
-						href={resolve('/user/account')}
-						class="shrink-0 inline-flex items-center justify-center py-2.5 px-5 min-button bg-primary-200 hover:bg-primary text-white font-semibold rounded-xl transition-opacity"
-					>
+					<Button href={resolve('/user/account')} size="lg" class="shrink-0">
 						{texts.account.manageLink}
-					</a>
+					</Button>
 				</section>
 			</div>
 		</div>
@@ -404,12 +407,7 @@
 					{texts.pages.profile.unsavedChanges}
 				</span>
 			{/if}
-			<Button
-				class="min-button bg-primary-200 hover:bg-primary"
-				type="submit"
-				form="profile-settings-form"
-				onclick={handleSaveClick}
-			>
+			<Button type="submit" form="profile-settings-form" onclick={handleSaveClick}>
 				{texts.buttons.save}
 			</Button>
 		</div>

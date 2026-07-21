@@ -43,6 +43,8 @@ export default defineConfig({
 			testMatch: [
 				'tests/smoke.spec.ts',
 				'tests/auth.spec.ts',
+				'tests/email-case-insensitive.spec.ts',
+				'tests/misc.spec.ts',
 				'tests/search-focus.spec.ts',
 				'tests/search-focus.mobile.spec.ts',
 			],
@@ -51,7 +53,32 @@ export default defineConfig({
 			name: 'authenticated',
 			use: { browserName: 'chromium', storageState: STORAGE_STATE },
 			dependencies: ['setup'],
-			testMatch: ['tests/authenticated.spec.ts'],
+			testMatch: [
+				'tests/authenticated.spec.ts',
+				'tests/item-upload.spec.ts',
+				'tests/trust.spec.ts',
+				'tests/feedback.spec.ts',
+			],
+		},
+		{
+			// Cross-actor flows (lending, group join) open their own per-role contexts,
+			// so no project-level storageState — just ensure the states exist (setup).
+			name: 'multiuser',
+			use: { browserName: 'chromium' },
+			dependencies: ['setup'],
+			testMatch: [
+				'tests/lending.spec.ts',
+				'tests/groups.spec.ts',
+				'tests/search.spec.ts',
+				'tests/messages.spec.ts',
+				'tests/notifications.spec.ts',
+				'tests/profile.spec.ts',
+				'tests/onboarding.spec.ts',
+				'tests/account.spec.ts',
+				'tests/external-fallbacks.spec.ts',
+				'tests/legal.spec.ts',
+				'tests/import.spec.ts',
+			],
 		},
 	],
 

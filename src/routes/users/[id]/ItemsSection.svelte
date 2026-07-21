@@ -128,7 +128,7 @@
 			{#each displayedItems as item (item.id)}
 				<ItemCard
 					item={item as unknown as ItemPublic}
-					imgUrl={itemImageUrl(pbImgUrl, item) ?? ''}
+					imgUrl={itemImageUrl(pbImgUrl, item, '0x300') ?? ''}
 					ownerImgUrl={profileImageUrl ?? undefined}
 					profileView={true}
 				/>

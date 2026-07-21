@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Section, Register } from 'flowbite-svelte-blocks';
-	import { Button, Label, Input } from 'flowbite-svelte';
+	import { Label, Input } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
@@ -33,13 +34,13 @@
 						bind:value={newEmail}
 						placeholder={texts.forms.email}
 						class="focus:border-primary-700 focus:ring-primary-700"
+						autocapitalize="none"
+						autocorrect="off"
+						spellcheck="false"
 						required
 					/>
 				</Label>
-				<Button
-					type="submit"
-					formaction="?/updatemail"
-					class="me-2 mb-2 min-button bg-primary"
+				<Button type="submit" formaction="?/updatemail"
 					>{texts.pages.updatemail.updateButton}</Button
 				>
 			</form>

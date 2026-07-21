@@ -3,8 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
-	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
+	import Button from '$lib/components/ui/Button.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import UserItemRow from './UserItemRow.svelte';
 	import Pagination from './Pagination.svelte';
@@ -85,17 +85,11 @@
 
 		<!-- Action buttons -->
 		<div class="flex flex-col sm:flex-row gap-4 mb-6">
-			<Button
-				onclick={() => { showAddModal = true; }}
-				class="flex-1 cursor-pointer flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-full shadow-sm border border-primary-200 bg-primary-50 hover:bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-100 dark:border-primary-700"
-			>
+			<Button size="lg" class="flex-1" onclick={() => { showAddModal = true; }}>
 				<span class="text-xl">📦</span>
 				{texts.pages.items.addSingle}
 			</Button>
-			<Button
-				href="/user/items/bulk-add"
-				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-full shadow-sm border border-primary-400 bg-primary-100 hover:bg-primary-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
-			>
+			<Button size="lg" class="flex-1" href={resolve('/user/items/bulk-add')}>
 				<span class="text-xl">✨</span>
 				{texts.pages.items.addBulk}
 			</Button>

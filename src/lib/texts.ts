@@ -1,19 +1,5 @@
 import { USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH } from '$lib/utils/username';
 
-export const ITEM_CATEGORIES = [
-	'Freizeit und Sport',
-	'Werkzeug und Garten',
-	'Reisen und Outdoor',
-	'Bücher',
-	'Spiele',
-	'Küche',
-	'Ton und Licht',
-	'Elektronik',
-	'Für Kinder',
-	'Sonstiges',
-] as const;
-export type ItemCategory = (typeof ITEM_CATEGORIES)[number];
-
 /** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
 const APP_NAME = 'AllerLeih';
 
@@ -33,6 +19,8 @@ export const texts = {
 	auth: {
 		emailPlaceholder: 'E-Mail Adresse',
 		passwordPlaceholder: '••••••••••',
+		showPassword: 'Passwort anzeigen',
+		hidePassword: 'Passwort verbergen',
 		usernamePlaceholder: 'z.B. Noah Lüni',
 		usernameHint: 'Öffentlich sichtbarer Anzeigename – Leerzeichen sind erlaubt. Anmelden kannst du dich mit deiner E-Mail-Adresse.',
 		loginWithEmailHint: 'Anmelden mit deiner E-Mail-Adresse.',
@@ -103,6 +91,13 @@ export const texts = {
 		passwordsDoNotMatch: 'Die Passwörter stimmen nicht überein.',
 		invalidOrExpiredResetToken:
 			'Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link zum Zurücksetzen des Passworts an.',
+		invalidOrExpiredVerificationToken:
+			'Dieser Bestätigungslink ist ungültig oder abgelaufen. Bitte fordere eine neue Bestätigungs-E-Mail an.',
+		invalidOrExpiredEmailChangeToken:
+			'Dieser Link zur Änderung der E-Mail-Adresse ist ungültig oder abgelaufen.',
+		emailChangeFailed:
+			'Die E-Mail-Adresse konnte nicht geändert werden. Der Link ist ungültig oder abgelaufen, oder das Passwort ist falsch.',
+		passwordRequired: 'Bitte gib dein aktuelles Passwort ein.',
 		invalidTelegramUsername: 'Ungültiger Telegram-Nutzername. Bitte gib nur den Namen ohne Sonderzeichen ein.',
 		invalidSignalLink: 'Ungültiger Signal-Link. Signal-Links sollten mit "signal.me/" beginnen.',
 		contactEmailRequired:
@@ -130,6 +125,9 @@ export const texts = {
 			'Falls diese E-Mail zu einem Account passt, wurde eine E-Mail zum Zurücksetzen des Passworts gesendet!',
 		passwordResetConfirmed:
 			'Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt anmelden.',
+		emailVerified: 'Deine E-Mail-Adresse wurde bestätigt. Du kannst dich jetzt anmelden.',
+		emailChanged:
+			'Deine E-Mail-Adresse wurde geändert. Bitte melde dich mit deiner neuen E-Mail-Adresse an.',
 		dataUpdated: 'Daten wurden erfolgreich aktualisiert.',
 		feedbackSent: 'Feedback erfolgreich gesendet. Vielen Dank!',
 		trusteeAdded: (username: string) => `${username} wurde deinem Netzwerk hinzugefügt.`,
@@ -352,6 +350,7 @@ export const texts = {
 
 	// General UI
 	ui: {
+		sendMessage: 'Nachricht senden',
 		resultsFound: (count: number) => `${count} Dinge gefunden`,
 		activeSince: (date: string) => `aktiv seit ${date}`,
 		itemsLent: (count: number) => `${count} Dinge`,
@@ -674,6 +673,8 @@ export const texts = {
 			ownerTypeAll: 'Alle',
 			ownerTypeInstitution: 'Institutionen',
 			ownerTypePrivate: 'Personen',
+			groupFilterLabel: 'Gruppe',
+			groupFilterAll: 'Alle Gruppen',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -683,6 +684,7 @@ export const texts = {
 			searchPlaceholder: 'Netzwerk durchsuchen...',
 			searchNewUser: 'Noch nicht im Netzwerk? Suche',
 			noNewUsersFound: 'Keine neuen Nutzer:innen gefunden.',
+			addTrustee: 'Als Vertraute(n) hinzufügen',
 		},
 		reset: {
 			title: 'Passwort zurücksetzen',
@@ -696,6 +698,17 @@ export const texts = {
 				backToReset: 'Neuen Link anfordern',
 			},
 		},
+		confirmVerification: {
+			title: 'E-Mail-Adresse bestätigen',
+			submitButton: 'E-Mail-Adresse bestätigen',
+			backToLogin: 'Zurück zur Anmeldung',
+		},
+		confirmEmailChange: {
+			title: 'Neue E-Mail-Adresse bestätigen',
+			passwordLabel: 'Aktuelles Passwort',
+			submitButton: 'E-Mail-Adresse bestätigen',
+			backToLogin: 'Zurück zur Anmeldung',
+		},
 		updatemail: {
 			title: 'Mailadresse ändern',
 			newEmailLabel: 'Deine neue E-Mail Adresse:',
@@ -708,6 +721,13 @@ export const texts = {
 			title: 'Unterhaltungen',
 			lending: 'Verleihen',
 			borrowing: 'Ausleihen',
+			onlyActiveLabel: 'Nur aktive Unterhaltungen zeigen',
+			// Prefix before the other user's name in a list item: "von <Verleiher:in>" when
+			// borrowing, "an <Ausleiher:in>" when lending.
+			fromUserPrefix: 'von',
+			toUserPrefix: 'an',
+			noConversations: 'Du hast noch keine Unterhaltungen.',
+			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
 			noBorrowingConversations: 'Du hast noch nichts angefragt.',
 		},
@@ -730,6 +750,7 @@ export const texts = {
 			saveFailed: 'Der Gegenstand konnte nicht gespeichert werden. Bitte versuche es erneut.',
 			validationFailed:
 				'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
+			descriptionTooLong: 'Die Beschreibung darf höchstens 4.000 Zeichen lang sein.',
 			search: 'Suchen...',
 			filterAll: 'Alle',
 			filterAvailable: 'Verfügbar',
@@ -1033,6 +1054,13 @@ export const texts = {
 		handoverConfirmed: (item: string) => `Übergabe von „${item}" wurde bestätigt`,
 		returnRequested: (from: string, item: string) => `${from} hat „${item}" zurückgegeben`,
 		returnConfirmed: (item: string) => `Rückgabe von „${item}" wurde bestätigt`,
+		requestAborted: (item: string) => `Die Anfrage für „${item}" wurde abgebrochen`,
+		groupMemberAdded: (from: string, group: string) =>
+			`${from} hat dich zur Gruppe „${group}" hinzugefügt`,
+		groupMemberJoined: (username: string, group: string) =>
+			`${username} ist deiner Gruppe „${group}" beigetreten`,
+		groupMemberRemoved: (from: string, group: string) =>
+			`${from} hat dich aus der Gruppe „${group}" entfernt`,
 	},
 
 	// Lending process
@@ -1044,6 +1072,7 @@ export const texts = {
 			active: 'Unterwegs',
 			return_requested: 'Rückgabe gemeldet',
 			completed: 'Abgeschlossen',
+			aborted: 'Abgebrochen',
 		},
 		actions: {
 			accept: 'Annehmen',
@@ -1051,6 +1080,13 @@ export const texts = {
 			confirmHandover: 'Übergabe bestätigen',
 			requestReturn: 'Rückgabe melden',
 			confirmReturn: 'Rückgabe bestätigen',
+			abort: 'Anfrage abbrechen',
+		},
+		// Confirmation modal shown before aborting (mirrors the delete modal).
+		confirmAbort: {
+			title: 'Anfrage abbrechen',
+			body: 'Willst du diese Anfrage wirklich abbrechen? Die andere Person wird benachrichtigt und der Gegenstand wird wieder freigegeben.',
+			confirm: 'Anfrage abbrechen',
 		},
 		statusDescription: {
 			pending: {
@@ -1073,6 +1109,7 @@ export const texts = {
 			},
 			completed: 'Die Ausleihe ist abgeschlossen.',
 			rejected: 'Diese Anfrage wurde abgelehnt.',
+			aborted: 'Diese Anfrage wurde abgebrochen.',
 		},
 		goToConversation: 'Zur laufenden Anfrage →',
 		errors: {
@@ -1167,6 +1204,14 @@ export const texts = {
 			title: 'Neues Passwort festlegen – AllerLeih',
 			description: 'Lege ein neues Passwort für dein AllerLeih-Konto fest.',
 		},
+		confirmVerification: {
+			title: 'E-Mail-Adresse bestätigen – AllerLeih',
+			description: 'Bestätige deine E-Mail-Adresse, um dein AllerLeih-Konto zu aktivieren.',
+		},
+		confirmEmailChange: {
+			title: 'Neue E-Mail-Adresse bestätigen – AllerLeih',
+			description: 'Bestätige die Änderung deiner E-Mail-Adresse für dein AllerLeih-Konto.',
+		},
 		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
 		itemDetailDescription: (name: string, owner: string) =>
 			`Leihe ${name} von ${owner} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
@@ -1218,6 +1263,14 @@ export const texts = {
 		availabilityHintExternal: 'Aktuelle Verfügbarkeit beim Anbieter prüfen.',
 		availabilityHintUnknown: 'Verfügbarkeit unbekannt',
 		archivedBanner: 'Dieses Angebot ist nicht mehr Teil des Bestandes.',
+		// Issue #368 — permanent "how the lending works" box on external/institution items.
+		externalLendingInfoTitle: 'So funktioniert die Ausleihe',
+		externalLendingInfoDefault:
+			'Dieser Gegenstand wird von einer Partner-Institution bereitgestellt und kann nicht direkt über AllerLeih reserviert oder gebucht werden. Für die Ausleihe wendest du dich direkt an die Institution — meist brauchst du dort ein eigenes Konto, und die Abholung erfolgt vor Ort. Über den Button gelangst du zum Angebot der Institution mit allen Details.',
+		// Self-service editor (profile form, institutions only).
+		externalLendingInfoEditLabel: 'Ausleih-Hinweis',
+		externalLendingInfoEditHint:
+			'Erkläre, wie Interessierte einen deiner externen Gegenstände ausleihen können (z. B. eigenes Konto nötig, Abholung vor Ort). Dieser Text ist für alle öffentlich sichtbar – gib hier keine vertraulichen Daten ein. Bleibt das Feld leer, zeigen wir einen allgemeinen Standardtext. Max. 1000 Zeichen.',
 		imagePlaceholder: 'Foto folgt',
 		importNavLabel: 'Bestand importieren',
 		importTitle: 'Bestand als CSV importieren',

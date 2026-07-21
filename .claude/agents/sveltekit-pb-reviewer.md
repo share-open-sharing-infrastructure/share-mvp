@@ -1,5 +1,6 @@
 ---
 name: sveltekit-pb-reviewer
+model: sonnet
 description: AllerLeih-specific code & security reviewer for SvelteKit + PocketBase changes. Use to review a diff or set of files for PocketBase filter injection, trust- & group-visibility and public-view / items_searchable leakage, auth, Svelte 5 runes correctness, deleted-account masking, realtime subscriptions, German-string placement, and test conventions. Complements the generic built-in /code-review and /security-review — invoke when you want a project-aware review of the current branch.
 tools: Read, Grep, Glob, Bash
 ---
@@ -40,7 +41,7 @@ user names files, review those. Read enough surrounding context to judge correct
    **Never destructure the `data` prop** (e.g. `const { data } = $props(); let x = data.x`) — it
    breaks `use:enhance` reactivity. Markup must read `data.x` directly.
 5. **German strings.** New user-facing text must come from `src/lib/texts.ts`
-   (+ `ITEM_CATEGORIES`), not be hardcoded inline in components.
+   (item categories from `src/lib/categories.ts`), not be hardcoded inline in components.
 6. **Tests.** New/changed server logic should have co-located `*.test.ts` mocking PocketBase per
    `docs/testing-strategy.md` (a `mockLocals` with `pb.collection()` returning `vi.fn()` stubs).
 7. **Deleted accounts & realtime.** Never render `user.username` directly for a user that might be

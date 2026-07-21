@@ -5,6 +5,7 @@
 	import { texts } from '$lib/texts';
 	import { pwaInstall } from '$lib/stores/pwaInstall.svelte';
 	import { BellOutline, MobilePhoneOutline, CloseOutline } from 'flowbite-svelte-icons';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let {
 		loggedIn,
@@ -110,18 +111,12 @@
 			<p class="text-sm text-tinte-700 leading-snug">{texts.pwa.notifBannerText}</p>
 		</div>
 		<div class="flex gap-2 justify-end">
-			<button
-				onclick={dismissNotifBanner}
-				class="text-xs text-tinte-400 hover:text-tinte-600 px-2 py-1"
-			>
+			<Button variant="ghost" size="sm" onclick={dismissNotifBanner}>
 				{texts.pwa.notifDismiss}
-			</button>
-			<button
-				onclick={enableNotifications}
-				class="text-xs font-semibold text-white bg-accent hover:bg-accent/90 rounded-lg px-3 py-1"
-			>
+			</Button>
+			<Button variant="accent" size="sm" onclick={enableNotifications}>
 				{texts.pwa.notifEnable}
-			</button>
+			</Button>
 		</div>
 	</div>
 
@@ -135,25 +130,24 @@
 				<MobilePhoneOutline class="h-5 w-5 text-accent shrink-0 mt-0.5" />
 				<p class="text-sm text-tinte-700 leading-snug">{texts.pwa.installBannerText}</p>
 			</div>
-			<button onclick={dismissInstallBanner} class="text-tinte-300 hover:text-tinte-500 shrink-0">
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				onclick={dismissInstallBanner}
+				aria-label={texts.buttons.close}
+				class="shrink-0"
+			>
 				<CloseOutline class="h-4 w-4" />
-			</button>
+			</Button>
 		</div>
 		<div class="flex gap-2 justify-end items-center">
 			{#if pwaInstall.canPrompt}
-				<a
-					href={appPath}
-					onclick={dismissInstallBanner}
-					class="text-xs text-tinte-400 hover:text-accent px-2 py-1"
-				>
+				<Button variant="ghost" size="sm" href={appPath} onclick={dismissInstallBanner}>
 					{texts.pwa.installLearnMore}
-				</a>
-				<button
-					onclick={triggerInstall}
-					class="text-xs font-semibold text-white bg-accent hover:bg-accent/90 rounded-lg px-3 py-1"
-				>
+				</Button>
+				<Button variant="accent" size="sm" onclick={triggerInstall}>
 					{texts.pwa.installButton}
-				</button>
+				</Button>
 			{:else}
 				<a
 					href={appPath}

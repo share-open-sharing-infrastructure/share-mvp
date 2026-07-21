@@ -63,6 +63,27 @@ describe('itemImageUrl', () => {
 		});
 		expect(url).toBe('https://catalogue.example/cover.jpg');
 	});
+
+	it('appends the thumb param to PocketBase file URLs when requested', () => {
+		const url = itemImageUrl(PB_URL, { id: 'item123', image: 'photo_abc.jpg' }, '0x300');
+		expect(url).toBe(
+			'https://pb.example.com/api/files/items_searchable/item123/photo_abc.jpg?thumb=0x300'
+		);
+	});
+
+	it('omits the thumb param when not requested', () => {
+		const url = itemImageUrl(PB_URL, { id: 'item123', image: 'photo_abc.jpg' });
+		expect(url).not.toContain('thumb');
+	});
+
+	it('never appends the thumb param to the externalImgUrl fallback', () => {
+		const url = itemImageUrl(
+			PB_URL,
+			{ id: 'item123', image: null, externalImgUrl: 'https://catalogue.example/cover.jpg' },
+			'0x300'
+		);
+		expect(url).toBe('https://catalogue.example/cover.jpg');
+	});
 });
 
 describe('itemImageUrls', () => {

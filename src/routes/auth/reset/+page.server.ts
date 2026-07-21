@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { normalizeEmail } from '$lib/server/email';
 
 export async function load({ locals }) {
 	if (locals.user) {
@@ -22,7 +23,7 @@ export const actions = {
 		try {
 			await locals.pb
 				.collection('users')
-				.requestPasswordReset(email.toString());
+				.requestPasswordReset(normalizeEmail(email.toString()));
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
 			return fail(500, {

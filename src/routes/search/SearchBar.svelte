@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Button } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { SearchOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { goto, beforeNavigate } from '$app/navigation';
@@ -143,8 +143,8 @@
 			</button>
 		{/if}
 	</div>
-	<Button type="submit" aria-label={inputValue.trim() ? texts.buttons.search : texts.buttons.showAll} class="min-button bg-primary-200 hover:bg-primary shrink-0">
-		<SearchOutline class="h-5 w-5"/><span class="ml-1">{inputValue.trim() ? texts.buttons.search : texts.buttons.showAll}</span>
+	<Button type="submit" aria-label={inputValue.trim() ? texts.buttons.search : texts.buttons.showAll} class="shrink-0">
+		<SearchOutline class="h-5 w-5" /><span>{inputValue.trim() ? texts.buttons.search : texts.buttons.showAll}</span>
 	</Button>
 
 </form>

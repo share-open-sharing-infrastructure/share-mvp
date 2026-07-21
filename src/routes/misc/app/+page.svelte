@@ -3,6 +3,7 @@
 	import { texts } from '$lib/texts';
 	import { pwaInstall } from '$lib/stores/pwaInstall.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import {
 		HomeOutline,
 		BellOutline,
@@ -73,12 +74,9 @@
 					{app.alreadyInstalled}
 				</p>
 			{:else if pwaInstall.canPrompt}
-				<button
-					onclick={() => pwaInstall.prompt().catch(() => {})}
-					class="rounded-lg bg-accent px-6 py-3 font-semibold text-white shadow-sm hover:bg-accent/90"
-				>
+				<Button variant="accent" size="lg" onclick={() => pwaInstall.prompt().catch(() => {})}>
 					{app.installNow}
-				</button>
+				</Button>
 				<p class="mt-2 text-sm text-tinte-400">{app.installNowHint}</p>
 			{:else}
 				<p class="text-sm text-tinte-400">{app.followStepsHint}</p>

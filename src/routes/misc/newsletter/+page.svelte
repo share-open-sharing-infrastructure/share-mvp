@@ -1,5 +1,6 @@
 <script>
-	import { Button, Input, Label } from 'flowbite-svelte';
+	import { Input, Label } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { texts } from '$lib/texts';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 </script>
@@ -40,6 +41,9 @@
 					type="email"
 					placeholder="deine@mail.de"
 					class="focus:border-primary-700 focus:ring-primary-700"
+					autocapitalize="none"
+					autocorrect="off"
+					spellcheck="false"
 					required
 				/>
 			</div>
@@ -56,7 +60,7 @@
 			</div>
 			<!-- Keila bot-detection honeypot — must stay hidden and empty -->
 			<input aria-hidden="true" autocomplete="off" name="h[url]" style="display: none" />
-			<Button type="submit" class="mt-1 w-full min-button bg-primary-200 hover:bg-primary cursor-pointer">
+			<Button type="submit" fullWidth class="mt-1">
 				{texts.buttons.newsletter}
 			</Button>
 		</form>

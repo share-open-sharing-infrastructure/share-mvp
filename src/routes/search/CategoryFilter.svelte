@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { Toggle } from 'flowbite-svelte';
-	import { ITEM_CATEGORIES } from '$lib/texts';
+	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { texts } from '$lib/texts';
 	import { buildSearchUrl } from './searchUrl';
 
@@ -12,13 +12,14 @@
 		perPage: number;
 		onlyAvailable: boolean;
 		ownerType: string;
+		group: string | null;
 	}
 
-	let { selectedCategories, op, q, perPage, onlyAvailable, ownerType }: Props = $props();
+	let { selectedCategories, op, q, perPage, onlyAvailable, ownerType, group }: Props = $props();
 
 	function buildUrl(newCats: string[], newOp: 'or' | 'and'): string {
 		// Always reset to page 1 when filter changes (omit page param).
-		return buildSearchUrl({ q, cats: newCats, op: newOp, onlyAvailable, ownerType, perPage: perPage !== 10 ? perPage : undefined });
+		return buildSearchUrl({ q, cats: newCats, op: newOp, onlyAvailable, ownerType, group: group ?? undefined, perPage: perPage !== 10 ? perPage : undefined });
 	}
 
 	function toggleCat(cat: string) {

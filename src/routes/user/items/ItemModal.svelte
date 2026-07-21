@@ -1,7 +1,6 @@
 <script lang="ts">
 	import {
 		Modal,
-		Button,
 		Input,
 		Label,
 		Helper,
@@ -10,6 +9,7 @@
 		Textarea,
 		Checkbox,
 	} from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
@@ -19,7 +19,8 @@
 	} from 'flowbite-svelte-icons';
 	import { onDestroy } from 'svelte';
 	import { resolve } from '$app/paths';
-	import { texts, ITEM_CATEGORIES } from '$lib/texts';
+	import { texts } from '$lib/texts';
+	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { compressImage } from '$lib/utils/imageUtils';
 	import { itemOwnFileUrls } from '$lib/utils/utils';
 	import type { ActionData } from './$types';
@@ -46,7 +47,7 @@
 		form
 	}: Props = $props();
 
-	let isAvailable = $derived(editingItem?.status === 'available' ? true : false);
+	let isAvailable = $state(true);
 
 	let selectedCategories = $state<string[]>([]);
 	let selectedGroups = $state<string[]>([]);
@@ -85,6 +86,7 @@
 			selectedCategories = [...(editingItem?.categories ?? [])];
 			selectedGroups = [...(editingItem?.groups ?? [])];
 			trusteesOn = editingItem?.trusteesOnly ?? true;
+			isAvailable = editingItem?.status === 'available';
 			isDirty = false;
 			imageError = null;
 			// Seed the existing-image gallery so editing an item with several photos shows
@@ -93,12 +95,6 @@
 				pbUrl && editingItem?.image?.length ? itemOwnFileUrls(pbUrl, editingItem) : [];
 		}
 	});
-
-	function toggleGroup(id: string, checked: boolean) {
-		selectedGroups = checked
-			? [...selectedGroups, id]
-			: selectedGroups.filter((g) => g !== id);
-	}
 
 	// Trustees and groups are independent audiences; an item is public only when
 	// neither is set.
@@ -109,19 +105,6 @@
 	let anyPublicGroupSelected = $derived(
 		groups.some((g) => g.isPublic && selectedGroups.includes(g.id))
 	);
-
-	function handleCategoryChange(e: Event) {
-		const cb = e.target as HTMLInputElement;
-		if (cb.checked) {
-			if (selectedCategories.length >= 3) {
-				cb.checked = false;
-				return;
-			}
-			selectedCategories = [...selectedCategories, cb.value];
-		} else {
-			selectedCategories = selectedCategories.filter((c) => c !== cb.value);
-		}
-	}
 
 	// Keep in sync with the `items.image` file field's maxSelect in the backend
 	// migration (1783500000_items_image_multi.js). Exceeding it makes PocketBase reject
@@ -230,8 +213,15 @@
 					// Show the failure inline right above the submit button (#522). Sourced
 					// from this form's own result — not the shared page-level `form` prop,
 					// which is fanned out to every row's modal and written by unrelated
-					// inline/bulk actions — so it stays tied to *this* submit.
-					submitError = (result.data as { message?: string } | undefined)?.message ?? null;
+					// inline/bulk actions — so it stays tied to *this* submit. A too-long
+					// description gets its own message instead of the generic one (the client
+					// maxlength normally prevents it; this covers a tampered/pasted submit).
+					const data = result.data as
+						| { message?: string; missingFields?: { descriptionTooLong?: boolean } }
+						| undefined;
+					submitError = data?.missingFields?.descriptionTooLong
+						? texts.pages.items.descriptionTooLong
+						: (data?.message ?? null);
 				}
 				await update();
 			};
@@ -244,16 +234,17 @@
 					{#each previews as p, i (p.url)}
 						<div class="relative">
 							<img src={p.url} alt={p.name} class="h-24 w-full rounded-md object-cover" />
-							<button
-								type="button"
+							<Button
+								variant="danger"
+								size="icon-sm"
 								onclick={() => removeFileAt(i)}
 								aria-label={texts.pages.items.imageRemove}
-								class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow hover:bg-red-600"
+								class="absolute -right-2 -top-2"
 							>
 								<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
 								</svg>
-							</button>
+							</Button>
 						</div>
 					{/each}
 				</div>
@@ -329,6 +320,7 @@
 					placeholder={texts.forms.itemDescription}
 					value={editingItem?.description ? editingItem.description : ''}
 					autocomplete="off"
+					maxlength={4000}
 					required
 				/>
 			</Label>
@@ -342,9 +334,8 @@
 							<Checkbox
 								name="categories"
 								value={cat}
-								checked={selectedCategories.includes(cat)}
+								bind:group={selectedCategories}
 								disabled={selectedCategories.length >= 3 && !selectedCategories.includes(cat)}
-								onchange={handleCategoryChange}
 							/>
 							{cat}
 						</Label>
@@ -398,8 +389,7 @@
 								<Checkbox
 									name="groups"
 									value={g.id}
-									checked={selectedGroups.includes(g.id)}
-									onchange={(e) => toggleGroup(g.id, (e.target as HTMLInputElement).checked)}
+									bind:group={selectedGroups}
 								/>
 								{g.name}
 								{#if g.isPublic}
@@ -458,7 +448,7 @@
 			{/if}
 
 			<!-- SUBMIT BUTTON -->
-			<Button class="min-button bg-primary-200 hover:bg-primary" type="submit">
+			<Button type="submit">
 				{type === 'edit' ? texts.buttons.save : texts.buttons.add}
 			</Button>
 		</div>
@@ -492,9 +482,7 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button class="min-button bg-accent-200 hover:bg-danger" type="submit"
-				>{texts.buttons.delete}</Button
-			>
+			<Button variant="danger" type="submit">{texts.buttons.delete}</Button>
 		</form>
 	{/if}
 </Modal>

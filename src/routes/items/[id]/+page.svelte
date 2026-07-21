@@ -2,7 +2,7 @@
 	import { Badge, Alert, Tooltip } from 'flowbite-svelte';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { HeartSolid } from 'flowbite-svelte-icons';
+	import { HeartSolid, InfoCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 	import { itemImageUrl, itemImageUrls } from '$lib/utils/utils';
@@ -13,6 +13,7 @@
 	import OwnerCard from './OwnerCard.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import LinkifiedText from '$lib/components/LinkifiedText.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
@@ -30,6 +31,12 @@
 	const isTrustRestricted = $derived(data.isTrustRestricted);
 	const isOwnItem = $derived(data.isOwnItem);
 	const isExternal = $derived(!!item.externalUrl);
+	// Issue #368 (review): the "how the lending works" box must appear whenever the
+	// borrower is sent off-platform — not only for externalUrl deep-links, but also when
+	// an institution routes requests to an off-platform contact (#438: mailto / external
+	// link, no externalUrl). Scoped to institutions, since the box and its override text
+	// are institution-specific.
+	const showLendingInfo = $derived(isExternal || (!!data.ownerContact && item.isInstitution));
 	const categoryPlaceholder = $derived(getCategoryPlaceholder(item.categories));
 	const isArchived = $derived(item.description?.startsWith('[Nicht mehr im Bestand]') ?? false);
 
@@ -46,7 +53,7 @@
 	const seoTitle = $derived(texts.seo.itemDetail(item.name, item.username ?? ''));
 	const seoDesc = $derived(
 		item.description
-			? item.description.slice(0, 155)
+			? item.description.replace(/\s+/g, ' ').trim().slice(0, 155)
 			: texts.seo.itemDetailDescription(
 					item.name,
 					item.username ?? ''
@@ -106,14 +113,28 @@
 
 	<!-- Description -->
 	{#if item.description}
-		<p class="leading-relaxed text-tinte-700 dark:text-tinte-300">
-			{item.description}
+		<p class="whitespace-pre-line leading-relaxed text-tinte-700 dark:text-tinte-300">
+			<LinkifiedText text={item.description} />
 		</p>
 	{/if}
 
 	<!-- Request error feedback (e.g. lender requirements not met on submit) -->
 	{#if form?.fail && form?.message}
 		<CustomAlert type="error" message={form.message} />
+	{/if}
+
+	<!-- Issue #368: permanent explanation of how borrowing works for external/institution
+	     items. Shown for externalUrl deep-links AND institutions that route requests to an
+	     off-platform contact (#438). Owner-provided text (data.externalLendingInfo) or a
+	     shared default fallback. -->
+	{#if showLendingInfo}
+		<Alert color="blue" class="items-start">
+			{#snippet icon()}<InfoCircleOutline class="h-5 w-5 shrink-0" />{/snippet}
+			<p class="font-semibold">{texts.institutional.externalLendingInfoTitle}</p>
+			<p class="mt-1 whitespace-pre-line font-normal">
+				{data.externalLendingInfo ?? texts.institutional.externalLendingInfoDefault}
+			</p>
+		</Alert>
 	{/if}
 
 	<!-- Travel Time + CTA -->

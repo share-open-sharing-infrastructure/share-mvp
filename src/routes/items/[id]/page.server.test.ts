@@ -252,6 +252,59 @@ describe('items/[id] load — off-platform-contact owners (#438)', () => {
 	});
 });
 
+describe('items/[id] load — externalLendingInfo pass-through (#368)', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		getActiveTerms.mockResolvedValue(null);
+		hasAcceptedActiveTerms.mockResolvedValue(true);
+		evaluateUnmetRequirements.mockResolvedValue([]);
+	});
+
+	it('passes the owner explanation through from the items_public row (authenticated)', async () => {
+		const { pb } = makePb({
+			itemExtra: { ownerExternalLendingInfo: 'Abholung vor Ort im Rathaus.' },
+		});
+
+		const data = await callLoad(pb);
+
+		expect(data.externalLendingInfo).toBe('Abholung vor Ort im Rathaus.');
+	});
+
+	it('passes the owner explanation through for an anonymous viewer too', async () => {
+		const { pb } = makePb({
+			itemExtra: { ownerExternalLendingInfo: 'Abholung vor Ort im Rathaus.' },
+		});
+
+		const data = await callLoad(pb, null);
+
+		expect(data.externalLendingInfo).toBe('Abholung vor Ort im Rathaus.');
+	});
+
+	it('falls back to null when the column is NULL (masked / no override)', async () => {
+		const { pb } = makePb({ itemExtra: { ownerExternalLendingInfo: null } });
+
+		const data = await callLoad(pb);
+
+		expect(data.externalLendingInfo).toBeNull();
+	});
+
+	it('falls back to null when the column is an empty string', async () => {
+		const { pb } = makePb({ itemExtra: { ownerExternalLendingInfo: '' } });
+
+		const data = await callLoad(pb);
+
+		expect(data.externalLendingInfo).toBeNull();
+	});
+
+	it('falls back to null when the column is absent from the row', async () => {
+		const { pb } = makePb({});
+
+		const data = await callLoad(pb);
+
+		expect(data.externalLendingInfo).toBeNull();
+	});
+});
+
 describe('items/[id] load — preferred transport mode (#426, from user_preferences)', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();

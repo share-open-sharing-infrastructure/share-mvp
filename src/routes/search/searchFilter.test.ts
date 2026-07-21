@@ -37,6 +37,7 @@ describe('buildItemFilter', () => {
 		op: 'or',
 		onlyAvailable: true,
 		ownerType: 'all',
+		selectedGroup: null,
 	};
 
 	it('includes the username clause when a query is present', () => {
@@ -52,11 +53,69 @@ describe('buildItemFilter', () => {
 		const filter = buildItemFilter({ ...base, query: 'x' }, 'user123');
 		expect(filter).toContain('userId != "user123"');
 	});
+
+	it('adds no group clause when no group is selected', () => {
+		expect(buildItemFilter({ ...base, query: 'x' })).not.toContain('groups');
+	});
+
+	it('adds exactly one group clause with the "~" operator when a group is selected', () => {
+		const filter = buildItemFilter({ ...base, selectedGroup: 'abcdefghij01234' });
+		expect(filter).toContain('groups ~ "abcdefghij01234"');
+		// Only a single group clause is ever emitted (single-select).
+		expect(filter?.match(/groups ~ /g)).toHaveLength(1);
+	});
+
+	it('combines the group clause with query, categories, availability and ownerType', () => {
+		const filter = buildItemFilter(
+			{
+				...base,
+				query: 'zelt',
+				selectedCategories: ['Reisen und Outdoor'],
+				onlyAvailable: true,
+				ownerType: 'private',
+				selectedGroup: 'abcdefghij01234',
+			},
+			'user123'
+		);
+		expect(filter).toContain('name ~ "zelt"');
+		expect(filter).toContain('categories ~ ');
+		expect(filter).toContain("status != 'unavailable'");
+		expect(filter).toContain('isInstitution != true');
+		expect(filter).toContain('userId != "user123"');
+		expect(filter).toContain('groups ~ "abcdefghij01234"');
+		// All clauses are AND-combined.
+		expect(filter).toContain(' && ');
+	});
+
+	it('escapes double quotes in the group id (defense-in-depth)', () => {
+		// The parser already restricts the value to a 15-char id; the builder still escapes.
+		const filter = buildItemFilter({ ...base, selectedGroup: 'ab"cd' });
+		expect(filter).toContain('groups ~ "ab\\"cd"');
+	});
 });
 
 describe('parseSearchParameters', () => {
 	it('parses the query from the q parameter', () => {
 		const params = parseSearchParameters(new URL('https://x.test/search?q=hammer'));
 		expect(params.query).toBe('hammer');
+	});
+
+	it('accepts a well-formed 15-char group id', () => {
+		const params = parseSearchParameters(new URL('https://x.test/search?group=abcdefghij01234'));
+		expect(params.selectedGroup).toBe('abcdefghij01234');
+	});
+
+	it('defaults selectedGroup to null when the param is missing or empty', () => {
+		expect(parseSearchParameters(new URL('https://x.test/search')).selectedGroup).toBeNull();
+		expect(parseSearchParameters(new URL('https://x.test/search?group=')).selectedGroup).toBeNull();
+	});
+
+	it('drops malformed group ids to null (injection, wrong length, quotes, whitespace)', () => {
+		const cases = ['<script>', 'abcdefghij0123456789012345', 'ab"cdefghij0123', '   ', 'short'];
+		for (const bad of cases) {
+			const url = new URL('https://x.test/search');
+			url.searchParams.set('group', bad);
+			expect(parseSearchParameters(url).selectedGroup).toBeNull();
+		}
 	});
 });

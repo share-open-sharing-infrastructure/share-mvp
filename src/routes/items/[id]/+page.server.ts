@@ -181,6 +181,12 @@ export async function load({ params, locals }) {
 		unmetRequirements,
 		ownerContact,
 		ownerHasLocation: !!item.ownerHasLocation,
+		// Issue #368 — the institution's process explanation for external items, read from the
+		// already-loaded items_public row (masked to NULL for restricted items, so no extra
+		// query and no leak). Empty/NULL → the component falls back to the shared default text.
+		externalLendingInfo:
+			(typeof item.ownerExternalLendingInfo === 'string' && item.ownerExternalLendingInfo) ||
+			null,
 	};
 }
 

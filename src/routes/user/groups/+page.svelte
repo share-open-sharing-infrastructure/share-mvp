@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Modal, Label, Input, Textarea, Card } from 'flowbite-svelte';
+	import { Modal, Label, Input, Textarea, Card } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -24,7 +25,7 @@
 <div class="mx-auto max-w-5xl px-4 py-6 space-y-6">
 	<div class="flex items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold text-tinte-900">{texts.groups.pageTitle}</h1>
-		<Button class="bg-primary-200 hover:bg-primary min-button" onclick={() => (showCreate = true)}>
+		<Button onclick={() => (showCreate = true)}>
 			{texts.groups.create}
 		</Button>
 	</div>
@@ -89,7 +90,8 @@
 						<input type="hidden" name="groupId" value={g.id} />
 						<Button
 							type="submit"
-							class="bg-accent-200 hover:bg-danger min-button text-sm"
+							variant="danger"
+							size="sm"
 							onclick={(e) => {
 								if (!confirm(texts.groups.leaveConfirm)) e.preventDefault();
 							}}
@@ -132,7 +134,7 @@
 			<Textarea name="description" placeholder={texts.groups.descriptionPlaceholder} class="h-24 w-full" />
 		</Label>
 		<div class="flex justify-end">
-			<Button type="submit" class="bg-primary-200 hover:bg-primary min-button">
+			<Button type="submit">
 				{texts.groups.create}
 			</Button>
 		</div>

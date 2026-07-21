@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Alert, Badge, Button } from 'flowbite-svelte';
+	import { Alert, Badge } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
@@ -112,7 +113,7 @@
 						<p class="text-xs text-tinte-400 mt-1">{texts.institutional.importUploadHint}</p>
 					</div>
 					<div class="flex justify-end">
-						<Button type="submit" class="min-button bg-primary-200 hover:bg-primary" disabled={!selectedFile}>
+						<Button type="submit" disabled={!selectedFile}>
 							{texts.institutional.importPreviewButton}
 						</Button>
 					</div>
@@ -190,17 +191,11 @@
 			<!-- Apply form -->
 			<form method="POST" action="?/apply" use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }} class="flex gap-3 justify-end">
 				<input type="hidden" name="csvText" value={form.csvText} />
-				<Button
-					type="button"
-					color="alternative"
-					class="min-button"
-					onclick={() => { step = 'upload'; }}
-				>
+				<Button variant="secondary" onclick={() => { step = 'upload'; }}>
 					{texts.institutional.importBackButton}
 				</Button>
 				<Button
 					type="submit"
-					class="min-button bg-primary-200 hover:bg-primary"
 					disabled={form.summary.create === 0 && form.summary.update === 0 && form.summary.archive === 0}
 				>
 					{texts.institutional.importApplyButton}
@@ -227,11 +222,7 @@
 				{/if}
 			{/if}
 			<div class="flex gap-3">
-				<Button
-					type="button"
-					class="min-button bg-primary-200 hover:bg-primary"
-					onclick={() => { step = 'upload'; }}
-				>
+				<Button onclick={() => { step = 'upload'; }}>
 					{texts.institutional.importAnotherButton}
 				</Button>
 				<a href={resolve('/user/items')} class="inline-flex items-center text-sm font-medium text-primary hover:underline">

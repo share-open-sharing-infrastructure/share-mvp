@@ -96,7 +96,7 @@ classDiagram
   to the owner, the owner's trustees (when `trusteesOnly`), and members of an
   attached group. See [data-model.md](data-model.md).
 - `status` reflects current availability: `available`, `unavailable` (actively on loan), or `unknown`.
-- `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`.
+- `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/categories.ts`.
 
 ## Groups
 
@@ -139,8 +139,11 @@ stateDiagram-v2
     active --> return_requested : Borrower signals return
     active --> completed : Owner confirms return directly
     return_requested --> completed : Owner confirms return
+    pending --> aborted : Either party aborts
+    accepted --> aborted : Either party aborts
     rejected --> [*]
     completed --> [*]
+    aborted --> [*]
 ```
 
 | Transition | Triggered by | Side effects |
@@ -151,6 +154,9 @@ stateDiagram-v2
 | accepted → active | Owner | Sends `handover_confirmed` notification |
 | active → return_requested | Borrower | Sends `return_requested` notification |
 | active or return_requested → completed | Owner | Sets item `status = available`; sends `return_confirmed` notification; ~33% chance triggers counterfactual impact survey |
+| pending or accepted → aborted | Either party | Terminal cancellation. Item is reset to `status = available` when aborting from `accepted` (the reset runs server-side in the `conversations` `onRecordUpdateRequest` hook so the non-owner requester can free it too). Sends a neutral `request_aborted` notification to the counterparty (does not name who aborted). Enforced authoritatively by the hook (`allerleih-backend/pb_hooks/lending.pb.js`), which restricts the transition to participants and to the `pending`/`accepted` source states. |
+
+**Abort vs. Delete affordance:** while a request is abortable (`pending`/`accepted`) the conversation UI hides the "Anfrage löschen" (delete) control and shows "Anfrage abbrechen" instead (in `pending` only to the requester — the owner keeps "Ablehnen"; in `accepted` to both parties). Delete stays available in the terminal states (`rejected`/`completed`/`aborted`) to clear history.
 
 ---
 

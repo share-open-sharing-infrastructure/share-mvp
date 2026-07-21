@@ -93,6 +93,7 @@ export const actions = {
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { texts } from '$lib/texts';
+  import Button from '$lib/components/ui/Button.svelte';
 
   let { data, form } = $props();          // declare props; do NOT copy fields out of `data`
   let q = $state('');
@@ -101,7 +102,7 @@ export const actions = {
 
 <form method="POST" action="?/create" use:enhance>
   <input name="name" />
-  <button type="submit">{texts.buttons.save}</button>
+  <Button type="submit">{texts.buttons.save}</Button>
 </form>
 
 {#each data.items as item (item.id)}

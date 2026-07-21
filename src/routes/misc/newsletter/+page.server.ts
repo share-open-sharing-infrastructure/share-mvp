@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import { normalizeEmail } from '$lib/server/email';
 
 export const actions: Actions = {
 	subscribe: async ({ request }) => {
@@ -9,7 +10,7 @@ export const actions: Actions = {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 			body: new URLSearchParams({
-				'contact[email]': (data.get('contact[email]') as string) ?? '',
+				'contact[email]': normalizeEmail((data.get('contact[email]') as string) ?? ''),
 				'contact[first_name]': (data.get('contact[first_name]') as string) ?? '',
 				'h[url]': '',
 			}),

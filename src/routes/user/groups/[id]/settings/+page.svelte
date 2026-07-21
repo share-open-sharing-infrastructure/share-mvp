@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Button, Input, Label, Textarea, Toggle, Card } from 'flowbite-svelte';
+	import { Input, Label, Textarea, Toggle, Card } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
@@ -90,7 +91,6 @@
 			<div class="flex justify-end">
 				<Button
 					type="submit"
-					class="bg-primary-200 hover:bg-primary min-button"
 					onclick={(e) => {
 						// Confirm only when newly switching the group to public.
 						if (makePublic && !data.group.isPublic && !confirm(texts.groups.publicConfirm)) {
@@ -110,7 +110,7 @@
 			<div class="mt-4 flex flex-col sm:flex-row gap-2">
 				<Input type="text" readonly value={data.publicUrl} aria-label={texts.groups.publicLinkTitle} class="w-full text-xs" />
 				<Button
-					class="bg-primary-200 hover:bg-primary min-button w-full sm:w-auto shrink-0"
+					class="w-full sm:w-auto shrink-0"
 					onclick={() => copyLink(data.publicUrl, 'public')}
 				>
 					{copiedKey === 'public' ? texts.groups.linkCopied : texts.groups.copyLink}
@@ -134,7 +134,7 @@
 							label={texts.groups.shareGroupButton}
 						/>
 						<Button
-							class="bg-primary-200 hover:bg-primary min-button w-full sm:w-auto shrink-0"
+							class="w-full sm:w-auto shrink-0"
 							onclick={() => copyLink(data.invite!.url, 'invite')}
 						>
 							{copiedKey === 'invite' ? texts.groups.linkCopied : texts.groups.copyLink}
@@ -147,7 +147,7 @@
 					<div class="flex gap-2">
 						<form method="POST" action="?/revokeInvite" use:enhance>
 							<input type="hidden" name="inviteId" value={data.invite.id} />
-							<Button type="submit" class="bg-accent-200 hover:bg-danger min-button text-sm">{texts.groups.revokeInvite}</Button>
+							<Button type="submit" variant="danger" size="sm">{texts.groups.revokeInvite}</Button>
 						</form>
 					</div>
 				</Card>
@@ -163,7 +163,7 @@
 					<span>{texts.groups.maxUsesLabel}</span>
 					<Input type="number" name="maxUses" min="0" value="0" class="w-24" />
 				</Label>
-				<Button type="submit" class="bg-primary-200 hover:bg-primary min-button">
+				<Button type="submit">
 					{data.invite ? texts.groups.regenerateInvite : texts.groups.createInvite}
 				</Button>
 			</form>
@@ -176,7 +176,7 @@
 		<form method="POST" action="?/deleteGroup" class="mt-4" use:enhance>
 			<Button
 				type="submit"
-				class="bg-accent-200 hover:bg-danger min-button"
+				variant="danger"
 				onclick={(e) => {
 					if (!confirm(texts.groups.deleteConfirm)) e.preventDefault();
 				}}

@@ -1,4 +1,4 @@
-import { type ItemCategory } from '$lib/texts';
+import { type ItemCategory } from '$lib/categories';
 import type { MappedItem } from '../core/types';
 
 /**

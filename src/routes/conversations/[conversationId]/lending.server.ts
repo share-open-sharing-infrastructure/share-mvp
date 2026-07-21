@@ -27,7 +27,7 @@ async function loadAndValidateConversation(
 	pb: PocketBase,
 	conversationId: string,
 	userId: string,
-	requiredRole: 'owner' | 'requester',
+	requiredRole: 'owner' | 'requester' | 'participant',
 	requiredStatus: LendingStatus | LendingStatus[]
 ): Promise<{ conv: Record<string, unknown> } | { error: FailResult }> {
 	let conversation: Record<string, unknown>;
@@ -37,8 +37,14 @@ async function loadAndValidateConversation(
 		const e = err as Partial<ClientResponseError>;
 		return { error: fail(e.status ?? 500, { fail: true, message: texts.lending.errors.notFound }) };
 	}
-	const roleField = requiredRole === 'owner' ? 'itemOwner' : 'requester';
-	if (conversation[roleField] !== userId) return { error: fail(403, { fail: true, message: texts.lending.errors.noPermission }) };
+	// `participant` passes for either side of the conversation; the role-specific
+	// checks pin exactly one side.
+	const isParticipant = conversation.itemOwner === userId || conversation.requester === userId;
+	const roleOk =
+		requiredRole === 'participant'
+			? isParticipant
+			: conversation[requiredRole === 'owner' ? 'itemOwner' : 'requester'] === userId;
+	if (!roleOk) return { error: fail(403, { fail: true, message: texts.lending.errors.noPermission }) };
 	const validStatuses = Array.isArray(requiredStatus) ? requiredStatus : [requiredStatus];
 	if (!(validStatuses as string[]).includes(conversation.lendingStatus as string)) return { error: fail(400, { fail: true, message: texts.lending.errors.invalidState }) };
 	return { conv: conversation };
@@ -151,6 +157,34 @@ export async function confirmHandover(
 
 	const itemName = await getItemName(pb, conv.requestedItem as string);
 	await notifyUser(pb, conv.requester as string, userId, 'handover_confirmed', conversationId, texts.notifications.handoverConfirmed(itemName));
+}
+
+/**
+ * State transition: `pending` | `accepted` → `aborted` (called by EITHER party).
+ * The counterparty is notified (neutrally — the notification does not name who
+ * aborted). The requested item is NOT touched here: on `accepted → aborted` the
+ * backend `lending.pb.js` hook resets it to `available` in an elevated
+ * transaction (the aborting party may be the non-owner requester).
+ */
+export async function abortRequest(
+	pb: PocketBase,
+	conversationId: string,
+	userId: string
+): Promise<FailResult | void> {
+	const result = await loadAndValidateConversation(pb, conversationId, userId, 'participant', ['pending', 'accepted']);
+	if ('error' in result) return result.error;
+	const { conv } = result;
+
+	try {
+		await pb.collection('conversations').update(conversationId, { lendingStatus: 'aborted' });
+	} catch (err) {
+		const e = err as Partial<ClientResponseError>;
+		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+	}
+
+	const itemName = await getItemName(pb, conv.requestedItem as string);
+	const counterpartyId = (conv.requester === userId ? conv.itemOwner : conv.requester) as string;
+	await notifyUser(pb, counterpartyId, userId, 'request_aborted', conversationId, texts.notifications.requestAborted(itemName));
 }
 
 /** State transition: `active` → `return_requested` (called by the borrower). */

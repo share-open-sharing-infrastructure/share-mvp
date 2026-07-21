@@ -1,6 +1,13 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
+import { texts } from '$lib/texts';
 import { getAttachableGroups } from '$lib/server/groups';
+import {
+	extractBulkItemDraft,
+	filterAttachableGroups,
+	sanitizeCategories,
+	validateItemFields,
+	type ItemWritePayload,
+} from '$lib/server/itemForm';
 
 export async function load({ locals }) {
 	const attachableGroups = await getAttachableGroups(locals.pb, locals.user.id);
@@ -14,7 +21,8 @@ export const actions = {
 		if (!itemCount || itemCount < 1) return fail(400, { message: 'Keine Gegenstände.' });
 
 		// Only group ids the user may actually attach (owned or member), so a
-		// tampered form can't share an item with arbitrary groups.
+		// tampered form can't share an item with arbitrary groups. Loaded once per
+		// request (not per row).
 		const allowedGroupIds = new Set(
 			(await getAttachableGroups(locals.pb, locals.user.id)).map((g) => g.id)
 		);
@@ -22,45 +30,32 @@ export const actions = {
 		let successCount = 0;
 
 		for (let i = 0; i < itemCount; i++) {
-			const name = formData.get(`name_${i}`) as string;
-			const description = formData.get(`description_${i}`) as string;
-			const image = formData.get(`image_${i}`);
-			const categoriesRaw = formData.get(`categories_${i}`) as string;
-			const groupsRaw = formData.get(`groups_${i}`) as string;
+			const draft = extractBulkItemDraft(formData, i);
+			const images = draft.image ? [draft.image] : [];
 
-			let categories: string[] = [];
-			try {
-				categories = (JSON.parse(categoriesRaw ?? '[]') as string[]).filter((c) =>
-					ITEM_CATEGORIES.includes(c as ItemCategory)
-				);
-			} catch {
-				categories = [];
+			// Skip incomplete rows (missing name/description/file) and rows whose file
+			// is not an accepted image type — the shared validator applies the MIME
+			// whitelist to bulk too, so an invalid image type is just another invalid row.
+			if (!validateItemFields({ name: draft.name, description: draft.description, images }, { requireImage: true }).isValid) {
+				continue;
 			}
 
-			let groups: string[] = [];
-			try {
-				groups = (JSON.parse(groupsRaw ?? '[]') as string[]).filter((id) => allowedGroupIds.has(id));
-			} catch {
-				groups = [];
-			}
+			const payload: ItemWritePayload = {
+				name: draft.name,
+				description: draft.description,
+				image: draft.image ?? undefined,
+				owner: locals.user.id,
+				categories: sanitizeCategories(draft.rawCategories),
+				groups: filterAttachableGroups(draft.rawGroups, allowedGroupIds),
+				status: 'available',
+				trusteesOnly: draft.trusteesOnly,
+			};
 
-			if (!name || !description || !(image instanceof File) || image.size === 0) continue;
-
 			try {
-				await locals.pb.collection('items').create({
-					name,
-					description,
-					image,
-					owner: locals.user.id,
-					categories,
-					groups,
-					status: 'available',
-					trusteesOnly: formData.get(`trusteesOnly_${i}`) === 'on',
-				});
+				await locals.pb.collection('items').create(payload);
 				successCount++;
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (err: Error | any) {
-				console.error('bulkCreate item error:', err?.message ?? err);
+			} catch (err: unknown) {
+				console.error('bulkCreate item error:', err instanceof Error ? err.message : err);
 			}
 		}
 

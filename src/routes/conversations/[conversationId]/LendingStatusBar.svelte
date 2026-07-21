@@ -3,18 +3,40 @@
 	import { texts } from '$lib/texts';
 	import type { Conversation } from '$lib/types/models';
 	import { LENDING_LIFECYCLE, type LendingStatus } from '$lib/lending';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
 		lendingStatus: Conversation['lendingStatus'];
 		isOwner: boolean;
 		/** Username of the item owner — shown in the borrower-facing pending description. */
 		itemOwnerUsername: string;
+		/** Opens the abort-confirmation modal (owned by the parent). */
+		onAbort?: () => void;
 	}
 
-	let { lendingStatus, isOwner, itemOwnerUsername }: Props = $props();
+	let { lendingStatus, isOwner, itemOwnerUsername, onAbort }: Props = $props();
 
 	// Short alias used throughout this file; keeps template expressions concise.
 	const status = $derived(lendingStatus);
+
+	// `rejected` and `aborted` are both terminal dead-ends: no progress bar, just a
+	// gray badge + description. Values are resolved here to keep the template's type
+	// narrowing simple.
+	const isDeadEnd = $derived(status === 'rejected' || status === 'aborted');
+	const deadEndLabel = $derived(
+		status === 'aborted' ? texts.lending.statusLabel.aborted : texts.lending.statusLabel.rejected
+	);
+	const deadEndDescription = $derived(
+		status === 'aborted'
+			? texts.lending.statusDescription.aborted
+			: texts.lending.statusDescription.rejected
+	);
+
+	// Who may abort, per the approved role/state rules (#373): in `pending` only the
+	// requester (the owner uses Ablehnen); in `accepted` either party.
+	const showAbort = $derived(
+		!!onAbort && ((status === 'pending' && !isOwner) || status === 'accepted')
+	);
 
 	// The five forward-progress steps. `rejected` is a dead-end handled separately below.
 	const steps: readonly LendingStatus[] = LENDING_LIFECYCLE;
@@ -23,7 +45,7 @@
 
 	// States where the bar is filled up to and including this step
 	function isStepReached(idx: number): boolean {
-		return idx <= currentStepIndex && status !== 'rejected';
+		return idx <= currentStepIndex && !isDeadEnd;
 	}
 
 	// Description text differs by role. `pending` is handled first because its borrower
@@ -34,6 +56,7 @@
 		if (!status) return '';
 		if (status === 'completed') return texts.lending.statusDescription.completed;
 		if (status === 'rejected') return texts.lending.statusDescription.rejected;
+		if (status === 'aborted') return texts.lending.statusDescription.aborted;
 		if (status === 'pending') {
 			const pendingDesc = texts.lending.statusDescription.pending;
 			return isOwner ? pendingDesc.owner : pendingDesc.requester(itemOwnerUsername);
@@ -42,21 +65,17 @@
 		return isOwner ? desc.owner : desc.requester;
 	});
 
-	const actionBtnClass =
-		'rounded-full px-3 py-1.5 text-xs font-semibold bg-primary-200 hover:bg-primary text-tinte-900 transition-colors cursor-pointer';
-	const secondaryBtnClass =
-		'rounded-full px-3 py-1.5 text-xs font-semibold border border-tinte-300 dark:border-tinte-600 text-tinte-600 dark:text-tinte-300 hover:bg-tinte-100 dark:hover:bg-tinte-800 transition-colors cursor-pointer';
 </script>
 
 {#if status}
 	<div class="border-b border-tinte-100 dark:border-tinte-800 bg-papier dark:bg-tinte-900 px-4 sm:py-3 space-y-3 shrink-0">
-		{#if status === 'rejected'}
+		{#if isDeadEnd}
 			<div class="flex items-center gap-2">
 				<span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 dark:bg-tinte-800 text-tinte-500 dark:text-tinte-400 border border-gray-200 dark:border-tinte-700">
-					{texts.lending.statusLabel.rejected}
+					{deadEndLabel}
 				</span>
 				<span class="text-xs text-tinte-500 dark:text-tinte-400">
-					{texts.lending.statusDescription.rejected}
+					{deadEndDescription}
 				</span>
 			</div>
 		{:else}
@@ -89,41 +108,48 @@
 				<div class="flex items-center gap-2 shrink-0">
 					{#if status === 'pending' && isOwner}
 						<form method="POST" action="?/rejectRequest" use:enhance>
-							<button type="submit" class={secondaryBtnClass}>
+							<Button type="submit" variant="secondary" size="sm">
 								{texts.lending.actions.reject}
-							</button>
+							</Button>
 						</form>
 						<form method="POST" action="?/acceptRequest" use:enhance>
-							<button type="submit" class={actionBtnClass}>
+							<Button type="submit" size="sm">
 								{texts.lending.actions.accept}
-							</button>
+							</Button>
 						</form>
 					{:else if status === 'accepted' && isOwner}
 						<form method="POST" action="?/confirmHandover" use:enhance>
-							<button type="submit" class={actionBtnClass}>
+							<Button type="submit" size="sm">
 								{texts.lending.actions.confirmHandover}
-							</button>
+							</Button>
 						</form>
 					{:else if status === 'active'}
 						{#if !isOwner}
 							<form method="POST" action="?/requestReturn" use:enhance>
-								<button type="submit" class={actionBtnClass}>
+								<Button type="submit" size="sm">
 									{texts.lending.actions.requestReturn}
-								</button>
+								</Button>
 							</form>
 						{:else}
 							<form method="POST" action="?/confirmReturn" use:enhance>
-								<button type="submit" class={secondaryBtnClass}>
+								<Button type="submit" variant="secondary" size="sm">
 									{texts.lending.actions.confirmReturn}
-								</button>
+								</Button>
 							</form>
 						{/if}
 					{:else if status === 'return_requested' && isOwner}
 						<form method="POST" action="?/confirmReturn" use:enhance>
-							<button type="submit" class={actionBtnClass}>
+							<Button type="submit" size="sm">
 								{texts.lending.actions.confirmReturn}
-							</button>
+							</Button>
 						</form>
+					{/if}
+					{#if showAbort}
+						<!-- Opens the confirmation modal in the parent; the actual mutation
+						     is the parent's ?/abortRequest form. -->
+						<Button variant="secondary" size="sm" onclick={() => onAbort?.()}>
+							{texts.lending.actions.abort}
+						</Button>
 					{/if}
 				</div>
 			</div>
