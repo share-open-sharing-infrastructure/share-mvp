@@ -143,6 +143,7 @@
 		<NavBarComponent
 			loggedIn={!!data.currentUser}
 			currentUser={data.currentUser}
+			isAdminUser={data.isAdminUser}
 			{unreadCount}
 		/>
 	{:else}

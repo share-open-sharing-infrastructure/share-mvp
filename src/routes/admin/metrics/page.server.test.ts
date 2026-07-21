@@ -18,28 +18,30 @@ beforeEach(() => {
 
 describe('/admin/metrics load', () => {
 	it('404s a non-admin user — the route must not reveal its existence', async () => {
-		isAdmin.mockReturnValue(false);
+		isAdmin.mockResolvedValue(false);
 
-		await expect(load({ locals: { user: { email: 'nope@example.com' } } } as LoadEvent)).rejects.toMatchObject({
+		await expect(load({ locals: { user: { id: 'u1' } } } as LoadEvent)).rejects.toMatchObject({
 			status: 404,
 		});
+		expect(isAdmin).toHaveBeenCalledWith('u1');
 		expect(getLiveCoreMetrics).not.toHaveBeenCalled();
 	});
 
 	it('404s an unauthenticated visitor', async () => {
-		isAdmin.mockReturnValue(false);
+		isAdmin.mockResolvedValue(false);
 
 		await expect(load({ locals: { user: null } } as LoadEvent)).rejects.toMatchObject({ status: 404 });
+		expect(isAdmin).toHaveBeenCalledWith(undefined);
 	});
 
-	it('returns live metrics + history for an allowlisted admin', async () => {
-		isAdmin.mockReturnValue(true);
+	it('returns live metrics + history for an admin', async () => {
+		isAdmin.mockResolvedValue(true);
 		const live = { users: { total: 1, institutions: 0, verified: 1 } };
 		const history = [{ date: '2026-07-20', metrics: {} }];
 		getLiveCoreMetrics.mockResolvedValue(live);
 		getMetricsHistory.mockResolvedValue(history);
 
-		const result = await load({ locals: { user: { email: 'admin@example.com' } } } as LoadEvent);
+		const result = await load({ locals: { user: { id: 'admin1' } } } as LoadEvent);
 
 		expect(result).toEqual({ live, history });
 	});

@@ -1,5 +1,6 @@
 import { NOTIFICATIONS_DEP } from '$lib/constants';
 import { getUserPreferences } from '$lib/server/userPreferences';
+import { isAdmin } from '$lib/server/metrics';
 import type { UserPreferences } from '$lib/types/models';
 
 export const load = async (event) => {
@@ -12,6 +13,9 @@ export const load = async (event) => {
 	// Preferences (transport mode, onboarding flag, …) live in a sidecar collection
 	// (issue #426); surface them once here so every page can read them off `data`.
 	let currentUserPreferences: UserPreferences | null = null;
+	// isAdmin isn't on currentUser (the field is hidden on the backend — see
+	// $lib/server/metrics.ts), so the nav's admin link needs its own lookup here.
+	let isAdminUser = false;
 	if (currentUser) {
 		try {
 			const result = await event.locals.pb
@@ -30,12 +34,14 @@ export const load = async (event) => {
 			currentUser.id,
 			'user-preferences-layout'
 		);
+		isAdminUser = await isAdmin(currentUser.id);
 	}
 
 	return {
 		currentUser,
 		currentUserPreferences,
 		unreadNotificationCount,
+		isAdminUser,
 		pbAuthToken: event.locals.pb.authStore.token ?? null,
 	};
 };

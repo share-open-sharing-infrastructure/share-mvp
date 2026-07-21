@@ -44,6 +44,7 @@ export const texts = {
 		notifications: 'Benachrichtigungen',
 		myItems: 'Meine Dinge',
 		myProfile: 'Einstellungen',
+		adminMetrics: 'Kennzahlen (Admin)',
 		social: 'Vertraute',
 		groups: 'Gruppen',
 		network: 'Mein Netzwerk',
@@ -1512,6 +1513,8 @@ export const texts = {
 			itemsAvailable: 'Verfügbare Gegenstände',
 			loansCompleted: 'Abgeschlossene Ausleihen',
 			impactWouldBuyCount: 'Mal wurde geliehen statt neu gekauft',
+			unavailable: 'Die Zahlen sind gerade nicht verfügbar — bitte versuch es später noch einmal.',
+			linkToFullPage: 'Alle Zahlen ansehen',
 		},
 	},
 };

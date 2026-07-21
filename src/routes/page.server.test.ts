@@ -10,8 +10,8 @@ beforeEach(() => {
 	vi.clearAllMocks();
 });
 
-describe('/misc/stats load', () => {
-	it('returns the whitelisted public stats, unauthenticated', async () => {
+describe('/ (landing page) load', () => {
+	it('returns the public stats for the embedded widget', async () => {
 		const stats = { usersTotal: 10, itemsAvailable: 5, loansCompleted: 2, impactWouldBuyCount: 1 };
 		getPublicStats.mockResolvedValue(stats);
 
@@ -20,7 +20,7 @@ describe('/misc/stats load', () => {
 		expect(result).toEqual({ stats });
 	});
 
-	it('returns stats: null when getPublicStats fails soft (page shows a fallback message)', async () => {
+	it('returns stats: null when getPublicStats fails soft — the widget is simply omitted', async () => {
 		getPublicStats.mockResolvedValue(null);
 
 		const result = await load({} as never);

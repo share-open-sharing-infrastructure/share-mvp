@@ -58,8 +58,6 @@ Required in `.env` (see `docs/architecture.md` for what each does; template: `.e
 `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
 `MISTRAL_API_KEY` (prod only). Integration sync (`/api/sync`, `/api/refresh`; see
 `docs/operations/integration-sync.md`): `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`.
-Admin metrics dashboard (`/admin/metrics`; see `docs/operations/metrics.md`): `ADMIN_EMAILS`
-(comma-separated allowlist; empty/unset disables the route — 404 for everyone).
 
 ## Guardrails (always apply)
 

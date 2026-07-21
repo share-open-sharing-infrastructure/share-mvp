@@ -20,9 +20,10 @@
 	import FeedbackButton from './FeedbackButton.svelte';
 	import { teardownPushSubscription } from '$lib/utils/pushSubscription';
 
-	let { loggedIn, currentUser, unreadCount = 0 } = $props<{
+	let { loggedIn, currentUser, isAdminUser = false, unreadCount = 0 } = $props<{
 		loggedIn: boolean;
 		currentUser: unknown;
+		isAdminUser?: boolean;
 		unreadCount?: number;
 	}>();
 
@@ -142,6 +143,13 @@
 						href={resolve('/user/import')}
 						class="hover:text-accent hover:bg-transparent"
 						>{texts.institutional.importNavLabel}</DropdownItem
+					>
+				{/if}
+				{#if isAdminUser}
+					<DropdownItem
+						href={resolve('/admin/metrics')}
+						class="hover:text-accent hover:bg-transparent"
+						>{texts.nav.adminMetrics}</DropdownItem
 					>
 				{/if}
 				<DropdownDivider />

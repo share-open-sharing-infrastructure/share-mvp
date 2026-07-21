@@ -2,9 +2,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { getSuperuserClient } = vi.hoisted(() => ({ getSuperuserClient: vi.fn() }));
 
-vi.mock('$env/static/private', () => ({
-	ADMIN_EMAILS: '  Alice@Example.com, bob@example.com  ',
-}));
 vi.mock('$lib/server/integrations/core/pocketbase', () => ({ getSuperuserClient }));
 
 import {
@@ -21,6 +18,7 @@ function fakePb(getListImpl?: () => Promise<{ totalItems: number }>) {
 		collection: vi.fn(() => ({
 			getList: vi.fn(getListImpl ?? (() => Promise.resolve({ totalItems: 3 }))),
 			getFullList: vi.fn().mockResolvedValue([]),
+			getOne: vi.fn().mockResolvedValue({ id: 'unused', isAdmin: false }),
 		})),
 	};
 }
@@ -31,27 +29,35 @@ beforeEach(() => {
 });
 
 describe('isAdmin', () => {
-	it('matches an allowlisted email case- and whitespace-insensitively', () => {
-		expect(isAdmin({ email: 'alice@example.com' })).toBe(true);
-		expect(isAdmin({ email: '  BOB@EXAMPLE.COM  ' })).toBe(true);
+	it('returns true when the superuser lookup finds users.isAdmin = true', async () => {
+		const pb = fakePb();
+		pb.collection = vi.fn(() => ({ getOne: vi.fn().mockResolvedValue({ id: 'u1', isAdmin: true }) })) as unknown as typeof pb.collection;
+		getSuperuserClient.mockResolvedValue(pb);
+
+		expect(await isAdmin('u1')).toBe(true);
+		expect(pb.collection).toHaveBeenCalledWith('users');
 	});
 
-	it('rejects an email not on the allowlist', () => {
-		expect(isAdmin({ email: 'carol@example.com' })).toBe(false);
+	it('returns false when users.isAdmin is false', async () => {
+		const pb = fakePb();
+		pb.collection = vi.fn(() => ({ getOne: vi.fn().mockResolvedValue({ id: 'u1', isAdmin: false }) })) as unknown as typeof pb.collection;
+		getSuperuserClient.mockResolvedValue(pb);
+
+		expect(await isAdmin('u1')).toBe(false);
 	});
 
-	it('rejects a missing user or missing email', () => {
-		expect(isAdmin(null)).toBe(false);
-		expect(isAdmin(undefined)).toBe(false);
-		expect(isAdmin({})).toBe(false);
+	it('returns false for a missing user id, without querying PocketBase', async () => {
+		expect(await isAdmin(null)).toBe(false);
+		expect(await isAdmin(undefined)).toBe(false);
+		expect(getSuperuserClient).not.toHaveBeenCalled();
 	});
 
-	it('disables the dashboard for everyone when ADMIN_EMAILS is unset', async () => {
-		vi.resetModules();
-		vi.doMock('$env/static/private', () => ({ ADMIN_EMAILS: '' }));
-		vi.doMock('$lib/server/integrations/core/pocketbase', () => ({ getSuperuserClient }));
-		const fresh = await import('./metrics');
-		expect(fresh.isAdmin({ email: 'alice@example.com' })).toBe(false);
+	it('fails soft to false if the lookup throws (deleted user, DB hiccup, …)', async () => {
+		const pb = fakePb();
+		pb.collection = vi.fn(() => ({ getOne: vi.fn().mockRejectedValue(new Error('not found')) })) as unknown as typeof pb.collection;
+		getSuperuserClient.mockResolvedValue(pb);
+
+		expect(await isAdmin('missing-id')).toBe(false);
 	});
 });
 
@@ -89,7 +95,7 @@ describe('getMetricsHistory', () => {
 		pb.collection = vi.fn(() => ({
 			getList: vi.fn().mockResolvedValue({ totalItems: 0 }),
 			getFullList: vi.fn().mockRejectedValue(new Error('Missing or invalid collection context.')),
-		}));
+		})) as unknown as typeof pb.collection;
 		getSuperuserClient.mockResolvedValue(pb);
 
 		await expect(getMetricsHistory(30)).resolves.toEqual([]);
@@ -103,7 +109,7 @@ describe('getPublicStats', () => {
 
 		const stats = await getPublicStats();
 
-		expect(Object.keys(stats).sort()).toEqual(
+		expect(Object.keys(stats!).sort()).toEqual(
 			['usersTotal', 'itemsAvailable', 'loansCompleted', 'impactWouldBuyCount'].sort()
 		);
 	});
@@ -117,5 +123,11 @@ describe('getPublicStats', () => {
 		await getPublicStats();
 
 		expect(pb.collection.mock.calls.length).toBe(callsAfterFirst);
+	});
+
+	it('fails soft to null instead of throwing — this now also renders on the home page', async () => {
+		getSuperuserClient.mockRejectedValue(new Error('superuser auth failed'));
+
+		await expect(getPublicStats()).resolves.toBeNull();
 	});
 });

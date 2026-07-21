@@ -35,6 +35,7 @@ erDiagram
         date lastLoginAt "stamped on auth (throttled 24h) — drives inactive-account retention; hidden field, superuser-only"
         date retentionNotifiedAt "last open-loan skip-notice (retention job); hidden field, superuser-only"
         date deletionWarnedAt "last inactivity-deletion warning email (once per inactivity cycle); hidden field, superuser-only"
+        bool isAdmin "grants /admin/metrics access; hidden field, superuser-only — set via the PocketBase admin UI, same as isInstitution"
         date created
         date updated
     }

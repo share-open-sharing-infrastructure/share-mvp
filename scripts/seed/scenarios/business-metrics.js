@@ -20,6 +20,8 @@
  *    counterfactual answers so the impact breakdown isn't a single bar.
  *  - 3 trust edges, 2 groups (one public/one private) with extra members, 2 invited
  *    users, 2 push subscriptions, and 3 outbound clicks across both institutions.
+ *  - alice_seed is seeded with isAdmin: true, so /admin/metrics is reachable
+ *    immediately (the flag lives in the DB now, not an ADMIN_EMAILS env allowlist).
  */
 import {
 	createUser,
@@ -101,6 +103,7 @@ function historicalMetrics(dayIndex, totalDays) {
 			total: Math.round(3 * progress),
 			last30d: Math.round(3 * progress),
 			byItemOwner30d: [],
+			byDomain30d: [],
 		},
 		community: {
 			groups: { total: progress > 0.5 ? 2 : 1, public: 1, memberships: Math.round(2 + 2 * progress) },
@@ -133,7 +136,9 @@ async function advanceLendingStatus(pb, conversationId, statuses, extraAtLast = 
 }
 
 export async function run(pb) {
-	const alice = await createUser(pb, 'alice_seed');
+	// isAdmin gates /admin/metrics — a DB flag now, not an env allowlist, so seeding
+	// it directly here is enough to try the dashboard with no extra config.
+	const alice = await createUser(pb, 'alice_seed', { isAdmin: true });
 	const bob = await createUser(pb, 'bob_seed');
 	const carol = await createUser(pb, 'carol_seed', { invitedBy: alice.id, verified: false });
 	const dave = await createUser(pb, 'dave_seed', { invitedBy: bob.id, verified: false });
@@ -336,10 +341,10 @@ export async function run(pb) {
     institution_a_seed${SEED_DOMAIN} · institution_b_seed${SEED_DOMAIN}
 
   Walkthrough:
-    1. Log in as an ADMIN_EMAILS-allowlisted user → /admin/metrics.
-       The "Nutzer:innen"/"Gegenstände"/"Ausleihen" tiles are LIVE — 6 users, 10 items
-       across private/institutional-native/external, and all 7 lendingStatus values
-       represented under "Ausleihen".
+    1. Log in as alice_seed (seeded with isAdmin: true) → /admin/metrics is reachable
+       directly, and now also shows a nav link. The "Nutzer:innen"/"Gegenstände"/
+       "Ausleihen" tiles are LIVE — 6 users, 10 items across private/institutional-
+       native/external, and all 7 lendingStatus values represented under "Ausleihen".
     2. The trend charts already show a ~2-week upward line (seeded directly into
        metrics_daily) — but it stops at YESTERDAY. To get an accurate "today" and fill
        in Aktive Nutzer:innen / Anfragen / Wirkung / Integrationen / Community with the

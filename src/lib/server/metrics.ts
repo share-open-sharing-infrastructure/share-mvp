@@ -1,4 +1,3 @@
-import { ADMIN_EMAILS } from '$env/static/private';
 import { getSuperuserClient } from './integrations/core/pocketbase';
 import type { DailyMetrics, MetricsDaily } from '$lib/types/models';
 
@@ -7,13 +6,24 @@ import type { DailyMetrics, MetricsDaily } from '$lib/types/models';
 // the admin dashboard's headline tiles are current-day, not yesterday's snapshot. See
 // docs/operations/metrics.md for the full catalog.
 
-/** True iff `user`'s email is in the (comma-separated) `ADMIN_EMAILS` allowlist. */
-export function isAdmin(user: { email?: string } | null | undefined): boolean {
-	const allowlist = ADMIN_EMAILS.split(',')
-		.map((e) => e.trim().toLowerCase())
-		.filter(Boolean);
-	if (allowlist.length === 0 || !user?.email) return false;
-	return allowlist.includes(user.email.trim().toLowerCase());
+/**
+ * True iff the given user id has `users.isAdmin = true`. That field is `hidden: true`
+ * on the backend (the base `users` collection's viewRule lets any authenticated user
+ * view any other user's full row, so admin status must never come back on a normal
+ * session's auth record) — only a superuser-authenticated request can read it, hence
+ * the DB round-trip here rather than checking a field on `locals.user`. Set the flag
+ * via the PocketBase admin UI, same as the existing `isInstitution` toggle.
+ */
+export async function isAdmin(userId: string | null | undefined): Promise<boolean> {
+	if (!userId) return false;
+	try {
+		const pb = await getSuperuserClient();
+		const user = await pb.collection('users').getOne(userId, { fields: 'id,isAdmin', requestKey: null });
+		return !!user.isAdmin;
+	} catch (err) {
+		console.error('isAdmin check failed — treating as not admin', err);
+		return false;
+	}
 }
 
 const LENDING_STATUSES = [
@@ -114,26 +124,36 @@ const PUBLIC_STATS_CACHE_MS = 60 * 60 * 1000; // ~1h — /misc/stats must never 
 let cachedPublicStats: { value: PublicStats; expiresAt: number } | null = null;
 
 /**
- * Whitelisted headline subset for the public /misc/stats page. Deliberately narrow — this
- * is the ONLY place that decides what leaves the superuser-only metrics_daily/live counts
- * for unauthenticated eyes; do not widen it without checking docs/operations/metrics.md.
+ * Whitelisted headline subset for the public /misc/stats page AND the landing page
+ * widget. Deliberately narrow — this is the ONLY place that decides what leaves the
+ * superuser-only metrics_daily/live counts for unauthenticated eyes; do not widen it
+ * without checking docs/operations/metrics.md.
+ *
+ * Fails soft (returns `null`) instead of throwing: this now renders on the homepage,
+ * so a transient superuser-auth/DB hiccup must not take down the whole landing page —
+ * callers should simply omit the stats section when this is null.
  */
-export async function getPublicStats(): Promise<PublicStats> {
+export async function getPublicStats(): Promise<PublicStats | null> {
 	if (cachedPublicStats && cachedPublicStats.expiresAt > Date.now()) {
 		return cachedPublicStats.value;
 	}
 
-	const pb = await getSuperuserClient();
-	const [usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount] = await Promise.all([
-		count(pb, 'users', 'deleted != true'),
-		count(pb, 'items', 'status = "available"'),
-		count(pb, 'conversations', 'lendingStatus = "completed"'),
-		count(pb, 'conversations', 'lendingStatus = "completed" && counterfactual = "would_buy"'),
-	]);
+	try {
+		const pb = await getSuperuserClient();
+		const [usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount] = await Promise.all([
+			count(pb, 'users', 'deleted != true'),
+			count(pb, 'items', 'status = "available"'),
+			count(pb, 'conversations', 'lendingStatus = "completed"'),
+			count(pb, 'conversations', 'lendingStatus = "completed" && counterfactual = "would_buy"'),
+		]);
 
-	const value: PublicStats = { usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount };
-	cachedPublicStats = { value, expiresAt: Date.now() + PUBLIC_STATS_CACHE_MS };
-	return value;
+		const value: PublicStats = { usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount };
+		cachedPublicStats = { value, expiresAt: Date.now() + PUBLIC_STATS_CACHE_MS };
+		return value;
+	} catch (err) {
+		console.error('getPublicStats failed — omitting the stats section', err);
+		return null;
+	}
 }
 
 /** Test-only: clear the in-process public-stats cache between test cases. */

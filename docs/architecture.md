@@ -52,7 +52,7 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 | API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync`, `/api/refresh` | Varies |
 | Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/misc/stats`, `/sitemap.xml` | No |
 | Legal consent | `/legal/accept`, `/legal/locked` | Yes (gate-exempt) |
-| Business metrics | `/admin/metrics` (allowlisted admins only, 404 otherwise), `/misc/stats` (public headline numbers) | `/admin/metrics`: yes + allowlist; `/misc/stats`: no |
+| Business metrics | `/admin/metrics` (`users.isAdmin` only, 404 otherwise), `/misc/stats` (public headline numbers, also teased on the home page) | `/admin/metrics`: yes + admin flag; `/misc/stats`/`/`: no |
 
 `/misc/tos` and `/misc/privacy` are public but no longer static — they render the active document from the `legal_documents` collection (Issue #399). `/legal/accept` and `/legal/locked` are the re-consent gate (see [domain-model.md](domain-model.md)); they are exempt from the gate itself so a not-yet-consented user can reach them.
 
@@ -102,7 +102,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
 - **Deploy trigger:** push to `main` → GitHub Actions (`.github/workflows/deploy-to-uberspace.yaml`) → `npm ci && npm run build` → `rsync` to Uberspace
 - **Process restart:** `supervisorctl restart svelte`
-- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`, the integration-sync vars `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (see [operations/integration-sync.md](operations/integration-sync.md)), and `ADMIN_EMAILS` (see [operations/metrics.md](operations/metrics.md)); a tracked `.env.example` lists all required vars
+- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`, and the integration-sync vars `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (see [operations/integration-sync.md](operations/integration-sync.md)); a tracked `.env.example` lists all required vars
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
 

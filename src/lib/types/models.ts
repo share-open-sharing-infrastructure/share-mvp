@@ -209,6 +209,16 @@ export interface User extends PocketBaseEntity {
 	 * so it cannot be self-cleared — an admin clears it after the matter is resolved.
 	 */
 	legalLocked?: boolean;
+
+	/**
+	 * Grants access to the /admin/metrics dashboard. `hidden: true` on the collection
+	 * (the base `users` viewRule lets any authenticated user view any other user's
+	 * full row, so this must never reach a client) — set via the PocketBase admin UI,
+	 * same as `isInstitution`. Never present on `locals.user`; only readable via
+	 * `$lib/server/metrics.ts`'s `isAdmin()` superuser lookup (kept here to document
+	 * the schema).
+	 */
+	isAdmin?: boolean;
 }
 
 export interface UserPublic extends PocketBaseEntity {

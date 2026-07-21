@@ -73,15 +73,22 @@ keep it in sync with `computeDailyMetrics()` in `jobs/metrics.js` when the catal
 
 ## Frontend routes
 
-- **`/admin/metrics`** — gated by `ADMIN_EMAILS` (comma-separated allowlist env var; empty/unset
-  → `error(404)`, not 403, so the route's existence isn't advertised). Shows live counts
-  (`getLiveCoreMetrics()` — users/items/loans, computed on request so they're current-day) plus
-  everything else from the latest `metrics_daily` row, and trend sparklines from the last 30 days
-  of snapshots.
+- **`/admin/metrics`** — gated by `users.isAdmin` (a `hidden: true` DB flag on the backend,
+  set via the PocketBase admin UI — same mechanism as the existing `isInstitution` toggle;
+  see `allerleih-backend/pb_migrations/1784623436_users_is_admin.js`). `isAdmin(userId)` does
+  a superuser-authenticated lookup rather than checking `locals.user`, since the field is
+  hidden and never present on a normal session's auth record. A non-admin gets `error(404)`,
+  not 403, so the route's existence isn't advertised. Shows live counts (`getLiveCoreMetrics()`
+  — users/items/loans, computed on request so they're current-day) plus everything else from
+  the latest `metrics_daily` row, and trend sparklines from the last 30 days of snapshots.
+  The nav shows a link to admins only (computed once in the root `+layout.server.ts` and
+  passed down, for the same hidden-field reason).
 - **`/misc/stats`** — public, unauthenticated. Shows the whitelisted subset returned by
   `getPublicStats()`: registered users, items available, completed loans, one impact number
   (completed loans where the borrower said they'd have bought new otherwise). Cached in-process
-  for ~1h so it never hammers PocketBase.
+  for ~1h so it never hammers PocketBase. The same subset is also teased on the home page
+  (`/`, via the shared `PublicStatsSection` component) — `getPublicStats()` fails soft
+  (`null`) instead of throwing so a transient hiccup never takes down the landing page.
 - Both read through `src/lib/server/metrics.ts` (`isAdmin`, `getLiveCoreMetrics`,
   `getMetricsHistory`, `getPublicStats`), which reuses `getSuperuserClient()`.
 
