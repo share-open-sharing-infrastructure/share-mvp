@@ -1328,6 +1328,7 @@ export const texts = {
 		importNoCsvData: 'Keine CSV-Daten vorhanden.',
 		importLoadExistingFailed:
 			'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+		importApplyFailed: 'Import fehlgeschlagen. Bitte später erneut versuchen.',
 		importLoaderLabel: 'Importiere …',
 		importLoaderHint: 'Bitte warten …',
 		importRefreshButton: 'Alle Gegenstände synchronisieren',

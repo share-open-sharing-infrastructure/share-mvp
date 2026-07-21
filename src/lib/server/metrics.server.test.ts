@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { getSuperuserClient } = vi.hoisted(() => ({ getSuperuserClient: vi.fn() }));
 
-vi.mock('$lib/server/integrations/core/pocketbase', () => ({ getSuperuserClient }));
+vi.mock('$lib/server/superuser', () => ({ getSuperuserClient }));
 
 import {
 	isAdmin,
