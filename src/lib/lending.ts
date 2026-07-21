@@ -5,7 +5,10 @@
  * Status ergänzen ⇒ HIER + texts.lending.statusLabel + Backend-Spiegel (Kommentar dort).
  */
 
-/** Die 5 Forward-Schritte in Lifecycle-Reihenfolge. `rejected` ist Sackgasse aus `pending`. */
+/**
+ * Die 5 Forward-Schritte in Lifecycle-Reihenfolge. Sackgassen: `rejected` (Owner lehnt
+ * aus `pending` ab) und `aborted` (Abbruch aus `pending`/`accepted`, #373).
+ */
 export const LENDING_LIFECYCLE = [
 	'pending',
 	'accepted',
@@ -14,7 +17,7 @@ export const LENDING_LIFECYCLE = [
 	'completed',
 ] as const;
 
-export const LENDING_STATUSES = [...LENDING_LIFECYCLE, 'rejected'] as const;
+export const LENDING_STATUSES = [...LENDING_LIFECYCLE, 'rejected', 'aborted'] as const;
 
 export type LendingStatus = (typeof LENDING_STATUSES)[number];
 
@@ -31,7 +34,9 @@ export const ACTIVE_LENDING_STATES = [
 
 /**
  * Unabgeschlossen: blockiert Item-Löschung und zählt als „bestehende Anfrage"
- * (verhindert Doppel-Anfragen desselben Users für dasselbe Item).
+ * (verhindert Doppel-Anfragen desselben Users für dasselbe Item). Die Sackgassen
+ * `rejected`/`aborted` und `completed` sind bewusst NICHT offen — danach darf
+ * derselbe User erneut anfragen.
  */
 export const OPEN_LENDING_STATES = ['pending', ...ACTIVE_LENDING_STATES] as const;
 

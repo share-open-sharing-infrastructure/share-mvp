@@ -22,7 +22,7 @@ describe('lending constants', () => {
 		]);
 	});
 
-	it('LENDING_STATUSES is the 6 statuses without duplicates', () => {
+	it('LENDING_STATUSES is the 7 statuses without duplicates', () => {
 		expect(LENDING_STATUSES).toEqual([
 			'pending',
 			'accepted',
@@ -30,19 +30,21 @@ describe('lending constants', () => {
 			'return_requested',
 			'completed',
 			'rejected',
+			'aborted',
 		]);
 		expect(new Set(LENDING_STATUSES).size).toBe(LENDING_STATUSES.length);
-		expect(LENDING_STATUSES.length).toBe(6);
+		expect(LENDING_STATUSES.length).toBe(7);
 	});
 
 	// Case 2: grouping invariants.
-	it('groupings relate correctly (ACTIVE ⊂ OPEN, pending ∈ OPEN∖ACTIVE, rejected/completed ∉ OPEN)', () => {
+	it('groupings relate correctly (ACTIVE ⊂ OPEN, pending ∈ OPEN∖ACTIVE, rejected/aborted/completed ∉ OPEN)', () => {
 		for (const s of ACTIVE_LENDING_STATES) {
 			expect(OPEN_LENDING_STATES).toContain(s);
 		}
 		expect(OPEN_LENDING_STATES).toContain('pending');
 		expect(ACTIVE_LENDING_STATES as readonly string[]).not.toContain('pending');
 		expect(OPEN_LENDING_STATES as readonly string[]).not.toContain('rejected');
+		expect(OPEN_LENDING_STATES as readonly string[]).not.toContain('aborted');
 		expect(OPEN_LENDING_STATES as readonly string[]).not.toContain('completed');
 	});
 });
@@ -57,7 +59,7 @@ describe('lendingStatusFilter', () => {
 		for (const s of OPEN_LENDING_STATES) {
 			expect(filter.match(new RegExp(`lendingStatus = "${s}"`, 'g'))).toHaveLength(1);
 		}
-		for (const s of ['rejected', 'completed'] as const) {
+		for (const s of ['rejected', 'aborted', 'completed'] as const) {
 			expect(filter).not.toContain(`lendingStatus = "${s}"`);
 		}
 		// Correctly parenthesised and OR-joined.
@@ -74,7 +76,7 @@ describe('lendingStatusFilter', () => {
 		for (const s of ACTIVE_LENDING_STATES) {
 			expect(filter.match(new RegExp(`lendingStatus = "${s}"`, 'g'))).toHaveLength(1);
 		}
-		for (const s of ['pending', 'rejected', 'completed'] as const) {
+		for (const s of ['pending', 'rejected', 'aborted', 'completed'] as const) {
 			expect(filter).not.toContain(`lendingStatus = "${s}"`);
 		}
 	});
