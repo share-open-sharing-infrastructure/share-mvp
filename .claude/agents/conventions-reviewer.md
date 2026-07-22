@@ -62,10 +62,10 @@ Should-fix:
 Also check whether a helper for newly written logic **already** exists in `$lib/`, `$lib/server/`
 or `$lib/utils/` — check with `rg` before assuming "doesn't exist".
 
-### 3a. Link-/Routen-Auflösung (`resolve`)
+### 3a. Link / route resolution (`resolve`)
 The lint rule `svelte/no-navigation-without-resolve` passes on any direct `resolve()`, but the
 **route-ID form** is a convention it does *not* enforce (`docs/best-practices.md` →
-"Link-/Routen-Auflösung"). Findings:
+"Link / route resolution"). Findings:
 - `resolve()` with a **template-string path** (`resolve(`/items/${id}`)`) instead of route-ID form
   (`resolve('/items/[id]', { id })`) — Should-fix. The route-ID must be a plain string literal;
   param keys match the `[segment]` folder names.
