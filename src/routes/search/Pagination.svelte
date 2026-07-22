@@ -94,8 +94,8 @@
 			{#if op === 'and'}
 				<input type="hidden" name="op" value="and" />
 			{/if}
-			{#if !onlyAvailable}
-				<input type="hidden" name="onlyAvailable" value="false" />
+			{#if onlyAvailable}
+				<input type="hidden" name="onlyAvailable" value="true" />
 			{/if}
 			{#if ownerType !== 'all'}
 				<input type="hidden" name="ownerType" value={ownerType} />
