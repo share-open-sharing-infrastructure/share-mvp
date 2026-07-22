@@ -1,5 +1,6 @@
 ---
 name: allerleih-coder
+model: sonnet
 description: Expert implementation agent for the AllerLeih platform — SvelteKit 2 + Svelte 5 (runes) frontend and PocketBase (JS hooks + migrations) backend, German UI. Use to implement an approved plan or a well-scoped code change across the frontend and/or backend, honouring every project guardrail and using the project skills + Svelte MCP + Context7. Does NOT commit, push, or open PRs — that is the orchestrator's job.
 ---
 

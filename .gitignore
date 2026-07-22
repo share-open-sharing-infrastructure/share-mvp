@@ -8,7 +8,7 @@ dist
 !.env.example
 .vscode
 .claude/worktrees
-.claude/CLAUDE.md
+CLAUDE.local.md
 
 # Playwright e2e
 /test-results/
