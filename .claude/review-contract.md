@@ -1,85 +1,83 @@
-# Review-Kontrakt (geteilt von allen Reviewer-Rollen)
+# Review contract (shared by all reviewer roles)
 
-Diese Datei wird von `sveltekit-pb-reviewer`, `code-quality-reviewer`, `a11y-reviewer` und
-`conventions-reviewer` gelesen. Sie legt fest, **wie** reviewt und berichtet wird — **was**
-geprüft wird, steht in der jeweiligen Agent-Datei.
+This file is read by `sveltekit-pb-reviewer`, `code-quality-reviewer`, `a11y-reviewer` and
+`conventions-reviewer`. It defines **how** to review and report — **what** each role checks lives
+in the respective agent file.
 
-## Rollenschnitt — nicht in fremdem Revier wildern
+## Role boundaries — don't poach another role's beat
 
-Vier Rollen teilen sich den Diff. Findet eine Rolle etwas, das klar einer anderen gehört,
-**meldet sie es nicht** — es sei denn, es ist blockierend und die zuständige Rolle würde es
-plausibel übersehen. Dann mit dem Präfix `[cross]` melden.
+Four roles share the diff. If a role spots something that clearly belongs to another, it **does
+not report it** — unless it is blocking and the responsible role would plausibly miss it. In that
+case, report it with a `[cross]` prefix.
 
-| Rolle | Revier |
+| Role | Beat |
 |---|---|
-| `sveltekit-pb-reviewer` | Security & Datenschutz: PB-Filter-Injection, Trust-/Gruppen-Leakage, Auth, Masking, Realtime-Auth |
-| `code-quality-reviewer` | Struktur & Lesbarkeit: Länge, Komplexität, Duplikation, Abstraktions-Altitude, Anti-Patterns |
-| `a11y-reviewer` | Semantik, Fokus, ARIA, Tastatur, Kontrast, Screenreader |
-| `conventions-reviewer` | Projekt-Idiome: `texts.ts`, Runen-Regeln, Test-Konventionen, `displayName()`, `subscribeRealtime()` |
+| `sveltekit-pb-reviewer` | Security & data protection: PB filter injection, trust/group leakage, auth, masking, realtime auth |
+| `code-quality-reviewer` | Structure & readability: length, complexity, duplication, abstraction altitude, anti-patterns |
+| `a11y-reviewer` | Semantics, focus, ARIA, keyboard, contrast, screen readers |
+| `conventions-reviewer` | Project idioms: `texts.ts`, runes rules, test conventions, `displayName()`, `subscribeRealtime()` |
 
 ## Scope
 
-Der Orchestrator übergibt dir im Prompt **die Dateiliste und den fertigen Diff**. Nutze den —
-ermittle den Scope **nicht selbst neu**. Kein `git diff` „zur Sicherheit", kein
-`git log`, kein Erkunden der Repo-Struktur. Fehlt der Diff im Prompt, fordere ihn an, statt ihn
-zu holen.
+The orchestrator hands you **the file list and the ready-made diff** in the prompt. Use it — do
+**not** re-derive the scope yourself. No `git diff` "just to be safe", no `git log`, no exploring
+the repo structure. If the diff is missing from the prompt, ask for it instead of fetching it.
 
-**Nur den Diff bewerten** — plus so viel Umgebung wie nötig, um korrekt zu urteilen. Vorbestehende
-Mängel in unangetasteten Dateien sind **kein** Finding; berührt der Diff eine Datei aber
-substanziell, zählt deren Zustand mit.
+**Judge only the diff** — plus as much surrounding context as you need to judge correctly.
+Pre-existing flaws in untouched files are **not** a finding; but if the diff touches a file
+substantially, that file's state counts.
 
-## Sparsam arbeiten (gilt für alle Rollen)
+## Work frugally (applies to every role)
 
-Jeder Tool-Call kostet. Halte dich an die billigste Reihenfolge:
+Every tool call costs. Stick to the cheapest order:
 
-1. **Erst den übergebenen Diff lesen.** Viele Findings stehen schon dort — dafür brauchst du die
-   Datei gar nicht.
-2. **Ganze Datei nur, wenn du sie brauchst**, um zu urteilen (Struktur, Kontext einer Funktion).
-   Nicht reflexhaft jede berührte Datei öffnen.
-3. **Nie Dateien außerhalb des Diffs öffnen**, außer für eine konkrete, benannte Prüfung
-   (existiert dieser Helper? wird dieses Symbol noch benutzt?) — und dann per `rg` mit einem
-   engen Muster, nicht per Read.
-4. **Kein Repo-Erkunden**, keine `ls`-Rundgänge, keine Dokus „zum Aufwärmen". Lies ein Doc nur,
-   wenn eine konkrete Frage daran hängt.
-5. **Richtwert: höchstens ~15 Tool-Calls.** Reicht das nicht, melde was du hast und sag im Fazit,
-   was du nicht prüfen konntest — das ist billiger und ehrlicher als weiterzugraben.
-6. **Report knapp halten.** Keine Wiederholung des Diffs, keine Zusammenfassung des Changes, kein
-   Lob. Nur Findings im Format unten.
+1. **Read the provided diff first.** Many findings are already there — you don't need the file for
+   those.
+2. **Open the whole file only when you need it** to judge (structure, the context of a function).
+   Don't reflexively open every touched file.
+3. **Never open files outside the diff**, except for one specific, named check (does this helper
+   exist? is this symbol still used?) — and then via `rg` with a narrow pattern, not via Read.
+4. **No repo exploring**, no `ls` tours, no docs "to warm up". Read a doc only when a concrete
+   question depends on it.
+5. **Rule of thumb: ~15 tool calls at most.** If that isn't enough, report what you have and state
+   in the verdict what you couldn't check — that's cheaper and more honest than digging on.
+6. **Keep the report terse.** No repeating the diff, no summary of the change, no praise. Only
+   findings in the format below.
 
 ## Read-only
 
-Alle Reviewer-Rollen sind **strikt read-only**: Read/Grep/Glob und lesendes Bash
-(`git diff`, `git log`, `git show`, `wc -l`, `rg`). Niemals editieren, committen, stagen oder
-mutierende Kommandos ausführen. Das Fixen macht der Orchestrator (`/review-all`) — deine Aufgabe
-endet beim Report. Deshalb muss jedes Finding **ohne Rückfrage umsetzbar** sein.
+All reviewer roles are **strictly read-only**: Read/Grep/Glob and read-only Bash (`git diff`,
+`git log`, `git show`, `wc -l`, `rg`). Never edit, commit, stage, or run mutating commands. Fixing
+is the orchestrator's job (`/review-all`) — your work ends at the report. That's why every finding
+must be **actionable without a follow-up question**.
 
 ## Severity
 
-- **Blocking** — falsch, unsicher, kaputt, oder Datenverlust/Leak. Darf nicht so mergen.
-- **Should-fix** — real, kostet später Zeit oder Nerven, aber blockiert nicht.
-- **Nice-to-have** — echte Verbesserung, subjektiv oder klein.
+- **Blocking** — wrong, unsafe, broken, or data loss/leak. Must not merge like this.
+- **Should-fix** — real, will cost time or nerves later, but doesn't block.
+- **Nice-to-have** — a genuine improvement, subjective or small.
 
-Ordne ehrlich ein. Eine Liste, auf der alles „Blocking" ist, ist wertlos. Umgekehrt: stufe
-nichts herunter, nur damit der Change durchgeht.
+Rank honestly. A list where everything is "Blocking" is worthless. Conversely: don't downgrade
+anything just to let the change through.
 
-## Was NICHT gemeldet wird
+## What is NOT reported
 
-- Alles, was ESLint oder Prettier ohnehin fängt (Formatierung, Quotes, Semikolons, Import-Order,
-  ungenutzte Variablen).
-- Reine Geschmacksfragen ohne Begründung, die über „mag ich lieber anders" hinausgeht.
-- Umbenennungs-Vorschläge ohne konkreten Verständnisgewinn.
-- Vorschläge, die eine größere Umstrukturierung außerhalb des Diff-Scopes bedeuten — die gehören
-  als Ein-Zeilen-Hinweis unter **Beobachtungen**, nicht als Finding.
+- Anything ESLint or Prettier catches anyway (formatting, quotes, semicolons, import order,
+  unused variables).
+- Pure matters of taste without a rationale that goes beyond "I'd rather do it differently".
+- Rename suggestions with no concrete gain in understanding.
+- Suggestions that imply a larger restructuring outside the diff scope — those belong as a
+  one-line note under **Observations**, not as a finding.
 
-## Output-Format (exakt einhalten — der Orchestrator parst das)
+## Output format (follow exactly — the orchestrator parses this)
 
-Nach Severity gruppiert, innerhalb jeder Gruppe das Wichtigste zuerst:
+Grouped by severity, most important first within each group:
 
 ```
 ### Blocking
-<pfad/zur/datei.ts>:<zeile> — <ein Satz: was ist falsch>
-  Warum: <ein Satz: welche konkrete Folge hat es>
-  Fix: <konkret genug, dass jemand es ohne Rückfrage umsetzen kann>
+<path/to/file.ts>:<line> — <one sentence: what is wrong>
+  Why: <one sentence: what concrete consequence it has>
+  Fix: <concrete enough that someone can implement it without a follow-up question>
 
 ### Should-fix
 …
@@ -88,19 +86,19 @@ Nach Severity gruppiert, innerhalb jeder Gruppe das Wichtigste zuerst:
 …
 ```
 
-Danach optional:
+Then optionally:
 
 ```
-### Beobachtungen
-- <Dinge außerhalb des Diff-Scopes, die auffielen — max. 3, je eine Zeile>
+### Observations
+- <things outside the diff scope that stood out — max 3, one line each>
 ```
 
-Zum Schluss **immer**:
+And at the end, **always**:
 
 ```
-### Fazit
-<1–2 Sätze aus Sicht deiner Rolle: kann das so mergen, oder was hält es auf>
+### Verdict
+<1–2 sentences from your role's perspective: can this merge, or what holds it up>
 ```
 
-Leere Kategorien: eine Zeile „Keine Findings." Keine Dateiinhalte dumpen, keine Diffs
-wiederholen, keine Zusammenfassung des Changes — der Orchestrator kennt ihn.
+Empty categories: one line "No findings." Don't dump file contents, don't repeat diffs, don't
+summarize the change — the orchestrator already knows it.

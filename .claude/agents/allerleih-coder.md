@@ -40,30 +40,26 @@ to for the area you're touching (`docs/architecture.md`, `docs/data-model.md`,
   - Backend: `new-migration` (write a migration the repo's way), `write-tests`
     (node --test integration tests).
 
-## Guardrails — non-negotiable (frontend)
+## Guardrails — read them at the source, don't re-derive
 
-1. **Never destructure the `data` prop.** Read `data.x` directly in markup; `let x = data.x`
-   detaches `use:enhance` reactivity.
-2. **Every PocketBase filter is built with `pb.filter(raw, {params})`** — never template-literal
-   interpolation, for *every* value incl. `locals.user.id` / route params (filter injection).
-   `locals.pb.filter(...)` in routes, `pb.filter(...)` in `$lib/server/*`.
-3. **Svelte 5 runes only** (`$state`, `$derived`, `$props`, `$effect`, `$bindable`). No `export let`.
-4. **All app mutations go through form actions** (`action="?/name"`). `/api/*` endpoints are only
-   for external integrations + client helpers — there is no REST layer for app data.
-5. **Trust/group visibility is enforced at the data layer**, not in app code. Read trust through
-   `$lib/server/trust.ts` (`isTrusting`/`getTrustees`/`getTrusters`/`addTrust`/`removeTrust`);
-   never re-implement trust filtering client-side. There is **no** `filterTrustedItems` helper.
-   Unauthenticated browsing uses the `*_public` views — never leak email, raw coordinates,
-   trusted items, or trust-graph data through them; `items_searchable` filters rows (auth-only).
-6. **All user-facing strings go in `src/lib/texts.ts`** (+ `ITEM_CATEGORIES`), never inline.
-7. **Never render `user.username` directly** for a possibly-deleted user — use `displayName()`
-   from `$lib/utils/utils.ts`.
-8. **Auth model:** `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/`
-   requires auth. New routes outside the unprotected prefixes must require auth. Client realtime
-   goes through `subscribeRealtime()` (`$lib/client-pb`), not raw `pb.collection().subscribe()`.
+The guardrails are defined **once** and are the single source of truth — this file deliberately
+does not restate them in full:
 
-## Guardrails — backend (PocketBase hooks/migrations)
+- **Frontend** → this repo's `.claude/CLAUDE.md`, section "Guardrails (always apply)".
+- **Backend** → the backend repo's `CLAUDE.md`.
 
+Read the set for whichever repo you're touching and follow it verbatim. As a memory jog, the
+frontend ones you break most easily: never destructure `data`; every PocketBase filter via
+`pb.filter(raw, {params})` (incl. `locals.user.id` / route params); Svelte 5 runes only (no
+`export let`); all mutations via form actions (no REST layer for app data); trust/group visibility
+at the data layer (read via `$lib/server/trust.ts`, never re-implement client-side — there is no
+`filterTrustedItems`; `*_public` views must not leak email/raw coords/trusted or group items);
+user-facing strings in `src/lib/texts.ts` (+ `ITEM_CATEGORIES`); `displayName()` for any
+possibly-deleted user; client realtime via `subscribeRealtime()` (`$lib/client-pb`), not raw
+`pb.collection().subscribe()`; respect the auth/unprotected-prefix model in `src/hooks.server.ts`.
+
+A few **backend specifics** (mirroring the backend `CLAUDE.md`) bite hardest in hook code — keep
+them in mind when you're in `pb_hooks/`:
 - Hook files run in isolated contexts: **`require()` shared code *inside* the handler** via
   `${__hooks}/...`, never at top level. Business logic in `services/`, pure helpers in `utils/`.
 - Filter queries with placeholders: `findFirstRecordByFilter('x', 'f = {:v}', { v })` — never
@@ -74,8 +70,9 @@ to for the area you're touching (`docs/architecture.md`, `docs/data-model.md`,
 - **`*_public` views are masking views for guests** — when item/user visibility changes, update
   the view migration (`items_public` masks name/description/image of trusteesOnly/group items;
   `users_public` omits email + raw coords) or you leak restricted data.
-- Keep each repo's `CLAUDE.md` in sync when you add/rename a route, endpoint, collection/view,
-  helper, or env var — update the doc **and** the guardrail/router in the same change.
+
+When you add/rename a route, endpoint, collection/view, helper, or env var, keep the affected
+repo's `CLAUDE.md` + docs in sync in the same change (see its "Keep in sync" section).
 
 ## Workflow & boundaries
 

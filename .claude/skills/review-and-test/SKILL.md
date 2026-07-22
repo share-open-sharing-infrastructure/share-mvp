@@ -40,31 +40,30 @@ Review and browser-test are independent — spawn **all sub-agents in the same m
 run in parallel. All must be told to obey the relevant repo's `CLAUDE.md` guardrails and consult
 its skills, and all are read-only w.r.t. source.
 
-### Review — vier Rollen-Agents
-Der Review ist auf vier spezialisierte Rollen aufgeteilt; jede hat ein eigenes Revier und teilt
-sich den Kontrakt in `.claude/review-contract.md` (im Wurzelverzeichnis des Frontend-Repos) (Scope, Severity, Output-Format,
-Abgrenzung). Spawn sie gegen den aktuellen Diff **jedes betroffenen Repos**
-(`git -C <repo> diff main...HEAD` + Working Tree):
+### Review — four role agents
+The review is split into four specialised roles; each has its own beat and shares the contract in
+`.claude/review-contract.md` (in the frontend repo's root) (scope, severity, output format,
+boundaries). Spawn them against the current diff of **each affected repo**
+(`git -C <repo> diff main...HEAD` + working tree):
 
-| Agent | Revier |
+| Agent | Beat |
 |---|---|
-| `sveltekit-pb-reviewer` | PB-Filter-Injection, Trust-/Gruppen-Leakage, `items_public`/`users_public`/`items_searchable`, Auth, PII/DSGVO, Realtime-Autorisierung |
-| `code-quality-reviewer` | Dateilänge, Komplexität, Duplikation, Abstraktions-Altitude, Anti-Patterns |
-| `a11y-reviewer` | Semantik, Fokus, ARIA, Tastatur, Kontrast, Screenreader |
-| `conventions-reviewer` | Runen-Regeln, `texts.ts`, `displayName()`, `subscribeRealtime()`, Test-Konventionen, Design-System |
+| `sveltekit-pb-reviewer` | PB filter injection, trust/group leakage, `items_public`/`users_public`/`items_searchable`, auth, PII/GDPR, realtime authorisation |
+| `code-quality-reviewer` | file length, complexity, duplication, abstraction altitude, anti-patterns |
+| `a11y-reviewer` | semantics, focus, ARIA, keyboard, contrast, screen readers |
+| `conventions-reviewer` | runes rules, `texts.ts`, `displayName()`, `subscribeRealtime()`, test conventions, design system |
 
-Jede Rolle liefert eine Findings-Liste (**file:line + konkreter Fix**, Severity), leer wenn sauber.
+Each role returns a findings list (**file:line + concrete fix**, severity), empty if clean.
 
-**Kosten:** Hol den Diff **einmal selbst** und gib ihn den Agents im Prompt mit — sonst führen
-vier Agents denselben `git diff` erneut aus. **Starte nur Rollen, deren Gate zutrifft:**
-`sveltekit-pb-reviewer` bei Server/Routen/Hooks/Migrations/Auth/Personendaten,
-`code-quality-reviewer` ab ~80 geänderten Zeilen oder einer neuen Datei, `a11y-reviewer` nur bei
-Markup-Änderungen in `.svelte`, `conventions-reviewer` bei Frontend-`src/` oder `pb_hooks/`.
-Bei **≤ 40 geänderten Zeilen über ≤ 3 Dateien** reviewst du selbst statt Agents zu starten.
-Weggelassene Rollen im Report begründen. Das eingebaute `/security-review` nur als zweite Linse
-bei wirklich sicherheitskritischen Diffs — nicht routinemäßig.
+**Cost:** fetch the diff **once yourself** and pass it to the agents in the prompt — otherwise four
+agents re-run the same `git diff`. **Only start roles whose gate applies:** `sveltekit-pb-reviewer`
+for server/routes/hooks/migrations/auth/personal data, `code-quality-reviewer` from ~80 changed
+lines or a new file, `a11y-reviewer` only for markup changes in `.svelte`, `conventions-reviewer`
+for frontend `src/` or `pb_hooks/`. For **≤ 40 changed lines over ≤ 3 files** review it yourself
+instead of starting agents. Justify skipped roles in the report. Use the built-in
+`/security-review` only as a second lens for genuinely security-critical diffs — not routinely.
 
-Melden zwei Rollen dieselbe Stelle: im Report **einmal** aufführen, mit der höheren Severity.
+If two roles report the same spot: list it **once** in the report, with the higher severity.
 
 ### Test — sub-agent `allerleih-tester`
 Spawn it to verify the change end-to-end, scoped to the diff's impact set. It:
@@ -88,17 +87,17 @@ Once all agents return, output **one** German report:
 
 - **Scope** — which repo(s) and flow you covered (and, if the tester narrowed/widened scope, why);
   which reviewer roles ran, and which were skipped for lack of relevant changes.
-- **Review** — findings grouped by severity (nicht nach Rolle), each as `file:line` + the concrete
-  fix, with the reporting role in brackets. Dedupe: dieselbe Stelle nur einmal, mit der höheren
-  Severity. "Keine Findings" if clean. Note if `/security-review` was also run.
+- **Review** — findings grouped by severity (not by role), each as `file:line` + the concrete fix,
+  with the reporting role in brackets. Dedupe: the same spot only once, with the higher severity.
+  "Keine Findings" if clean. Note if `/security-review` was also run.
 - **Test** — the impact set the tester derived; each thing it ran (vitest / backend / e2e /
   browser smoke) with PASS/FAIL; every failure with the exact error / console message / failing
   request + screenshot.
 - **Fazit** — one-line verdict: is the change safe & working, or what blocks it.
 
 Then **stop.** Do not fix anything. If there are findings/failures, remind the user they can run
-`/review-all` (dieselben Rollen, aber inklusive Fix-Durchlauf mit Änderungsprotokoll — ohne
-Browser-Test) oder `/issue-to-pr` (fix-loop → tests → PR) — this skill's job ends at the report.
+`/review-all` (the same roles, but including a fix pass with a change log — without a browser test)
+or `/issue-to-pr` (fix-loop → tests → PR) — this skill's job ends at the report.
 
 ## Notes
 

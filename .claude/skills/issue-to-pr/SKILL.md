@@ -58,11 +58,9 @@ Plan agent if the change is substantial).
 Spawn the `allerleih-coder` agent with the approved plan. It already carries the project
 knowledge, guardrails, and tooling rules below — still hand it the concrete plan and reinforce:
 - The full approved plan and the target repo(s).
-- **Obey `CLAUDE.md` guardrails** verbatim: never destructure `data`; build every PocketBase
-  filter with `pb.filter(raw,{params})`; Svelte 5 runes only (no `export let`); all mutations via
-  form actions; trust/group visibility at the data layer (read via `$lib/server/trust.ts`, never
-  re-implement client-side); user-facing strings in `src/lib/texts.ts`; `displayName()` for any
-  possibly-deleted user; respect the auth/unprotected-prefix model.
+- **Obey the guardrails verbatim.** They are defined once, in the target repo's `CLAUDE.md`
+  ("Guardrails (always apply)") — the coder already reads them and its own agent file points there.
+  Don't re-derive or relax them; this prompt deliberately does not restate them.
 - **Use the Svelte MCP server** (`svelte` — `list-sections`, `get-documentation`,
   `svelte-autofixer`, `playground-link`) for any Svelte 5 / SvelteKit API question and to
   autofix components after writing them — do not rely on training memory for Svelte APIs.
@@ -74,17 +72,17 @@ knowledge, guardrails, and tooling rules below — still hand it the concrete pl
 - Add/extend tests per `write-tests` for any new server logic or route.
 - Report back: files changed per repo, and a short note of which skills/guardrails it applied.
 
-## Stage 3 — Review (vier Rollen-Agents, parallel)
+## Stage 3 — Review (four role agents, in parallel)
 
 Fetch the diff **once** (`git -C <repo> diff main...HEAD` + working tree for both repos), then
 spawn the applicable reviewer roles **in one message**, passing the diff text in the prompt —
 never let four agents re-derive it themselves. They share the contract in
-`.claude/review-contract.md` (im Wurzelverzeichnis des Frontend-Repos) (scope, severity, output format, revier boundaries, cost
-rules); pass that path too.
+`.claude/review-contract.md` (in the frontend repo's root) (scope, severity, output format, beat
+boundaries, cost rules); pass that path too.
 
 **Only start a role whose gate applies** — an agent that cannot find anything still costs:
 
-| Agent | Revier | Gate |
+| Agent | Beat | Gate |
 |---|---|---|
 | `sveltekit-pb-reviewer` | pb.filter injection, trust/group visibility & `items_public`/`users_public`/`items_searchable` leakage, auth, PII/GDPR | server code, routes, hooks, migrations, PB queries, auth, personal data |
 | `code-quality-reviewer` | file length, complexity, duplication, abstraction altitude, anti-patterns | ≥ 80 changed lines, or a new file, or a touched file over the length threshold |
@@ -104,9 +102,9 @@ visibility rules, new public routes) — routinely it just duplicates `sveltekit
 While the reviewers return findings:
 1. Send the **consolidated, deduped** findings back to the `allerleih-coder` agent to fix them —
    fixes only, no scope creep.
-2. Re-run the reviewer roles on the new diff. **Nur die Rollen erneut laufen lassen, deren
-   Findings gefixt wurden** — das spart Tokens und Zeit; einen Full-Rerun aller vier nur, wenn
-   der Fix substanziell umgebaut hat.
+2. Re-run the reviewer roles on the new diff. **Only re-run the roles whose findings were fixed** —
+   that saves tokens and time; do a full re-run of all four only when the fix reworked things
+   substantially.
 3. Repeat until the reviewers return **no findings** above Nice-to-have.
 
 Cap at **5 rounds**. If still not clean after 5, stop and surface the remaining findings to the

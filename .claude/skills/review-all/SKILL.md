@@ -1,134 +1,132 @@
 ---
 name: review-all
 description: >
-  Multi-Rollen-Review des aktuellen AllerLeih-Changes: vier spezialisierte Reviewer
-  (Security & Datenschutz, Code-Qualität, Accessibility, Konventionen) laufen parallel gegen den
-  Diff, danach werden die Findings konsolidiert, dedupliziert und direkt gefixt — mit einem
-  Änderungsprotokoll, das für jeden Fix was/wo/warum festhält. Use when a change should be
-  reviewed from all angles and the findings fixed in one go, without opening a PR. Nicht für
-  GitHub-PR-Reviews (dafür /review) und ohne Browser-Test (dafür /review-and-test).
+  Multi-role review of the current AllerLeih change: four specialised reviewers (security & data
+  protection, code quality, accessibility, conventions) run in parallel against the diff, then the
+  findings are consolidated, deduped and fixed directly — with a change log that records what/where/
+  why for each fix. Use when a change should be reviewed from all angles and the findings fixed in
+  one go, without opening a PR. Not for GitHub PR reviews (use /review for those) and without a
+  browser test (use /review-and-test for that).
 ---
 
 # review-all
 
-Du bist der **Orchestrator**. Du reviewst nicht selbst — du spawnst die Rollen-Agents,
-konsolidierst ihre Reports und **fixt danach**. Die Agents sind read-only; das Schreiben passiert
-ausschließlich hier, sequenziell, damit sich parallele Läufe nicht gegenseitig überschreiben.
+You are the **orchestrator**. You don't review yourself — you spawn the role agents, consolidate
+their reports and **fix afterwards**. The agents are read-only; writing happens exclusively here,
+sequentially, so parallel runs don't overwrite each other.
 
-Diese Skill **committet und pusht nicht** und öffnet keinen PR. Sie endet mit sauberem
-Arbeitsverzeichnis voller Fixes plus Protokoll — der Rest ist `/create-pr`.
+This skill **does not commit or push** and opens no PR. It ends with a clean working directory full
+of fixes plus a change log — the rest is `/create-pr`.
 
-**Repos:** Frontend (dieses Repo, SvelteKit) und PocketBase-Backend liegen als Schwester-Ordner
-im selben Workspace; ein e2e-Worktree kann daneben existieren. Der Default-Scope ist der aktuelle
-Change gegen `main` in jedem betroffenen Repo.
+**Repos:** frontend (this repo, SvelteKit) and the PocketBase backend are sibling directories in
+the same workspace; an e2e worktree may sit alongside. The default scope is the current change
+against `main` in each affected repo.
 
 ## Stage 0 — Scope
 
-1. Default = aktueller Change gegen `main`. Je Repo: `git -C <repo> diff --name-only main...HEAD`
-   plus `git -C <repo> status --porcelain`. Nennt der Nutzer Branch/Dateien, gilt das stattdessen.
-2. Sind die Repos sauber, sag das und **stoppe** — es gibt nichts zu reviewen.
-3. Nenne den Scope in einem deutschen Satz, bevor du Agents startest.
+1. Default = current change against `main`. Per repo: `git -C <repo> diff --name-only main...HEAD`
+   plus `git -C <repo> status --porcelain`. If the user names a branch/files, that applies instead.
+2. If the repos are clean, say so and **stop** — there's nothing to review.
+3. State the scope in one German sentence before you start agents.
 
-## Stage 1 — Rollen auswählen und starten
+## Stage 1 — Select and start roles
 
-Ein Agent-Start kostet unabhängig davon, ob er etwas findet. **Starte nur Rollen, die auf diesem
-Diff überhaupt etwas finden können.**
+Starting an agent costs regardless of whether it finds anything. **Only start roles that can
+actually find something on this diff.**
 
-### Kleiner Diff ⇒ gar keine Agents
+### Small diff ⇒ no agents at all
 
-Ist der Diff **≤ 40 geänderte Zeilen über ≤ 3 Dateien**, reviewst du **selbst** — Kontrakt lesen,
-Diff gegen die vier Checklisten prüfen, fertig. Vier Agents für einen Zweizeiler sind reine
-Verschwendung. Sag im Report, dass du den Direktweg genommen hast.
+If the diff is **≤ 40 changed lines over ≤ 3 files**, review it **yourself** — read the contract,
+check the diff against the four checklists, done. Four agents for a two-liner is pure waste. Say in
+the report that you took the direct route.
 
-### Sonst: Rollen per Gate
+### Otherwise: roles by gate
 
-Starte eine Rolle nur, wenn ihr Gate zutrifft:
+Only start a role if its gate applies:
 
-| Agent | Startet nur, wenn der Diff … |
+| Agent | Starts only if the diff … |
 |---|---|
-| `sveltekit-pb-reviewer` | Server-Code, Routen, Hooks, Migrations, PB-Queries, Auth oder Felder mit Personenbezug berührt |
-| `code-quality-reviewer` | ≥ 80 geänderte Zeilen **oder** eine neue Datei **oder** eine berührte Datei über der Längen-Schwelle enthält |
-| `a11y-reviewer` | `.svelte`-Dateien mit Markup-Änderung enthält (reine Script-Blöcke zählen nicht) |
-| `conventions-reviewer` | Frontend-`src/` oder Backend-`pb_hooks/` berührt |
+| `sveltekit-pb-reviewer` | touches server code, routes, hooks, migrations, PB queries, auth or personal-data fields |
+| `code-quality-reviewer` | ≥ 80 changed lines **or** a new file **or** contains a touched file over the length threshold |
+| `a11y-reviewer` | contains `.svelte` files with a markup change (pure script blocks don't count) |
+| `conventions-reviewer` | touches frontend `src/` or backend `pb_hooks/` |
 
-Trifft kein Gate zu (z. B. nur Doku, Konfig, Tests), sag das und **stoppe**.
+If no gate applies (e.g. only docs, config, tests), say so and **stop**.
 
-**Die passenden Rollen in einer einzigen Nachricht spawnen** (`run_in_background: false`), damit
-sie nebenläufig laufen.
+**Spawn the applicable roles in a single message** (`run_in_background: false`) so they run
+concurrently.
 
-### Prompt an jede Rolle — den Diff mitgeben
+### Prompt to each role — pass the diff in
 
-Der teuerste Fehler ist, dass mehrere Agents denselben `git diff` nochmal selbst ausführen und
-sich durchs Repo lesen. Gib deshalb **im Prompt** mit:
+The most expensive mistake is several agents re-running the same `git diff` and reading through the
+repo themselves. So pass **in the prompt**:
 
-- den **fertigen Diff-Text** (`git -C <repo> diff main...HEAD`) — einmal von dir geholt, nicht
-  von jedem Agent erneut,
-- die Liste der geänderten Dateien mit Zeilenzahlen (`wc -l`),
-- den Hinweis, dass der Review-Kontrakt in `.claude/review-contract.md` (im Wurzelverzeichnis
-  dieses Repos) liegt,
-- den Hinweis auf die `CLAUDE.md` des betroffenen Repos.
+- the **ready-made diff text** (`git -C <repo> diff main...HEAD`) — fetched once by you, not by
+  each agent again,
+- the list of changed files with line counts (`wc -l`),
+- the note that the review contract lives in `.claude/review-contract.md` (in this repo's root),
+- the pointer to the affected repo's `CLAUDE.md`.
 
-Ist der Diff sehr groß (> ~1500 Zeilen), gib statt des Volltextes die Dateiliste + die Anweisung,
-gezielt zu lesen — dann ist der Diff im Prompt teurer als das Nachlesen.
+If the diff is very large (> ~1500 lines), pass the file list + the instruction to read
+selectively instead of the full text — then the diff in the prompt is more expensive than reading.
 
-Das eingebaute `/security-review` als **zweite** Linse nur bei wirklich sicherheitskritischen
-Diffs (Auth, Sichtbarkeitsregeln, neue öffentliche Routen) — nicht routinemäßig, es dupliziert
-sonst nur `sveltekit-pb-reviewer`.
+Use the built-in `/security-review` as a **second** lens only for genuinely security-critical diffs
+(auth, visibility rules, new public routes) — not routinely, else it just duplicates
+`sveltekit-pb-reviewer`.
 
-## Stage 2 — Konsolidieren
+## Stage 2 — Consolidate
 
-Bevor du irgendetwas anfasst:
+Before you touch anything:
 
-1. **Deduplizieren.** Melden zwei Rollen dieselbe Stelle, behalte die fachlich zuständige
-   Formulierung und die **höhere** Severity.
-2. **Widersprüche auflösen.** Kollidiert ein Vorschlag mit einem anderen (typisch: „extrahiere
-   Helper" vs. „eine Abstraktion mit einem Aufrufer"), entscheide begründet — und schreibe die
-   Entscheidung ins Protokoll.
-3. **Nach Datei gruppieren**, nicht nach Rolle — so entsteht pro Datei ein Edit statt mehrere.
-4. **Plausibilisieren.** Prüfe jedes Finding kurz am echten Code, bevor du es umsetzt. Agents
-   irren; ein Fix auf Basis eines falschen Findings ist schlimmer als kein Fix. Verworfene
-   Findings kommen ins Protokoll mit Begründung, nicht stillschweigend weg.
+1. **Deduplicate.** If two roles report the same spot, keep the wording from the responsible role
+   and the **higher** severity.
+2. **Resolve contradictions.** If one suggestion collides with another (typically: "extract a
+   helper" vs. "an abstraction with one caller"), decide with a rationale — and write the decision
+   into the change log.
+3. **Group by file**, not by role — so one edit results per file instead of several.
+4. **Sanity-check.** Briefly verify every finding against the real code before implementing it.
+   Agents err; a fix based on a wrong finding is worse than no fix. Discarded findings go into the
+   change log with a rationale, not silently away.
 
-## Stage 3 — Fixen
+## Stage 3 — Fix
 
-- **Blocking und Should-fix werden gefixt.** Ohne Rückfrage — das ist die stehende Freigabe.
-- **Nice-to-have** wird **nicht** automatisch gefixt: auflisten und den Nutzer am Ende fragen.
-- **Nicht autonom fixbar** (Design-Entscheidung nötig, Fix sprengt den Scope, Fachlichkeit
-  unklar): nicht anfassen, im Protokoll unter „offen" mit dem, was zur Entscheidung fehlt.
-- Nutze für die Umsetzung den `allerleih-coder`-Agent, wenn ein Fix mehrere Dateien oder echtes
-  Neuschreiben bedeutet; triviale Fixes machst du direkt.
-- Fixe **sequenziell** und halte den Diff minimal: nur das Finding beheben, keine
-  Gelegenheits-Umbauten. Was dir dabei zusätzlich auffällt, wird ein Finding, kein Ad-hoc-Edit.
+- **Blocking and Should-fix get fixed.** Without asking — that's the standing approval.
+- **Nice-to-have** is **not** auto-fixed: list it and ask the user at the end.
+- **Not autonomously fixable** (needs a design decision, the fix blows the scope, the domain logic
+  is unclear): don't touch it, put it in the change log under "offen" with what's missing to decide.
+- Use the `allerleih-coder` agent for a fix that spans several files or means real rewriting;
+  trivial fixes you do directly.
+- Fix **sequentially** and keep the diff minimal: only fix the finding, no opportunistic reworks.
+  Anything else you notice becomes a finding, not an ad-hoc edit.
 
-Nach den Fixes im betroffenen Repo verifizieren, dass nichts kaputtging: `npm run lint`,
-`npm run check`, die relevanten `npx vitest run <dateien>` bzw. Backend-`npm test`.
-**Gotcha:** läuft parallel ein lokaler Dev-Stack (PocketBase auf Port 8091), fallen Backend-Tests
-breit mit „superuser auth failed" aus — dann den Dev-Stack stoppen und erneut laufen. Bekannte
-vorbestehende Fehlschläge (z. B. `$env`-Sync-Variablen bei `check`/`build`) klar als *nicht vom
-Change verursacht* kennzeichnen, nicht wegfixen.
+After the fixes, verify in the affected repo that nothing broke: `npm run lint`, `npm run check`,
+the relevant `npx vitest run <files>` or backend `npm test`. **Gotcha:** if a local dev stack is
+running in parallel (PocketBase on port 8091), backend tests fail broadly with "superuser auth
+failed" — then stop the dev stack and run again. Mark known pre-existing failures (e.g. `$env` sync
+variables on `check`/`build`) clearly as *not caused by the change*, don't fix them away.
 
-## Stage 4 — Bericht mit Änderungsprotokoll
+## Stage 4 — Report with change log
 
-Ein deutscher Report:
+One German report:
 
-- **Scope** — Repos, Flow, welche Rollen liefen (und welche warum nicht).
-- **Änderungsprotokoll** — der Kern. Pro Fix eine Zeile, gruppiert nach Datei:
+- **Scope** — repos, flow, which roles ran (and which didn't, and why).
+- **Änderungsprotokoll** — the core. One line per fix, grouped by file:
 
   ```
-  <datei>:<zeile> — [Severity, Rolle] <was geändert wurde>
-    Warum: <die Begründung aus dem Finding, ein Satz>
+  <file>:<line> — [severity, role] <what was changed>
+    Warum: <the rationale from the finding, one sentence>
   ```
 
-- **Offen** — nicht gefixte Findings: Nice-to-have (mit der Frage, ob du sie noch machen sollst)
-  und nicht autonom Fixbares (mit der fehlenden Entscheidung).
-- **Verworfen** — Findings, die der Plausibilisierung nicht standhielten, je ein Satz warum.
-- **Verifikation** — was gelaufen ist, mit PASS/FAIL; vorbestehende Fehler getrennt ausgewiesen.
-- **Fazit** — ein bis zwei Sätze: ist der Change jetzt sauber, was bleibt.
+- **Offen** — unfixed findings: Nice-to-have (with the question whether you should still do them)
+  and not-autonomously-fixable (with the missing decision).
+- **Verworfen** — findings that didn't survive the sanity check, one sentence each on why.
+- **Verifikation** — what ran, with PASS/FAIL; pre-existing failures listed separately.
+- **Fazit** — one or two sentences: is the change clean now, what remains.
 
 ## Notes
 
-- Alle nötigen Agents in **einer** Nachricht starten; erst schreiben, wenn **alle** zurück sind.
-- Niemals stagen, committen oder pushen.
-- Bleibt ein Blocking-Finding ungefixt, sag das im Fazit ausdrücklich — es darf nicht in der
-  Liste untergehen.
-- Ist der Scope unklar (welcher Branch, welches Feature), einmal nachfragen statt raten.
+- Start all needed agents in **one** message; don't write until **all** are back.
+- Never stage, commit or push.
+- If a Blocking finding stays unfixed, say so explicitly in the verdict — it must not get lost in
+  the list.
+- If the scope is unclear (which branch, which feature), ask once instead of guessing.
