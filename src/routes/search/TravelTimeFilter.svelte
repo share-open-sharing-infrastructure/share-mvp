@@ -1,10 +1,17 @@
 <script lang="ts">
 	import { Dropdown, DropdownItem } from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
-	import { onMount, untrack } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import {
+		getPosition,
+		isPermissionBlocked,
+		queryGeoPermission,
+		supportsPermissionsQuery,
+	} from '$lib/utils/geolocation';
 	import type { ItemPublic } from '$lib/types/models';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -31,10 +38,13 @@
 
 	let dropdownOpen = $state(false);
 	let showNoLocationPrompt = $state(false);
-	let locationStatus = $state<'idle' | 'requesting' | 'denied'>('idle');
+	let locationStatus = $state<'idle' | 'requesting' | 'blocked'>('idle');
 	let isFetchingTravelTimes = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
 	let mounted = false;
+	// Focus target for the blocked-guidance message so it's reachable after the
+	// clicked control it replaces is removed from the DOM (see focusBlockedMessage).
+	let blockedMessageEl: HTMLParagraphElement | null = $state(null);
 
 	// Fire-and-forget: sends a diagnostic event to the server log. Never throws.
 	function sendDiag(payload: Record<string, unknown>) {
@@ -76,28 +86,49 @@
 		}
 	}
 
-	function requestLocation(mode: TransportMode, { onDenied }: { onDenied?: () => void } = {}) {
-		navigator.geolocation.getCurrentPosition(
-			(pos) => {
-				if (!mounted) { return; }
-				cachedUserLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
-				fetchTravelTimes(mode, cachedUserLocation);
-				showNoLocationPrompt = false;
-				locationStatus = 'idle';
-			},
-			() => {
-				if (!mounted) return;
-				isFetchingTravelTimes = false;
-				onDenied?.();
+	/** Requests the user's location for `mode`, routed through the shared geolocation
+	 *  helper. Where the Permissions API is available we check it first so a hard
+	 *  denial goes straight to the blocked UI instead of a futile `getCurrentPosition()`
+	 *  call. Where it isn't (iOS Safari never implements it for geolocation) we call
+	 *  `getPosition()` directly — awaiting the permission query first would break the
+	 *  click handler's user-gesture chain and silently suppress the native prompt. */
+	async function requestLocation(mode: TransportMode, { onBlocked }: { onBlocked?: () => void } = {}) {
+		if (supportsPermissionsQuery()) {
+			const permission = await queryGeoPermission();
+			if (isPermissionBlocked(permission)) {
+				onBlocked?.();
+				return;
 			}
-		);
+		}
+
+		try {
+			const position = await getPosition();
+			if (!mounted) return;
+			cachedUserLocation = position;
+			fetchTravelTimes(mode, cachedUserLocation);
+			showNoLocationPrompt = false;
+			locationStatus = 'idle';
+		} catch {
+			if (!mounted) return;
+			isFetchingTravelTimes = false;
+			onBlocked?.();
+		}
+	}
+
+	// The button the user clicked is unmounted once the blocked message replaces
+	// it, so focus would otherwise fall back to <body>; move it onto the message
+	// once Svelte has patched the DOM for the new state.
+	async function focusBlockedMessage() {
+		await tick();
+		blockedMessageEl?.focus();
 	}
 
 	function activateLocation() {
 		locationStatus = 'requesting';
 		requestLocation(transportMode!, {
-			onDenied: () => {
-				locationStatus = 'denied';
+			onBlocked: () => {
+				locationStatus = 'blocked';
+				focusBlockedMessage();
 			},
 		});
 	}
@@ -106,6 +137,7 @@
 		transportMode = mode;
 		dropdownOpen = false;
 		showNoLocationPrompt = false;
+		locationStatus = 'idle';
 
 		if (isLoggedIn) {
 			const fd = new FormData();
@@ -121,8 +153,10 @@
 		}
 
 		requestLocation(mode, {
-			onDenied: () => {
+			onBlocked: () => {
 				showNoLocationPrompt = true;
+				locationStatus = 'blocked';
+				focusBlockedMessage();
 			},
 		});
 	}
@@ -225,11 +259,18 @@
 
 	<!-- Location permission prompt -->
 	{#if showNoLocationPrompt}
-		<div class="flex flex-col items-center gap-1.5 mt-2 text-center">
-			{#if locationStatus === 'denied'}
-				<p class="text-sm text-tinte-500">
-					{texts.onboarding.browserLocation.denied}
+		<div class="flex flex-col items-center gap-1.5 mt-2 text-center" role="status">
+			{#if locationStatus === 'blocked'}
+				<p
+					class="text-sm text-tinte-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					tabindex="-1"
+					bind:this={blockedMessageEl}
+				>
+					{texts.onboarding.browserLocation.blocked}
 				</p>
+				<Button variant="secondary" size="sm" onclick={() => location.reload()}>
+					{texts.onboarding.browserLocation.reload}
+				</Button>
 			{:else}
 				<p class="text-sm text-tinte-500">
 					{texts.onboarding.browserLocation.explanation}
