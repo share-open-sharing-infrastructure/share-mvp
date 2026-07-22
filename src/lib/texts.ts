@@ -1511,7 +1511,7 @@ export const texts = {
 			title: 'AllerLeih Zahlen',
 			intro: 'Ein kleiner Einblick in die AllerLeih-Plattform.',
 			usersTotal: 'Registrierte Nutzer:innen',
-			itemsAvailable: 'Verfügbare Gegenstände',
+			itemsTotal: 'Gegenstände auf der Plattform',
 			loansCompleted: 'Abgeschlossene Ausleihen',
 			impactWouldBuyCount: 'Mal wurde geliehen statt neu gekauft',
 			unavailable: 'Die Zahlen sind gerade nicht verfügbar — bitte versuch es später noch einmal.',

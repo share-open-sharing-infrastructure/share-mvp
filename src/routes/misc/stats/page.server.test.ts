@@ -12,7 +12,7 @@ beforeEach(() => {
 
 describe('/misc/stats load', () => {
 	it('returns the whitelisted public stats, unauthenticated', async () => {
-		const stats = { usersTotal: 10, itemsAvailable: 5, loansCompleted: 2, impactWouldBuyCount: 1 };
+		const stats = { usersTotal: 10, itemsTotal: 5, loansCompleted: 2, impactWouldBuyCount: 1 };
 		getPublicStats.mockResolvedValue(stats);
 
 		const result = await load({} as never);

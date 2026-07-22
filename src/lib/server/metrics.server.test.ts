@@ -119,7 +119,7 @@ describe('getPublicStats', () => {
 		expect(Object.keys(stats!).sort()).toEqual(
 			[
 				'usersTotal',
-				'itemsAvailable',
+				'itemsTotal',
 				'loansCompleted',
 				'impactWouldBuyCount',
 				'groupsTotal',
