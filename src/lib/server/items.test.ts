@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { deleteItem, deleteMultipleItems, setItemStatus } from './items';
+import { deleteItem, deleteMultipleItems, setItemStatus, toggleItemStatus } from './items';
 
-vi.mock('../../routes/conversations/[conversationId]/conversation.server', () => ({
+vi.mock('./conversations', () => ({
 	deleteConversation: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { deleteConversation } from '../../routes/conversations/[conversationId]/conversation.server';
+import { deleteConversation } from './conversations';
 
 const OWNER_ID = 'user123';
 const OTHER_ID = 'user999';
@@ -25,7 +25,7 @@ function makePb({
 	openConversations = [],
 	allConversations = [],
 }: {
-	item?: { id: string; owner: string } | null;
+	item?: ({ id: string; owner: string } & Record<string, unknown>) | null;
 	openConversations?: { id: string }[];
 	allConversations?: { id: string }[];
 }) {
@@ -205,5 +205,52 @@ describe('setItemStatus', () => {
 		const result = await setItemStatus(pb, 'nonexistent', OWNER_ID, 'available');
 
 		expect(result).toBe(false);
+	});
+});
+
+describe('toggleItemStatus', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('flips an available item to unavailable when caller is the owner', async () => {
+		const pb = makePb({ item: { id: 'item1', owner: OWNER_ID, status: 'available' } });
+
+		const result = await toggleItemStatus(pb, 'item1', OWNER_ID);
+
+		expect(result).toEqual({ status: 'ok', newStatus: 'unavailable' });
+		expect(pb._update).toHaveBeenCalledWith('item1', { status: 'unavailable' });
+	});
+
+	it('flips an unavailable item to available when caller is the owner', async () => {
+		const pb = makePb({ item: { id: 'item1', owner: OWNER_ID, status: 'unavailable' } });
+
+		const result = await toggleItemStatus(pb, 'item1', OWNER_ID);
+
+		expect(result).toEqual({ status: 'ok', newStatus: 'available' });
+		expect(pb._update).toHaveBeenCalledWith('item1', { status: 'available' });
+	});
+
+	it('returns not_owner and does not update when caller is not the owner', async () => {
+		const pb = makePb({ item: { id: 'item1', owner: OWNER_ID, status: 'available' } });
+
+		const result = await toggleItemStatus(pb, 'item1', OTHER_ID);
+
+		expect(result).toEqual({ status: 'not_owner' });
+		expect(pb._update).not.toHaveBeenCalled();
+	});
+
+	it('returns not_found when the item does not exist', async () => {
+		const pb = makePb({ item: null });
+
+		const result = await toggleItemStatus(pb, 'nonexistent', OWNER_ID);
+
+		expect(result).toEqual({ status: 'not_found' });
+		expect(pb._update).not.toHaveBeenCalled();
+	});
+
+	it('propagates an update failure instead of swallowing it (so the caller can fail() the action)', async () => {
+		const pb = makePb({ item: { id: 'item1', owner: OWNER_ID, status: 'available' } });
+		pb._update.mockRejectedValueOnce(new Error('write failed'));
+
+		await expect(toggleItemStatus(pb, 'item1', OWNER_ID)).rejects.toThrow('write failed');
 	});
 });

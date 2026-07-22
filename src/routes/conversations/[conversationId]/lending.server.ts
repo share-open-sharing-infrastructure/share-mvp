@@ -2,9 +2,14 @@ import type PocketBase from 'pocketbase';
 import type { ClientResponseError } from 'pocketbase';
 import { fail } from '@sveltejs/kit';
 import type { NotificationType } from '$lib/types/models.js';
-import { ABORTABLE_LENDING_STATES, isLendingStatusIn, type LendingStatus } from '$lib/lending';
+import {
+	isLendingStatusIn,
+	LENDING_TRANSITIONS,
+	type LendingAction,
+	type LendingStatus,
+} from '$lib/lending';
 import { texts } from '$lib/texts';
-import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
+import { notifyAndPush } from '$lib/server/notifications.js';
 
 const PERCENTAGE_OF_USERS_ASKED = 0.33;
 
@@ -60,9 +65,7 @@ async function notifyUser(
 	conversationId: string,
 	body: string
 ): Promise<void> {
-	const url = `/conversations/${conversationId}`;
-	await createNotification(pb, recipientId, senderId, type, conversationId, body);
-	await sendPushToUser(pb, recipientId, texts.notifications.pushTitle, body, url);
+	await notifyAndPush(pb, { recipient: recipientId, sender: senderId, type, relatedId: conversationId, body });
 }
 
 /** Fetches an item's display name, falling back gracefully if the item can't be loaded. */
@@ -75,117 +78,180 @@ async function getItemName(pb: PocketBase, itemId: string): Promise<string> {
 	}
 }
 
+/** Everything a `TRANSITION_EFFECTS` entry needs to compute its side effects. */
+interface EffectContext {
+	pb: PocketBase;
+	conversationId: string;
+	conv: Record<string, unknown>;
+	userId: string;
+	itemName: string;
+	/** `requestReturn`'s `requesterName` — the only transition that needs extra caller data. */
+	extra?: string;
+}
+
+interface TransitionEffect {
+	/** Extra fields merged into the `conversations.update()` patch alongside `{ lendingStatus }`. */
+	conversationPatch?: (ctx: EffectContext) => Record<string, unknown>;
+	/** Item-side patch to apply after the conversation write succeeds, if any. */
+	itemPatch?: (ctx: EffectContext) => Record<string, unknown> | null;
+	/** Who gets notified, with what type/body. */
+	notify: (ctx: EffectContext) => { recipientId: string; type: NotificationType; body: string };
+	/** Runs after the core transition + notification succeed (failures here are logged, not fatal). */
+	after?: (ctx: EffectContext) => Promise<void>;
+}
+
+/**
+ * Per-action side effects, keyed the same as `$lib/lending.ts`'s `LENDING_TRANSITIONS` (which
+ * supplies the role/state guard). `executeLendingTransition()` below is the single function
+ * that drives conversation update + item update + notification + after-effect for all 6
+ * actions from this table, replacing 6 near-identical try/catch/update blocks.
+ */
+const TRANSITION_EFFECTS: Record<LendingAction, TransitionEffect> = {
+	acceptRequest: {
+		itemPatch: () => ({ status: 'unavailable' }),
+		notify: (ctx) => ({
+			recipientId: ctx.conv.requester as string,
+			type: 'request_accepted',
+			body: texts.notifications.requestAccepted(ctx.itemName),
+		}),
+		// Only one borrower can proceed — auto-reject every other still-pending request
+		// for the same item. Best-effort: a failure here is logged, not surfaced as a
+		// failed accept (the accept itself already succeeded).
+		after: async (ctx) => {
+			try {
+				const otherPending = await ctx.pb.collection('conversations').getFullList({
+					filter: ctx.pb.filter(
+						'requestedItem={:requestedItem} && lendingStatus="pending" && id!={:conversationId}',
+						{ requestedItem: ctx.conv.requestedItem, conversationId: ctx.conversationId }
+					),
+				});
+				await Promise.all(
+					otherPending.map(async (other) => {
+						await ctx.pb.collection('conversations').update(other.id, { lendingStatus: 'rejected' });
+						await notifyUser(ctx.pb, other.requester, ctx.userId, 'request_rejected', other.id, texts.notifications.requestRejected(ctx.itemName));
+					})
+				);
+			} catch (err) {
+				console.error('Failed to auto-reject other pending conversations:', err);
+			}
+		},
+	},
+
+	rejectRequest: {
+		notify: (ctx) => ({
+			recipientId: ctx.conv.requester as string,
+			type: 'request_rejected',
+			body: texts.notifications.requestRejected(ctx.itemName),
+		}),
+	},
+
+	// The requested item is NOT touched here: on `accepted → aborted` the backend
+	// `lending.pb.js` hook resets it to `available` in an elevated transaction (the
+	// aborting party may be the non-owner requester). The counterparty is notified
+	// neutrally — the notification does not name who aborted.
+	abortRequest: {
+		notify: (ctx) => {
+			const counterpartyId = (ctx.conv.requester === ctx.userId ? ctx.conv.itemOwner : ctx.conv.requester) as string;
+			return { recipientId: counterpartyId, type: 'request_aborted', body: texts.notifications.requestAborted(ctx.itemName) };
+		},
+	},
+
+	confirmHandover: {
+		notify: (ctx) => ({
+			recipientId: ctx.conv.requester as string,
+			type: 'handover_confirmed',
+			body: texts.notifications.handoverConfirmed(ctx.itemName),
+		}),
+	},
+
+	requestReturn: {
+		notify: (ctx) => ({
+			recipientId: ctx.conv.itemOwner as string,
+			type: 'return_requested',
+			body: texts.notifications.returnRequested(ctx.extra ?? '', ctx.itemName),
+		}),
+	},
+
+	confirmReturn: {
+		conversationPatch: () => (shouldAskCounterfactual() ? { counterfactual: 'pending' } : {}),
+		itemPatch: () => ({ status: 'available' }),
+		notify: (ctx) => ({
+			recipientId: ctx.conv.requester as string,
+			type: 'return_confirmed',
+			body: texts.notifications.returnConfirmed(ctx.itemName),
+		}),
+	},
+};
+
+/**
+ * Runs a lending state transition end-to-end: role/state guard (via
+ * `loadAndValidateConversation`, using `LENDING_TRANSITIONS[action]`), the conversation +
+ * optional item update (via `TRANSITION_EFFECTS[action]`), the notification, and any
+ * after-effect. Every one of the 6 exported transition functions below is a thin wrapper
+ * around this.
+ */
+async function executeLendingTransition(
+	pb: PocketBase,
+	action: LendingAction,
+	conversationId: string,
+	userId: string,
+	extra?: string
+): Promise<FailResult | void> {
+	const transition = LENDING_TRANSITIONS[action];
+	const result = await loadAndValidateConversation(pb, conversationId, userId, transition.role, transition.from);
+	if ('error' in result) return result.error;
+	const { conv } = result;
+
+	const itemName = await getItemName(pb, conv.requestedItem as string);
+	const effect = TRANSITION_EFFECTS[action];
+	const ctx: EffectContext = { pb, conversationId, conv, userId, itemName, extra };
+
+	try {
+		const extraPatch = effect.conversationPatch?.(ctx) ?? {};
+		await pb.collection('conversations').update(conversationId, { lendingStatus: transition.to, ...extraPatch });
+		// NOT atomic: for acceptRequest/confirmReturn this is a conversation write followed by
+		// a separate item write — if the item update fails after the conversation update
+		// already succeeded, the two can end up out of sync (e.g. status 'accepted' but the
+		// item still 'available'). Fixing this needs a backend transaction (PocketBase hook
+		// running both writes in `$app.runInTransaction`); out of scope for this refactor.
+		const itemPatch = effect.itemPatch?.(ctx);
+		if (itemPatch) await pb.collection('items').update(conv.requestedItem as string, itemPatch);
+	} catch (err) {
+		const e = err as Partial<ClientResponseError>;
+		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+	}
+
+	const { recipientId, type, body } = effect.notify(ctx);
+	await notifyUser(pb, recipientId, userId, type, conversationId, body);
+
+	if (effect.after) await effect.after(ctx);
+}
+
 /**
  * State transition: `pending` → `accepted` (called by item owner).
  * Marks the item unavailable and auto-rejects all other pending conversations
  * for the same item so only one borrower can proceed.
  */
-export async function acceptRequest(
-	pb: PocketBase,
-	conversationId: string,
-	userId: string
-): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'owner', 'pending');
-	if ('error' in result) return result.error;
-	const { conv } = result;
-
-	const itemName = await getItemName(pb, conv.requestedItem as string);
-
-	try {
-		await pb.collection('conversations').update(conversationId, { lendingStatus: 'accepted' });
-		await pb.collection('items').update(conv.requestedItem as string, { status: 'unavailable' });
-	} catch (err) {
-		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
-	}
-
-	await notifyUser(pb, conv.requester as string, userId, 'request_accepted', conversationId, texts.notifications.requestAccepted(itemName));
-
-	// Auto-reject all other pending conversations for the same item
-	try {
-		const otherPending = await pb.collection('conversations').getFullList({
-			filter: pb.filter('requestedItem={:requestedItem} && lendingStatus="pending" && id!={:conversationId}', {
-				requestedItem: conv.requestedItem,
-				conversationId,
-			}),
-		});
-		await Promise.all(otherPending.map(async (other) => {
-			await pb.collection('conversations').update(other.id, { lendingStatus: 'rejected' });
-			await notifyUser(pb, other.requester, userId, 'request_rejected', other.id, texts.notifications.requestRejected(itemName));
-		}));
-	} catch (err) {
-		console.error('Failed to auto-reject other pending conversations:', err);
-	}
+export async function acceptRequest(pb: PocketBase, conversationId: string, userId: string): Promise<FailResult | void> {
+	return executeLendingTransition(pb, 'acceptRequest', conversationId, userId);
 }
 
 /** State transition: `pending` → `rejected` (called by item owner). */
-export async function rejectRequest(
-	pb: PocketBase,
-	conversationId: string,
-	userId: string
-): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'owner', 'pending');
-	if ('error' in result) return result.error;
-	const { conv } = result;
-
-	try {
-		await pb.collection('conversations').update(conversationId, { lendingStatus: 'rejected' });
-	} catch (err) {
-		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
-	}
-
-	const itemName = await getItemName(pb, conv.requestedItem as string);
-	await notifyUser(pb, conv.requester as string, userId, 'request_rejected', conversationId, texts.notifications.requestRejected(itemName));
-}
-
-/** State transition: `accepted` → `active` (called by item owner after physical handover). */
-export async function confirmHandover(
-	pb: PocketBase,
-	conversationId: string,
-	userId: string
-): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'owner', 'accepted');
-	if ('error' in result) return result.error;
-	const { conv } = result;
-
-	try {
-		await pb.collection('conversations').update(conversationId, { lendingStatus: 'active' });
-	} catch (err) {
-		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
-	}
-
-	const itemName = await getItemName(pb, conv.requestedItem as string);
-	await notifyUser(pb, conv.requester as string, userId, 'handover_confirmed', conversationId, texts.notifications.handoverConfirmed(itemName));
+export async function rejectRequest(pb: PocketBase, conversationId: string, userId: string): Promise<FailResult | void> {
+	return executeLendingTransition(pb, 'rejectRequest', conversationId, userId);
 }
 
 /**
  * State transition: `pending` | `accepted` → `aborted` (called by EITHER party).
- * The counterparty is notified (neutrally — the notification does not name who
- * aborted). The requested item is NOT touched here: on `accepted → aborted` the
- * backend `lending.pb.js` hook resets it to `available` in an elevated
- * transaction (the aborting party may be the non-owner requester).
+ * See `TRANSITION_EFFECTS.abortRequest` for why the item is intentionally left untouched.
  */
-export async function abortRequest(
-	pb: PocketBase,
-	conversationId: string,
-	userId: string
-): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'participant', ABORTABLE_LENDING_STATES);
-	if ('error' in result) return result.error;
-	const { conv } = result;
+export async function abortRequest(pb: PocketBase, conversationId: string, userId: string): Promise<FailResult | void> {
+	return executeLendingTransition(pb, 'abortRequest', conversationId, userId);
+}
 
-	try {
-		await pb.collection('conversations').update(conversationId, { lendingStatus: 'aborted' });
-	} catch (err) {
-		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
-	}
-
-	const itemName = await getItemName(pb, conv.requestedItem as string);
-	const counterpartyId = (conv.requester === userId ? conv.itemOwner : conv.requester) as string;
-	await notifyUser(pb, counterpartyId, userId, 'request_aborted', conversationId, texts.notifications.requestAborted(itemName));
+/** State transition: `accepted` → `active` (called by item owner after physical handover). */
+export async function confirmHandover(pb: PocketBase, conversationId: string, userId: string): Promise<FailResult | void> {
+	return executeLendingTransition(pb, 'confirmHandover', conversationId, userId);
 }
 
 /** State transition: `active` → `return_requested` (called by the borrower). */
@@ -195,44 +261,13 @@ export async function requestReturn(
 	userId: string,
 	requesterName: string
 ): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'requester', 'active');
-	if ('error' in result) return result.error;
-	const { conv } = result;
-
-	try {
-		await pb.collection('conversations').update(conversationId, { lendingStatus: 'return_requested' });
-	} catch (err) {
-		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
-	}
-
-	const itemName = await getItemName(pb, conv.requestedItem as string);
-	await notifyUser(pb, conv.itemOwner as string, userId, 'return_requested', conversationId, texts.notifications.returnRequested(requesterName, itemName));
+	return executeLendingTransition(pb, 'requestReturn', conversationId, userId, requesterName);
 }
 
 /**
  * State transition: `active` | `return_requested` → `completed` (called by item owner).
  * Marks the item available again so it can receive new requests.
  */
-export async function confirmReturn(
-	pb: PocketBase,
-	conversationId: string,
-	userId: string
-): Promise<FailResult | void> {
-	const result = await loadAndValidateConversation(pb, conversationId, userId, 'owner', ['active', 'return_requested']);
-	if ('error' in result) return result.error;
-	const { conv } = result;
-
-	const itemName = await getItemName(pb, conv.requestedItem as string);
-
-	try {
-		const counterfactualPatch = shouldAskCounterfactual() ? { counterfactual: 'pending' } : {};
-		await pb.collection('conversations').update(conversationId, { lendingStatus: 'completed', ...counterfactualPatch });
-		await pb.collection('items').update(conv.requestedItem as string, { status: 'available' });
-	} catch (err) {
-		const e = err as Partial<ClientResponseError>;
-		return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
-	}
-
-	await notifyUser(pb, conv.requester as string, userId, 'return_confirmed', conversationId, texts.notifications.returnConfirmed(itemName));
+export async function confirmReturn(pb: PocketBase, conversationId: string, userId: string): Promise<FailResult | void> {
+	return executeLendingTransition(pb, 'confirmReturn', conversationId, userId);
 }

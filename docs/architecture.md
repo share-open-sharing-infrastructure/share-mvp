@@ -119,9 +119,19 @@ AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat 
 
 Domain-specific reconciliation lives next to its route in rune-free helper modules rather than in the components themselves:
 
-- `src/routes/conversations/conversationListRealtime.ts` — keeps the conversation sidebar list in sync.
-- `src/routes/conversations/[conversationId]/conversationRealtime.ts` — keeps a single open conversation in sync (lending status, counterfactual, and the fetch/dedupe of newly appended messages). State is read/written through accessor closures so the page keeps ownership of the reactive state.
+- `src/routes/conversations/conversationListRealtime.ts` — keeps the conversation sidebar list in sync: `update` events sync `readByOwner`/`readByRequester`/`lastMessageAt`/`lendingStatus` and re-sort (mirroring the server's `-lastMessageAt,-updated` sort), `create` events insert the fetched record at its sorted position, `delete` events remove the entry.
+- `src/routes/conversations/[conversationId]/conversationRealtime.ts` — keeps a single open conversation in sync (lending status, counterfactual, and the fetch/dedupe of every newly appended message id in a coalesced/batched event, not just the last one). State is read/written through accessor closures so the page keeps ownership of the reactive state.
 
 Pages hold "server-load data that a realtime handler also writes to" in a `realtimeSynced()` box (`src/lib/stores/realtimeSynced.svelte.ts`) — a writable `$derived` that re-syncs from `load()` while staying directly assignable by the handler (issue #469).
+
+### Conversations: server-helper layout
+
+The `/conversations` area's server logic is split by ownership, following the "libs never import from routes" rule:
+
+- `src/lib/server/conversations.ts` — `deleteConversation()`, shared by the route's `?/deleteConversation` action and `$lib/server/items.ts`'s cascade-on-item-delete (an item's conversations are deleted with it).
+- `src/lib/server/items.ts` — `toggleItemStatus()` (flips an item's availability from the conversation header) alongside the existing `setItemStatus`/`deleteItem`/`deleteMultipleItems`.
+- `src/lib/server/notifications.ts` — `notifyAndPush()` bundles the create-notification + send-push pair every call site needs; `sendMessage` (route-local `conversation.server.ts`) and the 6 lending transitions (`[conversationId]/lending.server.ts`) both call it.
+- `[conversationId]/lending.server.ts` — the 6 `?/actionName` transitions are table-driven: `$lib/lending.ts`'s `LENDING_TRANSITIONS` supplies the role/from/to per action, and a local `TRANSITION_EFFECTS` table supplies the per-action item/notification side effects, both consumed by a single `executeLendingTransition()`.
+- `[conversationId]/conversationDetail.ts` — `toConversationDetail()` maps the raw `conversations` wire record (ids + optional `expand`) to the flattened, dangling-item-safe view-model the detail page and its header render from.
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.

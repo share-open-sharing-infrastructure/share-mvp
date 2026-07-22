@@ -473,15 +473,58 @@ export type CounterfactualAnswer =
 	| 'unsure'
 	| 'skipped';
 
+/**
+ * The valid non-'pending' answers a participant can actually submit for
+ * `submitCounterfactual` — 'pending' is the server-assigned initial sentinel, never a
+ * submittable answer. Single source of truth for that action's validation; the UI-only
+ * 'other' sentinel (replaced by free text before it reaches the server) is intentionally
+ * NOT included here — see `CounterfactualAnswer`'s `(string & {})` widening below.
+ */
+export const COUNTERFACTUAL_ANSWERS = [
+	'would_buy',
+	'not_important',
+	'too_expensive',
+	'borrow_elsewhere',
+	'unsure',
+	'skipped',
+] as const satisfies readonly Exclude<CounterfactualAnswer, 'pending'>[];
+
+/**
+ * Safe subset of `User` fields for a conversation's `requester`/`itemOwner` expand —
+ * deliberately excludes `email` and other PII (`User.email` is documented as "should not
+ * be visible publicly"). The conversations `load()`s restrict the expand to exactly this
+ * shape via PocketBase's `fields` param (see `$lib/conversationPartnerFields.ts`'s
+ * `conversationFieldsWithSafePartners()`) — keep both in sync with what `ConversationHeader.svelte`
+ * and `ConversationListItem.svelte` actually read from the expanded user.
+ */
+export interface ConversationPartner {
+	id: string;
+	username: string;
+	/** True if this account has been deleted/anonymized — used by `displayName()`. */
+	deleted?: boolean;
+	profileImage?: string;
+	verified?: boolean;
+	created: string;
+}
+
+/**
+ * Honest wire/record shape of the `conversations` collection: relations are plain ids,
+ * matching what PocketBase actually returns. Expanded relations (when requested via
+ * `expand: '...'`) are available under `expand`, each individually optional since an
+ * expand can be omitted or fail to resolve (e.g. a dangling/deleted `requestedItem`).
+ * For a flattened, dangling-item-safe view-model, see `toConversationDetail()` in
+ * `src/routes/conversations/[conversationId]/conversationDetail.ts`.
+ */
 export interface Conversation extends PocketBaseEntity {
-	requester: User;
-	itemOwner: User;
-	requestedItem: Item;
-	messages: Message[];
+	requester: UserId;
+	itemOwner: UserId;
+	requestedItem: ItemId;
+	messages: MessageId[];
 	readByRequester: boolean;
 	readByOwner: boolean;
 	lendingStatus?: LendingStatus;
-	counterfactual?: CounterfactualAnswer;
+	/** Free text is allowed for the 'other' answer — see `COUNTERFACTUAL_ANSWERS`. */
+	counterfactual?: CounterfactualAnswer | (string & {});
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;
 	ownerLastSeenAt?: string;
@@ -496,6 +539,13 @@ export interface Conversation extends PocketBaseEntity {
 
 	/** Same as `acceptedAt`, for the first transition into 'completed'. */
 	completedAt?: string;
+
+	expand?: {
+		requester?: ConversationPartner;
+		itemOwner?: ConversationPartner;
+		requestedItem?: Item;
+		messages?: Message[];
+	};
 }
 
 // --- NOTIFICATION ---

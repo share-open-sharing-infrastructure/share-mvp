@@ -3,8 +3,17 @@
 	import { page } from '$app/state';
 	import { texts } from '$lib/texts';
 	import { displayName } from '$lib/utils/utils';
+	import type { Conversation } from '$lib/types/models';
 
-	let { conversation, currentUser, PB_IMG_URL } = $props();
+	let {
+		conversation,
+		currentUser,
+		PB_IMG_URL,
+	}: {
+		conversation: Conversation;
+		currentUser: { id: string };
+		PB_IMG_URL: string;
+	} = $props();
 
 	const isActive = $derived(page.params.conversationId === conversation.id);
 
@@ -17,8 +26,8 @@
 
 	const otherUser = $derived(
 		conversation.requester === currentUser.id
-			? conversation.expand.itemOwner
-			: conversation.expand.requester
+			? conversation.expand?.itemOwner
+			: conversation.expand?.requester
 	);
 
 	const isUnread = $derived(
@@ -35,7 +44,7 @@
 	// `image` is a multi-file field; the first entry is the cover.
 	const itemCover = $derived(Array.isArray(item?.image) ? item.image[0] : (item?.image ?? null));
 	const itemImage = $derived(
-		itemCover ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${itemCover}` : null
+		item && itemCover ? `${PB_IMG_URL}api/files/${item.collectionId}/${item.id}/${itemCover}` : null
 	);
 
 	const lendingStatusLabel = $derived(

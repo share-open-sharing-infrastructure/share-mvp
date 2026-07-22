@@ -12,6 +12,10 @@ For now, we aim to build test coverage up as we go to achieve a reasonable balan
 
 Currently, this means that we gradually implement unit tests for server-side functions. Browser-level end-to-end tests (Playwright) now cover a first set of full flows — see [End-to-end tests](#end-to-end-tests-playwright) below.
 
+Shared PocketBase mock helpers (`mockFilter` + `makeMockPb`, extracted from duplicated per-file
+copies) live in [`src/lib/test-utils/pocketbase.ts`](/src/lib/test-utils/pocketbase.ts) — prefer
+importing them over hand-rolling a new copy when a test needs a mock `PocketBase` client.
+
 ## End-to-end tests (Playwright)
 
 The unit tests above mock PocketBase; the end-to-end suite (in [`/e2e`](/e2e)) instead drives

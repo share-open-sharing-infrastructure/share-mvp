@@ -1,6 +1,6 @@
 import type PocketBase from 'pocketbase';
 import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
-import { deleteConversation } from '../../routes/conversations/[conversationId]/conversation.server';
+import { deleteConversation } from './conversations';
 
 export type DeleteItemResult =
 	| { status: 'deleted' }
@@ -101,4 +101,37 @@ export async function setItemStatus(
 
 	await pb.collection('items').update(itemId, { status: newStatus });
 	return true;
+}
+
+export type ToggleItemStatusResult =
+	| { status: 'ok'; newStatus: 'available' | 'unavailable' }
+	| { status: 'not_found' }
+	| { status: 'not_owner' };
+
+/**
+ * Flips an item's status between `available`/`unavailable` after verifying ownership.
+ *
+ * Unlike the item-agnostic {@link setItemStatus}, this reads the current status itself to
+ * compute the flip, and — importantly — lets a failed update `throw` instead of swallowing
+ * it: the previous route-local copy of this logic caught and only `console.error`'d an update
+ * failure, so the form action reported success (no `fail()`) even when the write didn't
+ * happen. Callers are expected to catch and translate a thrown error into `fail()`.
+ */
+export async function toggleItemStatus(
+	pb: PocketBase,
+	itemId: string,
+	ownerUserId: string
+): Promise<ToggleItemStatusResult> {
+	let item;
+	try {
+		item = await pb.collection('items').getOne(itemId);
+	} catch {
+		return { status: 'not_found' };
+	}
+
+	if (item.owner !== ownerUserId) return { status: 'not_owner' };
+
+	const newStatus = item.status === 'available' ? 'unavailable' : 'available';
+	await pb.collection('items').update(itemId, { status: newStatus });
+	return { status: 'ok', newStatus };
 }

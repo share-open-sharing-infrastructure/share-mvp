@@ -58,6 +58,11 @@ function makePb({ item, openConversations = [] }) {
 Always provide `pb.filter` — production code builds every filter through it (never with template
 literals), so a missing mock throws. Reset state between tests with `beforeEach(() => vi.clearAllMocks())`.
 
+If the code under test only needs `pb.collection(name)` + `pb.filter` (no `pb.send`/`authStore`),
+reach for the shared `mockFilter`/`makeMockPb` in `src/lib/test-utils/pocketbase.ts` instead of
+hand-rolling the snippet above — it's the same shape, already used by the `conversations` route's
+tests. Only write a custom factory (like the one above) when you need `send`/`authStore` too.
+
 **Not everything routes through `collection()`.** Some `$lib/server/*` helpers reach a privileged
 backend hook via the root-level `pb.send('/api/…')`, and a few read `pb.authStore`. Stub those as
 siblings of `pb.filter` on the `pb` object — `send: vi.fn().mockResolvedValue({ … })` — not inside

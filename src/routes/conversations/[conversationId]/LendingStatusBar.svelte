@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import type { Conversation } from '$lib/types/models';
-	import { LENDING_LIFECYCLE, type LendingStatus } from '$lib/lending';
+	import { LENDING_LIFECYCLE, canAbortUi, type LendingStatus } from '$lib/lending';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
@@ -32,11 +32,10 @@
 			: texts.lending.statusDescription.rejected
 	);
 
-	// Who may abort, per the approved role/state rules (#373): in `pending` only the
-	// requester (the owner uses Ablehnen); in `accepted` either party.
-	const showAbort = $derived(
-		!!onAbort && ((status === 'pending' && !isOwner) || status === 'accepted')
-	);
+	// Who may abort, per the approved role/state rules (#373) — see `canAbortUi`'s doc
+	// comment in $lib/lending.ts for why this is intentionally NOT the same rule the
+	// server enforces for the abort transition itself.
+	const showAbort = $derived(!!onAbort && canAbortUi(status, isOwner));
 
 	// The five forward-progress steps. `rejected` is a dead-end handled separately below.
 	const steps: readonly LendingStatus[] = LENDING_LIFECYCLE;
@@ -66,6 +65,12 @@
 	});
 
 </script>
+
+{#snippet actionForm(action: string, label: string, variant: 'primary' | 'secondary')}
+	<form method="POST" {action} use:enhance>
+		<Button type="submit" {variant} size="sm">{label}</Button>
+	</form>
+{/snippet}
 
 {#if status}
 	<div class="border-b border-tinte-100 dark:border-tinte-800 bg-papier dark:bg-tinte-900 px-4 sm:py-3 space-y-3 shrink-0">
@@ -107,42 +112,18 @@
 
 				<div class="flex items-center gap-2 shrink-0">
 					{#if status === 'pending' && isOwner}
-						<form method="POST" action="?/rejectRequest" use:enhance>
-							<Button type="submit" variant="secondary" size="sm">
-								{texts.lending.actions.reject}
-							</Button>
-						</form>
-						<form method="POST" action="?/acceptRequest" use:enhance>
-							<Button type="submit" size="sm">
-								{texts.lending.actions.accept}
-							</Button>
-						</form>
+						{@render actionForm('?/rejectRequest', texts.lending.actions.reject, 'secondary')}
+						{@render actionForm('?/acceptRequest', texts.lending.actions.accept, 'primary')}
 					{:else if status === 'accepted' && isOwner}
-						<form method="POST" action="?/confirmHandover" use:enhance>
-							<Button type="submit" size="sm">
-								{texts.lending.actions.confirmHandover}
-							</Button>
-						</form>
+						{@render actionForm('?/confirmHandover', texts.lending.actions.confirmHandover, 'primary')}
 					{:else if status === 'active'}
 						{#if !isOwner}
-							<form method="POST" action="?/requestReturn" use:enhance>
-								<Button type="submit" size="sm">
-									{texts.lending.actions.requestReturn}
-								</Button>
-							</form>
+							{@render actionForm('?/requestReturn', texts.lending.actions.requestReturn, 'primary')}
 						{:else}
-							<form method="POST" action="?/confirmReturn" use:enhance>
-								<Button type="submit" variant="secondary" size="sm">
-									{texts.lending.actions.confirmReturn}
-								</Button>
-							</form>
+							{@render actionForm('?/confirmReturn', texts.lending.actions.confirmReturn, 'secondary')}
 						{/if}
 					{:else if status === 'return_requested' && isOwner}
-						<form method="POST" action="?/confirmReturn" use:enhance>
-							<Button type="submit" size="sm">
-								{texts.lending.actions.confirmReturn}
-							</Button>
-						</form>
+						{@render actionForm('?/confirmReturn', texts.lending.actions.confirmReturn, 'primary')}
 					{/if}
 					{#if showAbort}
 						<!-- Opens the confirmation modal in the parent; the actual mutation
