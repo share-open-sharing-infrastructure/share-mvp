@@ -1,5 +1,4 @@
 <script lang="ts">
-	/* eslint-disable svelte/no-navigation-without-resolve */
 	import { goto } from '$app/navigation';
 	import { Section } from 'flowbite-svelte-blocks';
 	import SearchBar from './SearchBar.svelte';
@@ -43,17 +42,17 @@
 	function handleApply(draft: FilterDraft) {
 		filterModalOpen = false;
 		// Single navigation commits every draft field at once; page resets to default (omitted).
-		goto(
-			buildSearchUrl({
-				q: data.q,
-				sort: draft.sort,
-				onlyAvailable: draft.onlyAvailable,
-				ownerType: draft.ownerType,
-				cats: draft.selectedCategories,
-				op: draft.op,
-				group: draft.selectedGroup ?? undefined,
-			})
-		);
+		const url = buildSearchUrl({
+			q: data.q,
+			sort: draft.sort,
+			onlyAvailable: draft.onlyAvailable,
+			ownerType: draft.ownerType,
+			cats: draft.selectedCategories,
+			op: draft.op,
+			group: draft.selectedGroup ?? undefined,
+		});
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() returns an already-resolved URL; the rule cannot see through the call
+		goto(url);
 	}
 
 	const filteredItems = $derived.by(() => {

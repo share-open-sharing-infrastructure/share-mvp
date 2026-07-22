@@ -57,8 +57,7 @@
 		isDebouncing = true;
 		debounceTimer = setTimeout(async () => {
 			isDebouncing = false;
-			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			await goto(`/search?q=${encodeURIComponent(value)}`, {
+			await goto(resolve(`/search?q=${encodeURIComponent(value)}`), {
 				keepFocus: true,
 				noScroll: true,
 				replaceState: true
@@ -74,8 +73,7 @@
 		}
 		isDebouncing = false;
 		const value = inputValue.trim();
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		await goto(value ? `/search?q=${encodeURIComponent(value)}` : resolve('/search'), {
+		await goto(resolve(value ? `/search?q=${encodeURIComponent(value)}` : '/search'), {
 			keepFocus: true,
 			noScroll: true
 		});

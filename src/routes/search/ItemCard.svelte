@@ -51,7 +51,7 @@
 </script>
 
 <Card
-	href="/items/{item.id}"
+	href={resolve('/items/[id]', { id: item.id })}
 	class="flex-row relative"
 	horizontal
 	size="xl"

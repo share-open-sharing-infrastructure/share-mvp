@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { Alert, Badge } from 'flowbite-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { resolve } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
@@ -81,15 +81,13 @@
 			<p class="text-sm text-tinte-600 dark:text-tinte-400">
 				{texts.institutional.importIntro}
 			</p>
-			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href="/templates/items-import-template.csv"
+				href={asset('/templates/items-import-template.csv')}
 				download
 				class="inline-flex items-center text-sm font-medium text-primary hover:underline"
 			>
 				{texts.institutional.importTemplateLink} ↓
 			</a>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 
 			{#if form?.error || fileError}
 				<CustomAlert type="error" message={form?.message ?? fileError} />

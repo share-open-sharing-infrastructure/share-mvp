@@ -29,13 +29,13 @@
 
 	function notificationHref(n: Notification): string {
 		if (conversationNotificationTypes.has(n.type)) {
-			return resolve(`/conversations/${n.relatedId}`);
+			return resolve('/conversations/[conversationId]', { conversationId: n.relatedId });
 		}
 		if (n.type === 'trust_added' || n.type === 'invite_accepted') {
-			return resolve(`/users/${n.relatedId}`);
+			return resolve('/users/[id]', { id: n.relatedId });
 		}
 		if (groupNotificationTypes.has(n.type)) {
-			return resolve(`/user/groups/${n.relatedId}`);
+			return resolve('/user/groups/[id]', { id: n.relatedId });
 		}
 		return resolve('/notifications');
 	}
@@ -59,7 +59,7 @@
 			{#each data.notifications as notification (notification.id)}
 				<li class="flex items-center gap-2 py-4 px-2 rounded-lg hover:bg-papier transition-colors">
 					
-					<!-- eslint-disable svelte/no-navigation-without-resolve -- notificationHref() already returns resolve()d internal paths; the rule can't see through the function call -->
+					<!-- eslint-disable svelte/no-navigation-without-resolve -- notificationHref() returns an already-resolved URL; the rule cannot see through the call -->
 					<a
 						href={notificationHref(notification)}
 						class="flex items-start gap-4 flex-1 min-w-0"

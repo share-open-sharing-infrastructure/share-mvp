@@ -148,7 +148,7 @@
 					{#each filteredUsers as potentialFriend (potentialFriend.id)}
 						<div class="flex items-center hover:bg-primary-50 dark:hover:bg-primary-900">
 							<a
-								href={resolve(`/users/[id]`, { id: potentialFriend.id })}
+								href={resolve('/users/[id]', { id: potentialFriend.id })}
 								class="flex-1 p-3 text-tinte-900 dark:text-white"
 							>
 								@{potentialFriend.username}
@@ -248,7 +248,7 @@
 					<!-- Username -->
 					<TableBodyCell class="max-w-30 whitespace-nowrap overflow-hidden text-ellipsis">
 						<a
-							href={resolve(`/users/[id]`, { id: entry.id })}
+							href={resolve('/users/[id]', { id: entry.id })}
 							class="flex flex-row items-center font-medium text-tinte-900 dark:text-white hover:underline"
 						>
 							<img
