@@ -1,4 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const { isAdmin } = vi.hoisted(() => ({ isAdmin: vi.fn() }));
+vi.mock('$lib/server/metrics', () => ({ isAdmin }));
+
 import { load } from './+layout.server';
 import { NOTIFICATIONS_DEP } from '$lib/constants';
 
@@ -16,6 +20,7 @@ describe('Root layout load', () => {
 		prefsGetFirstListItem = vi.fn().mockResolvedValue({ hasOnboarded: true, preferredTransportMode: 'car' });
 		depends = vi.fn();
 		filter = vi.fn((raw: string) => raw);
+		isAdmin.mockResolvedValue(false);
 	});
 
 	function buildEvent(user: { id: string } | null) {
@@ -81,5 +86,18 @@ describe('Root layout load', () => {
 		const result = await load(buildEvent(null));
 		expect(result.currentUserPreferences).toBeNull();
 		expect(prefsGetFirstListItem).not.toHaveBeenCalled();
+	});
+
+	it('surfaces isAdminUser for an admin, for the nav link', async () => {
+		isAdmin.mockResolvedValue(true);
+		const result = await load(buildEvent({ id: 'user1' }));
+		expect(result.isAdminUser).toBe(true);
+		expect(isAdmin).toHaveBeenCalledWith('user1');
+	});
+
+	it('does not check isAdmin and defaults isAdminUser to false for a guest', async () => {
+		const result = await load(buildEvent(null));
+		expect(result.isAdminUser).toBe(false);
+		expect(isAdmin).not.toHaveBeenCalled();
 	});
 });

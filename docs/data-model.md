@@ -35,6 +35,7 @@ erDiagram
         date lastLoginAt "stamped on auth (throttled 24h) — drives inactive-account retention; hidden field, superuser-only"
         date retentionNotifiedAt "last open-loan skip-notice (retention job); hidden field, superuser-only"
         date deletionWarnedAt "last inactivity-deletion warning email (once per inactivity cycle); hidden field, superuser-only"
+        bool isAdmin "grants /admin/metrics access; hidden field, superuser-only — set via the PocketBase admin UI, same as isInstitution"
         date created
         date updated
     }
@@ -172,6 +173,8 @@ erDiagram
         date lastMessageAt "set on message send — drives list sort"
         date requesterLastSeenAt "presence heartbeat — server-only"
         date ownerLastSeenAt "presence heartbeat — server-only"
+        date acceptedAt "first transition into 'accepted' — stamped server-side by lending_timestamps.pb.js hook, never client-writable in practice"
+        date completedAt "first transition into 'completed' — same hook; business-metrics project"
         date created
         date updated
     }
@@ -282,6 +285,14 @@ erDiagram
     }
 
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
+
+    METRICS_DAILY{
+        string id PK
+        string date "YYYY-MM-DD, unique — one row per day"
+        json metrics "full aggregate catalog, see docs/operations/metrics.md — superuser-only, no per-user data"
+        date created
+        date updated
+    }
 ```
 
 ## Item categories
@@ -577,3 +588,24 @@ it falls back to **private**, never public. See [groups.md](groups.md).
 ## Impact Research: `counterfactual`
 
 `conversations.counterfactual` is populated at loan completion for a random ~33% of loans. It records the borrower's answer to a survey asking what they would have done without the platform (e.g., bought it new, borrowed elsewhere, gone without). This data is used to measure the platform's environmental and social impact.
+
+## metrics_daily
+
+Backend of the business-metrics project (admin dashboard `/admin/metrics` + public transparency
+page `/misc/stats`). One row per calendar day (`date`, text `YYYY-MM-DD`, **unique index**),
+upserted nightly by the `pb_hooks/jobs/metrics.js` cron job (registered in `metrics.pb.js`, runs at
+03:00 — after the retention jobs). `metrics` is a single flexible JSON blob rather than typed
+columns: the full catalog (core / funnel & engagement / impact / integrations & outbound /
+community & growth groups) can grow without a migration, since only the computing job and the
+frontend's `DailyMetrics` type (`src/lib/types/models.ts`) need to agree on the shape.
+
+All five API rules are `null` — **superuser-only**, read exclusively via
+`$lib/server/metrics.ts` (`getSuperuserClient`). Every value is a count or aggregate; nothing here
+is per-user data, but exposure to the admin dashboard vs. the public stats page is still an
+explicit app-code whitelist, not a PocketBase rule. See `docs/operations/metrics.md` for the full
+metric catalog, how to re-run the job, and how to add a new metric.
+
+Time-based figures (30-day/7-day windows, everything derived from `conversations.acceptedAt` /
+`completedAt`) only accumulate from when those fields started being stamped — there is no
+backfill, so early snapshots read as zero/null for those metrics (documented limitation, not a
+bug).

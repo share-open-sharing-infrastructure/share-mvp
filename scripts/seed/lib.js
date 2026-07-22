@@ -74,6 +74,14 @@ export async function teardown(pb) {
 	await deleteWhere(pb, 'lending_terms', anyOf('owner'));
 	await deleteWhere(pb, 'messages', `${anyOf('from')} || ${anyOf('to')}`);
 	await deleteWhere(pb, 'conversations', `${anyOf('requester')} || ${anyOf('itemOwner')}`);
+	// push_subscriptions.user and outbound_clicks.item are NOT cascadeDelete (see the
+	// migrations), so a scenario seeding either would leak across re-runs without this.
+	await deleteWhere(pb, 'push_subscriptions', anyOf('user'));
+	const seedItems = await pb.collection('items').getFullList({ filter: anyOf('owner') }).catch(() => []);
+	if (seedItems.length > 0) {
+		const byItem = '(' + seedItems.map((i) => `item = "${i.id}"`).join(' || ') + ')';
+		await deleteWhere(pb, 'outbound_clicks', byItem);
+	}
 	await deleteWhere(pb, 'items', anyOf('owner'));
 	for (const g of seedGroups) await pb.collection('groups').delete(g.id).catch(() => {});
 	for (const u of seedUsers) await pb.collection('users').delete(u.id).catch(() => {});

@@ -1,5 +1,11 @@
 import { fail } from '@sveltejs/kit';
 import { texts } from '$lib/texts';
+import { getPublicStats } from '$lib/server/metrics';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async () => {
+	return { stats: await getPublicStats() };
+};
 
 export const actions = {
 	feedback: async ({ locals, request }) => {

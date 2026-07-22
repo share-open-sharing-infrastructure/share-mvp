@@ -3,8 +3,12 @@
 	import { resolve } from '$app/paths';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import PublicStatsSection from '$lib/components/PublicStatsSection.svelte';
+
+	let { data } = $props();
 
 	const landingTexts = texts.pages.landing;
+	const statsTexts = texts.metrics.public;
 	const siteUrl = 'https://allerleih.org';
 
 	const jsonLd = JSON.stringify({
@@ -144,4 +148,18 @@
 			{/each}
 		</div>
 	</section>
+
+	<!-- Public transparency numbers: same data as /misc/stats, teased here for visitors -->
+	{#if data.stats}
+		<section>
+			<div class="max-w-6xl mx-auto text-center">
+				<h2 class="text-2xl font-bold text-tinte-900 dark:text-tinte-100">{statsTexts.title}</h2>
+				<p class="mt-2 text-tinte-500 dark:text-tinte-400">{statsTexts.intro}</p>
+				<div class="mt-6">
+					<PublicStatsSection stats={data.stats} />
+				</div>
+				<a href={resolve('/misc/stats')} class="{styles.cardLink} mt-4 inline-block">{statsTexts.linkToFullPage} →</a>
+			</div>
+		</section>
+	{/if}
 </div>
