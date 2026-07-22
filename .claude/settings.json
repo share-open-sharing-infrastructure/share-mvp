@@ -20,5 +20,18 @@
       "Bash(gh pr list *)",
       "Bash(gh pr diff *)"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR}/.claude/hooks/block-env-stage.js\""
+          }
+        ]
+      }
+    ]
   }
 }
