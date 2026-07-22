@@ -46,11 +46,48 @@ there would couple every frontend PR to the backend repo's current state. Lint a
 however, **do** run on every PR via [`.github/workflows/lint.yaml`](/.github/workflows/lint.yaml)
 (`npm run lint` + `npm run check`), alongside the existing Vitest + build workflow.
 
+## Mocking PocketBase
+
+Every unit test needs two small building blocks: a `filter` mock (production code always
+builds filters via `pb.filter(raw, {params})`, never template-literal interpolation — see
+`.claude/CLAUDE.md`) and a `collection(name) → stubs` dispatch skeleton for the mock `pb`. Don't
+hand-roll these — import them from `$lib/server/test-helpers`:
+
+```ts
+export function mockFilter(raw: string, params?: Record<string, unknown>): string;
+export function makeMockPb(impls: Record<string, Record<string, ReturnType<typeof vi.fn>>>): PocketBase;
+```
+
+`mockFilter` mirrors the real `pb.filter()`: it quotes and escapes string params and substitutes
+every occurrence of each `{:param}` placeholder (numbers/booleans stay unquoted). `makeMockPb`
+builds a minimal `pb` whose `collection(name)` dispatches to the matching entry of `impls` and
+whose `filter` is an assertable spy delegating to `mockFilter`. A collection you didn't stub
+resolves to `undefined`, so a test that touches it fails loudly instead of silently no-opping.
+
+```ts
+import { makeMockPb } from '$lib/server/test-helpers';
+
+const getOne = vi.fn().mockResolvedValue({ id: 'item1' });
+const pb = makeMockPb({ items: { getOne } });
+```
+
+Destructure the `vi.fn()`s you need to assert on *before* passing them into `impls` — per-test
+spy access stays local to the test, the helper only owns the dispatch shape. If a scenario needs
+more than plain method stubs (e.g. picking a response based on the incoming `filter` string, or a
+reusable scenario factory), build that on top of `makeMockPb` rather than duplicating its
+dispatch/filter logic — see `deleteItem`'s `makePb(opts)` in
+[`items.test.ts`](/src/lib/server/items.test.ts) for the pattern. Some `$lib/server/*` helpers
+also reach a privileged backend hook via `pb.send('/api/…')` or read `pb.authStore` — stub those
+as siblings on the object returned by `makeMockPb` (`{ ...makeMockPb({...}), send: vi.fn() }`),
+not inside `collection()`.
+
 ## Practice
 
 Test files currently live next to their target. For example, for testing conversation functionality, the test file lives directly next to [/src/routes/conversations/[conversationId]/+page.server.ts](/src/routes/conversations/[conversationId]/+page.server.ts). It should NOT have a leading +, this is reserved for Svelte files only.
 
-To test a page and its functions, use Vitest like so:
+To test a page and its functions, use Vitest like so (the `mockLocals.pb` below is a simplified
+sketch — for a real `pb.filter`/`collection()` mock use `makeMockPb` from the "Mocking
+PocketBase" section above):
 
 ```javascript
 

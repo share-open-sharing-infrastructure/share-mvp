@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import type PocketBase from 'pocketbase';
+import { makeMockPb } from '$lib/server/test-helpers';
 
 // Avoid loading the real notifications module (web-push + VAPID env) at import time.
 vi.mock('$lib/server/notifications.js', () => ({
@@ -9,23 +9,6 @@ vi.mock('$lib/server/notifications.js', () => ({
 }));
 
 import { deleteConversation, sendMessage } from './conversation.server';
-
-function mockFilter(raw: string, params?: Record<string, unknown>): string {
-	if (!params) return raw;
-	let result = raw;
-	for (const [key, value] of Object.entries(params)) {
-		const escaped = typeof value === 'string' ? `'${value.replace(/'/g, "\\'")}'` : `${value}`;
-		result = result.replaceAll(`{:${key}}`, escaped);
-	}
-	return result;
-}
-
-function makeMockPb(impls: Record<string, Record<string, ReturnType<typeof vi.fn>>>): PocketBase {
-	return {
-		collection: vi.fn((name: string) => impls[name]),
-		filter: vi.fn(mockFilter),
-	} as unknown as PocketBase;
-}
 
 describe('deleteConversation', () => {
 	it('deletes the conversation and every notification referencing it', async () => {

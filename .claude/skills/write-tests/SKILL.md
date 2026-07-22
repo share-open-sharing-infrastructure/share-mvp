@@ -20,13 +20,20 @@ Co-locate the test with its target, same basename + `.test.ts`:
 - `src/lib/server/items.ts` → `src/lib/server/items.test.ts`
 - `src/routes/legal/accept/+page.server.ts` → `src/routes/legal/accept/page.server.test.ts`
 
-## 2. Mock PocketBase with a small factory
+## 2. Mock PocketBase with the shared helper
 
-There's no real DB in unit tests. Build a `pb` whose `collection(name)` returns an object of
-`vi.fn()` stubs for only the methods the code under test calls — e.g. `getOne`, `getFirstListItem`,
-`getFullList`, `create`, `update`, `delete`. Distinguish multiple calls to the same collection by
-inspecting the args (e.g. the `filter` string), and expose the stubs so you can assert on them
-afterwards.
+There's no real DB in unit tests. Don't hand-roll a `filter` mock or a `collection(name)` dispatch
+skeleton — both live in `$lib/server/test-helpers`:
+
+```ts
+export function mockFilter(raw: string, params?: Record<string, unknown>): string;
+export function makeMockPb(impls: Record<string, Record<string, ReturnType<typeof vi.fn>>>): PocketBase;
+```
+
+`makeMockPb` builds a `pb` whose `collection(name)` returns the matching entry of `impls` (only
+stub the methods the code under test calls — e.g. `getOne`, `getFirstListItem`, `getFullList`,
+`create`, `update`, `delete`) and whose `filter` is an assertable spy mirroring the real
+`pb.filter()`. Destructure the `vi.fn()`s you need to assert on before passing them into `impls`.
 
 Many helpers signal "not found" by **rejecting** rather than returning null — `getOne` and
 `getFirstListItem` throw when nothing matches, and the code wraps them in `try/catch`. Drive that
@@ -35,6 +42,7 @@ branch with `vi.fn().mockRejectedValue(new Error('not found'))` so you actually 
 ```ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { deleteItem } from './items';
+import { makeMockPb } from '$lib/server/test-helpers';
 
 function makePb({ item, openConversations = [] }) {
   const getOne = vi.fn().mockResolvedValue(item);
@@ -43,20 +51,19 @@ function makePb({ item, openConversations = [] }) {
     Promise.resolve(filter?.includes('lendingStatus') ? openConversations : [])
   );
   const pb = {
-    collection: vi.fn((name: string) =>
-      name === 'items' ? { getOne, delete: deleteRecord } : { getFullList }
-    ),
-    // Mirror the real pb.filter() so the code under test can interpolate params.
-    filter: (raw: string, params?: Record<string, unknown>) =>
-      params ? Object.entries(params).reduce((a, [k, v]) => a.replace(`{:${k}}`, String(v)), raw) : raw,
+    ...makeMockPb({ items: { getOne, delete: deleteRecord }, conversations: { getFullList } }),
     _deleteRecord: deleteRecord, // handles surfaced for assertions
   };
   return pb as unknown as Parameters<typeof deleteItem>[0] & typeof pb;
 }
 ```
 
-Always provide `pb.filter` — production code builds every filter through it (never with template
-literals), so a missing mock throws. Reset state between tests with `beforeEach(() => vi.clearAllMocks())`.
+Distinguish multiple calls to the same collection by inspecting the args (e.g. the `filter`
+string) inside the stub, and expose the underlying `vi.fn()`s so you can assert on them
+afterwards. `pb.filter` always works out of the box — production code builds every filter
+through it (never with template literals), and an unstubbed collection resolves to `undefined`
+so a test that touches it fails loudly. Reset state between tests with
+`beforeEach(() => vi.clearAllMocks())`.
 
 **Not everything routes through `collection()`.** Some `$lib/server/*` helpers reach a privileged
 backend hook via the root-level `pb.send('/api/…')`, and a few read `pb.authStore`. Stub those as

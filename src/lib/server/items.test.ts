@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { deleteItem, deleteMultipleItems, setItemStatus } from './items';
+import { makeMockPb } from './test-helpers';
 
 vi.mock('../../routes/conversations/[conversationId]/conversation.server', () => ({
 	deleteConversation: vi.fn().mockResolvedValue(undefined),
@@ -43,18 +44,10 @@ function makePb({
 	);
 
 	const pb = {
-		collection: vi.fn((name: string) => {
-			if (name === 'items') return { getOne, delete: deleteRecord, update };
-			if (name === 'conversations') return { getFullList };
-			return {};
+		...makeMockPb({
+			items: { getOne, delete: deleteRecord, update },
+			conversations: { getFullList },
 		}),
-		filter: (raw: string, params?: Record<string, unknown>) => {
-			if (!params) return raw;
-			return Object.entries(params).reduce(
-				(acc, [k, v]) => acc.replace(`{:${k}}`, String(v)),
-				raw
-			);
-		},
 		_deleteRecord: deleteRecord,
 		_update: update,
 		_getOne: getOne,
@@ -130,38 +123,24 @@ describe('deleteMultipleItems', () => {
 			item2: [{ id: 'conv-open' }],
 		};
 
-		const pb = {
-			collection: vi.fn((name: string) => {
-				if (name === 'items') {
-					return {
-						getOne: vi.fn((id: string) => Promise.resolve(itemMap[id])),
-						delete: vi.fn().mockResolvedValue(undefined),
-					};
-				}
-				if (name === 'conversations') {
-					return {
-						getFullList: vi.fn(({ filter }: { filter?: string } = {}) => {
-							if (typeof filter === 'string' && filter.includes('lendingStatus')) {
-								// Open guard — derive item ID from the filter string
-								for (const [itemId, convs] of Object.entries(openConvsByItemId)) {
-									if (filter.includes(itemId)) return Promise.resolve(convs);
-								}
-								return Promise.resolve([]);
-							}
-							return Promise.resolve([]); // cascade — no remaining convs
-						}),
-					};
-				}
-				return {};
-			}),
-			filter: (raw: string, params?: Record<string, unknown>) => {
-				if (!params) return raw;
-				return Object.entries(params).reduce(
-					(acc, [k, v]) => acc.replace(`{:${k}}`, String(v)),
-					raw
-				);
+		const pb = makeMockPb({
+			items: {
+				getOne: vi.fn((id: string) => Promise.resolve(itemMap[id])),
+				delete: vi.fn().mockResolvedValue(undefined),
 			},
-		} as unknown as Parameters<typeof deleteMultipleItems>[0];
+			conversations: {
+				getFullList: vi.fn(({ filter }: { filter?: string } = {}) => {
+					if (typeof filter === 'string' && filter.includes('lendingStatus')) {
+						// Open guard — derive item ID from the filter string
+						for (const [itemId, convs] of Object.entries(openConvsByItemId)) {
+							if (filter.includes(itemId)) return Promise.resolve(convs);
+						}
+						return Promise.resolve([]);
+					}
+					return Promise.resolve([]); // cascade — no remaining convs
+				}),
+			},
+		}) as unknown as Parameters<typeof deleteMultipleItems>[0];
 
 		const { deleted, blocked } = await deleteMultipleItems(pb, ['item1', 'item2'], OWNER_ID);
 
