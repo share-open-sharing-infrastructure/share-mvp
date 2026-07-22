@@ -1,47 +1,36 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { Toggle } from 'flowbite-svelte';
 	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { texts } from '$lib/texts';
-	import { buildSearchUrl } from './searchUrl';
 
+	// Rendered inside FilterModal (issue #505): holds no navigation of its own. Selections
+	// are local draft state, bound up to the modal, and only committed to the URL when
+	// "Filter anwenden" is clicked there.
 	interface Props {
 		selectedCategories: string[];
 		op: 'or' | 'and';
-		q: string;
-		perPage: number;
-		onlyAvailable: boolean;
-		ownerType: string;
-		group: string | null;
 	}
 
-	let { selectedCategories, op, q, perPage, onlyAvailable, ownerType, group }: Props = $props();
-
-	function buildUrl(newCats: string[], newOp: 'or' | 'and'): string {
-		// Always reset to page 1 when filter changes (omit page param).
-		return buildSearchUrl({ q, cats: newCats, op: newOp, onlyAvailable, ownerType, group: group ?? undefined, perPage: perPage !== 10 ? perPage : undefined });
-	}
+	let { selectedCategories = $bindable(), op = $bindable() }: Props = $props();
 
 	function toggleCat(cat: string) {
-		const next = selectedCategories.includes(cat) ? [] : [cat];
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() already resolve()s the /search path; the rule can't see through the helper
-		goto(buildUrl(next, op));
+		selectedCategories = selectedCategories.includes(cat) ? [] : [cat];
 	}
 
 	function toggleOp() {
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() already resolve()s the /search path; the rule can't see through the helper
-		goto(buildUrl(selectedCategories, op === 'or' ? 'and' : 'or'));
+		op = op === 'or' ? 'and' : 'or';
 	}
 
 	let andActive = $derived(op === 'and');
 </script>
 
 <div class="mt-3 space-y-2">
-	<div class="flex flex-wrap justify-center gap-2">
+	<div class="flex flex-wrap gap-2">
 		{#each ITEM_CATEGORIES as cat(cat)}
 			{@const active = selectedCategories.includes(cat)}
 			<button
 				type="button"
+				aria-pressed={active}
 				onclick={() => toggleCat(cat)}
 				class="rounded-full border px-3 py-1 text-sm font-medium transition-colors cursor-pointer
 					{active

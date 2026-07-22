@@ -212,6 +212,10 @@
 					max="30"
 					step="5"
 					bind:value={maxMinutes}
+					aria-label={texts.pages.search.durationFilter.sliderLabel}
+					aria-valuetext={maxMinutes >= 30
+						? texts.pages.search.durationFilter.noLimit
+						: texts.pages.search.durationFilter.maxMinutes(maxMinutes)}
 					class="w-full h-2 accent-primary cursor-pointer"
 				/>
 				<span class="text-sm text-tinte-600 dark:text-tinte-300 w-28">

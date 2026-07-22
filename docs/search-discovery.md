@@ -10,27 +10,36 @@ URL search params
    │  parseSearchParameters()        searchFilter.ts
    ▼
 SearchParameters  ──buildItemFilter()──►  PocketBase filter string
-   │                                          │
-   ▼                                          ▼
+   │                        │
+   │                        └─ sort ──sortToPbSort()──►  PocketBase sort string
+   ▼
 +page.server.ts load()  ──getList(page, perPage, { sort, filter })──►  items_searchable view
    │
    ▼
-+page.svelte  ──►  ResultsList → ItemCard      (+ Pagination, CategoryFilter, TravelTimeFilter)
++page.svelte  ──►  ResultsList → ItemCard   (+ Pagination, TravelTimeFilter, FilterModal)
 ```
 
 ## Pieces
 
 | Concern | File | Notes |
 |---|---|---|
-| Parse & validate URL params | [`searchFilter.ts`](../src/routes/search/searchFilter.ts) `parseSearchParameters` | Returns a fully-typed `SearchParameters`; clamps `page`/`perPage`, drops unknown categories. |
+| Parse & validate URL params | [`searchFilter.ts`](../src/routes/search/searchFilter.ts) `parseSearchParameters` | Returns a fully-typed `SearchParameters`; clamps `page`/`perPage`, drops unknown categories/sort values. |
 | Build the PB filter | [`searchFilter.ts`](../src/routes/search/searchFilter.ts) `buildItemFilter` / `buildSearchFilter` | Combines name, owner-exclusion, categories, availability, owner-type and group with `&&`. |
-| Server load | [`+page.server.ts`](../src/routes/search/+page.server.ts) | Reads the `items_searchable` view, sorts, paginates, logs non-empty queries. |
-| Page shell + client filters | [`+page.svelte`](../src/routes/search/+page.svelte) | Wires search bar, filters, results, pagination. |
+| Map sort → PB sort string | [`searchFilter.ts`](../src/routes/search/searchFilter.ts) `sortToPbSort` | `newest` → `-created` (default), `name_asc` → `name`, `name_desc` → `-name`. |
+| Server load | [`+page.server.ts`](../src/routes/search/+page.server.ts) | Reads the `items_searchable` view, sorts (via `sortToPbSort`), paginates, logs non-empty queries. |
+| Page shell | [`+page.svelte`](../src/routes/search/+page.svelte) | Wires search bar, the filter trigger + `TravelTimeFilter`, results, pagination. |
 | Results grid | [`ResultsList.svelte`](../src/routes/search/ResultsList.svelte) → [`ItemCard.svelte`](../src/routes/search/ItemCard.svelte) | Takes an `ItemPublic[]` and renders cards. |
-| Pagination UI | [`Pagination.svelte`](../src/routes/search/Pagination.svelte) | Page buttons + per-page selector; a GET form so no `goto()` is needed. |
+| Pagination UI | [`Pagination.svelte`](../src/routes/search/Pagination.svelte) | Page buttons + per-page selector; a GET form so no `goto()` is needed. Threads `sort` alongside the other params. |
 | URL building | [`searchUrl.ts`](../src/routes/search/searchUrl.ts) `buildSearchUrl` | Single source of truth for constructing `/search?...` links. |
-| Travel-time filter | [`TravelTimeFilter.svelte`](../src/routes/search/TravelTimeFilter.svelte) | Client-side; filters/sorts the **current page** by bucketed minutes (see below). |
-| Group filter | [`GroupFilter.svelte`](../src/routes/search/GroupFilter.svelte) | Single-select dropdown of the user's groups; navigates via `buildSearchUrl`. Rendered only when the user has groups (guests never see it). |
+| Consolidated filter trigger + modal | [`FilterModal.svelte`](../src/routes/search/FilterModal.svelte) | Opened from a "Filter" button (with an active-filter-count badge counting only what's settable inside the modal: Verfügbarkeit / Anbieter / Kategorien / Gruppe) on the search page. Holds Sortierung / Verfügbarkeit / Anbieter / Kategorien / Gruppe as local draft `$state`, seeded from the current (URL-derived) props whenever it opens. Nothing navigates until "Filter anwenden", which does one `buildSearchUrl` + `goto()` call committing every draft field at once; "Zurücksetzen" only resets the draft to app defaults, it does not navigate or close the modal. |
+| Generic segmented control | [`SegmentedControl.svelte`](../src/lib/components/ui/SegmentedControl.svelte) | Reusable `options[]` + bindable `value` pill-group primitive; used for the Anbieter control and the modal's sort options. |
+| Travel-time filter | [`TravelTimeFilter.svelte`](../src/routes/search/TravelTimeFilter.svelte) | Rendered inline next to Filter/Sort, not inside the modal. Client-side; filters/sorts the **current page** by bucketed minutes (see below). Its state (`transportMode`/`travelTimes`/`maxMinutes`) lives in `+page.svelte` and was never URL state; the slider itself is its own reset (drag back to the 30 min "no limit" default). |
+| Category filter | [`CategoryFilter.svelte`](../src/routes/search/CategoryFilter.svelte) | Rendered inside the modal's Kategorien section. Chip grid + AND/OR toggle; binds to the modal's draft state (`selectedCategories`/`op`) instead of navigating itself. |
+| Group filter | [`GroupFilter.svelte`](../src/routes/search/GroupFilter.svelte) | Rendered inside the modal's Gruppe section (only when the user has groups; guests never see it). Single-select dropdown of the user's groups; binds to the modal's draft state instead of navigating itself. |
+
+> **Deferred:** Bezirke, Sprachen and max. Leihdauer filters are intentionally not in the modal —
+> there are no backend fields for them yet. Adding them needs a schema change first (coordinate
+> via the `/schema-change` skill) before any filter UI is built.
 
 ## Which view it reads
 
@@ -57,6 +66,7 @@ All discovery state lives in the URL (deep-linkable, server-rendered). Defaults 
 | `onlyAvailable` | `true` (default); `false` includes unavailable items |
 | `ownerType` | `all` (default) / `institution` / `private` |
 | `group` | a single group id — restrict results to items shared with that group. Only groups the requester owns or is a member of are accepted (see the security note below); anything else is silently dropped |
+| `sort` | `newest` (default) / `name_asc` / `name_desc` — mapped to a PocketBase sort string by `sortToPbSort`. Omitted from the URL at the default; an unrecognised value falls back to `newest`. |
 | `page` (1), `perPage` (20, max 50) | pagination |
 
 ### Group filter (`group`) — security

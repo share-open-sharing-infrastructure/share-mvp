@@ -37,6 +37,19 @@ describe('buildSearchUrl', () => {
 	it('returns the bare search path when no params are set', () => {
 		expect(buildSearchUrl({})).toBe('/search');
 	});
+
+	it('includes sort when non-default', () => {
+		const url = buildSearchUrl({ sort: 'name_asc' });
+		expect(url).toBe('/search?sort=name_asc');
+	});
+
+	it('omits sort entirely when "newest" (the default)', () => {
+		expect(buildSearchUrl({ sort: 'newest' })).toBe('/search');
+	});
+
+	it('omits sort entirely when undefined', () => {
+		expect(buildSearchUrl({ sort: undefined })).toBe('/search');
+	});
 });
 
 // Roundtrip invariant: buildSearchUrl and parseSearchParameters MUST agree on every default.
@@ -69,5 +82,11 @@ describe('buildSearchUrl ↔ parseSearchParameters roundtrip', () => {
 		expect(parsed.ownerType).toBe('institution');
 		expect(parsed.page).toBe(3);
 		expect(parsed.perPage).toBe(50);
+	});
+
+	it('preserves sort for every option, including the default', () => {
+		expect(roundtrip({ sort: 'newest' }).sort).toBe('newest');
+		expect(roundtrip({ sort: 'name_asc' }).sort).toBe('name_asc');
+		expect(roundtrip({ sort: 'name_desc' }).sort).toBe('name_desc');
 	});
 });
