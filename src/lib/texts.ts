@@ -727,6 +727,8 @@ export const texts = {
 			// borrowing, "an <Ausleiher:in>" when lending.
 			fromUserPrefix: 'von',
 			toUserPrefix: 'an',
+			// Screen-reader label for the unread indicator on a conversation list row.
+			unread: 'Ungelesen',
 			noConversations: 'Du hast noch keine Unterhaltungen.',
 			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',

@@ -63,6 +63,8 @@ export async function run(pb) {
 	// Extra public items across categories for search render / filter / pagination.
 	await createItem(pb, owner.id, 'E2E Campingzelt', ['Reisen und Outdoor']);
 	await createItem(pb, owner.id, 'E2E Kochbuch', ['Bücher']);
+	// "E2E Beamer" is reserved for conversation-read-on-open.spec: the viewer requests it
+	// to open an unread-for-owner conversation, then the spec checks hover vs. click.
 	await createItem(pb, owner.id, 'E2E Beamer', ['Ton und Licht']);
 	// Trustees-only: visible to the owner's trustees (viewer), masked for third / strangers.
 	const geheim = await createItem(pb, owner.id, 'E2E Geheimwerkzeug', ['Werkzeug und Garten'], {
@@ -103,6 +105,7 @@ export async function run(pb) {
   Items (owner):
     E2E Bohrmaschine (public)          → /items/${bohrmaschine.id}   [reserved for lending.spec]
     E2E Campingzelt / Kochbuch / Beamer (public, various categories)
+      [Beamer reserved for conversation-read-on-open.spec, Kochbuch for messages.spec]
     E2E Geheimwerkzeug (trustees-only) → /items/${geheim.id}   [viewer sees it, third does not]
 
   Groups (owner):

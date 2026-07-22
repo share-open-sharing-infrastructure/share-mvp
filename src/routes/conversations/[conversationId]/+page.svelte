@@ -143,6 +143,22 @@
 		);
 	});
 
+	// Mark the conversation as read once it is actually opened. Read-state is no longer
+	// touched in load() because load() runs on hover-preload
+	// (data-sveltekit-preload-data="hover"), which would mark threads read on mere hover
+	// (issue #412). Fire-and-forget: the POST targets the CURRENT conversation by explicit
+	// path so a mid-flight client-side nav can't retarget the wrong thread; on success we
+	// invalidateAll() to resync read-state (list dot, nav badge). This effect intentionally
+	// reads ONLY `pb` (mounted gate) and `conversationId` — adding other reactive reads
+	// would make it re-fire and re-mark.
+	$effect(() => {
+		if (!pb) return;
+		const id = conversationId;
+		fetch(`/conversations/${id}?/markRead`, { method: 'POST', body: new FormData() })
+			.then(() => invalidateAll())
+			.catch(() => {});
+	});
+
 	// Presence heartbeat: periodically update the lastSeenAt timestamp so the backend
 	// knows the user is actively viewing this conversation and can suppress email notifications.
 	$effect(() => {

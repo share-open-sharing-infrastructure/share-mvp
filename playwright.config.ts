@@ -69,6 +69,7 @@ export default defineConfig({
 			dependencies: ['setup'],
 			testMatch: [
 				'tests/lending.spec.ts',
+				'tests/conversation-read-on-open.spec.ts',
 				'tests/groups.spec.ts',
 				'tests/search.spec.ts',
 				'tests/messages.spec.ts',

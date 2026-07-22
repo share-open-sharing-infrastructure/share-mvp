@@ -40,40 +40,10 @@ export async function load({ params, locals }) {
 		updated: conversationRecord.updated,
 	};
 
-	// Mark the conversation as read for the current viewer
-	if (locals.user) {
-		const isRequester = conversationRecord.requester === locals.user.id;
-		const isOwner = conversationRecord.itemOwner === locals.user.id;
-		const needsUpdate =
-			(isRequester && !conversationRecord.readByRequester) ||
-			(isOwner && !conversationRecord.readByOwner);
-
-		if (needsUpdate) {
-			await locals.pb.collection('conversations').update(conversationId, {
-				...(isRequester && { readByRequester: true }),
-				...(isOwner && { readByOwner: true }),
-			});
-		}
-
-		// Conversation read state (readByRequester/readByOwner) and notification read
-		// state are tracked in separate collections, so viewing the conversation does
-		// not automatically clear the notification badge. We sync them here.
-		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
-			filter: locals.pb.filter('recipient={:userId} && relatedId={:conversationId} && read=false', {
-				userId: locals.user.id,
-				conversationId,
-			}),
-			fields: 'id',
-		});
-		if (unreadNotifs.length > 0) {
-			await Promise.all(
-				unreadNotifs.map((n) =>
-					locals.pb.collection('notifications').update(n.id, { read: true }).catch(() => {})
-				)
-			);
-		}
-	}
-
+	// NB: read-state is deliberately NOT mutated here. load() runs on hover-preload
+	// (data-sveltekit-preload-data="hover"), so marking read in load() flipped threads
+	// to read on mere hover. Marking read now happens only via the `markRead` action,
+	// fired from the page once it is actually opened (issue #412).
 	const partnerId =
 		conversationRecord.requester === locals.user?.id
 			? conversationRecord.itemOwner
@@ -84,6 +54,36 @@ export async function load({ params, locals }) {
 }
 
 export const actions = {
+	// Explicitly triggered when the conversation page is actually opened (see +page.svelte),
+	// so read-state is no longer flipped by a hover-preload of load() (issue #412).
+	markRead: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.errors.noPermission });
+		const conversationId = params.conversationId;
+		try {
+			// Single getOne (fetches the read flags too) that also authorises participation;
+			// the read state is handed to markConversationRead so it does not re-fetch.
+			const conv = await messaging.fetchConversationForParticipant(
+				locals.pb,
+				conversationId,
+				locals.user.id,
+				'readByRequester,readByOwner'
+			);
+			await messaging.markConversationRead(
+				locals.pb,
+				{
+					id: conv.id,
+					requester: conv.requester,
+					itemOwner: conv.itemOwner,
+					readByRequester: conv.readByRequester,
+					readByOwner: conv.readByOwner,
+				},
+				locals.user.id
+			);
+		} catch (err) {
+			return messaging.toActionFailResult(err, texts.errors.somethingWentWrong);
+		}
+	},
+
 	sendMessage: async ({ locals, request, params }) => {
 		const data = await request.formData();
 		const content = data.get('messageContent')?.toString().trim();
@@ -109,16 +109,11 @@ export const actions = {
 		const data = await request.formData();
 		const conversationId = data.get('conversationId') as string;
 		try {
-			const conv = await locals.pb
-				.collection('conversations')
-				.getOne(conversationId, { fields: 'requester,itemOwner' });
-			if (conv.requester !== locals.user?.id && conv.itemOwner !== locals.user?.id) {
-				return fail(403, { fail: true, message: texts.errors.noPermission });
-			}
+			await messaging.fetchConversationForParticipant(locals.pb, conversationId, locals.user?.id);
 			await messaging.deleteConversation(locals.pb, conversationId);
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: e.data?.message ?? texts.errors.failedToDeleteConversation });
+			return messaging.toActionFailResult(err, e.data?.message ?? texts.errors.failedToDeleteConversation);
 		}
 		redirect(303, '/conversations');
 	},
@@ -167,16 +162,10 @@ export const actions = {
 			answer = text;
 		}
 		try {
-			const conv = await locals.pb
-				.collection('conversations')
-				.getOne(conversationId, { fields: 'requester,itemOwner' });
-			if (conv.requester !== locals.user?.id && conv.itemOwner !== locals.user?.id) {
-				return fail(403, { fail: true, message: texts.errors.noPermission });
-			}
+			await messaging.fetchConversationForParticipant(locals.pb, conversationId, locals.user?.id);
 			await locals.pb.collection('conversations').update(conversationId, { counterfactual: answer });
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return messaging.toActionFailResult(err, texts.errors.somethingWentWrong);
 		}
 	},
 };
