@@ -142,61 +142,61 @@ export async function load({ locals }) {
 
 There's actually not much to say here except that this should handle errors properly. Otherwise, it just runs well in conjunction with the SvelteKit mechanisms explained above.
 
-## Link-/Routen-Auflösung (`resolve`)
+## Link / route resolution (`resolve`)
 
-Alle **internen** Navigationen (`<a href>`, `goto()`, `pushState`/`replaceState`, Komponenten-
-`href`-Props wie bei `Button`/`Card`) laufen über `resolve()` aus `$app/paths`. Der ESLint-Rule
-`svelte/no-navigation-without-resolve` (empfohlen, aktiv) erzwingt das — er erkennt aber **nur
-einen direkten `resolve()`-Aufruf** an der Navigationsstelle (bzw. eine Variable, deren Initializer
-direkt ein `resolve()` ist). **Durch Wrapper-Funktionen oder Re-Exports sieht er nicht hindurch** —
-deshalb gibt es bewusst **keinen** zentralen Routen-Helper.
+All **internal** navigation (`<a href>`, `goto()`, `pushState`/`replaceState`, component `href`
+props like on `Button`/`Card`) goes through `resolve()` from `$app/paths`. The ESLint rule
+`svelte/no-navigation-without-resolve` (recommended, enabled) enforces this — but it only
+recognises **a direct `resolve()` call** at the navigation site (or a variable whose initializer
+is directly a `resolve()`). **It cannot see through wrapper functions or re-exports** — so there
+is deliberately **no** central route helper.
 
-**Kanonische Form: Route-ID + Params**, nicht Template-String-Interpolation:
+**Canonical form: route ID + params**, not template-string interpolation:
 
 ```svelte
-<!-- richtig -->
+<!-- correct -->
 <a href={resolve('/users/[id]', { id })}>…</a>
 <a href={resolve('/user/groups/[id]/members', { id: group.id })}>…</a>
 
-<!-- falsch: Template-String, Wrapper, Re-Export -->
+<!-- wrong: template string, wrapper, re-export -->
 <a href={resolve(`/users/${id}`)}>…</a>
 <a href={routeTo.user(id)}>…</a>
 ```
 
-Der Route-ID-String ist ein **String-Literal** (kein Template-String), und die Param-Keys heißen
-exakt wie die `[segment]`-Ordner (`[id]`, `[conversationId]`, …).
+The route-ID string is a **string literal** (not a template string), and the param keys are named
+exactly like the `[segment]` folders (`[id]`, `[conversationId]`, …).
 
-Genau **drei** gestattete Ausnahmen:
+Exactly **three** permitted exceptions:
 
-- **A — Query/Hash** gehören **in** das `resolve()`-Argument. SvelteKit reicht Query/Hash seit
-  **2.26** durch `resolve()` durch; ein Disable „resolve handhabt keine Query-Strings" ist damit
-  veraltet.
+- **A — Query/hash** belong **inside** the `resolve()` argument. SvelteKit passes query/hash
+  through `resolve()` since **2.26**, so a disable saying "resolve doesn't handle query strings" is
+  stale.
 
   ```ts
   goto(resolve(`/search?q=${encodeURIComponent(q)}`));
   goto(resolve(`/user/items?${params.toString()}`));
   ```
 
-- **B — Wiederverwendbare URL-Builder** (`buildSearchUrl()`, `notificationHref()`) bauen ihre URL
-  **intern** mit `resolve()` und geben eine fertig aufgelöste URL zurück. An der Aufrufstelle steht
-  **ein** Disable mit standardisiertem Wortlaut, weil der Rule nicht durch den Aufruf sieht:
+- **B — Reusable URL builders** (`buildSearchUrl()`, `notificationHref()`) build their URL
+  **internally** with `resolve()` and return an already-resolved URL. At the call site there is
+  **one** disable with a standardised wording, because the rule cannot see through the call:
 
   ```ts
   // eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() returns an already-resolved URL; the rule cannot see through the call
   goto(buildSearchUrl({ q, cats }));
   ```
 
-- **C — Externe / benutzergelieferte URLs** werden **nie** aufgelöst: `LinkifiedText.svelte`
-  (`rel="external"`) und der Footer-Redirect über `/api/redirect?to=…` (interner https-Guard +
-  Klick-Tracking) bleiben unangetastet.
+- **C — External / user-supplied URLs** are **never** resolved: `LinkifiedText.svelte`
+  (`rel="external"`) and the footer redirect via `/api/redirect?to=…` (internal https guard +
+  click tracking) stay untouched.
 
-**Statische Dateien** aus `static/` (z. B. CSV-Vorlagen) über `asset()` (ebenfalls `$app/paths`,
-seit 2.26), nicht `resolve()`:
+**Static files** from `static/` (e.g. CSV templates) go through `asset()` (also `$app/paths`,
+since 2.26), not `resolve()`:
 
 ```svelte
 <a href={asset('/templates/items-import-template.csv')} download>…</a>
 ```
 
-`redirect()` in Server-`load`-Funktionen / `hooks.server.ts` fällt **nicht** unter den Rule und
-bleibt daher unverändert (heute `base=''`, also identisch). Würde je ein `base`-Pfad gesetzt,
-müssten diese Redirect-Ziele durch `resolve()` laufen.
+`redirect()` in server `load` functions / `hooks.server.ts` is **not** covered by the rule and
+therefore stays unchanged (today `base=''`, so identical). If a `base` path were ever set, these
+redirect targets would need to go through `resolve()`.
