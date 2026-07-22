@@ -11,11 +11,10 @@
 	import { FilterOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
 	import { buildSearchUrl } from './searchUrl';
-	import type { SortOption } from './searchFilter';
+	import type { OwnerType, FilterDraft } from './searchFilter';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
-	type OwnerType = 'all' | 'institution' | 'private';
 
 	const { data } = $props();
 
@@ -41,14 +40,7 @@
 			(data.selectedGroup ? 1 : 0)
 	);
 
-	function handleApply(draft: {
-		sort: SortOption;
-		onlyAvailable: boolean;
-		ownerType: OwnerType;
-		selectedCategories: string[];
-		op: 'or' | 'and';
-		selectedGroup: string | null;
-	}) {
+	function handleApply(draft: FilterDraft) {
 		filterModalOpen = false;
 		// Single navigation commits every draft field at once; page resets to default (omitted).
 		goto(
@@ -133,9 +125,9 @@
 <!-- HEADER -->
 <div class="mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<h3 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
+		<h2 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.pages.search.title}
-		</h3>
+		</h2>
 	</div>
 </div>
 
@@ -166,14 +158,13 @@
 		onApply={handleApply}
 	/>
 
-	<!-- Commenting this out to try if the cleaner approach is better, maybe reintroduce later -->
-	<!-- <div class="w-full items-center justify-center text-center mt-2">
+	<div class="w-full items-center justify-center text-center mt-2" aria-live="polite">
 		{#if data.q || data.selectedCategories.length > 0 || data.selectedGroup}
-			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : data.totalItems ?? 0)}</h5>
+			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : (data.totalItems ?? 0))}</h5>
 		{:else}
 			<h5>{texts.pages.search.newestItemsHeading}</h5>
 		{/if}
-	</div> -->
+	</div>
 
 	{@render paginationControls()}
 

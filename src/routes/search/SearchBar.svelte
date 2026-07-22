@@ -94,7 +94,6 @@
 
 <form method="GET" action="/search" class="flex gap-2" onsubmit={handleSubmit}>
 	<div class="relative flex-1">
-		
 		<input
 			bind:this={inputEl}
 			bind:value={inputValue}
@@ -110,8 +109,8 @@
 				<button
 					type="button"
 					onclick={clearSearch}
-					aria-label="Suche zurücksetzen"
-					class="flex items-center text-tinte-400 hover:text-tinte-600 dark:hover:text-tinte-200"
+					aria-label={texts.buttons.clearSearch}
+					class="flex items-center p-1 text-tinte-500 hover:text-tinte-600 dark:text-tinte-400 dark:hover:text-tinte-200"
 				>
 					<svg class="h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 						<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />

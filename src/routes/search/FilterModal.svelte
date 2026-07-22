@@ -5,18 +5,7 @@
 	import CategoryFilter from './CategoryFilter.svelte';
 	import GroupFilter from './GroupFilter.svelte';
 	import { texts } from '$lib/texts';
-	import type { SortOption } from './searchFilter';
-
-	type OwnerType = 'all' | 'institution' | 'private';
-
-	interface Draft {
-		sort: SortOption;
-		onlyAvailable: boolean;
-		ownerType: OwnerType;
-		selectedCategories: string[];
-		op: 'or' | 'and';
-		selectedGroup: string | null;
-	}
+	import type { SortOption, OwnerType, FilterDraft } from './searchFilter';
 
 	interface Props {
 		open: boolean;
@@ -29,7 +18,7 @@
 		selectedGroup: string | null;
 		groups: { id: string; name: string }[];
 		// Committed once, in a single call, when "Filter anwenden" is clicked.
-		onApply: (draft: Draft) => void;
+		onApply: (draft: FilterDraft) => void;
 	}
 
 	let {
@@ -46,7 +35,7 @@
 
 	// App defaults — what "Zurücksetzen" restores the draft to (issue #505 scope: reset only
 	// touches the in-modal draft, it does not navigate; the user still applies to commit it).
-	const DEFAULTS: Draft = {
+	const DEFAULTS: FilterDraft = {
 		sort: 'newest',
 		onlyAvailable: false,
 		ownerType: 'all',
@@ -55,28 +44,25 @@
 		selectedGroup: null,
 	};
 
-	let draft = $state<Draft>({
-		sort,
-		onlyAvailable,
-		ownerType,
-		selectedCategories: [...selectedCategories],
-		op,
-		selectedGroup,
-	});
+	// Snapshot the current (URL-derived) props into a fresh draft. Used both for the initial
+	// state and to re-seed on every open, so the two can never drift apart.
+	function seedFromProps(): FilterDraft {
+		return {
+			sort,
+			onlyAvailable,
+			ownerType,
+			selectedCategories: [...selectedCategories],
+			op,
+			selectedGroup,
+		};
+	}
+
+	let draft = $state<FilterDraft>(seedFromProps());
 
 	// Re-seed the draft from the current (URL-derived) props every time the modal opens, so a
 	// previous "Zurücksetzen" (without Apply) or a stale draft never leaks into the next open.
 	$effect(() => {
-		if (open) {
-			draft = {
-				sort,
-				onlyAvailable,
-				ownerType,
-				selectedCategories: [...selectedCategories],
-				op,
-				selectedGroup,
-			};
-		}
+		if (open) draft = seedFromProps();
 	});
 
 	const sortOptions = Object.entries(texts.pages.search.sortOptions).map(([value, label]) => ({
@@ -90,9 +76,10 @@
 		{ value: 'private', label: texts.pages.search.ownerTypePrivate },
 	];
 
+	// Only resets the in-modal draft — it does NOT navigate or close the modal (the user still
+	// clicks "Filter anwenden" to commit). Matches the contract in docs/search-discovery.md.
 	function reset() {
 		draft = { ...DEFAULTS, selectedCategories: [...DEFAULTS.selectedCategories] };
-		apply();
 	}
 
 	function apply() {
@@ -104,9 +91,9 @@
 	<div class="flex flex-col gap-6">
 		<!-- Sortierung -->
 		<section>
-			<h3 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
+			<h4 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
 				{texts.pages.search.sortLabel}
-			</h3>
+			</h4>
 			<SegmentedControl
 				options={sortOptions}
 				bind:value={draft.sort}
@@ -116,12 +103,11 @@
 
 		<!-- Verfügbarkeit -->
 		<section>
-			<label class="flex items-center gap-2 cursor-pointer">
-				<Toggle bind:checked={draft.onlyAvailable} aria-describedby="availability-subtext" />
+			<Toggle bind:checked={draft.onlyAvailable} aria-describedby="availability-subtext">
 				<span class="text-sm text-tinte-600 dark:text-tinte-400">
 					{texts.pages.search.onlyAvailable}
 				</span>
-			</label>
+			</Toggle>
 			<p id="availability-subtext" class="sr-only">
 				{texts.pages.search.filterAvailabilitySubtext}
 			</p>
@@ -129,9 +115,9 @@
 
 		<!-- Anbieter -->
 		<section>
-			<h3 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
+			<h4 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
 				{texts.pages.search.filterSectionOwnerType}
-			</h3>
+			</h4>
 			<SegmentedControl
 				options={ownerTypeOptions}
 				bind:value={draft.ownerType}
@@ -141,18 +127,20 @@
 
 		<!-- Kategorien -->
 		<section>
-			<h3 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
+			<h4 id="filter-categories-heading" class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
 				{texts.pages.search.filterSectionCategories}
-			</h3>
-			<CategoryFilter bind:selectedCategories={draft.selectedCategories} bind:op={draft.op} />
+			</h4>
+			<div role="group" aria-labelledby="filter-categories-heading">
+				<CategoryFilter bind:selectedCategories={draft.selectedCategories} bind:op={draft.op} />
+			</div>
 		</section>
 
 		<!-- Gruppe -->
 		{#if groups.length > 0}
 			<section>
-				<h3 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
+				<h4 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
 					{texts.pages.search.filterSectionGroup}
-				</h3>
+				</h4>
 				<GroupFilter {groups} bind:selectedGroup={draft.selectedGroup} />
 			</section>
 		{/if}

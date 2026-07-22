@@ -3,6 +3,18 @@ import type { ItemPublic } from '$lib/types/models';
 
 export type SortOption = 'newest' | 'name_asc' | 'name_desc';
 
+export type OwnerType = 'all' | 'institution' | 'private';
+
+/** The full set of filter fields `FilterModal` edits as a local draft before committing them. */
+export interface FilterDraft {
+	sort: SortOption;
+	onlyAvailable: boolean;
+	ownerType: OwnerType;
+	selectedCategories: string[];
+	op: 'or' | 'and';
+	selectedGroup: string | null;
+}
+
 export type SearchParameters = {
 	query: string;
 	page: number;
@@ -10,7 +22,7 @@ export type SearchParameters = {
 	selectedCategories: ItemCategory[];
 	op: 'or' | 'and';
 	onlyAvailable: boolean;
-	ownerType: 'all' | 'institution' | 'private';
+	ownerType: OwnerType;
 	/**
 	 * Raw, format-plausible group id parsed from the URL (or `null`). This is NOT yet a
 	 * proven-membership id: `parseSearchParameters` stays pure/sync and only shape-checks it.
@@ -91,7 +103,7 @@ export function parseSearchParameters(url: URL): SearchParameters {
 	const onlyAvailable = url.searchParams.get('onlyAvailable') === 'true';
 
 	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
-	const ownerType: 'all' | 'institution' | 'private' =
+	const ownerType: OwnerType =
 		ownerTypeParam === 'institution' || ownerTypeParam === 'private' ? ownerTypeParam : 'all';
 
 	// Shape-check only: a PocketBase record id is 15 alphanumerics. Garbage is dropped to `null`

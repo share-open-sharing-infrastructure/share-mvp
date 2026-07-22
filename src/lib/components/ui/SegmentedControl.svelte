@@ -16,21 +16,39 @@
 
 	let { options, value = $bindable(), onchange, label, class: className = '' }: Props = $props();
 
+	// Roving tabindex + arrow-key selection, per the WAI-ARIA radio-group pattern: the group is a
+	// single Tab stop (only the checked radio is tabbable), and Arrow keys move focus *and*
+	// selection between options.
+	let buttons = $state<HTMLButtonElement[]>([]);
+
 	function select(next: T) {
 		value = next;
 		onchange?.(next);
 	}
+
+	function onKeydown(event: KeyboardEvent, index: number) {
+		const forward = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+		const backward = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+		if (!forward && !backward) return;
+		event.preventDefault();
+		const delta = forward ? 1 : -1;
+		const nextIndex = (index + delta + options.length) % options.length;
+		select(options[nextIndex].value);
+		buttons[nextIndex]?.focus();
+	}
 </script>
 
-<!-- Roving tabindex / arrow-key navigation intentionally out of scope for this fix. -->
 <div role="radiogroup" aria-label={label} class="inline-flex flex-wrap gap-2 {className}">
-	{#each options as option (option.value)}
+	{#each options as option, index (option.value)}
 		{@const active = option.value === value}
 		<button
+			bind:this={buttons[index]}
 			type="button"
 			role="radio"
 			aria-checked={active}
+			tabindex={active ? 0 : -1}
 			onclick={() => select(option.value)}
+			onkeydown={(event) => onKeydown(event, index)}
 			class="rounded-full border px-3 py-1 text-sm font-medium transition-colors cursor-pointer
 				{active
 				? 'bg-primary border-primary text-white'

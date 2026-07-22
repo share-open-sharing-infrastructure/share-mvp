@@ -44,12 +44,11 @@
 
 	{#if selectedCategories.length >= 2}
 		<div class="flex justify-center">
-			<label class="flex items-center gap-2 cursor-pointer">
-				<Toggle checked={andActive} onchange={toggleOp} />
+			<Toggle checked={andActive} onchange={toggleOp}>
 				<span class="text-sm text-tinte-600 dark:text-tinte-400">
 					{texts.pages.search.categoryFilterAnd}
 				</span>
-			</label>
+			</Toggle>
 		</div>
 	{/if}
 </div>
