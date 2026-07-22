@@ -176,31 +176,31 @@ Three new collections plus one new field on `items` (see
 | Self-join | Allowed only for public groups, only for yourself, and only as `member` (never `admin`); idempotent. |
 | Invite expired / used up | Preview and join both return `410` with a clear message. |
 
-### Benachrichtigungen bei Mitgliedschafts-Events
+### Membership-event notifications
 
-Drei Mitgliedschafts-Ereignisse erzeugen jeweils eine In-App-Benachrichtigung **und** einen
-Web-Push (kein E-Mail-Versand — bewusst wie bei den Lending-Events):
+Three membership events each produce an in-app notification **and** a web push (no email — a
+deliberate choice, as with the lending events):
 
-| Ereignis | Empfänger | Typ | Klickziel |
+| Event | Recipient | Type | Click target |
 |---|---|---|---|
-| Owner nimmt jemanden über die Mitglieder-Seite auf (`addMember`) | der/die Hinzugefügte | `group_member_added` | `/user/groups/{id}` |
-| Beitritt per Einladungslink (`join`) | Group-Owner | `group_member_joined` | `/user/groups/{id}` |
-| Owner entfernt jemanden aus der Gruppe (`removeMember`) | der/die Entfernte | `group_member_removed` | `/user/groups/{id}` |
+| Owner adds someone via the members page (`addMember`) | the added person | `group_member_added` | `/user/groups/{id}` |
+| Join via invite link (`join`) | group owner | `group_member_joined` | `/user/groups/{id}` |
+| Owner removes someone from the group (`removeMember`) | the removed person | `group_member_removed` | `/user/groups/{id}` |
 
-- Alle drei werden **im Frontend** ausgelöst (die auslösende Session erzeugt die Notification
-  für die/den Anderen) — der Join-Fall lädt dazu die Owner-ID per `getOne` nach, weil die
-  Join-Response sie nicht enthält.
-- **Nur echte Änderungen** benachrichtigen: der idempotente Already-Member-Pfad (doppeltes
-  Hinzufügen, erneuter Link-Klick, Owner klickt eigenen Link) und ein No-op-Remove lösen nichts
-  aus; beim Entfernen gibt es zudem keine Self-Notification (Sender ≠ Empfänger).
-- `relatedId` ist die Gruppen-ID; wer die Notification anklickt, landet auf der Gruppenseite
-  (`requireGroupMembership` lässt Owner und Mitglieder rein). Beim `group_member_removed` hat
-  der/die Entfernte keinen Zugriff mehr — der Klick auf `/user/groups/{id}` endet dann auf einer
-  **404 „Group not found"** (akzeptierter Grenzfall): `requireGroupMembership` liest die Gruppe
-  zuerst per `getOne`, was die `groups`-Viewrule für Nicht-Mitglieder verweigert → `error(404)`,
-  noch bevor der Mitgliedschafts-Redirect greifen könnte. Dasselbe vorbestehende Verhalten trifft
-  jede/n Nicht-Berechtigte/n, der/die eine private Gruppen-URL öffnet. Die Konsistenzregel
-  relatedId → url → href bleibt intakt (alle drei Gruppen-Typen → `/user/groups/{id}`).
+- All three are triggered **in the frontend** (the triggering session creates the notification for
+  the other party) — the join case additionally loads the owner id via `getOne`, because the join
+  response doesn't include it.
+- **Only real changes** notify: the idempotent already-member path (adding twice, clicking the link
+  again, the owner clicking their own link) and a no-op remove trigger nothing; a removal also has
+  no self-notification (sender ≠ recipient).
+- `relatedId` is the group id; whoever clicks the notification lands on the group page
+  (`requireGroupMembership` lets owners and members in). For `group_member_removed` the removed
+  person no longer has access — clicking `/user/groups/{id}` then ends on a
+  **404 "Group not found"** (an accepted edge case): `requireGroupMembership` reads the group first
+  via `getOne`, which the `groups` view rule denies for non-members → `error(404)`, before the
+  membership redirect could ever kick in. The same pre-existing behaviour hits any unauthorised
+  person who opens a private group URL. The consistency rule relatedId → url → href stays intact
+  (all three group types → `/user/groups/{id}`).
 
 ---
 
