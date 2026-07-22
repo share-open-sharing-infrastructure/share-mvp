@@ -7,7 +7,6 @@ dist
 .env.*
 !.env.example
 .vscode
-.claude/settings.json
 .claude/worktrees
 .claude/CLAUDE.md
 
