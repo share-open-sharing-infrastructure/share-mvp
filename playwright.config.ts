@@ -58,6 +58,7 @@ export default defineConfig({
 				'tests/item-upload.spec.ts',
 				'tests/trust.spec.ts',
 				'tests/feedback.spec.ts',
+				'tests/toast-over-modal.spec.ts',
 			],
 		},
 		{
