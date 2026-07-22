@@ -13,8 +13,8 @@
 		<dd class="text-3xl font-semibold text-tinte-900 dark:text-tinte-100">{stats.usersTotal}</dd>
 	</div>
 	<div class="rounded-lg border border-tinte-200 bg-papier p-4 dark:border-tinte-700 dark:bg-tinte-900">
-		<dt class="text-sm text-tinte-500 dark:text-tinte-400">{t.itemsAvailable}</dt>
-		<dd class="text-3xl font-semibold text-tinte-900 dark:text-tinte-100">{stats.itemsAvailable}</dd>
+		<dt class="text-sm text-tinte-500 dark:text-tinte-400">{t.itemsTotal}</dt>
+		<dd class="text-3xl font-semibold text-tinte-900 dark:text-tinte-100">{stats.itemsTotal}</dd>
 	</div>
 	<div class="rounded-lg border border-tinte-200 bg-papier p-4 dark:border-tinte-700 dark:bg-tinte-900">
 		<dt class="text-sm text-tinte-500 dark:text-tinte-400">{t.loansCompleted}</dt>

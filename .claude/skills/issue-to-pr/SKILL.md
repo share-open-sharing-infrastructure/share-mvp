@@ -4,9 +4,9 @@ description: >
   Drive a single issue through the full AllerLeih delivery pipeline as an interactive
   orchestrator: plan → code → review → fix-loop → test → manual-test gate → commit + PR.
   Each stage runs as a dedicated sub-agent and MUST consult the applicable project skills and
-  CLAUDE.md guardrails. Use when the user hands over an issue (text, number, or URL) and wants
-  it taken from idea to an open pull request with human sign-off before shipping. Two human
-  gates: plan approval and manual-test OK.
+  CLAUDE.md guardrails. TRIGGERS: "address issue", "fix issue", "work on issue", "implement
+  issue", or any GitHub issue number or URL handed over for delivery — invoke this skill
+  immediately, before any research or coding. Two human gates: plan approval and manual-test OK.
 ---
 
 # issue-to-pr
