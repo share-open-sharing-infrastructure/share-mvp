@@ -7,6 +7,7 @@ export interface SearchUrlParams {
 	onlyAvailable?: boolean;
 	ownerType?: string;
 	group?: string;
+	sort?: string;
 	page?: number;
 	perPage?: number;
 }
@@ -21,5 +22,6 @@ export function buildSearchUrl(params: SearchUrlParams): string {
 	if (params.onlyAvailable) parts.push('onlyAvailable=true');
 	if (params.ownerType && params.ownerType !== 'all') parts.push(`ownerType=${params.ownerType}`);
 	if (params.group) parts.push(`group=${encodeURIComponent(params.group)}`);
+	if (params.sort && params.sort !== 'newest') parts.push(`sort=${encodeURIComponent(params.sort)}`);
 	return resolve('/search') + (parts.length ? '?' + parts.join('&') : '');
 }
