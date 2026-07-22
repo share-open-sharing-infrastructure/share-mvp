@@ -12,7 +12,7 @@ beforeEach(() => {
 
 describe('/ (landing page) load', () => {
 	it('returns the public stats for the embedded widget', async () => {
-		const stats = { usersTotal: 10, itemsAvailable: 5, loansCompleted: 2, impactWouldBuyCount: 1 };
+		const stats = { usersTotal: 10, itemsTotal: 5, loansCompleted: 2, impactWouldBuyCount: 1 };
 		getPublicStats.mockResolvedValue(stats);
 
 		const result = await load({} as never);

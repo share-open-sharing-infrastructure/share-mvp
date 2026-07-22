@@ -63,6 +63,9 @@
 	// top layer, which paints above any z-indexed toast overlay (#522). Local (not the
 	// shared page-level `form` prop) so it's scoped to THIS modal's own submit.
 	let submitError = $state<string | null>(null);
+	// In-flight guard against double-submit (slow connection + repeated taps firing
+	// duplicate ?/create requests, #445). Mirrors the bulk-add ReviewStep pattern.
+	let submitting = $state(false);
 	let fileInput = $state<HTMLInputElement | undefined>(undefined);
 	// Newly chosen images (a multi-file field). previews mirrors selectedFiles for display.
 	let selectedFiles = $state<File[]>([]);
@@ -163,6 +166,7 @@
 			form = null;
 			imageError = null;
 			submitError = null;
+			submitting = false;
 			clearPreviews();
 		}
 	});
@@ -186,6 +190,8 @@
 		oninput={() => (isDirty = true)}
 		onchange={() => (isDirty = true)}
 		use:enhance={async ({ formData, cancel }) => {
+			if (submitting) { cancel(); return; }
+			submitting = true;
 			submitError = null;
 			// Multi-file field: compress each chosen image and re-append under the same
 			// `itemImage` key. SVGs skip compression (canvas can't draw them reliably);
@@ -201,11 +207,13 @@
 					formData.append('itemImage', compressed, file.name);
 				} catch {
 					submitError = texts.bulkUpload.imageFormatUnsupported;
+					submitting = false;
 					cancel();
 					return;
 				}
 			}
 			return async ({ result, update }) => {
+				submitting = false;
 				if (result.type === 'success') {
 					isDirty = false;
 					isVisible = false;
@@ -448,7 +456,7 @@
 			{/if}
 
 			<!-- SUBMIT BUTTON -->
-			<Button type="submit">
+			<Button type="submit" loading={submitting}>
 				{type === 'edit' ? texts.buttons.save : texts.buttons.add}
 			</Button>
 		</div>

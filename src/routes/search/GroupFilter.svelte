@@ -1,33 +1,26 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
-	import { buildSearchUrl } from './searchUrl';
 
+	// Rendered inside FilterModal (issue #505): holds no navigation of its own. The selection
+	// is local draft state, bound up to the modal, and only committed to the URL when
+	// "Filter anwenden" is clicked there.
 	interface Props {
 		groups: { id: string; name: string }[];
 		selectedGroup: string | null;
-		// All other active search params, threaded through so switching group preserves them.
-		q: string;
-		cats: string[];
-		op: 'or' | 'and';
-		onlyAvailable: boolean;
-		ownerType: string;
 	}
 
-	let { groups, selectedGroup, q, cats, op, onlyAvailable, ownerType }: Props = $props();
+	let { groups, selectedGroup = $bindable() }: Props = $props();
 
 	function onChange(event: Event) {
 		const value = (event.currentTarget as HTMLSelectElement).value;
-		// Reset to page 1 (page param omitted, matching CategoryFilter). An empty value clears
-		// the filter (group left undefined).
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() returns an already-resolved URL; the rule cannot see through the call
-		goto(buildSearchUrl({ q, cats, op, onlyAvailable, ownerType, group: value || undefined }));
+		selectedGroup = value || null;
 	}
 </script>
 
 <!-- Only rendered when the user has groups (implies logged in); guests never see it. -->
-<div class="flex flex-wrap items-center justify-center gap-2">
+<div class="flex flex-wrap gap-2">
+	<label for="group-filter" class="sr-only">{texts.pages.search.groupFilterLabel}</label>
 	<!-- Styled as a pill matching the category chips / owner-type toggle: highlighted (primary)
 	     when a group is active, native arrow removed via appearance-none + custom chevron. -->
 	<div class="relative inline-flex">

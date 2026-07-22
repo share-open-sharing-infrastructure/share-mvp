@@ -6,10 +6,10 @@ detailed docs/skills that load on demand. Read the linked doc before structural 
 
 ## Project overview
 
-**AllerLeih** is an item-sharing platform. Users list items to share or lend and browse/request others'. 
-The platform's purpose is to provide free and open-source infrastructure for the sharing economy. 
-It integrates peer-2-peer-lending as well as institutional lending (either directly on the platform for small institutions or via integrations).
-**The UI is entirely in German.**
+**AllerLeih** is an item-sharing platform. Users list items to share or lend and browse/request
+others'. It integrates peer-2-peer lending as well as institutional lending (directly on the
+platform for small institutions, or via integrations — see `docs/integrations.md` and `README.md`
+for the mission/milestones). **The UI is entirely in German.**
 
 ## Tech stack
 
@@ -58,6 +58,8 @@ Required in `.env` (see `docs/architecture.md` for what each does; template: `.e
 `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
 `MISTRAL_API_KEY` (prod only). Integration sync (`/api/sync`, `/api/refresh`; see
 `docs/operations/integration-sync.md`): `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`.
+For personal local overrides (local ports, sandbox creds) that shouldn't be shared with the team,
+use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this file.
 
 ## Guardrails (always apply)
 
@@ -126,6 +128,7 @@ These prevent the most common bugs/security issues here — follow them without 
 | Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
 | Business metrics (`/admin/metrics`, `/misc/stats`, the nightly `metrics_daily` snapshot) | `docs/operations/metrics.md`; helper in `$lib/server/metrics.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
+| A backend-only issue (no frontend changes) | Still drive it through `/issue-to-pr` + `/create-pr` **here** — the plan gate and review dispatch (`sveltekit-pb-reviewer` covers `pb_hooks`/`pb_migrations`) live in this repo. The backend also has its own `allerleih-backend/.claude/skills/create-pr` for standalone use when working in that repo alone. |
 
 ## Project tooling (this repo's `.claude/`)
 

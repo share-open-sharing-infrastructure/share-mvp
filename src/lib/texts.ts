@@ -235,7 +235,7 @@ export const texts = {
 		offerSomething: 'Biete selbst etwas an!',
 		newsletter: 'Für Newsletter registrieren',
 		search: 'Suchen',
-		showAll: 'Alles anzeigen',
+		clearSearch: 'Suche zurücksetzen',
 	},
 
 	// Groups feature
@@ -663,6 +663,7 @@ export const texts = {
 				maxMinutes: (n: number) => `<${n} min`,
 				paginationHidden:
 					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf >30 min", um alle Seiten zu sehen.',
+				sliderLabel: 'Maximale Reisezeit in Minuten',
 			},
 			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
@@ -676,6 +677,24 @@ export const texts = {
 			ownerTypePrivate: 'Personen',
 			groupFilterLabel: 'Gruppe',
 			groupFilterAll: 'Alle Gruppen',
+			// Filter trigger button + modal (issue #505: consolidated filter modal)
+			filterButton: 'Filter',
+			filterButtonActive: (count: number) => `Filter (${count})`,
+			sortLabel: 'Sortierung',
+			sortOptions: {
+				newest: 'Neueste zuerst',
+				name_asc: 'Name A–Z',
+				name_desc: 'Name Z–A',
+			} as Record<string, string>,
+			filterModalTitle: 'Filter',
+			filterSectionAvailability: 'Verfügbarkeit',
+			filterAvailabilitySubtext: 'Zeigt nur Dinge, die aktuell verliehen werden können.',
+			filterSectionOwnerType: 'Anbieter',
+			filterSectionDistance: 'Entfernung',
+			filterSectionCategories: 'Kategorien',
+			filterSectionGroup: 'Gruppen',
+			filterReset: 'Zurücksetzen',
+			filterApply: 'Filter anwenden',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -1511,7 +1530,7 @@ export const texts = {
 			title: 'AllerLeih Zahlen',
 			intro: 'Ein kleiner Einblick in die AllerLeih-Plattform.',
 			usersTotal: 'Registrierte Nutzer:innen',
-			itemsAvailable: 'Verfügbare Gegenstände',
+			itemsTotal: 'Gegenstände auf der Plattform',
 			loansCompleted: 'Abgeschlossene Ausleihen',
 			impactWouldBuyCount: 'Mal wurde geliehen statt neu gekauft',
 			unavailable: 'Die Zahlen sind gerade nicht verfügbar — bitte versuch es später noch einmal.',

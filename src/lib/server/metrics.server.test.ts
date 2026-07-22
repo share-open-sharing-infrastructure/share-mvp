@@ -119,7 +119,7 @@ describe('getPublicStats', () => {
 		expect(Object.keys(stats!).sort()).toEqual(
 			[
 				'usersTotal',
-				'itemsAvailable',
+				'itemsTotal',
 				'loansCompleted',
 				'impactWouldBuyCount',
 				'groupsTotal',
@@ -128,6 +128,20 @@ describe('getPublicStats', () => {
 				'activeUsers30d',
 			].sort()
 		);
+	});
+
+	it('counts items with owner.deleted != true, not status = "available" — tombstoned items from deleted accounts are hidden from every other item view and must not inflate this headline', async () => {
+		const itemsGetList = vi.fn().mockResolvedValue({ totalItems: 3 });
+		const pb = fakePb();
+		pb.collection = vi.fn((name: string) =>
+			name === 'items' ? { getList: itemsGetList } : fakePb().collection()
+		) as unknown as typeof pb.collection;
+		getSuperuserClient.mockResolvedValue(pb);
+
+		await getPublicStats();
+
+		expect(itemsGetList).toHaveBeenCalledTimes(1);
+		expect(itemsGetList).toHaveBeenCalledWith(1, 1, expect.objectContaining({ filter: 'owner.deleted != true' }));
 	});
 
 	it('reads the community/messages/activeUsers fields from the latest snapshot row — same source as /admin/metrics', async () => {

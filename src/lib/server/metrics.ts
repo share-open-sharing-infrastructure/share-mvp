@@ -114,7 +114,7 @@ export async function getMetricsHistory(days: number): Promise<MetricsDaily[]> {
 
 export interface PublicStats {
 	usersTotal: number;
-	itemsAvailable: number;
+	itemsTotal: number;
 	loansCompleted: number;
 	/** Completed loans where the borrower said they'd have bought the item new otherwise. */
 	impactWouldBuyCount: number;
@@ -175,15 +175,19 @@ export async function getPublicStats(): Promise<PublicStats | null> {
 
 	try {
 		const pb = await getSuperuserClient();
-		const [usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount, snapshotStats] = await Promise.all([
+		const [usersTotal, itemsTotal, loansCompleted, impactWouldBuyCount, snapshotStats] = await Promise.all([
 			count(pb, 'users', 'deleted != true'),
-			count(pb, 'items', 'status = "available"'),
+			// Excludes items whose owner is deleted: those are tombstoned to `unavailable`
+			// on account deletion (see allerleih-backend services/account.js) and hidden
+			// from every other item view, so they must not inflate this public headline —
+			// mirrors the `deleted != true` exclusion on usersTotal above.
+			count(pb, 'items', 'owner.deleted != true'),
 			count(pb, 'conversations', 'lendingStatus = "completed"'),
 			count(pb, 'conversations', 'lendingStatus = "completed" && counterfactual = "would_buy"'),
 			getLatestSnapshotStats(pb),
 		]);
 
-		const value: PublicStats = { usersTotal, itemsAvailable, loansCompleted, impactWouldBuyCount, ...snapshotStats };
+		const value: PublicStats = { usersTotal, itemsTotal, loansCompleted, impactWouldBuyCount, ...snapshotStats };
 		cachedPublicStats = { value, expiresAt: Date.now() + PUBLIC_STATS_CACHE_MS };
 		return value;
 	} catch (err) {
