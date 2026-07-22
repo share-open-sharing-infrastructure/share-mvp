@@ -177,7 +177,11 @@ export async function getPublicStats(): Promise<PublicStats | null> {
 		const pb = await getSuperuserClient();
 		const [usersTotal, itemsTotal, loansCompleted, impactWouldBuyCount, snapshotStats] = await Promise.all([
 			count(pb, 'users', 'deleted != true'),
-			count(pb, 'items', ''),
+			// Excludes items whose owner is deleted: those are tombstoned to `unavailable`
+			// on account deletion (see allerleih-backend services/account.js) and hidden
+			// from every other item view, so they must not inflate this public headline —
+			// mirrors the `deleted != true` exclusion on usersTotal above.
+			count(pb, 'items', 'owner.deleted != true'),
 			count(pb, 'conversations', 'lendingStatus = "completed"'),
 			count(pb, 'conversations', 'lendingStatus = "completed" && counterfactual = "would_buy"'),
 			getLatestSnapshotStats(pb),

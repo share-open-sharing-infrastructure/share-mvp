@@ -130,6 +130,19 @@ describe('getPublicStats', () => {
 		);
 	});
 
+	it('counts items with owner.deleted != true, not status = "available" — tombstoned items from deleted accounts are hidden from every other item view and must not inflate this headline', async () => {
+		const pb = fakePb();
+		getSuperuserClient.mockResolvedValue(pb);
+
+		await getPublicStats();
+
+		const itemsCalls = pb.collection.mock.calls
+			.map((call, i) => ({ name: call[0], getListCalls: pb.collection.mock.results[i].value.getList.mock.calls }))
+			.filter((c) => c.name === 'items');
+		expect(itemsCalls).toHaveLength(1);
+		expect(itemsCalls[0].getListCalls[0][2]).toMatchObject({ filter: 'owner.deleted != true' });
+	});
+
 	it('reads the community/messages/activeUsers fields from the latest snapshot row — same source as /admin/metrics', async () => {
 		const pb = fakePb();
 		getSuperuserClient.mockResolvedValue(pb);
