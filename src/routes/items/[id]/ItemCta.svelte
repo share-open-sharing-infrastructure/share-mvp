@@ -113,7 +113,7 @@
 	{:else if existingConversation}
 		<!-- An in-progress conversation exists (incl. when the owner uses email contact):
 		     link straight into it rather than offering a new request / mailto. -->
-		<Button href={resolve(`/conversations/${existingConversation.id}`)}>
+		<Button href={resolve('/conversations/[conversationId]', { conversationId: existingConversation.id })}>
 			<MessagesOutline class="h-4 w-4" />
 			{texts.lending.goToConversation}
 		</Button>
@@ -144,7 +144,7 @@
 			</div>
 		</div>
 	{:else if requiresTermsAcceptance}
-		<Button href={resolve(`/items/${item.id}/terms`)}>
+		<Button href={resolve('/items/[id]/terms', { id: item.id })}>
 			<MessagesOutline class="h-4 w-4" />
 			{texts.pages.itemDetail.requestButton}
 		</Button>

@@ -21,7 +21,7 @@
 		const value = (event.currentTarget as HTMLSelectElement).value;
 		// Reset to page 1 (page param omitted, matching CategoryFilter). An empty value clears
 		// the filter (group left undefined).
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() already resolve()s the /search path; the rule can't see through the helper
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() returns an already-resolved URL; the rule cannot see through the call
 		goto(buildSearchUrl({ q, cats, op, onlyAvailable, ownerType, group: value || undefined }));
 	}
 </script>

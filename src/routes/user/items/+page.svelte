@@ -33,8 +33,7 @@
 			const params = new SvelteURLSearchParams(window.location.search);
 			params.set('search', value);
 			params.set('page', '1');
-			// eslint-disable-next-line svelte/no-navigation-without-resolve -- same-page query-string update; resolve() does not handle query strings
-			goto('?' + params.toString(), { keepFocus: true });
+			goto(resolve(`/user/items?${params.toString()}`), { keepFocus: true });
 		}, 300);
 	}
 
@@ -43,8 +42,7 @@
 		const params = new SvelteURLSearchParams(window.location.search);
 		params.set('status', value);
 		params.set('page', '1');
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- same-page query-string update; resolve() does not handle query strings
-		goto('?' + params.toString());
+		goto(resolve(`/user/items?${params.toString()}`));
 	}
 
 	function toggleSelectAll(checked: boolean) {

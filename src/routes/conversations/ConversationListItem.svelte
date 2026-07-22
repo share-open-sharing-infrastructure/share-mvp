@@ -47,7 +47,7 @@
 
 <li class="w-full">
 	<a
-		href={resolve(`/conversations/${conversation.id}`)}
+		href={resolve('/conversations/[conversationId]', { conversationId: conversation.id })}
 		class="flex items-center gap-3 rounded-xl border-l-4 px-2.5 py-2.5 transition-all min-h-14
 			{role === 'borrowing' ? 'border-primary' : 'border-accent'}
 			{isActive

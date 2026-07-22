@@ -24,12 +24,12 @@
 
 	function toggleCat(cat: string) {
 		const next = selectedCategories.includes(cat) ? [] : [cat];
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() already resolve()s the /search path; the rule can't see through the helper
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildUrl() wraps buildSearchUrl(), which returns an already-resolved URL; the rule cannot see through the call
 		goto(buildUrl(next, op));
 	}
 
 	function toggleOp() {
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() already resolve()s the /search path; the rule can't see through the helper
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildUrl() wraps buildSearchUrl(), which returns an already-resolved URL; the rule cannot see through the call
 		goto(buildUrl(selectedCategories, op === 'or' ? 'and' : 'or'));
 	}
 

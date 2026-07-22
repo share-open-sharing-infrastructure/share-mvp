@@ -1,5 +1,4 @@
 <script lang="ts">
-	/* eslint-disable svelte/no-navigation-without-resolve */
 	import { Section } from 'flowbite-svelte-blocks';
 	import SearchBar from './SearchBar.svelte';
 	import ResultsList from './ResultsList.svelte';
@@ -113,6 +112,7 @@
 	} as const}
 
 	<div class="flex flex-wrap justify-center items-center gap-1 my-3">
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- searchUrl() wraps buildSearchUrl(), which returns an already-resolved URL; the rule cannot see through the call -->
 		<a
 			href={searchUrl({ onlyAvailable: !data.onlyAvailable })}
 			class="rounded-full border px-3 py-1 text-sm font-medium transition-colors
@@ -125,6 +125,7 @@
 			href={searchUrl({ ownerType: ownerTypeNext[data.ownerType as keyof typeof ownerTypeNext] })}
 			class="flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors border-tinte-300 bg-papier text-tinte-700 hover:border-primary hover:text-primary dark:border-tinte-600 dark:bg-tinte-800 dark:text-tinte-300 dark:hover:border-primary dark:hover:text-primary"
 		><ArrowsRepeatOutline class="mr-1 h-4 w-4 shrink-0" />{texts.pages.search.ownerTypePrefix}: {ownerTypeLabel[data.ownerType as keyof typeof ownerTypeLabel]}</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 		{#if data.attachableGroups.length > 0}
 			<GroupFilter
 				groups={data.attachableGroups}

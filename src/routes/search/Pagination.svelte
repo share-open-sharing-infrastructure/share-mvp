@@ -1,5 +1,4 @@
 <script lang="ts">
-	/* eslint-disable svelte/no-navigation-without-resolve */
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { buildSearchUrl } from './searchUrl';
@@ -44,6 +43,7 @@
 		<div class="flex flex-1 hidden sm:block"></div>
 
 		<!-- Page controls -->
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- pageUrl() wraps buildSearchUrl(), which returns an already-resolved URL; the rule cannot see through the call -->
 		<div class="flex items-center gap-1">
 			<!-- Prev -->
 			{#if page > 1}
@@ -83,6 +83,7 @@
 				<span class="flex h-8 w-8 items-center justify-center rounded-full border border-tinte-200 bg-papier text-sm text-tinte-300 dark:border-tinte-700 dark:bg-tinte-800 dark:text-tinte-600 cursor-not-allowed">›</span>
 			{/if}
 		</div>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 
 		<!-- Per-page selector: GET form so no goto() needed -->
 		<form method="GET" action={resolve('/search')} class="flex flex-1 justify-end items-center gap-2 text-sm text-tinte-600 dark:text-tinte-400">

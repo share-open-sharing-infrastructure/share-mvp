@@ -462,7 +462,7 @@
 			<div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200" role="alert">
 				<p>{form.message}</p>
 				<a
-					href={resolve(`/conversations/${form.conversationIds[0]}`)}
+					href={resolve('/conversations/[conversationId]', { conversationId: form.conversationIds[0] })}
 					class="mt-1 inline-block font-semibold underline"
 				>{texts.pages.items.linkToConversation}</a>
 			</div>

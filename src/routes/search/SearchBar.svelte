@@ -10,8 +10,6 @@
 
 	let { q = '' }: { q: string } = $props();
 
-	const browseAllUrl = resolve('/search') + '?q=*';
-
 	let inputValue = $state(q);
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -59,8 +57,7 @@
 		isDebouncing = true;
 		debounceTimer = setTimeout(async () => {
 			isDebouncing = false;
-			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			await goto(`/search?q=${encodeURIComponent(value)}`, {
+			await goto(resolve(`/search?q=${encodeURIComponent(value)}`), {
 				keepFocus: true,
 				noScroll: true,
 				replaceState: true
@@ -76,8 +73,7 @@
 		}
 		isDebouncing = false;
 		const value = inputValue.trim();
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl, {
+		await goto(resolve(value ? `/search?q=${encodeURIComponent(value)}` : '/search?q=*'), {
 			keepFocus: true,
 			noScroll: true
 		});

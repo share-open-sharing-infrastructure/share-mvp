@@ -20,11 +20,11 @@
 			<p class="mx-auto max-w-2xl whitespace-pre-line text-tinte-700 dark:text-tinte-300">{data.group.description}</p>
 		{/if}
 		<div class="flex flex-wrap justify-center gap-2">
-			<Button variant="secondary" href={resolve(`/user/groups/${data.group.id}/members`)}>
+			<Button variant="secondary" href={resolve('/user/groups/[id]/members', { id: data.group.id })}>
 				<UsersGroupOutline class="h-4 w-4" />{texts.groups.members}
 			</Button>
 			{#if data.isOwner}
-				<Button variant="secondary" href={resolve(`/user/groups/${data.group.id}/settings`)}>
+				<Button variant="secondary" href={resolve('/user/groups/[id]/settings', { id: data.group.id })}>
 					<CogOutline class="h-4 w-4" />{texts.groups.settings}
 				</Button>
 			{/if}

@@ -93,6 +93,10 @@ These prevent the most common bugs/security issues here — follow them without 
   position) via `class`, never colors. → `docs/design-system.md`
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.
+- **Resolve internal navigation with `resolve()` from `$app/paths` at the call site**, in route-ID
+  form (`resolve('/users/[id]', { id })`) — never template-string interpolation, never a wrapper.
+  Query/hash go inside the `resolve()` arg; static `static/` files use `asset()`. Only builders
+  (`buildSearchUrl`/`notificationHref`) and external/user URLs are exempt. → `docs/best-practices.md`
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
   `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
   Authentication loads PocketBase auth from cookies and refreshes the token. Authorization

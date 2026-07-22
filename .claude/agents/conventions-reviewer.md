@@ -57,9 +57,25 @@ Should-fix:
 | rendering `user.username` directly | `displayName()` from `$lib/utils/utils.ts` | deleted accounts must be masked |
 | `pb.collection(...).subscribe()` in the client | `subscribeRealtime()` from `$lib/client-pb` | reconnect/retry from issue #435 |
 | custom trust queries | `$lib/server/trust.ts` | one truth for the trust graph |
+| `resolve(`/users/${id}`)` / a routes wrapper | `resolve('/users/[id]', { id })` from `$app/paths` | ESLint only sees a direct `resolve()`; route-ID form is the house form |
 
 Also check whether a helper for newly written logic **already** exists in `$lib/`, `$lib/server/`
 or `$lib/utils/` — check with `rg` before assuming "doesn't exist".
+
+### 3a. Link-/Routen-Auflösung (`resolve`)
+The lint rule `svelte/no-navigation-without-resolve` passes on any direct `resolve()`, but the
+**route-ID form** is a convention it does *not* enforce (`docs/best-practices.md` →
+"Link-/Routen-Auflösung"). Findings:
+- `resolve()` with a **template-string path** (`resolve(`/items/${id}`)`) instead of route-ID form
+  (`resolve('/items/[id]', { id })`) — Should-fix. The route-ID must be a plain string literal;
+  param keys match the `[segment]` folder names.
+- A **wrapper / central routes helper / re-export** around `resolve()` — Blocking: the rule can't
+  see through it, so it silently disables enforcement everywhere it's used.
+- Query/hash belong **inside** the `resolve()` argument (`resolve(`/search?q=${q}`)`), not appended
+  outside; a disable justified with "resolve doesn't handle query strings" is stale (2.26+).
+- Exempt (do **not** flag): the builders `buildSearchUrl()`/`notificationHref()` (one standardised
+  disable at the call site), `asset()` for `static/` files, and **external/user-supplied URLs**
+  (`LinkifiedText`, `/api/redirect`) which must **never** be resolved.
 
 ### 4. Tests
 - New or changed server logic needs a **co-located** `*.test.ts` next to the file.

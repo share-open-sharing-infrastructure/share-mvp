@@ -26,7 +26,7 @@
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<a
-		href={resolve(`/items/${data.item.id}`)}
+		href={resolve('/items/[id]', { id: data.item.id })}
 		class="inline-block text-sm text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200"
 	>
 		← {data.item.name}
@@ -102,7 +102,7 @@
 				{texts.lendingTerms.acceptAndRequestButton}
 			</Button>
 			<a
-				href={resolve(`/items/${data.item.id}`)}
+				href={resolve('/items/[id]', { id: data.item.id })}
 				class="text-sm text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200"
 			>
 				{texts.lendingTerms.cancel}
