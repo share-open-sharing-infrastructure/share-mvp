@@ -1,6 +1,6 @@
 # MVP for Share
 
-share is a platform for sharing! The apps purpose is to allow users to find everything that friends, family and strangers offer for borrowing in the area. The long-term goal is to integrate the platform with software like [leihbase](https://github.com/leihbase/leihbase), so that users can borrow both from private persons as well as from lending organisations like [Libraries of Things](https://en.wikipedia.org/wiki/Library_of_things) or for-profit lenders.
+share is a platform for sharing! The apps purpose is to allow users to find everything that friends, family and strangers offer for borrowing in the area. The long-term goal is to integrate the platform with software like [leihbase](https://github.com/leihbase/leihbase), so that users can borrow both from private persons as well as from lending organisations like [Libraries of Things](http://web.archive.org/web/20260716123929/https://en.wikipedia.org/wiki/Library_of_Things) or for-profit lenders.
 
 Here, we develop a first minimum viable product. Next milestones are roughly:
 
