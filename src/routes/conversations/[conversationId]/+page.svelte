@@ -3,7 +3,8 @@
 	import type PocketBase from 'pocketbase';
 	import { onMount } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidate, invalidateAll } from '$app/navigation';
+	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { getClientPB } from '$lib/client-pb';
 	import { realtimeSynced } from '$lib/stores/realtimeSynced.svelte';
@@ -148,14 +149,17 @@
 	// (data-sveltekit-preload-data="hover"), which would mark threads read on mere hover
 	// (issue #412). Fire-and-forget: the POST targets the CURRENT conversation by explicit
 	// path so a mid-flight client-side nav can't retarget the wrong thread; on success we
-	// invalidateAll() to resync read-state (list dot, nav badge). This effect intentionally
-	// reads ONLY `pb` (mounted gate) and `conversationId` — adding other reactive reads
-	// would make it re-fire and re-mark.
+	// invalidate(NOTIFICATIONS_DEP) to resync the nav unread badge. We deliberately do NOT
+	// invalidateAll() here — that re-runs every load (incl. this page's own), which tears
+	// down and recreates the realtime getList and makes PocketBase auto-cancel it; the
+	// conversation list's unread dot already updates from the realtime `conversations`
+	// update echoed by markRead. This effect intentionally reads ONLY `pb` (mounted gate)
+	// and `conversationId` — adding other reactive reads would make it re-fire and re-mark.
 	$effect(() => {
 		if (!pb) return;
 		const id = conversationId;
 		fetch(`/conversations/${id}?/markRead`, { method: 'POST', body: new FormData() })
-			.then(() => invalidateAll())
+			.then(() => invalidate(NOTIFICATIONS_DEP))
 			.catch(() => {});
 	});
 
