@@ -113,15 +113,12 @@ export const actions = {
 
 		const recipientId = isRequester ? conversation.itemOwner : conversation.requester;
 		const senderName = displayName(locals.user);
-		return sendMessage(
-			locals.pb,
-			params.conversationId,
-			content,
-			locals.user.id,
-			recipientId,
+		return sendMessage(locals.pb, params.conversationId, content, {
+			fromUserId: locals.user.id,
+			toUserId: recipientId,
 			senderName,
-			/* recipientIsRequester */ isOwner
-		);
+			recipientIsRequester: isOwner,
+		});
 	},
 
 	toggleStatus: async ({ locals, params }) => {

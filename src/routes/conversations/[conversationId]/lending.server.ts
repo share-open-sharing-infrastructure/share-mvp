@@ -56,18 +56,6 @@ async function loadAndValidateConversation(
 	return { conv: conversation };
 }
 
-/** Sends both an in-app notification and a push to all of a user's registered devices. */
-async function notifyUser(
-	pb: PocketBase,
-	recipientId: string,
-	senderId: string,
-	type: NotificationType,
-	conversationId: string,
-	body: string
-): Promise<void> {
-	await notifyAndPush(pb, { recipient: recipientId, sender: senderId, type, relatedId: conversationId, body });
-}
-
 /** Fetches an item's display name, falling back gracefully if the item can't be loaded. */
 async function getItemName(pb: PocketBase, itemId: string): Promise<string> {
 	try {
@@ -128,7 +116,13 @@ const TRANSITION_EFFECTS: Record<LendingAction, TransitionEffect> = {
 				await Promise.all(
 					otherPending.map(async (other) => {
 						await ctx.pb.collection('conversations').update(other.id, { lendingStatus: 'rejected' });
-						await notifyUser(ctx.pb, other.requester, ctx.userId, 'request_rejected', other.id, texts.notifications.requestRejected(ctx.itemName));
+						await notifyAndPush(ctx.pb, {
+							recipient: other.requester,
+							sender: ctx.userId,
+							type: 'request_rejected',
+							relatedId: other.id,
+							body: texts.notifications.requestRejected(ctx.itemName),
+						});
 					})
 				);
 			} catch (err) {
@@ -222,7 +216,7 @@ async function executeLendingTransition(
 	}
 
 	const { recipientId, type, body } = effect.notify(ctx);
-	await notifyUser(pb, recipientId, userId, type, conversationId, body);
+	await notifyAndPush(pb, { recipient: recipientId, sender: userId, type, relatedId: conversationId, body });
 
 	if (effect.after) await effect.after(ctx);
 }

@@ -26,7 +26,7 @@ describe('sendMessage', () => {
 		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
 		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
 
-		await sendMessage(pb, 'conv1', 'Hello!', 'userB', 'userA', 'Owner', /* recipientIsRequester */ true);
+		await sendMessage(pb, 'conv1', 'Hello!', { fromUserId: 'userB', toUserId: 'userA', senderName: 'Owner', recipientIsRequester: true });
 
 		// messages.create is called with conversation relation
 		expect(msgCreate).toHaveBeenCalledWith({
@@ -60,7 +60,7 @@ describe('sendMessage', () => {
 		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
 
 		// Send from owner (userB) to requester (userA)
-		await sendMessage(pb, 'conv1', 'Hey', 'userB', 'userA', 'Owner', true);
+		await sendMessage(pb, 'conv1', 'Hey', { fromUserId: 'userB', toUserId: 'userA', senderName: 'Owner', recipientIsRequester: true });
 
 		const updatePayload = convUpdate.mock.calls[0][1];
 		expect(updatePayload).toHaveProperty('readByRequester', false);
@@ -79,7 +79,7 @@ describe('sendMessage', () => {
 		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
 
 		// Send from requester (userA) to owner (userB)
-		await sendMessage(pb, 'conv1', 'Hi', 'userA', 'userB', 'Requester', false);
+		await sendMessage(pb, 'conv1', 'Hi', { fromUserId: 'userA', toUserId: 'userB', senderName: 'Requester', recipientIsRequester: false });
 
 		const updatePayload = convUpdate.mock.calls[0][1];
 		expect(updatePayload).toHaveProperty('readByOwner', false);
@@ -96,7 +96,7 @@ describe('sendMessage', () => {
 		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
 		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(false);
 
-		await sendMessage(pb, 'conv1', 'Hi', 'userA', 'userB', 'Requester', false);
+		await sendMessage(pb, 'conv1', 'Hi', { fromUserId: 'userA', toUserId: 'userB', senderName: 'Requester', recipientIsRequester: false });
 
 		expect(notifyAndPush).toHaveBeenCalledWith(pb, {
 			recipient: 'userB',
@@ -117,7 +117,7 @@ describe('sendMessage', () => {
 		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
 		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
 
-		await sendMessage(pb, 'conv1', 'Hi', 'userA', 'userB', 'Requester', false);
+		await sendMessage(pb, 'conv1', 'Hi', { fromUserId: 'userA', toUserId: 'userB', senderName: 'Requester', recipientIsRequester: false });
 
 		expect(notifyAndPush).not.toHaveBeenCalled();
 	});

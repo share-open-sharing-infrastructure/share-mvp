@@ -21,10 +21,17 @@ export async function sendMessage(
 	pb: PocketBase,
 	conversationId: string,
 	messageContent: FormDataEntryValue | null,
-	fromUserId: string,
-	toUserId: string,
-	senderName: string,
-	recipientIsRequester: boolean
+	{
+		fromUserId,
+		toUserId,
+		senderName,
+		recipientIsRequester,
+	}: {
+		fromUserId: string;
+		toUserId: string;
+		senderName: string;
+		recipientIsRequester: boolean;
+	}
 ): Promise<FailResult | void> {
 	let createdMessage: Message;
 	try {
