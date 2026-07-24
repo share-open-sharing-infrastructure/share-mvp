@@ -15,7 +15,7 @@ function run(opts: {
 	const promise = upsertSingletonRow({
 		pb,
 		collection: COLLECTION,
-		find: opts.find,
+		find: opts.find as () => Promise<{ id: string } | null>,
 		createData: { user: 'u1', value: 42 },
 		patch: { value: 42 },
 	});
