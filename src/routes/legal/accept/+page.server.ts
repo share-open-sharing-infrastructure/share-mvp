@@ -12,10 +12,18 @@ function safeRedirect(target: string | null): string {
 	return '/';
 }
 
-export async function load({ locals, url }) {
+/** All entry points bounce unauthenticated users through login preserving the FULL
+ *  current URL (incl. ?redirectTo=…). In practice dead code — hooks.server.ts already
+ *  gates /legal behind login — but kept in one place so the guards can't drift and a
+ *  future change can't silently lose the user's original destination. */
+function requireUser(locals: App.Locals, url: URL): void {
 	if (!locals.user) {
 		redirect(307, `/auth/login?redirectTo=${encodeURIComponent(url.pathname + url.search)}`);
 	}
+}
+
+export async function load({ locals, url }) {
+	requireUser(locals, url);
 	const user = locals.user as unknown as LegalUser;
 	const redirectTo = safeRedirect(url.searchParams.get('redirectTo'));
 
@@ -53,9 +61,7 @@ export async function load({ locals, url }) {
 
 export const actions = {
 	accept: async ({ locals, request, url }) => {
-		if (!locals.user) {
-			redirect(307, `/auth/login?redirectTo=${encodeURIComponent('/legal/accept')}`);
-		}
+		requireUser(locals, url);
 		const user = locals.user as unknown as LegalUser;
 		const redirectTo = safeRedirect(url.searchParams.get('redirectTo'));
 		const versions = await getActiveLegalVersions(locals.pb);
@@ -89,10 +95,8 @@ export const actions = {
 		redirect(303, redirectTo);
 	},
 
-	decline: async ({ locals }) => {
-		if (!locals.user) {
-			redirect(307, `/auth/login?redirectTo=${encodeURIComponent('/legal/accept')}`);
-		}
+	decline: async ({ locals, url }) => {
+		requireUser(locals, url);
 		try {
 			// Decline + account lock run in the backend hook (superuser context).
 			await locals.pb.send('/api/legal/decline', { method: 'POST' });

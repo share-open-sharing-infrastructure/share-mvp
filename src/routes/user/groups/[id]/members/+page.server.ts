@@ -87,24 +87,32 @@ export async function load({ locals, params }) {
 	};
 }
 
+// Load the group and assert the caller owns it (defense-in-depth on top of the
+// backend collection rule) — the shared opener of both actions below. One read
+// serves the owner check AND the group name the notification bodies need. A
+// missing/unreadable group (e.g. deleted in a race with the request) yields a
+// clean fail instead of a generic 500.
+async function loadOwnedGroup(locals: App.Locals, groupId: string) {
+	let group: { id: string; owner: string; name: string };
+	try {
+		group = await locals.pb
+			.collection('groups')
+			.getOne<{ id: string; owner: string; name: string }>(groupId, {
+				fields: 'id,owner,name',
+			});
+	} catch {
+		return { failure: fail(404, { fail: true, message: texts.errors.somethingWentWrong }) };
+	}
+	if (group.owner !== locals.user!.id)
+		return { failure: fail(403, { fail: true, message: texts.errors.noPermission }) };
+	return { group };
+}
+
 export const actions = {
 	addMember: async ({ locals, params, request }) => {
-		// Load the group once: the owner check (defense-in-depth on top of the backend
-		// collection rule) and the group name the notification body needs both come from
-		// this single read. A missing/unreadable group (e.g. deleted in a race with the
-		// request) yields a clean fail instead of a generic 500.
-		let group: { id: string; owner: string; name: string };
-		try {
-			group = await locals.pb
-				.collection('groups')
-				.getOne<{ id: string; owner: string; name: string }>(params.id, {
-					fields: 'id,owner,name',
-				});
-		} catch {
-			return fail(404, { fail: true, message: texts.errors.somethingWentWrong });
-		}
-		if (group.owner !== locals.user!.id)
-			return fail(403, { fail: true, message: texts.errors.noPermission });
+		const owned = await loadOwnedGroup(locals, params.id);
+		if ('failure' in owned) return owned.failure;
+		const { group } = owned;
 
 		const formData = await request.formData();
 		// The add-member search posts a resolved userId; fall back to an exact
@@ -158,21 +166,9 @@ export const actions = {
 	},
 
 	removeMember: async ({ locals, params, request }) => {
-		// Load the group once: the owner check and the group name the removal
-		// notification needs both come from this single read (as in addMember). A
-		// missing/unreadable group yields a clean fail instead of a generic 500.
-		let group: { id: string; owner: string; name: string };
-		try {
-			group = await locals.pb
-				.collection('groups')
-				.getOne<{ id: string; owner: string; name: string }>(params.id, {
-					fields: 'id,owner,name',
-				});
-		} catch {
-			return fail(404, { fail: true, message: texts.errors.somethingWentWrong });
-		}
-		if (group.owner !== locals.user!.id)
-			return fail(403, { fail: true, message: texts.errors.noPermission });
+		const owned = await loadOwnedGroup(locals, params.id);
+		if ('failure' in owned) return owned.failure;
+		const { group } = owned;
 
 		const membershipId = (await request.formData()).get('membershipId')?.toString();
 		if (!membershipId) return fail(400, { fail: true, message: texts.errors.missingId });

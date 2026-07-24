@@ -9,6 +9,13 @@
 		FooterLinkGroup,
 	} from 'flowbite-svelte';
 	import { GithubSolid } from 'flowbite-svelte-icons';
+
+	// One place for the shared footer-link styling — every FooterLink spreads this,
+	// so a hover/underline tweak is a single edit instead of ten.
+	const footerLinkProps = {
+		classes: { link: 'hover:no-underline' },
+		class: 'mb-2 hover:text-accent',
+	};
 </script>
 
 <Footer footerType="socialmedia" class="mt-5">
@@ -39,16 +46,16 @@
 						AllerLeih
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/guide')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/guide')}
 							>{texts.nav.guide}</FooterLink
 						>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/app')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/app')}
 							>{texts.nav.app}</FooterLink
 						>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/newsletter')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/newsletter')}
 							>{texts.nav.newsletter}</FooterLink
 						>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" 
+						<FooterLink {...footerLinkProps} 
 							href="/api/redirect?to=https%3A%2F%2Fallerleih.notion.site%2F36de086dc6ab80f69529e6cf68afe7c4%3Fv%3D36de086dc6ab80869c89000c98bbac63&source=footer"
 							target="_blank"
 							>{texts.nav.contribute}</FooterLink
@@ -62,13 +69,13 @@
 						Über
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/about')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/about')}
 							>{texts.nav.about}</FooterLink
 						>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/contact')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/contact')}
 							>{texts.nav.contact}</FooterLink
 						>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="noopener noreferrer">
+						<FooterLink {...footerLinkProps} href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="noopener noreferrer">
 							<span class="flex items-center gap-1">
 								<GithubSolid class="h-4 w-4" />
 								GitHub
@@ -84,8 +91,7 @@
 					</h2>
 					<FooterLinkGroup>
 						<FooterLink
-							classes={{ link: "hover:no-underline" }}
-							class="mb-2 hover:text-accent"
+							{...footerLinkProps}
 							href="/api/redirect?to=https%3A%2F%2Fpixelfed.de%2FAllerLeih&source=footer"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -107,8 +113,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
-							classes={{ link: "hover:no-underline" }}
-							class="mb-2 hover:text-accent"
+							{...footerLinkProps}
 							href="/api/redirect?to=https%3A%2F%2Fnorden.social%2F%40AllerLeih&source=footer"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -130,8 +135,7 @@
 							</span>
 						</FooterLink>
 						<FooterLink
-							classes={{ link: "hover:no-underline" }}
-							class="mb-2 hover:text-accent"
+							{...footerLinkProps}
 							href="/api/redirect?to=https%3A%2F%2Fwww.instagram.com%2Faller.leih%2F&source=footer"
 							target="_blank"
 							rel="noopener noreferrer"
@@ -161,13 +165,13 @@
 						Rechtliches
 					</h2>
 					<FooterLinkGroup>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/imprint')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/imprint')}
 							>{texts.nav.imprint}</FooterLink
 						>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/privacy')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/privacy')}
 							>{texts.nav.privacy}</FooterLink
 						>
-						<FooterLink classes={{ link: "hover:no-underline" }} class="mb-2 hover:text-accent" href={resolve('/misc/tos')}
+						<FooterLink {...footerLinkProps} href={resolve('/misc/tos')}
 							>{texts.nav.tos}</FooterLink
 						>
 					</FooterLinkGroup>
