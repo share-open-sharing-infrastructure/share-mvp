@@ -4,8 +4,8 @@
 	import { resolve } from '$app/paths';
 	import { enhance } from '$app/forms';
 	import { beforeNavigate } from '$app/navigation';
-	import AddressInput from '$lib/components/AddressInput.svelte';
-	import ProfileImageField from './ProfileImageField.svelte';
+	import ProfileBasicsSection from './ProfileBasicsSection.svelte';
+	import LocationSection from './LocationSection.svelte';
 	import EmailSection from './EmailSection.svelte';
 	import MessengerField from './MessengerField.svelte';
 	import ContactSection from './ContactSection.svelte';
@@ -13,7 +13,6 @@
 	import NotificationSettings from './NotificationSettings.svelte';
 	import LendingRequirementsSection from './LendingRequirementsSection.svelte';
 	import InviteLink from './InviteLink.svelte';
-	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import ProfileToc from './ProfileToc.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import { pushToast } from '$lib/stores/toast.svelte';
@@ -21,11 +20,6 @@
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
 	let { data, form } = $props();
-
-	let selectedTransportMode = $state<TransportMode>(
-		(data.currentUserPreferences?.preferredTransportMode as TransportMode | undefined) ??
-			'bicycle'
-	);
 
 	// Drives the sticky save bar's "unsaved changes" hint. Set on any edit within
 	// the main form; cleared only when THIS form saves successfully (see the form's
@@ -161,134 +155,25 @@
 						<h2 class={sectionTitleClass}>
 							{texts.pages.profile.sections.profile}
 						</h2>
-						<div class="mt-4 space-y-4">
-							<div
-								class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4"
-							>
-								<label
-									for="username"
-									class="sm:w-36 sm:shrink-0 text-sm font-medium text-tinte-900 dark:text-white"
-								>
-									{texts.ui.username}
-								</label>
-								<input
-									type="text"
-									name="username"
-									id="username"
-									value={data.currentUser.username}
-									class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-									required
-								/>
-							</div>
-
-							<div
-								class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4"
-							>
-								<label
-									for="profileImage"
-									class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white"
-								>
-									{texts.pages.profile.profileImageLabel}
-								</label>
-								<div class="sm:flex-1">
-									<ProfileImageField
-										imageUrl={profileImageUrl}
-										ondirty={markDirty}
-									/>
-								</div>
-							</div>
-
-							<div
-								class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4"
-							>
-								<label
-									for="bio"
-									class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white"
-								>
-									{texts.pages.profile.bioLabel}
-								</label>
-								<textarea
-									name="bio"
-									id="bio"
-									rows="4"
-									value={data.currentUser.bio ?? ''}
-									class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-y"
-									placeholder={texts.pages.profile.bioPlaceholder}
-								></textarea>
-							</div>
-						</div>
+						<ProfileBasicsSection
+							username={data.currentUser.username}
+							bio={data.currentUser.bio ?? ''}
+							{profileImageUrl}
+							ondirty={markDirty}
+						/>
 					</section>
 
-					<!-- STANDORT & MOBILITÄT: address + transport mode.
-					     #address is a deep-link target from the item-page lending-requirement CTA. -->
+					<!-- STANDORT & MOBILITÄT: address + transport mode -->
 					<section id="standort" class={cardClass}>
 						<h2 class={sectionTitleClass}>
 							{texts.pages.profile.sections.location}
 						</h2>
-						<div class="mt-4 space-y-4">
-							<div
-								id="address"
-								class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 scroll-mt-28"
-							>
-								<label
-									for="city"
-									class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white"
-								>
-									{texts.ui.location}
-								</label>
-								<div class="sm:flex-1">
-									<AddressInput initialValue={data.currentUser.city ?? ''} />
-									<p
-										class="text-sm text-tinte-600 dark:text-tinte-400 mb-2 mt-2"
-									>
-										{texts.pages.userProfile.addressNote}
-									</p>
-									<p class="text-xs text-tinte-500 dark:text-tinte-400">
-										{texts.pages.userProfile.addressHint}
-									</p>
-								</div>
-							</div>
-
-							<div
-								class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4"
-							>
-								<div
-									class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white"
-								>
-									{texts.pages.profile.transportModeLabel}
-								</div>
-								<div>
-									<div class="flex gap-2">
-										<input
-											type="hidden"
-											name="preferredTransportMode"
-											value={selectedTransportMode}
-										/>
-										{#each ['foot', 'bicycle', 'car'] as TransportMode[] as mode (mode)}
-											<button
-												type="button"
-												onclick={() => {
-													selectedTransportMode = mode;
-													markDirty();
-												}}
-												class="flex flex-col items-center gap-1 px-3 py-2 rounded-lg border-2 transition-colors cursor-pointer
-													{selectedTransportMode === mode
-													? 'border-primary bg-primary-50 dark:bg-primary-900/20 text-primary dark:text-primary-300'
-													: 'border-tinte-200 dark:border-tinte-600 text-tinte-600 dark:text-tinte-300 hover:border-tinte-400 dark:hover:border-tinte-400'}"
-											>
-												<TransportModeIcon {mode} class="h-5 w-5" />
-												<span class="text-xs font-medium"
-													>{texts.pages.search.transportModes[mode]}</span
-												>
-											</button>
-										{/each}
-									</div>
-									<p class="text-xs text-tinte-500 dark:text-tinte-400 mt-2">
-										{texts.pages.profile.transportModeNote}
-									</p>
-								</div>
-							</div>
-						</div>
+						<LocationSection
+							city={data.currentUser.city ?? ''}
+							initialTransportMode={(data.currentUserPreferences
+								?.preferredTransportMode as TransportMode | undefined) ?? 'bicycle'}
+							ondirty={markDirty}
+						/>
 					</section>
 
 					<!-- KONTAKT: messenger handles + visibility -->

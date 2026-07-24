@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// client-pb.ts reads PUBLIC_PB_URL from here at import time.
+// client-pb.ts (imported by realtime.ts) reads PUBLIC_PB_URL from here at import time.
 vi.mock('$env/static/public', () => ({ PUBLIC_PB_URL: 'http://localhost:8090' }));
 
 // A hoisted holder collects every PocketBase instance the module constructs, so
 // a test can reach the singleton created lazily by getClientPB().
 const hoisted = vi.hoisted(() => ({ instances: [] as MockPB[] }));
 
-// Minimal mock of the PocketBase client surface client-pb.ts touches: authStore
+// Minimal mock of the PocketBase client surface realtime.ts + client-pb.ts touch: authStore
 // (for the onChange reset registered in getClientPB), realtime.isConnected /
 // unsubscribe (the watchdog + reestablishAll), and collection().subscribe.
 class MockPB {
@@ -29,7 +29,7 @@ class MockPB {
 vi.mock('pocketbase', () => ({ default: MockPB }));
 
 // Mirror the module's own constants so assertions read intently (kept in sync
-// with client-pb.ts by hand — they are private there).
+// with realtime.ts by hand — they are private there).
 const WATCHDOG_INTERVAL_MS = 15_000;
 const REALTIME_STALE_MS = 40_000;
 const RECONNECT_AFTER_HIDDEN_MS = 3_000;
@@ -48,7 +48,7 @@ async function flush(): Promise<void> {
 }
 
 async function importModule() {
-	return import('./client-pb');
+	return import('./realtime');
 }
 
 beforeEach(() => {
@@ -85,7 +85,7 @@ async function subscribeAndSettle(
 	return { pb, cleanup };
 }
 
-describe('client-pb realtime watchdog', () => {
+describe('realtime watchdog', () => {
 	it('reconnects when the SDK reports the socket is down', async () => {
 		const mod = await importModule();
 		const { pb } = await subscribeAndSettle(mod, { expectsHeartbeat: true });
@@ -196,7 +196,7 @@ describe('client-pb realtime watchdog', () => {
 	});
 });
 
-describe('client-pb recovery listeners', () => {
+describe('realtime recovery listeners', () => {
 	it('reconnects on pageshow when restored from bfcache (persisted)', async () => {
 		const mod = await importModule();
 		const { pb } = await subscribeAndSettle(mod, { expectsHeartbeat: true });
