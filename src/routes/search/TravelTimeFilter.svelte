@@ -45,9 +45,12 @@
 	// wrapper only drives the spinner and applies the result to the bound prop.
 	async function runTravelTimeFetch(mode: TransportMode, userLocation: GeoPoint) {
 		isFetchingTravelTimes = true;
-		const result = await fetchTravelTimes(mode, userLocation, items);
-		if (result) travelTimes = result;
-		isFetchingTravelTimes = false;
+		try {
+			const result = await fetchTravelTimes(mode, userLocation, items);
+			if (result) travelTimes = result;
+		} finally {
+			isFetchingTravelTimes = false;
+		}
 	}
 
 	function requestLocation(mode: TransportMode, { onDenied }: { onDenied?: () => void } = {}) {

@@ -108,7 +108,7 @@
 		<TableBody>
 			{#if paginated.length === 0}
 				<TableBodyRow class="bg-transparent!">
-					<TableBodyCell colspan={4} class="text-center text-tinte-500 dark:text-tinte-400 bg-transparent!">
+					<TableBodyCell colspan={3} class="text-center text-tinte-500 dark:text-tinte-400 bg-transparent!">
 						{search ? 'Keine Treffer.' : texts.ui.trustNetworkEmpty}
 					</TableBodyCell>
 				</TableBodyRow>
