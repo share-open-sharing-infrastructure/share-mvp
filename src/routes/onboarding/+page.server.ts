@@ -38,6 +38,9 @@ export async function load({ locals, url }) {
 	};
 }
 
+/** Shared fallback for onboarding actions with no more specific error mapping. */
+const genericFailure = () => fail(500, { error: true, message: texts.errors.somethingWentWrong });
+
 export const actions = {
 	saveLocation: async ({ locals, request }) => {
 		const formData = await request.formData();
@@ -67,7 +70,7 @@ export const actions = {
 			if (geo !== undefined) await upsertUserGeolocation(locals.pb, locals.user.id, geo);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
@@ -95,7 +98,7 @@ export const actions = {
 			await locals.pb.collection('users').update(locals.user.id, pbFormData);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
@@ -119,7 +122,7 @@ export const actions = {
 			await removeTrust(locals.pb, locals.user.id, toRemoveTrusteeId);
 		} catch (error: Error | any) {
 			console.error(error?.message ?? error);
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
@@ -161,7 +164,7 @@ export const actions = {
 			await upsertOwnContact(locals.pb, locals.user.id, contact);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 };

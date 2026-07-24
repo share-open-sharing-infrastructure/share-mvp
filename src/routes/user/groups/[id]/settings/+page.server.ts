@@ -1,6 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
-import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { failFromPbError } from '$lib/server/pbErrors';
 import { requireGroupMembership, isGroupOwner } from '$lib/server/groups';
 import type { GroupInvite } from '$lib/types/models';
 
@@ -61,8 +61,7 @@ export const actions = {
 		try {
 			await locals.pb.collection('groups').update(params.id, { name, description, isPublic });
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 		return { success: true };
 	},
@@ -99,8 +98,7 @@ export const actions = {
 				...(expiresAt ? { expiresAt } : {}),
 			});
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 		return { success: true };
 	},
@@ -114,8 +112,7 @@ export const actions = {
 		try {
 			await locals.pb.collection('group_invites').delete(inviteId);
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 		return { success: true };
 	},
@@ -127,8 +124,7 @@ export const actions = {
 		try {
 			await locals.pb.collection('groups').delete(params.id);
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 		redirect(303, '/user/groups');
 	},

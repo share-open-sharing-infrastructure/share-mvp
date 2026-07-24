@@ -4,6 +4,7 @@
 	import { MessagesOutline } from 'flowbite-svelte-icons';
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
+	import { itemStatusBadgeClasses, itemStatusLabel } from '$lib/utils/itemStatus';
 	import { resolve } from '$app/paths';
 	import { buildMailtoHref, buildItemRedirectHref } from '$lib/utils/utils';
 	import type { ItemPublic, UnmetRequirement } from '$lib/types/models';
@@ -78,17 +79,9 @@
 			<button
 				type="submit"
 				class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold border transition-colors cursor-pointer
-					{item.status === 'available'
-						? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-						: item.status === 'unavailable'
-						? 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'
-						: 'bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200'}"
+					{itemStatusBadgeClasses(item.status, { interactive: true })}"
 			>
-				{item.status === 'available'
-					? texts.itemStatus.available
-					: item.status === 'unavailable'
-					? texts.itemStatus.unavailable
-					: texts.itemStatus.unknown}
+				{itemStatusLabel(item.status)}
 				{#if item.status !== 'unknown'}
 					<span class="ml-2 text-xs opacity-60">
 						{'→ ' + (item.status === 'available' ? texts.itemStatus.markUnavailable : texts.itemStatus.markAvailable)}
