@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import type { Conversation } from '$lib/types/models';
-	import { LENDING_LIFECYCLE, canAbortUi, type LendingStatus } from '$lib/lending';
+	import { LENDING_LIFECYCLE, canAbortUi, canTransition, type LendingStatus } from '$lib/lending';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
@@ -36,6 +36,21 @@
 	// comment in $lib/lending.ts for why this is intentionally NOT the same rule the
 	// server enforces for the abort transition itself.
 	const showAbort = $derived(!!onAbort && canAbortUi(status, isOwner));
+
+	// A conversation only ever has these two roles, so `isRequester` is just the negation.
+	// Action-button visibility is derived from the same `LENDING_TRANSITIONS` table the
+	// server enforces (via `canTransition`) instead of re-deriving the role/status rule
+	// per button — keeps this list from drifting out of sync with the server guard.
+	const role = $derived({ isOwner, isRequester: !isOwner });
+	const showReject = $derived(canTransition('rejectRequest', role, status));
+	const showAccept = $derived(canTransition('acceptRequest', role, status));
+	const showConfirmHandover = $derived(canTransition('confirmHandover', role, status));
+	const showRequestReturn = $derived(canTransition('requestReturn', role, status));
+	const showConfirmReturn = $derived(canTransition('confirmReturn', role, status));
+	// Visual weight only: `confirmReturn` is the secondary action while still `active`
+	// (the borrower may yet request a return) but becomes the primary CTA once a return
+	// has actually been requested.
+	const confirmReturnVariant = $derived(status === 'return_requested' ? 'primary' : 'secondary');
 
 	// The five forward-progress steps. `rejected` is a dead-end handled separately below.
 	const steps: readonly LendingStatus[] = LENDING_LIFECYCLE;
@@ -111,19 +126,20 @@
 				</div>
 
 				<div class="flex items-center gap-2 shrink-0">
-					{#if status === 'pending' && isOwner}
+					{#if showReject}
 						{@render actionForm('?/rejectRequest', texts.lending.actions.reject, 'secondary')}
+					{/if}
+					{#if showAccept}
 						{@render actionForm('?/acceptRequest', texts.lending.actions.accept, 'primary')}
-					{:else if status === 'accepted' && isOwner}
+					{/if}
+					{#if showConfirmHandover}
 						{@render actionForm('?/confirmHandover', texts.lending.actions.confirmHandover, 'primary')}
-					{:else if status === 'active'}
-						{#if !isOwner}
-							{@render actionForm('?/requestReturn', texts.lending.actions.requestReturn, 'primary')}
-						{:else}
-							{@render actionForm('?/confirmReturn', texts.lending.actions.confirmReturn, 'secondary')}
-						{/if}
-					{:else if status === 'return_requested' && isOwner}
-						{@render actionForm('?/confirmReturn', texts.lending.actions.confirmReturn, 'primary')}
+					{/if}
+					{#if showRequestReturn}
+						{@render actionForm('?/requestReturn', texts.lending.actions.requestReturn, 'primary')}
+					{/if}
+					{#if showConfirmReturn}
+						{@render actionForm('?/confirmReturn', texts.lending.actions.confirmReturn, confirmReturnVariant)}
 					{/if}
 					{#if showAbort}
 						<!-- Opens the confirmation modal in the parent; the actual mutation

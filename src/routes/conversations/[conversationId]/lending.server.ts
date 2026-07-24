@@ -73,8 +73,8 @@ interface EffectContext {
 	conv: Record<string, unknown>;
 	userId: string;
 	itemName: string;
-	/** `requestReturn`'s `requesterName` — the only transition that needs extra caller data. */
-	extra?: string;
+	/** Set only for `requestReturn`, the sole transition that needs extra caller data. */
+	requesterName?: string;
 }
 
 interface TransitionEffect {
@@ -162,7 +162,7 @@ const TRANSITION_EFFECTS: Record<LendingAction, TransitionEffect> = {
 		notify: (ctx) => ({
 			recipientId: ctx.conv.itemOwner as string,
 			type: 'return_requested',
-			body: texts.notifications.returnRequested(ctx.extra ?? '', ctx.itemName),
+			body: texts.notifications.returnRequested(ctx.requesterName ?? '', ctx.itemName),
 		}),
 	},
 
@@ -189,7 +189,7 @@ async function executeLendingTransition(
 	action: LendingAction,
 	conversationId: string,
 	userId: string,
-	extra?: string
+	requesterName?: string
 ): Promise<FailResult | void> {
 	const transition = LENDING_TRANSITIONS[action];
 	const result = await loadAndValidateConversation(pb, conversationId, userId, transition.role, transition.from);
@@ -198,7 +198,7 @@ async function executeLendingTransition(
 
 	const itemName = await getItemName(pb, conv.requestedItem as string);
 	const effect = TRANSITION_EFFECTS[action];
-	const ctx: EffectContext = { pb, conversationId, conv, userId, itemName, extra };
+	const ctx: EffectContext = { pb, conversationId, conv, userId, itemName, requesterName };
 
 	try {
 		const extraPatch = effect.conversationPatch?.(ctx) ?? {};
