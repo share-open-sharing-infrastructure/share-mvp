@@ -3,134 +3,83 @@
 	import ConversationList from './ConversationList.svelte';
 	import { getClientPB } from '$lib/client-pb';
 	import { subscribeConversationList } from './conversationListRealtime';
+	import { scrollLock, viewportHeight } from './chatViewport';
+	import {
+		matchesRole,
+		matchesActive,
+		emptyReason as computeEmptyReason,
+		type ConversationRoleFilter,
+	} from './conversationFilters';
+	import { realtimeSynced } from '$lib/stores/realtimeSynced.svelte';
 	import { page } from '$app/state';
 	import { invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import type { Conversation } from '$lib/types/models';
-	import { OPEN_LENDING_STATES, isLendingStatusIn } from '$lib/lending';
 
 	let { data, children } = $props();
 
 	// Filter state — written ONLY by the click handlers below, never by effects or
 	// navigation. The filters affect the sidebar list only: the open conversation stays
 	// open even when they hide it from the list.
-	// null = no filter selected, show both lending and borrowing conversations.
-	let activeFilter: 'lending' | 'borrowing' | null = $state(null);
+	let activeFilter: ConversationRoleFilter = $state(null);
 	let showOnlyActive = $state(true);
 
 	const hasConversation = $derived(!!page.params.conversationId);
 
 	let outerEl: HTMLDivElement | undefined = $state();
 
-	// Lock the document while a conversation route is mounted so the page itself can
-	// never scroll: the chat is a fixed-height app shell, and a scrollable document is
-	// what let the mobile keyboard scroll the whole page down (revealing the footer)
-	// instead of just reflowing the chat. The footer and the root <main> padding still
-	// exist in flow but are simply clipped below the fold. Scoped here (rather than in
-	// the root layout) via mount/unmount, the same pattern modals use for scroll-locking.
-	$effect(() => {
-		const html = document.documentElement;
-		const body = document.body;
-		const prevHtml = html.style.overflow;
-		const prevBody = body.style.overflow;
-		// Reset to the top before locking: on a cold load the document can already be
-		// scrolled down (e.g. the input focus dragging the too-tall page into view), and
-		// locking `overflow: hidden` would otherwise freeze it there — footer showing,
-		// view trapped (#529). The input now focuses with preventScroll, this is the belt.
-		window.scrollTo(0, 0);
-		html.style.overflow = 'hidden';
-		body.style.overflow = 'hidden';
-		return () => {
-			html.style.overflow = prevHtml;
-			body.style.overflow = prevBody;
-		};
-	});
+	// Server-load data that the realtime handler below also writes to directly (clearing
+	// unread dots, syncing status changes) — re-syncs from load() whenever it reruns (e.g.
+	// invalidateAll() on realtime reconnect), same pattern as the detail page's messages/
+	// lendingStatus/counterfactual boxes (issue #469).
+	const conversations = realtimeSynced(() => data.conversations);
 
-	// Size the chat container to fill the *visual* viewport below the navbar.
-	// Using visualViewport.height (rather than 100dvh) means the on-screen mobile
-	// keyboard shrinks the container: the message list (flex-1) absorbs the shrink
-	// and the input bar rides up just above the keyboard, matching native chat apps.
-	// The scroll-lock above keeps the page itself from scrolling, so the keyboard only
-	// reflows this container.
-	// On a cold load (push/share link, reload) the mobile visual viewport isn't settled
-	// yet — the browser toolbar is still expanded, so a single mount-time measurement
-	// fixes too small a height and the scroll-lock stops a correcting event from firing.
-	// So we re-measure across the settle window: after first paint (rAF), after the
-	// toolbar collapses (timeout), and on window `load` / `orientationchange`, on top of
-	// the live resize/scroll listeners. On internal navigation the viewport is already
-	// settled → the extra passes are harmless no-ops.
-	$effect(() => {
-		if (!outerEl) return;
+	// Segmented filter control config — literal Tailwind classes per tab/state (never
+	// interpolated, e.g. no `text-${color}`) so the two near-identical buttons collapse
+	// into one data-driven `{#each}` instead of duplicated markup.
+	const FILTER_TABS: {
+		key: 'borrowing' | 'lending';
+		label: string;
+		activeClasses: string;
+		inactiveClasses: string;
+		badgeActiveClasses: string;
+	}[] = [
+		{
+			key: 'borrowing',
+			label: texts.pages.conversations.borrowing,
+			activeClasses: 'bg-white dark:bg-tinte-700 text-primary shadow-sm',
+			inactiveClasses: 'text-primary-300 dark:text-primary-400/70 hover:text-primary',
+			badgeActiveClasses: 'bg-primary text-white',
+		},
+		{
+			key: 'lending',
+			label: texts.pages.conversations.lending,
+			activeClasses: 'bg-white dark:bg-tinte-700 text-accent shadow-sm',
+			inactiveClasses: 'text-accent-300 dark:text-accent-400/70 hover:text-accent',
+			badgeActiveClasses: 'bg-accent text-white',
+		},
+	];
+	const BADGE_INACTIVE_CLASSES = 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300';
 
-		const vv = window.visualViewport;
-
-		const update = () => {
-			const top = outerEl!.getBoundingClientRect().top + window.scrollY;
-			const viewportHeight = vv ? vv.height : window.innerHeight;
-			outerEl!.style.height = `${viewportHeight - top}px`;
-		};
-
-		update();
-		const rafId = requestAnimationFrame(update);
-		const timeoutId = setTimeout(update, 250);
-		window.addEventListener('load', update);
-		window.addEventListener('orientationchange', update);
-		window.addEventListener('resize', update);
-		vv?.addEventListener('resize', update);
-		vv?.addEventListener('scroll', update);
-		return () => {
-			cancelAnimationFrame(rafId);
-			clearTimeout(timeoutId);
-			window.removeEventListener('load', update);
-			window.removeEventListener('orientationchange', update);
-			window.removeEventListener('resize', update);
-			vv?.removeEventListener('resize', update);
-			vv?.removeEventListener('scroll', update);
-		};
-	});
-
-	// Local writable derived: re-derives from data.conversations whenever load() reruns
-	// (e.g. invalidateAll on realtime reconnect) and also accepts direct writes from the
-	// realtime handler below (clearing unread dots).
-	let conversations: Conversation[] = $derived([...data.conversations]);
-
-	// Role/status predicates shared by the tab counts and the visibility filter.
-	const isLending = (c: Conversation) => c.itemOwner === data.currentUser.id;
-	// Plain chats without lending status count as active; terminal states
-	// (rejected/aborted/completed) do not.
-	const isActive = (c: Conversation) =>
-		!c.lendingStatus || isLendingStatusIn(OPEN_LENDING_STATES, c.lendingStatus);
-	const matchesRole = (c: Conversation) =>
-		activeFilter === null || (activeFilter === 'lending') === isLending(c);
-	const matchesActive = (c: Conversation) => !showOnlyActive || isActive(c);
-
-	// Tab badge counts respect the active-only checkbox so the badge always matches
-	// what selecting that tab would show in the list.
-	const lendingConversations = $derived(
-		conversations.filter((c) => isLending(c) && matchesActive(c))
-	);
-	const borrowingConversations = $derived(
-		conversations.filter((c) => !isLending(c) && matchesActive(c))
-	);
+	// Per-tab count, respecting the active-only checkbox so the badge always matches what
+	// selecting that tab would show in the list.
+	function tabCount(key: 'borrowing' | 'lending'): number {
+		return conversations.value.filter(
+			(c) => matchesRole(c, data.currentUser.id, key) && matchesActive(c, showOnlyActive)
+		).length;
+	}
 
 	// Conversations after the lending/borrowing filter, before the "only active" checkbox —
 	// used to tell whether an empty result is due to the active-only filter or to genuinely
 	// having no conversations of that type.
-	const conversationsByFilter = $derived(conversations.filter(matchesRole));
+	const conversationsByRole = $derived(
+		conversations.value.filter((c) => matchesRole(c, data.currentUser.id, activeFilter))
+	);
 
 	// The filters apply strictly to the list — a conversation they hide stays open in the
 	// chat panel but is not shown (or highlighted) in the sidebar.
-	const visibleConversations = $derived(conversationsByFilter.filter(matchesActive));
+	const visibleConversations = $derived(conversationsByRole.filter((c) => matchesActive(c, showOnlyActive)));
 
-	const emptyReason = $derived(
-		conversationsByFilter.length > 0
-			? 'active'
-			: activeFilter === 'lending'
-				? 'lending'
-				: activeFilter === 'borrowing'
-					? 'borrowing'
-					: 'none'
-	);
+	const emptyReason = $derived(computeEmptyReason(conversationsByRole.length > 0, activeFilter));
 
 	function toggleFilter(filter: 'lending' | 'borrowing') {
 		activeFilter = activeFilter === filter ? null : filter;
@@ -143,18 +92,19 @@
 		// and #435.
 		return subscribeConversationList(
 			getClientPB(),
-			() => conversations,
-			(next) => (conversations = next),
+			() => conversations.value,
+			(next) => (conversations.value = next),
 			() => invalidateAll()
 		);
 	});
 </script>
 
-<!-- Height is set dynamically via $effect to fill viewport below the navbar; the
-	100dvh inline baseline covers the JS-lag window on cold load (before the $effect
-	measures) so the footer never blitzes through — the $effect then overwrites
-	style.height with the exact px value. -->
-<div bind:this={outerEl} class="flex flex-col" style="height: 100dvh">
+<!-- Height is set dynamically via the viewportHeight action to fill viewport below the
+	navbar; the 100dvh inline baseline covers the JS-lag window on cold load (before the
+	action measures) so the footer never blitzes through — the action then overwrites
+	style.height with the exact px value. scrollLock keeps the document itself from
+	scrolling while this layout is mounted (see chatViewport.ts for both). -->
+<div bind:this={outerEl} use:scrollLock use:viewportHeight class="flex flex-col" style="height: 100dvh">
 	<div class="flex-1 min-h-0 mx-auto w-full max-w-5xl flex gap-3 px-3 py-3">
 		<!-- SIDEBAR — full width on mobile when no conversation open, fixed width on desktop -->
 		<div
@@ -177,44 +127,25 @@
 				already-selected one deselects it back to "show all" -->
 			<div class="px-3 py-2.5 shrink-0">
 				<div class="flex p-1 bg-tinte-100 dark:bg-tinte-800 rounded-xl gap-1">
-					<button
-						onclick={() => toggleFilter('borrowing')}
-						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
-							{activeFilter === 'borrowing'
-							? 'bg-white dark:bg-tinte-700 text-primary shadow-sm'
-							: 'text-primary-300 dark:text-primary-400/70 hover:text-primary'}"
-					>
-						{texts.pages.conversations.borrowing}
-						{#if borrowingConversations.length > 0}
-							<span
-								class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
-								{activeFilter === 'borrowing'
-									? 'bg-primary text-white'
-									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}"
-							>
-								{borrowingConversations.length}
-							</span>
-						{/if}
-					</button>
-					<button
-						onclick={() => toggleFilter('lending')}
-						class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
-							{activeFilter === 'lending'
-							? 'bg-white dark:bg-tinte-700 text-accent shadow-sm'
-							: 'text-accent-300 dark:text-accent-400/70 hover:text-accent'}"
-					>
-						{texts.pages.conversations.lending}
-						{#if lendingConversations.length > 0}
-							<span
-								class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
-								{activeFilter === 'lending'
-									? 'bg-accent text-white'
-									: 'bg-tinte-300 dark:bg-tinte-600 text-tinte-600 dark:text-tinte-300'}"
-							>
-								{lendingConversations.length}
-							</span>
-						{/if}
-					</button>
+					{#each FILTER_TABS as tab (tab.key)}
+						{@const count = tabCount(tab.key)}
+						<button
+							onclick={() => toggleFilter(tab.key)}
+							class="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 text-sm font-medium rounded-lg transition-all hover:cursor-pointer
+								{activeFilter === tab.key ? tab.activeClasses : tab.inactiveClasses}"
+							aria-pressed={activeFilter === tab.key}
+						>
+							{tab.label}
+							{#if count > 0}
+								<span
+									class="w-4 h-4 rounded-full text-[10px] font-bold leading-none flex items-center justify-center shrink-0
+									{activeFilter === tab.key ? tab.badgeActiveClasses : BADGE_INACTIVE_CLASSES}"
+								>
+									{count}
+								</span>
+							{/if}
+						</button>
+					{/each}
 				</div>
 			</div>
 

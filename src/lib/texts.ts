@@ -750,6 +750,10 @@ export const texts = {
 			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
 			noBorrowingConversations: 'Du hast noch nichts angefragt.',
+			backToConversations: '← Zurück zu deinen Anfragen',
+			noConversationSelectedTitle: 'Kein Gespräch ausgewählt',
+			noConversationSelectedBody: 'Wähle eine Unterhaltung aus der Liste oder starte eine neue über die Suche.',
+			goToSearch: 'Zur Suche',
 		},
 		items: {
 			title: 'Meine Dinge',
@@ -1102,11 +1106,17 @@ export const texts = {
 			confirmReturn: 'Rückgabe bestätigen',
 			abort: 'Anfrage abbrechen',
 		},
-		// Confirmation modal shown before aborting (mirrors the delete modal).
+		// Confirmation modal shown before aborting (mirrors confirmDelete below).
 		confirmAbort: {
 			title: 'Anfrage abbrechen',
 			body: 'Willst du diese Anfrage wirklich abbrechen? Die andere Person wird benachrichtigt und der Gegenstand wird wieder freigegeben.',
 			confirm: 'Anfrage abbrechen',
+		},
+		// Confirmation modal shown before deleting a conversation (mirrors confirmAbort above).
+		confirmDelete: {
+			title: 'Anfrage löschen',
+			body: 'Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung gehen dabei verloren.',
+			confirm: 'Anfrage löschen',
 		},
 		statusDescription: {
 			pending: {

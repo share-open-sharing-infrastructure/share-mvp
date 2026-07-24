@@ -5,15 +5,11 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import { onMount } from 'svelte';
 
-	let {
-		chatPartner,
-		isSubmitting = $bindable(),
-		messageText = $bindable(),
-	}: {
-		chatPartner: { id: string };
-		isSubmitting: boolean;
-		messageText: string;
-	} = $props();
+	// The recipient is derived server-side from the conversation's actual participants
+	// (see ?/sendMessage in +page.server.ts) — this form no longer needs (or sends) a
+	// chatPartnerId, so it also no longer needs a `chatPartner` prop.
+	let messageText = $state('');
+	let isSubmitting = $state(false);
 
 	let inputEl: HTMLInputElement | undefined = $state();
 
@@ -35,13 +31,12 @@
 	use:enhance={() => {
 		isSubmitting = true;
 		return async ({ update }) => {
-			await update({reset: false}); // Have to disable reset, otherwise Svelte clears the form data and the target user is not found
+			await update();
 			isSubmitting = false;
 			messageText = '';
 		};
 	}}
 >
-	<input name="chatPartnerId" value={chatPartner.id} hidden />
 	<input
 		bind:this={inputEl}
 		name="messageContent"
