@@ -1,6 +1,18 @@
 import type PocketBase from 'pocketbase';
+import { upsertSingletonRow } from '$lib/server/singletonRow';
 
 export type GeoPoint = { lon: number; lat: number };
+
+/** The user's geolocation row id, or null if none exists yet. */
+async function findGeolocationRow(pb: PocketBase, userId: string): Promise<{ id: string } | null> {
+	try {
+		return await pb
+			.collection('user_geolocations')
+			.getFirstListItem(pb.filter('user = {:u}', { u: userId }), { fields: 'id' });
+	} catch {
+		return null;
+	}
+}
 
 /** Reads the current user's own stored geolocation, or null if none/null-island. */
 export async function getUserGeolocation(pb: PocketBase, userId: string): Promise<GeoPoint | null> {
@@ -21,20 +33,16 @@ export async function upsertUserGeolocation(
 	userId: string,
 	geo: GeoPoint | null
 ): Promise<void> {
-	let existingId: string | null = null;
-	try {
-		const rec = await pb
-			.collection('user_geolocations')
-			.getFirstListItem(pb.filter('user = {:u}', { u: userId }));
-		existingId = rec.id;
-	} catch {
-		// no existing entry
+	if (!geo) {
+		const existing = await findGeolocationRow(pb, userId);
+		if (existing) await pb.collection('user_geolocations').delete(existing.id);
+		return;
 	}
-
-	if (geo) {
-		if (existingId) await pb.collection('user_geolocations').update(existingId, { geolocation: geo });
-		else await pb.collection('user_geolocations').create({ user: userId, geolocation: geo });
-	} else if (existingId) {
-		await pb.collection('user_geolocations').delete(existingId);
-	}
+	await upsertSingletonRow({
+		pb,
+		collection: 'user_geolocations',
+		find: () => findGeolocationRow(pb, userId),
+		createData: { user: userId, geolocation: geo },
+		patch: { geolocation: geo },
+	});
 }

@@ -3,8 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { texts } from '$lib/texts';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { User } from '$lib/types/models';
-import { createNotification, sendPushToUser } from '$lib/server/notifications';
-import { addTrust, removeTrust, getTrustees } from '$lib/server/trust';
+import { addTrustAndNotify, removeTrust, getTrustees } from '$lib/server/trust';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { getUserGeolocation, upsertUserGeolocation } from '$lib/server/geolocation';
 import { getOwnContact, upsertOwnContact } from '$lib/server/contacts';
@@ -76,16 +75,8 @@ export const actions = {
 		const formData = await request.formData();
 		const newTrusteeId = formData.get('trusteeId') as string;
 
-		try {
-			await addTrust(locals.pb, locals.user.id, newTrusteeId);
-		} catch (error: Error | any) {
-			console.error(error?.message ?? error);
-		}
-
-		const adderName = locals.user.username ?? 'Jemand';
-		const notificationBody = texts.notifications.trustAdded(adderName);
-		await createNotification(locals.pb, newTrusteeId as string, locals.user.id, 'trust_added', locals.user.id, notificationBody);
-		await sendPushToUser(locals.pb, newTrusteeId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+		const result = await addTrustAndNotify(locals.pb, locals.user, newTrusteeId);
+		if (!result.ok) return fail(result.status, { error: true, message: result.message });
 	},
 
 	saveProfile: async ({ locals, request }) => {
@@ -128,6 +119,7 @@ export const actions = {
 			await removeTrust(locals.pb, locals.user.id, toRemoveTrusteeId);
 		} catch (error: Error | any) {
 			console.error(error?.message ?? error);
+			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
 		}
 	},
 

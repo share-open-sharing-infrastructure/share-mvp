@@ -1,6 +1,7 @@
 import type PocketBase from 'pocketbase';
 import type { LendingRequirements, UnmetRequirement, RequirementSetting } from '$lib/types/models';
 import { texts } from '$lib/texts';
+import { upsertSingletonRow } from '$lib/server/singletonRow';
 
 /**
  * Lender-defined borrower requirements (issues #423 / #389).
@@ -110,29 +111,21 @@ export async function getOwnerRequirements(
 
 /**
  * Upserts the owner's own requirements row. Creates it on first save, updates it
- * thereafter (one row per owner, enforced by a unique index on `owner`). If two
- * saves race and both try to create, the loser's unique-index error is caught and
- * retried as an update, so the user never sees a spurious failure.
+ * thereafter (one row per owner, enforced by a unique index on `owner`); a lost
+ * create race is retried as an update by the shared helper.
  */
 export async function upsertOwnerRequirements(
 	pb: PocketBase,
 	ownerId: string,
 	data: Partial<Record<RequirementField, boolean>>
 ): Promise<void> {
-	const existing = await getOwnerRequirements(pb, ownerId);
-	if (existing) {
-		await pb.collection('lending_requirements').update(existing.id, data);
-		return;
-	}
-	try {
-		await pb.collection('lending_requirements').create({ owner: ownerId, ...data });
-	} catch (err) {
-		// Lost a create race (unique index on owner) — fall back to updating the row
-		// that the other writer just created.
-		const row = await getOwnerRequirements(pb, ownerId);
-		if (row) await pb.collection('lending_requirements').update(row.id, data);
-		else throw err;
-	}
+	await upsertSingletonRow({
+		pb,
+		collection: 'lending_requirements',
+		find: () => getOwnerRequirements(pb, ownerId),
+		createData: { owner: ownerId, ...data },
+		patch: data,
+	});
 }
 
 /**

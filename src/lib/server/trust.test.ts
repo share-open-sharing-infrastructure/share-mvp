@@ -1,6 +1,21 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type PocketBase from 'pocketbase';
-import { isTrusting, addTrust, removeTrust, getTrustees, getTrusters } from './trust';
+import { texts } from '$lib/texts';
+import {
+	isTrusting,
+	addTrust,
+	addTrustAndNotify,
+	removeTrust,
+	getTrustees,
+	getTrusters,
+} from './trust';
+
+vi.mock('$lib/server/notifications', () => ({
+	createNotification: vi.fn().mockResolvedValue(undefined),
+	sendPushToUser: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { createNotification, sendPushToUser } from '$lib/server/notifications';
 
 function mockFilter(raw: string, params?: Record<string, unknown>): string {
 	if (!params) return raw;
@@ -78,6 +93,101 @@ describe('addTrust', () => {
 		const create = vi.fn().mockRejectedValue(new Error('boom'));
 		const pb = makePb({ getFirstListItem, create });
 		await expect(addTrust(pb, 'a', 'b')).rejects.toThrow('boom');
+	});
+});
+
+describe('addTrustAndNotify', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	const truster = { id: 'a', username: 'Anna' };
+
+	/** pb with a users_public target lookup plus trusts-collection mocks. */
+	function makeTrustNotifyPb(
+		target: { deleted?: boolean } | null,
+		trusts: Record<string, ReturnType<typeof vi.fn>>
+	): PocketBase {
+		const usersPublic = {
+			getOne:
+				target === null
+					? vi.fn().mockRejectedValue(new Error('not found'))
+					: vi.fn().mockResolvedValue({ id: 'b', ...target }),
+		};
+		return {
+			collection: vi.fn((name: string) =>
+				name === 'trusts' ? trusts : name === 'users_public' ? usersPublic : {}
+			),
+			filter: vi.fn(mockFilter),
+		} as unknown as PocketBase;
+	}
+
+	it('creates the edge and notifies the trustee (in-app + push)', async () => {
+		const create = vi.fn().mockResolvedValue({ id: 't1' });
+		const pb = makeTrustNotifyPb({}, {
+			getFirstListItem: vi.fn().mockRejectedValue(new Error('none')),
+			create,
+		});
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: true });
+		expect(create).toHaveBeenCalledWith({ truster: 'a', trustee: 'b' });
+		expect(createNotification).toHaveBeenCalledWith(
+			pb,
+			'b',
+			'a',
+			'trust_added',
+			'a',
+			expect.stringContaining('Anna')
+		);
+		expect(sendPushToUser).toHaveBeenCalledWith(
+			pb,
+			'b',
+			texts.notifications.pushTitle,
+			expect.stringContaining('Anna'),
+			'/users/a'
+		);
+	});
+
+	it('refuses a deleted (anonymized) target with a 400 and does not touch the edge', async () => {
+		const create = vi.fn();
+		const pb = makeTrustNotifyPb({ deleted: true }, { create });
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: false, status: 400, message: texts.account.cannotTrustDeleted });
+		expect(create).not.toHaveBeenCalled();
+		expect(createNotification).not.toHaveBeenCalled();
+	});
+
+	it('returns a 404 when the target cannot be resolved', async () => {
+		const pb = makeTrustNotifyPb(null, {});
+		const result = await addTrustAndNotify(pb, truster, 'b');
+		expect(result).toEqual({ ok: false, status: 404, message: texts.errors.somethingWentWrong });
+	});
+
+	it('surfaces an edge-creation failure as a 500 instead of pretending success (regression)', async () => {
+		// Pre-check and post-failure re-check both say "no edge" → addTrust rethrows.
+		const pb = makeTrustNotifyPb({}, {
+			getFirstListItem: vi.fn().mockRejectedValue(new Error('none')),
+			create: vi.fn().mockRejectedValue(new Error('boom')),
+		});
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: false, status: 500, message: texts.errors.somethingWentWrong });
+		expect(createNotification).not.toHaveBeenCalled();
+	});
+
+	it('treats a notification failure as non-fatal — the edge exists, so the flow succeeded', async () => {
+		vi.mocked(createNotification).mockRejectedValueOnce(new Error('push down'));
+		const pb = makeTrustNotifyPb({}, {
+			getFirstListItem: vi.fn().mockRejectedValue(new Error('none')),
+			create: vi.fn().mockResolvedValue({ id: 't1' }),
+		});
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: true });
 	});
 });
 

@@ -4,7 +4,7 @@ import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { texts } from '$lib/texts';
 import type { Item } from '$lib/types/models';
 import { getAttachableGroups } from '$lib/server/groups';
-import { deleteItem, deleteMultipleItems, setItemStatus } from '$lib/server/items';
+import { deleteItem, deleteMultipleItems, setItemStatus, toggleItemStatus } from '$lib/server/items';
 import {
 	extractItemForm,
 	sanitizeCategories,
@@ -211,18 +211,10 @@ export const actions = {
 		const itemId = formData.get('itemId')?.toString();
 		if (!itemId) return fail(400, { fail: true, message: texts.errors.missingId });
 
-		let item: Item;
 		try {
-			item = await locals.pb.collection('items').getOne<Item>(itemId);
-		} catch {
-			return fail(404, { fail: true, message: texts.errors.itemNotFound });
-		}
-
-		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: texts.errors.noPermission });
-
-		const newStatus = item.status === 'available' ? 'unavailable' : 'available';
-		try {
-			await setItemStatus(locals.pb, itemId, locals.user.id, newStatus);
+			const result = await toggleItemStatus(locals.pb, itemId, locals.user.id);
+			if (result.status === 'not_found') return fail(404, { fail: true, message: texts.errors.itemNotFound });
+			if (result.status === 'not_owner') return fail(403, { fail: true, message: texts.errors.noPermission });
 		} catch (err) {
 			const e = err as Partial<ClientResponseError>;
 			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
