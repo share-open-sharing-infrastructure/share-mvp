@@ -42,14 +42,18 @@ existing items ──▶ per item: claimsInstitution → claimsItem → fetchOne
 
 - **found & changed** → update. **gone** (source no longer has it) → archive (`unavailable`).
   **error** (transient) → leave untouched.
-- A per-institution **circuit-breaker** aborts with zero writes if ≥50% of fetches error
-  **or come back "gone"** (so a source outage — including a collection-level 404 or an empty
-  maintenance response — can't mass-archive the catalogue).
+- A per-institution **circuit-breaker** aborts with zero writes if ≥50% of the fetches for the items
+  a run **claimed** error **or come back "gone"** (so a source outage — including a collection-level
+  404 or an empty maintenance response — can't mass-archive the catalogue). Items of another source
+  are skipped, so they never enter that rate.
 - Routing is two-staged: integrations are first narrowed to those whose optional
   `claimsInstitution(institution)` accepts the institution's source (detected from its base URL,
   e.g. `/webopac` ⇒ WINBIAP), then each stored item goes to the first remaining integration whose
-  `claimsItem(item)` returns true (detected from `externalUrl`/`externalId`). The two stages keep
-  leihbackend's catch-all `claimsItem` from grabbing — and wrongly archiving — another source's items.
+  `claimsItem(item)` returns true (detected from `externalUrl`/`externalId`). Both stages matter:
+  `claimsInstitution` keeps leihbackend away from a WINBIAP institution, and `claimsItem` keeps it
+  away from WINBIAP-shaped items *inside* a leihbackend institution — which is a real configuration
+  (CSV-imported WebOPAC records next to a feed, or two `sync_config` rows for one institution). The
+  full pull applies the same `claimsItem` filter to the items it diffs against.
 - Discovery is shared (`findSyncConfigs`, reading the `sync_config` collection). The scheduled
   `integration_refresh` cron refreshes every configured institution; an institution can also refresh
   its **own** items on demand via `POST /api/import/refresh`.
