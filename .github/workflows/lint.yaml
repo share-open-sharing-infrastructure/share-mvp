@@ -22,9 +22,6 @@ jobs:
       VAPID_SUBJECT: mailto:ci@example.com
       ORS_API_KEY: dummy
       MISTRAL_API_KEY: dummy
-      SYNC_SECRET: dummy
-      PB_SUPERUSER_EMAIL: ci@example.com
-      PB_SUPERUSER_PASSWORD: dummy
     steps:
       - name: Check out code
         uses: actions/checkout@v4

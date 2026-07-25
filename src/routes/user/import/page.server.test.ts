@@ -35,6 +35,11 @@ function refreshEvent(locals: App.Locals) {
 	return { locals } as unknown as Parameters<typeof actions.refresh>[0];
 }
 
+/** A PocketBase ClientResponseError-alike for the backend's 409 "another run is active". */
+function busyError() {
+	return Object.assign(new Error('busy'), { status: 409 });
+}
+
 function csvFile(content: string, name = 'items.csv'): File {
 	return new File([content], name, { type: 'text/csv' });
 }
@@ -185,6 +190,15 @@ describe('import: apply action', () => {
 		expect(result.rowErrors).toEqual(['name: cannot be blank.']);
 	});
 
+	it('fails 409 with the busy text when another integration run holds the lock', async () => {
+		const send = vi.fn().mockRejectedValue(busyError());
+		const result = await actions.apply(applyEvent(makeLocals(true, send), `${header}\nx-1,Ding,,Stadt,,,available,false,`));
+		expect(result).toMatchObject({
+			status: 409,
+			data: { error: true, message: texts.institutional.importBusy }
+		});
+	});
+
 	it('fails 503 when the backend apply call throws', async () => {
 		const send = vi.fn().mockRejectedValue(new Error('backend down'));
 		const result = await actions.apply(applyEvent(makeLocals(true, send), `${header}\nA-1,Bohrmaschine,,,,,,,`));
@@ -207,6 +221,24 @@ describe('import: refresh action', () => {
 		expect(send.mock.calls[0][0]).toBe('/api/import/refresh');
 		expect(send.mock.calls[0][1]).toMatchObject({ method: 'POST' });
 		expect(result).toMatchObject({ refreshed: true });
+	});
+
+	it('fails 409 with the busy text when another integration run holds the lock', async () => {
+		const send = vi.fn().mockRejectedValue(busyError());
+		const result = await actions.refresh(refreshEvent(makeLocals(true, send)));
+		expect(result).toMatchObject({
+			status: 409,
+			data: { error: true, message: texts.institutional.importBusy }
+		});
+	});
+
+	it('reports the missing integration instead of a successful no-op', async () => {
+		const send = vi.fn().mockResolvedValue({ institution: 'inst1', errors: [], configured: false });
+		const result = await actions.refresh(refreshEvent(makeLocals(true, send)));
+		expect(result).toMatchObject({
+			status: 400,
+			data: { error: true, message: texts.institutional.importRefreshNoIntegration }
+		});
 	});
 
 	it('fails 503 when the refresh call throws', async () => {

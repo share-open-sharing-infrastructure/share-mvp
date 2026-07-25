@@ -213,8 +213,9 @@ export function parseAndMapCsv(csvText: string, ownerId: string): ParseAndMapRes
 	const mappedRows: MappedRow[] = [];
 	const rowErrors: RowResult[] = [];
 	// Keep-last dedupe: a duplicate externalId must yield exactly one MappedRow, otherwise a
-	// first import would issue two creates for the same (owner, externalId) and fail the
-	// whole write batch on the unique index.
+	// first import would issue two creates for the same (owner, externalId) — and since `items`
+	// has NO unique index on externalId, that means two silent duplicates rather than an error.
+	// The backend dedupes the same way (`prepareRows`); this copy keeps the preview honest.
 	const rowByExternalId = new Map<string, MappedRow>();
 
 	rows.forEach((raw, i) => {

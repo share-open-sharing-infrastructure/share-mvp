@@ -26,9 +26,8 @@ jobs:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
-          PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
-          PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
-          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
+          # No PB_SUPERUSER_* / SYNC_SECRET: since #487 Phase 3 the app writes nothing as
+          # superuser and shares no sync secret — those live only in local tooling (seed + e2e).
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:

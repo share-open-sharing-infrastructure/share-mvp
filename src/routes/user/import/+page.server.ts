@@ -33,6 +33,16 @@ interface ImportSummary {
 	skipped: number;
 	errors: string[];
 	durationMs: number;
+	/** `/api/import/refresh` only: false when the institution has no `sync_config` row at all. */
+	configured?: boolean;
+}
+
+/**
+ * True when the backend refused a write because another integration run (cron sync/refresh or
+ * another import) holds the shared lock — a "try again shortly", not a failure.
+ */
+function isBusy(err: unknown): boolean {
+	return (err as Partial<ClientResponseError>)?.status === 409;
 }
 
 /** Diff forecast returned by the backend `/api/import/preview` dryRun endpoint (no write). */
@@ -146,6 +156,9 @@ export const actions = {
 				body: { rows: mappedRows.map(({ item }) => toRow(item)) }
 			});
 		} catch (err) {
+			if (isBusy(err)) {
+				return fail(409, { error: true, message: texts.institutional.importBusy });
+			}
 			console.error('import apply failed:', (err as Partial<ClientResponseError>)?.message ?? err);
 			return fail(503, { error: true, message: texts.institutional.importApplyFailed });
 		}
@@ -171,11 +184,21 @@ export const actions = {
 		}
 
 		// Refreshes only the caller's own items (user session — no SYNC_SECRET, no ?institution=).
+		let summary: ImportSummary;
 		try {
-			await locals.pb.send('/api/import/refresh', { method: 'POST' });
+			summary = await locals.pb.send('/api/import/refresh', { method: 'POST' });
 		} catch (err) {
+			if (isBusy(err)) {
+				return fail(409, { error: true, message: texts.institutional.importBusy });
+			}
 			console.error('import refresh failed:', (err as Partial<ClientResponseError>)?.message ?? err);
 			return fail(503, { error: true, message: texts.institutional.importRefreshFailed });
+		}
+
+		// A refresh without any configured source is a guaranteed no-op — say so instead of
+		// reporting success for work that never happened.
+		if (summary.configured === false) {
+			return fail(400, { error: true, message: texts.institutional.importRefreshNoIntegration });
 		}
 
 		return { success: true, refreshed: true, message: texts.institutional.importRefreshTriggered };

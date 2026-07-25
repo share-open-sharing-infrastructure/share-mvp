@@ -27,12 +27,8 @@ jobs:
         env:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
           LOGIN_SECRET: ${{ secrets.LOGIN_SECRET }}
-          # Static private env members must exist at build time or `$env/static/private`
-          # fails with "Missing export" (added by the leihlokal integration, #400). Dummy
-          # values are fine — they're only read at runtime, not baked into behaviour here.
-          SYNC_SECRET: dummy
-          PB_SUPERUSER_EMAIL: ci@example.com
-          PB_SUPERUSER_PASSWORD: dummy
+          # The integration's SYNC_SECRET / PB_SUPERUSER_* build vars are gone with #487 Phase 3
+          # (no `$env/static/private` import reads them anymore).
   test:
     # This matrix tests both the main and pull request branches
     name: Test ${{ matrix.artifact }}
