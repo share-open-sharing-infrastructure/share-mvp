@@ -11,7 +11,7 @@ import {
 import { texts } from '$lib/texts';
 import { notifyAndPush } from '$lib/server/notifications.js';
 
-const PERCENTAGE_OF_USERS_ASKED = 0.33;
+const PERCENTAGE_OF_USERS_ASKED = 0.8;
 
 export function shouldAskCounterfactual(rng: () => number = Math.random): boolean {
 	return rng() < PERCENTAGE_OF_USERS_ASKED;
