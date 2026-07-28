@@ -52,6 +52,29 @@
 			? texts.lending.statusLabel[conversation.lendingStatus as keyof typeof texts.lending.statusLabel]
 			: null
 	);
+
+	// Row background: active wins; otherwise an unread row is tinted in the role's
+	// color (primary = borrowing, accent = lending); read rows only tint on hover.
+	const rowBackgroundClass = $derived(
+		isActive
+			? 'bg-white dark:bg-tinte-800 shadow-sm'
+			: isUnread
+				? role === 'borrowing'
+					? 'bg-primary-100 dark:bg-primary-900/20 hover:bg-primary-200/60'
+					: 'bg-accent-100 dark:bg-accent-900/20 hover:bg-accent-200/60'
+				: 'hover:bg-white dark:hover:bg-tinte-800 hover:shadow-sm'
+	);
+
+	// Title text: active rows use the role color, unread rows just go bold.
+	const titleTextClass = $derived(
+		isActive
+			? role === 'borrowing'
+				? 'font-semibold text-primary'
+				: 'font-semibold text-accent'
+			: isUnread
+				? 'font-semibold text-tinte-900 dark:text-white'
+				: 'font-medium text-tinte-700 dark:text-tinte-200'
+	);
 </script>
 
 <li class="w-full">
@@ -59,13 +82,7 @@
 		href={resolve('/conversations/[conversationId]', { conversationId: conversation.id })}
 		class="flex items-center gap-3 rounded-xl border-l-4 px-2.5 py-2.5 transition-all min-h-14
 			{role === 'borrowing' ? 'border-primary' : 'border-accent'}
-			{isActive
-				? 'bg-white dark:bg-tinte-800 shadow-sm'
-				: isUnread
-					? role === 'borrowing'
-						? 'bg-primary-100 dark:bg-primary-900/20 hover:bg-primary-200/60'
-						: 'bg-accent-100 dark:bg-accent-900/20 hover:bg-accent-200/60'
-					: 'hover:bg-white dark:hover:bg-tinte-800 hover:shadow-sm'}"
+			{rowBackgroundClass}"
 	>
 		<!-- Item thumbnail -->
 		<div class="shrink-0 w-11 h-11 rounded-full border border-tinte-400 overflow-hidden bg-tinte-200 dark:bg-tinte-700">
@@ -82,14 +99,7 @@
 
 		<!-- Text -->
 		<div class="flex-1 min-w-0">
-			<p class="text-sm truncate leading-tight
-				{isActive
-					? role === 'borrowing'
-						? 'font-semibold text-primary'
-						: 'font-semibold text-accent'
-					: isUnread
-						? 'font-semibold text-tinte-900 dark:text-white'
-						: 'font-medium text-tinte-700 dark:text-tinte-200'}">
+			<p class="text-sm truncate leading-tight {titleTextClass}">
 				{itemName}
 			</p>
 			<p class="text-xs text-tinte-400 dark:text-tinte-500 truncate leading-tight mt-0.5">

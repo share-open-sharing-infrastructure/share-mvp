@@ -6,8 +6,13 @@
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
 	import type { ItemPublic } from '$lib/types/models';
-
-	type TransportMode = 'foot' | 'bicycle' | 'car';
+	import {
+		fetchTravelTimes,
+		persistTransportMode,
+		requestBrowserLocation,
+		type GeoPoint,
+		type TransportMode,
+	} from './travelTimeClient';
 
 	interface Props {
 		preferredMode: TransportMode | undefined;
@@ -33,55 +38,27 @@
 	let showNoLocationPrompt = $state(false);
 	let locationStatus = $state<'idle' | 'requesting' | 'denied'>('idle');
 	let isFetchingTravelTimes = $state(false);
-	let cachedUserLocation: { lon: number; lat: number } | null = null;
+	let cachedUserLocation: GeoPoint | null = null;
 	let mounted = false;
 
-	// Fire-and-forget: sends a diagnostic event to the server log. Never throws.
-	function sendDiag(payload: Record<string, unknown>) {
-		fetch('/api/diagnostics', { method: 'POST', body: JSON.stringify(payload) }).catch(() => {});
-	}
-
-	async function fetchTravelTimes(mode: TransportMode, userLocation: { lon: number; lat: number }) {
+	// The fetch itself (timeout, diagnostics) lives in travelTimeClient.ts; this
+	// wrapper only drives the spinner and applies the result to the bound prop.
+	async function runTravelTimeFetch(mode: TransportMode, userLocation: GeoPoint) {
 		isFetchingTravelTimes = true;
-
-		const ownerIds = [...new Set(items.map((item) => item.userId).filter(Boolean))];
-		if (ownerIds.length === 0) {
-			isFetchingTravelTimes = false;
-			return;
-		}
-
-		// Abort after 15s so a hanging ORS response doesn't leave the UI stuck indefinitely
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), 15_000);
 		try {
-			const response = await fetch('/api/travel-times/search', {
-				method: 'POST',
-				signal: controller.signal,
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ userLocation, transportMode: mode, ownerIds }),
-			});
-			
-			if (response.ok) {
-				travelTimes = await response.json();
-			} else {
-				sendDiag({ event: 'fetch_error', page: 'search', status: response.status });
-			}
-		} catch (err) {
-			// AbortError means our 15s timeout fired; any other error is a network failure
-			const isTimeout = err instanceof DOMException && err.name === 'AbortError';
-			sendDiag({ event: isTimeout ? 'fetch_timeout' : 'fetch_error', page: 'search' });
+			const result = await fetchTravelTimes(mode, userLocation, items);
+			if (result) travelTimes = result;
 		} finally {
-			clearTimeout(timeoutId);
 			isFetchingTravelTimes = false;
 		}
 	}
 
 	function requestLocation(mode: TransportMode, { onDenied }: { onDenied?: () => void } = {}) {
-		navigator.geolocation.getCurrentPosition(
-			(pos) => {
+		requestBrowserLocation(
+			(location) => {
 				if (!mounted) { return; }
-				cachedUserLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
-				fetchTravelTimes(mode, cachedUserLocation);
+				cachedUserLocation = location;
+				runTravelTimeFetch(mode, location);
 				showNoLocationPrompt = false;
 				locationStatus = 'idle';
 			},
@@ -108,15 +85,11 @@
 		showNoLocationPrompt = false;
 
 		if (isLoggedIn) {
-			const fd = new FormData();
-			fd.append('mode', mode);
-			fetch('?/saveTransportMode', { method: 'POST', body: fd }).catch((err) =>
-				console.error('Failed to save transport mode:', err)
-			);
+			persistTransportMode(mode);
 		}
 
 		if (cachedUserLocation) {
-			fetchTravelTimes(mode, cachedUserLocation);
+			runTravelTimeFetch(mode, cachedUserLocation);
 			return;
 		}
 
@@ -134,7 +107,7 @@
 			if (!mounted) {  return; }
 			if (!transportMode) { return; }
 			if (!cachedUserLocation) { return; }
-			fetchTravelTimes(transportMode, cachedUserLocation);
+			runTravelTimeFetch(transportMode, cachedUserLocation);
 		});
 	});
 

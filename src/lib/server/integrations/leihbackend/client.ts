@@ -1,6 +1,9 @@
 import { dev } from '$app/environment';
 import { assertPublicHttpUrl } from '../core/urlGuard';
+import { IntegrationFetchError, normalizeBaseUrl } from '../core/http';
 import type { LeihbackendItem } from './mapping';
+
+export { normalizeBaseUrl } from '../core/http';
 
 interface ItemPublicListResponse {
 	page: number;
@@ -12,15 +15,10 @@ interface ItemPublicListResponse {
 
 /** Thrown when fetching `item_public` from a leihbackend instance fails for any reason.
  *  The caller must treat the institution's pull as failed — no partial results. */
-export class LeihbackendFetchError extends Error {
-	readonly baseUrl: string;
-	readonly status?: number;
-
+export class LeihbackendFetchError extends IntegrationFetchError {
 	constructor(message: string, baseUrl: string, options?: { status?: number; cause?: unknown }) {
-		super(message, { cause: options?.cause });
+		super(message, baseUrl, options);
 		this.name = 'LeihbackendFetchError';
-		this.baseUrl = baseUrl;
-		this.status = options?.status;
 	}
 }
 
@@ -29,11 +27,6 @@ const MAX_ITEMS = 5000;
 // A source reporting an absurd `totalPages` must not drive endless sequential GETs.
 const MAX_PAGES = Math.ceil(MAX_ITEMS / PER_PAGE) + 1;
 const TIMEOUT_MS = 15000;
-
-/** Strips trailing slashes from a leihbackend base URL. */
-export function normalizeBaseUrl(url: string): string {
-	return url.replace(/\/+$/, '');
-}
 
 /**
  * Pages through `{base}/api/collections/item_public/records` until exhausted.
