@@ -8,7 +8,7 @@ Here, we develop a first minimum viable product. For a fine-grained timeline, se
 
 If you wish to contribute or are otherwise interested in the project, please don't hesitate to get in touch via kontakt@allerleih.org.
 
-> **The UI is prsenetly in German.** All user-facing strings live in `src/lib/texts.ts`; code, comments, docs and PR descriptions are English. We will internationalise the platfrom asap.
+> **The UI is presently in German.** All user-facing strings live in `src/lib/texts.ts`; code, comments, docs and PR descriptions are English. We will internationalise the platform asap.
 
 ---
 
