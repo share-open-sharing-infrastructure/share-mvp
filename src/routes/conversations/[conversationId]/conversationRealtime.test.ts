@@ -11,7 +11,7 @@ const { subscribeRealtime, unsubscribe } = vi.hoisted(() => ({
 	unsubscribe: vi.fn(),
 }));
 
-vi.mock('$lib/client-pb', () => ({ subscribeRealtime }));
+vi.mock('$lib/realtime', () => ({ subscribeRealtime }));
 
 import { subscribeConversation } from './conversationRealtime';
 

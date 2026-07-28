@@ -8,6 +8,7 @@ import { generateInviteSlug } from '$lib/inviteSlug';
 import { getUserGeolocation, upsertUserGeolocation } from '$lib/server/geolocation';
 import { getOwnContact, upsertOwnContact } from '$lib/server/contacts';
 import { upsertUserPreferences } from '$lib/server/userPreferences';
+import { parseGeolocationFields, parseMessengerContact } from '$lib/server/profileForm';
 
 export async function load({ locals, url }) {
 	let inviteCode = locals.user.inviteCode as string | undefined;
@@ -38,6 +39,9 @@ export async function load({ locals, url }) {
 	};
 }
 
+/** Shared fallback for onboarding actions with no more specific error mapping. */
+const genericFailure = () => fail(500, { error: true, message: texts.errors.somethingWentWrong });
+
 export const actions = {
 	saveLocation: async ({ locals, request }) => {
 		const formData = await request.formData();
@@ -49,25 +53,14 @@ export const actions = {
 			updateData['city'] = city.trim();
 		}
 
-		let geo: { lon: number; lat: number } | null | undefined;
-		const geoLon = formData.get('geolocation_lon')?.toString();
-		const geoLat = formData.get('geolocation_lat')?.toString();
-		if (geoLon && geoLat) {
-			const lon = parseFloat(geoLon);
-			const lat = parseFloat(geoLat);
-			if (!isNaN(lon) && !isNaN(lat)) {
-				geo = { lon, lat };
-			}
-		} else if (city === '') {
-			geo = null;
-		}
+		const geo = parseGeolocationFields(formData, city);
 
 		try {
 			await locals.pb.collection('users').update(locals.user.id, updateData);
 			if (geo !== undefined) await upsertUserGeolocation(locals.pb, locals.user.id, geo);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
@@ -95,7 +88,7 @@ export const actions = {
 			await locals.pb.collection('users').update(locals.user.id, pbFormData);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
@@ -119,49 +112,23 @@ export const actions = {
 			await removeTrust(locals.pb, locals.user.id, toRemoveTrusteeId);
 		} catch (error: Error | any) {
 			console.error(error?.message ?? error);
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
 	complete: async ({ locals, request }) => {
 		const formData = await request.formData();
 
-		const contact = {
-			telegramUsername: '',
-			signalLink: '',
-			telegramVisibleToTrustedOnly: formData.get('telegramVisibleToTrustedOnly') === 'on',
-			signalVisibleToTrustedOnly: formData.get('signalVisibleToTrustedOnly') === 'on',
-		};
-
-		const telegramUsername = formData.get('telegramUsername')?.toString();
-		if (telegramUsername !== undefined) {
-			const trimmed = telegramUsername.trim();
-			if (trimmed !== '') {
-				const cleaned = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
-				if (!/^[a-zA-Z0-9_]{5,32}$/.test(cleaned)) {
-					return fail(400, { error: true, message: texts.errors.invalidTelegramUsername });
-				}
-				contact.telegramUsername = cleaned;
-			}
-		}
-
-		const signalLink = formData.get('signalLink')?.toString();
-		if (signalLink !== undefined) {
-			const trimmed = signalLink.trim();
-			if (trimmed !== '') {
-				if (!trimmed.includes('signal.me')) {
-					return fail(400, { error: true, message: texts.errors.invalidSignalLink });
-				}
-				contact.signalLink = trimmed;
-			}
-		}
+		// Same messenger fields (and validation) as the profile settings form.
+		const parsed = parseMessengerContact(formData);
+		if (!parsed.ok) return fail(400, { error: true, message: parsed.message });
 
 		try {
 			await upsertUserPreferences(locals.pb, locals.user.id, { hasOnboarded: true });
-			await upsertOwnContact(locals.pb, locals.user.id, contact);
+			await upsertOwnContact(locals.pb, locals.user.id, parsed.value);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 };

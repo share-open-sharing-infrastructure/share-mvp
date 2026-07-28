@@ -3,26 +3,21 @@
 		Modal,
 		Input,
 		Label,
-		Helper,
 		Toggle,
-		Img,
 		Textarea,
 		Checkbox,
 	} from 'flowbite-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
-	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
-	import {
-		ChevronRightOutline,
-		QuestionCircleSolid,
-	} from 'flowbite-svelte-icons';
-	import { onDestroy } from 'svelte';
+	import { QuestionCircleSolid } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { compressImage } from '$lib/utils/imageUtils';
 	import { itemOwnFileUrls } from '$lib/utils/utils';
+	import ItemImagePicker from './ItemImagePicker.svelte';
+	import ItemVisibilityFields from './ItemVisibilityFields.svelte';
 	import type { ActionData } from './$types';
 
 	interface Props {
@@ -52,12 +47,10 @@
 	let selectedCategories = $state<string[]>([]);
 	let selectedGroups = $state<string[]>([]);
 	let trusteesOn = $state(true);
-	let showTrustInfo = $state(false);
 	let showAvailabilityInfo = $state(false);
 	// Track edits so an accidental modal dismiss (backdrop / ESC / X) can warn before
 	// discarding the user's input.
 	let isDirty = $state(false);
-	let imageError = $state<string | null>(null);
 	// Submit-time failure message, shown inline right above the submit button. A bottom
 	// toast can't be used here: the Flowbite modal is a native <dialog> in the browser's
 	// top layer, which paints above any z-indexed toast overlay (#522). Local (not the
@@ -66,23 +59,10 @@
 	// In-flight guard against double-submit (slow connection + repeated taps firing
 	// duplicate ?/create requests, #445). Mirrors the bulk-add ReviewStep pattern.
 	let submitting = $state(false);
-	let fileInput = $state<HTMLInputElement | undefined>(undefined);
-	// Newly chosen images (a multi-file field). previews mirrors selectedFiles for display.
+	// Newly chosen images, owned by ItemImagePicker; bound here for submit-time compression.
 	let selectedFiles = $state<File[]>([]);
-	let previews = $state<{ url: string; name: string }[]>([]);
-	// Images already saved on the item (edit mode). Shown so the owner sees the full
-	// set — not just the cover — but display-only: picking new files replaces the whole
-	// set (see imageReplaceHint), so these are not individually removable.
+	// Images already saved on the item (edit mode), passed to the picker's display-only gallery.
 	let existingImageUrls = $state<string[]>([]);
-
-	function clearPreviews() {
-		// Guard against a no-op write: this runs inside an $effect that reads `previews`,
-		// so assigning a fresh [] unconditionally would retrigger the effect forever.
-		if (previews.length === 0) return;
-		for (const p of previews) URL.revokeObjectURL(p.url);
-		previews = [];
-		selectedFiles = [];
-	}
 
 	$effect(() => {
 		if (isVisible) {
@@ -91,7 +71,6 @@
 			trusteesOn = editingItem?.trusteesOnly ?? true;
 			isAvailable = editingItem?.status === 'available';
 			isDirty = false;
-			imageError = null;
 			// Seed the existing-image gallery so editing an item with several photos shows
 			// them all. Needs pbUrl to build the file URLs; empty for add / external-only items.
 			existingImageUrls =
@@ -99,75 +78,11 @@
 		}
 	});
 
-	// Trustees and groups are independent audiences; an item is public only when
-	// neither is set.
-	let isPublic = $derived(!trusteesOn && selectedGroups.length === 0);
-
-	// A selected PUBLIC group means anyone can self-join and thus see this item —
-	// warn the owner so sharing into a public group is a conscious choice.
-	let anyPublicGroupSelected = $derived(
-		groups.some((g) => g.isPublic && selectedGroups.includes(g.id))
-	);
-
-	// Keep in sync with the `items.image` file field's maxSelect in the backend
-	// migration (1783500000_items_image_multi.js). Exceeding it makes PocketBase reject
-	// the create/update, so cap here to avoid a silent failure.
-	const MAX_IMAGES = 5;
-
-	// Add images from the file picker or a drop, deduped by name+size, capped at MAX_IMAGES.
-	function addFiles(files: File[]) {
-		const imgs = files.filter((f) => f.type.startsWith('image/'));
-		if (imgs.length === 0) return;
-		const existing = new Set(selectedFiles.map((f) => `${f.name}_${f.size}`));
-		let fresh = imgs.filter((f) => !existing.has(`${f.name}_${f.size}`));
-		const room = MAX_IMAGES - selectedFiles.length;
-		const truncated = fresh.length > room;
-		if (truncated) fresh = fresh.slice(0, Math.max(0, room));
-		if (fresh.length === 0) {
-			if (truncated) imageError = texts.pages.items.imageMaxReached(MAX_IMAGES);
-			return;
-		}
-		selectedFiles = [...selectedFiles, ...fresh];
-		previews = [
-			...previews,
-			...fresh.map((f) => ({ url: URL.createObjectURL(f), name: f.name })),
-		];
-		imageError = truncated ? texts.pages.items.imageMaxReached(MAX_IMAGES) : null;
-		isDirty = true;
-	}
-
-	function removeFileAt(i: number) {
-		URL.revokeObjectURL(previews[i].url);
-		previews = previews.filter((_, idx) => idx !== i);
-		selectedFiles = selectedFiles.filter((_, idx) => idx !== i);
-		isDirty = true;
-	}
-
-	function handleFileChange(event: Event) {
-		const input = event.target as HTMLInputElement;
-		addFiles(Array.from(input.files ?? []));
-		// Reset so the same file can be re-added after removal.
-		input.value = '';
-	}
-
-	function handleDrop(event: DragEvent) {
-		event.preventDefault();
-		addFiles(Array.from(event.dataTransfer?.files ?? []));
-	}
-
-	function openPicker() {
-		fileInput?.click();
-	}
-
-	onDestroy(clearPreviews);
-
 	$effect(() => {
 		if (!isVisible) {
 			form = null;
-			imageError = null;
 			submitError = null;
 			submitting = false;
-			clearPreviews();
 		}
 	});
 </script>
@@ -236,73 +151,15 @@
 		}}
 	>
 		<!-- LEFT COLUMN: image preview(s) + upload (drag & drop / click) -->
-		<div class="flex flex-col gap-3 md:w-2/5">
-			{#if previews.length > 0}
-				<div class="grid grid-cols-2 gap-2">
-					{#each previews as p, i (p.url)}
-						<div class="relative">
-							<img src={p.url} alt={p.name} class="h-24 w-full rounded-md object-cover" />
-							<Button
-								variant="danger"
-								size="icon-sm"
-								onclick={() => removeFileAt(i)}
-								aria-label={texts.pages.items.imageRemove}
-								class="absolute -right-2 -top-2"
-							>
-								<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
-								</svg>
-							</Button>
-						</div>
-					{/each}
-				</div>
-			{:else if existingImageUrls.length > 0}
-				<!-- Existing images (edit mode), display-only: new uploads replace the whole set. -->
-				<div class="grid grid-cols-2 gap-2">
-					{#each existingImageUrls as url (url)}
-						<img
-							src={url}
-							alt={editingItem?.name ?? ''}
-							class="h-24 w-full rounded-md object-cover"
-						/>
-					{/each}
-				</div>
-			{:else}
-				<Img
-					src={imgUrl || placeholderimg}
-					class="mx-auto h-40 w-40 rounded-md object-cover"
-				/>
-			{/if}
-
-			<button
-				type="button"
-				aria-label={texts.pages.items.imageUploadAria}
-				class="flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-tinte-300 bg-transparent p-4 text-sm text-tinte-500 hover:border-primary-400 focus:ring-2 focus:ring-primary-300 dark:border-tinte-600 dark:text-tinte-400"
-				onclick={openPicker}
-				ondragover={(e) => e.preventDefault()}
-				ondrop={handleDrop}
-			>
-				{texts.pages.items.imageDropHintMulti}
-			</button>
-			<input
-				bind:this={fileInput}
-				type="file"
-				id="itemImage"
-				class="sr-only"
-				accept="image/*"
-				multiple
-				onchange={handleFileChange}
-			/>
-			<Helper class="text-center">{texts.pages.items.imageFormatsHint}</Helper>
-			{#if type === 'edit'}
-				<p class="text-center text-xs text-tinte-500 dark:text-tinte-400">
-					{texts.pages.items.imageReplaceHint}
-				</p>
-			{/if}
-			{#if imageError}
-				<p class="text-center text-sm text-danger">{imageError}</p>
-			{/if}
-		</div>
+		<ItemImagePicker
+			bind:selectedFiles
+			{existingImageUrls}
+			{imgUrl}
+			mode={type}
+			itemName={editingItem?.name ?? ''}
+			visible={isVisible}
+			onDirty={() => (isDirty = true)}
+		/>
 
 		<!-- RIGHT COLUMN: item details -->
 		<div class="flex flex-1 flex-col space-y-6">
@@ -351,70 +208,7 @@
 				</div>
 			</div>
 
-			<!-- VISIBILITY: trustees and groups are independent audiences -->
-			<div class="flex items-center">
-				<Label class="flex">
-					<Toggle
-						name="trusteesOnly"
-						classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
-						bind:checked={trusteesOn}
-						>{texts.groups.itemTrusteesLabel}</Toggle
-					>
-				</Label>
-				<!-- Info button lives OUTSIDE the <Label> so clicking it doesn't toggle the switch. -->
-				<button
-					type="button"
-					class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400"
-					onclick={() => (showTrustInfo = !showTrustInfo)}
-				>
-					<QuestionCircleSolid class="ml-1 h-full" />
-					<span class="sr-only">{texts.ui.explainThis}</span>
-				</button>
-			</div>
-			{#if showTrustInfo}
-				<div class="space-y-1 rounded-lg border border-tinte-200 bg-sand p-3 text-sm text-tinte-500">
-					<p class="font-semibold text-tinte-900">{texts.groups.trustInfoTitle}</p>
-					<p>{texts.groups.trustInfoBody}</p>
-					<a href={resolve('/social')} class="flex items-center font-medium text-accent hover:underline">
-						{texts.groups.trustInfoAddLink}<ChevronRightOutline class="ms-1.5 h-4 w-4 text-accent" />
-					</a>
-				</div>
-			{/if}
-
-			<!-- GROUP SHARING (independent of the trustees toggle) -->
-			<div class="space-y-2 rounded-lg border border-tinte-200 bg-sand p-3">
-				<span class="text-sm font-medium text-tinte-900">{texts.groups.itemShareTitle}</span>
-				{#if groups.length === 0}
-					<p class="text-sm text-tinte-500">{texts.groups.noGroupsForItem}</p>
-					<a href={resolve('/user/groups')} class="flex items-center text-sm font-medium text-accent hover:underline">
-						{texts.groups.goToGroups}<ChevronRightOutline class="ms-1.5 h-4 w-4 text-accent" />
-					</a>
-				{:else}
-					<p class="text-xs text-tinte-500">{texts.groups.itemShareHint}</p>
-					<div class="flex flex-col gap-1.5">
-						{#each groups as g (g.id)}
-							<Label class="flex cursor-pointer items-center gap-2 font-normal">
-								<Checkbox
-									name="groups"
-									value={g.id}
-									bind:group={selectedGroups}
-								/>
-								{g.name}
-								{#if g.isPublic}
-									<span class="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-800 dark:bg-primary-900 dark:text-primary-200">{texts.groups.publicBadge}</span>
-								{/if}
-							</Label>
-						{/each}
-					</div>
-					{#if anyPublicGroupSelected}
-						<p class="text-xs font-medium text-danger">{texts.groups.itemPublicGroupWarning}</p>
-					{/if}
-				{/if}
-			</div>
-
-			{#if isPublic}
-				<p class="text-xs text-tinte-500">{texts.groups.itemPublicHint}</p>
-			{/if}
+			<ItemVisibilityFields {groups} bind:trusteesOn bind:selectedGroups />
 
 			{#if type === 'edit'}
 				<div class="flex items-center">

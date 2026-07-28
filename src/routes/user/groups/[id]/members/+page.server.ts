@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
-import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { failFromPbError } from '$lib/server/pbErrors';
 import { requireGroupMembership } from '$lib/server/groups';
 import { createNotification, sendPushToUser } from '$lib/server/notifications';
 import { displayName } from '$lib/utils/utils';
@@ -140,7 +140,6 @@ export const actions = {
 			await createNotification(locals.pb, user.id, locals.user!.id, 'group_member_added', params.id, body);
 			await sendPushToUser(locals.pb, user.id, texts.notifications.pushTitle, body, notifUrl);
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
 			// A 400 is most likely the unique (group,user) index firing because the
 			// user is already a member. Confirm that's actually the case rather than
 			// swallowing every 400 (which would hide genuine create failures).
@@ -152,7 +151,7 @@ export const actions = {
 					);
 				// Already a member -> idempotent success.
 			} catch {
-				return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+				return failFromPbError(err);
 			}
 		}
 		return { success: true };
@@ -199,8 +198,7 @@ export const actions = {
 				await sendPushToUser(locals.pb, m.user, texts.notifications.pushTitle, body, notifUrl);
 			}
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 		return { success: true };
 	},

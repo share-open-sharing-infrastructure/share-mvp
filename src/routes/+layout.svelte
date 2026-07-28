@@ -6,7 +6,8 @@
 	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
 	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
 	import ToastHost from '$lib/components/ToastHost.svelte';
-	import { getClientPB, syncClientPBAuth, subscribeRealtime } from '$lib/client-pb';
+	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
+	import { subscribeRealtime } from '$lib/realtime';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
 	import { navigationLoader } from '$lib/stores/navigationLoader.svelte';
