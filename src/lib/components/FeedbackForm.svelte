@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
+	import { detectBrowser } from '$lib/utils/browserInfo';
 	import SparkleButton from './SparkleButton.svelte';
 
 	interface Props {
@@ -43,61 +44,11 @@
 				? 'touch'
 				: 'mouse';
 
-		const ua = navigator.userAgent;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const uaData = (navigator as any).userAgentData;
-
-		// 1. Try Client Hints brands (best signal)
-		if (uaData?.brands) {
-			for (const b of uaData.brands) {
-				const brand = b.brand.toLowerCase();
-
-				if (brand.includes('brave')) {
-					browser = 'brave';
-					browserVersion = b.version;
-					return;
-				}
-				if (brand.includes('opera')) {
-					browser = 'opera';
-					browserVersion = b.version;
-					return;
-				}
-				if (brand.includes('vivaldi')) {
-					browser = 'vivaldi';
-					browserVersion = b.version;
-					return;
-				}
-				if (brand.includes('edge')) {
-					browser = 'edge';
-					browserVersion = b.version;
-					return;
-				}
-				if (brand.includes('chrome') || brand.includes('chromium')) {
-					browser = 'chrome';
-					browserVersion = b.version;
-				}
-			}
-		}
-
-		// 2. UA heuristics (best-effort, not guaranteed)
-		if (ua.includes('Brave')) {
-			browser = 'brave';
-		} else if (ua.includes('OPR/') || ua.includes('Opera')) {
-			browser = 'opera';
-		} else if (ua.includes('Vivaldi')) {
-			browser = 'vivaldi';
-		} else if (ua.includes('Firefox')) {
-			browser = 'firefox';
-			browserVersion = ua.match(/Firefox\/(\d+)/)?.[1] ?? 'unknown';
-			return;
-		} else if (ua.includes('Safari') && !ua.includes('Chrome')) {
-			browser = 'safari';
-			browserVersion = ua.match(/Version\/(\d+)/)?.[1] ?? 'unknown';
-			return;
-		} else if (ua.includes('Chrome')) {
-			browser = 'chrome';
-			browserVersion = ua.match(/Chrome\/(\d+)/)?.[1] ?? 'unknown';
-		}
+		const info = detectBrowser(navigator.userAgent, uaData);
+		browser = info.browser;
+		browserVersion = info.version;
 	});
 </script>
 

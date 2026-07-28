@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
+	import { itemStatusBadgeClasses, itemStatusLabel } from '$lib/utils/itemStatus';
 	import { formatTimestamp, displayName, itemOwnFileUrls, buildItemRedirectHref } from '$lib/utils/utils';
 	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
@@ -116,25 +117,17 @@
 							<button
 								type="submit"
 								class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border transition-colors cursor-pointer
-									{item.status === 'available'
-										? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-										: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
+									{itemStatusBadgeClasses(item.status, { interactive: true })}"
 							>
-								{item.status === 'available'
-									? texts.itemStatus.available
-									: texts.itemStatus.unavailable}
+								{itemStatusLabel(item.status)}
 							</button>
 						</form>
 					{:else}
 						<span
 							class="mt-0.5 self-start inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border
-								{item.status === 'available'
-									? 'bg-green-100 text-green-800 border-green-300'
-									: 'bg-accent-100 text-accent-800 border-accent-300'}"
+								{itemStatusBadgeClasses(item.status)}"
 						>
-							{item.status === 'available'
-								? texts.itemStatus.available
-								: texts.itemStatus.unavailable}
+							{itemStatusLabel(item.status)}
 						</span>
 					{/if}
 				</div>

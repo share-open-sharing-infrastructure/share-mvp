@@ -1,4 +1,5 @@
 import type PocketBase from 'pocketbase';
+import type { RecordModel } from 'pocketbase';
 import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 import { deleteConversation } from './conversations';
 
@@ -7,6 +8,32 @@ export type DeleteItemResult =
 	| { status: 'not_found' }
 	| { status: 'not_owner' }
 	| { status: 'has_open_conversations'; conversationIds: string[] };
+
+export type OwnedItemResult =
+	| { status: 'ok'; item: RecordModel }
+	| { status: 'not_found' }
+	| { status: 'not_owner' };
+
+/**
+ * Loads an item and verifies the caller owns it — the shared guard for every
+ * owner-only item mutation in this module (and for route actions with the same
+ * precondition). A failed fetch is reported as `not_found`, a foreign item as
+ * `not_owner`; only `ok` carries the record.
+ */
+export async function getOwnedItem(
+	pb: PocketBase,
+	itemId: string,
+	ownerUserId: string
+): Promise<OwnedItemResult> {
+	let item;
+	try {
+		item = await pb.collection('items').getOne(itemId);
+	} catch {
+		return { status: 'not_found' };
+	}
+	if (item.owner !== ownerUserId) return { status: 'not_owner' };
+	return { status: 'ok', item };
+}
 
 /**
  * Deletes an item and all related closed conversations (with their notifications).
@@ -19,14 +46,8 @@ export async function deleteItem(
 	itemId: string,
 	ownerUserId: string
 ): Promise<DeleteItemResult> {
-	let item;
-	try {
-		item = await pb.collection('items').getOne(itemId);
-	} catch {
-		return { status: 'not_found' };
-	}
-
-	if (item.owner !== ownerUserId) return { status: 'not_owner' };
+	const owned = await getOwnedItem(pb, itemId, ownerUserId);
+	if (owned.status !== 'ok') return owned;
 
 	const open = await pb.collection('conversations').getFullList({
 		filter: pb.filter(
@@ -90,14 +111,8 @@ export async function setItemStatus(
 	ownerUserId: string,
 	newStatus: 'available' | 'unavailable'
 ): Promise<boolean> {
-	let item;
-	try {
-		item = await pb.collection('items').getOne(itemId);
-	} catch {
-		return false;
-	}
-
-	if (item.owner !== ownerUserId) return false;
+	const owned = await getOwnedItem(pb, itemId, ownerUserId);
+	if (owned.status !== 'ok') return false;
 
 	await pb.collection('items').update(itemId, { status: newStatus });
 	return true;
@@ -122,16 +137,10 @@ export async function toggleItemStatus(
 	itemId: string,
 	ownerUserId: string
 ): Promise<ToggleItemStatusResult> {
-	let item;
-	try {
-		item = await pb.collection('items').getOne(itemId);
-	} catch {
-		return { status: 'not_found' };
-	}
+	const owned = await getOwnedItem(pb, itemId, ownerUserId);
+	if (owned.status !== 'ok') return owned;
 
-	if (item.owner !== ownerUserId) return { status: 'not_owner' };
-
-	const newStatus = item.status === 'available' ? 'unavailable' : 'available';
+	const newStatus = owned.item.status === 'available' ? 'unavailable' : 'available';
 	await pb.collection('items').update(itemId, { status: newStatus });
 	return { status: 'ok', newStatus };
 }

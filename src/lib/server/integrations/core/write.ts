@@ -25,11 +25,13 @@ function syncedFieldsOf(item: MappedItem): Pick<MappedItem, (typeof SYNCED_FIELD
 	>;
 }
 
+/** Batch size + inter-batch pause travel as one value so a call site can't swap
+ *  the two same-typed numbers (or mix one phase's size with the other's pause). */
+type BatchPolicy = { batchSize: number; pauseMs: number };
+
 // Stays under PocketBase's default *:create rate limit of 20/5s.
-const UPDATE_BATCH = 50;
-const UPDATE_PAUSE_MS = 300;
-const CREATE_BATCH = 15;
-const CREATE_PAUSE_MS = 5500;
+const UPDATE_POLICY: BatchPolicy = { batchSize: 50, pauseMs: 300 };
+const CREATE_POLICY: BatchPolicy = { batchSize: 15, pauseMs: 5500 };
 
 /**
  * Sends `items` to PocketBase in sequential batches, pausing between each batch.
@@ -37,8 +39,7 @@ const CREATE_PAUSE_MS = 5500;
  *
  * @param pb - PocketBase client.
  * @param items - All items to write in this pass.
- * @param batchSize - Maximum number of operations per PocketBase batch request.
- * @param interBatchPauseMs - Milliseconds to wait between consecutive batches (rate-limit compliance).
+ * @param policy - Batch size + pause between consecutive batches (rate-limit compliance).
  * @param addToBatch - Callback that registers one item onto the batch (e.g. create or update).
  * @param retry - Wrapper applied to each batch send (e.g. superuser re-auth on 401); identity by default.
  * @returns `sent`: items in successful batches. `errors`: one raw error message per failed batch.
@@ -46,13 +47,13 @@ const CREATE_PAUSE_MS = 5500;
 async function sendBatched<T>(
 	pb: PocketBase,
 	items: T[],
-	batchSize: number,
-	interBatchPauseMs: number,
+	policy: BatchPolicy,
 	addToBatch: (batch: ReturnType<typeof pb.createBatch>, item: T) => void,
 	retry: RetryWrapper = noRetry,
 ): Promise<{ sent: number; errors: string[] }> {
 	let sent = 0;
 	const batchErrors: string[] = [];
+	const { batchSize, pauseMs } = policy;
 
 	for (let offset = 0; offset < items.length; offset += batchSize) {
 		const chunk = items.slice(offset, offset + batchSize);
@@ -66,7 +67,7 @@ async function sendBatched<T>(
 		} catch (err) {
 			batchErrors.push(pbErrorMessage(err));
 		}
-		if (offset + batchSize < items.length) await delay(interBatchPauseMs);
+		if (offset + batchSize < items.length) await delay(pauseMs);
 	}
 
 	return { sent, errors: batchErrors };
@@ -84,15 +85,15 @@ async function sendBatched<T>(
 export async function applyDiff(pb: PocketBase, diff: DiffResult, retry: RetryWrapper = noRetry): Promise<WriteResult> {
 	const errors: string[] = [];
 
-	const updateResult = await sendBatched(pb, diff.toUpdate, UPDATE_BATCH, UPDATE_PAUSE_MS,
+	const updateResult = await sendBatched(pb, diff.toUpdate, UPDATE_POLICY,
 		(batch, { id, data }) => batch.collection('items').update(id, syncedFieldsOf(data)), retry);
 	errors.push(...updateResult.errors.map((e) => `update batch: ${e}`));
 
-	const createResult = await sendBatched(pb, diff.toCreate, CREATE_BATCH, CREATE_PAUSE_MS,
+	const createResult = await sendBatched(pb, diff.toCreate, CREATE_POLICY,
 		(batch, item) => batch.collection('items').create(item), retry);
 	errors.push(...createResult.errors.map((e) => `create batch: ${e}`));
 
-	const archiveResult = await sendBatched(pb, diff.toArchive, UPDATE_BATCH, UPDATE_PAUSE_MS,
+	const archiveResult = await sendBatched(pb, diff.toArchive, UPDATE_POLICY,
 		(batch, item: ExistingItem) => batch.collection('items').update(item.id, {
 			status: 'unavailable',
 			description: archiveDescription(item.description),

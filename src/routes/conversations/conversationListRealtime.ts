@@ -1,5 +1,5 @@
 import type PocketBase from 'pocketbase';
-import { subscribeRealtime } from '$lib/client-pb';
+import { subscribeRealtime } from '$lib/realtime';
 import { conversationFieldsWithSafePartners } from '$lib/conversationPartnerFields';
 import type { Conversation } from '$lib/types/models';
 

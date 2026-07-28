@@ -1,20 +1,18 @@
 import { dev } from '$app/environment';
 import type { Item } from '$lib/types/models';
 import { assertPublicHttpUrl } from '../core/urlGuard';
+import { IntegrationFetchError, normalizeBaseUrl } from '../core/http';
+
+export { normalizeBaseUrl } from '../core/http';
 
 type ItemStatus = Item['status']; // 'available' | 'unavailable' | 'unknown'
 
 /** Thrown when a WINBIAP WebOPAC request fails (network, non-2xx, or an unexpected body).
  *  Treated as a transient failure by the refresh flow — the item is left untouched. */
-export class WinbiapFetchError extends Error {
-	readonly baseUrl: string;
-	readonly status?: number;
-
+export class WinbiapFetchError extends IntegrationFetchError {
 	constructor(message: string, baseUrl: string, options?: { status?: number; cause?: unknown }) {
-		super(message, { cause: options?.cause });
+		super(message, baseUrl, options);
 		this.name = 'WinbiapFetchError';
-		this.baseUrl = baseUrl;
-		this.status = options?.status;
 	}
 }
 
@@ -43,11 +41,6 @@ interface CatalogueRecord {
 
 interface SearchResponse {
 	Data?: CatalogueRecord[];
-}
-
-/** Strips trailing slashes from a WebOPAC base URL. */
-export function normalizeBaseUrl(url: string): string {
-	return url.replace(/\/+$/, '');
 }
 
 /**
