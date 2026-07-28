@@ -113,8 +113,14 @@ export async function startConversationAndNotify(
 	);
 	const conversationUrl = `/conversations/${conversation.id}`;
 
-	await createNotification(pb, item.ownerId, requester.id, 'new_request', conversation.id, notificationBody);
-	await sendPushToUser(pb, item.ownerId, texts.notifications.pushTitle, notificationBody, conversationUrl);
+	try {
+		await createNotification(pb, item.ownerId, requester.id, 'new_request', conversation.id, notificationBody);
+		await sendPushToUser(pb, item.ownerId, texts.notifications.pushTitle, notificationBody, conversationUrl);
+	} catch (err) {
+		// Best-effort: the conversation already exists, so a failure to notify the
+		// owner must not fail the action (mirrors addTrustAndNotify in trust.ts).
+		console.error('startConversationAndNotify: owner notification failed', err);
+	}
 
 	return { status: 'ok', conversationId: conversation.id };
 }
