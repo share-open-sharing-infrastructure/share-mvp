@@ -112,7 +112,7 @@
 							href="/api/redirect?to=https%3A%2F%2Fnorden.social%2F%40AllerLeih&source=footer"
 							target="_blank"
 							rel="noopener noreferrer"
-							aria-label="{texts.footer.mastodon}}"
+							aria-label={texts.footer.mastodon}
 						>
 							<span class="flex items-center gap-2">
 							<svg

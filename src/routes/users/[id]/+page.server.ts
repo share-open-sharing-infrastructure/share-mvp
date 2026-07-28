@@ -3,8 +3,7 @@ import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
-import { createNotification, sendPushToUser } from '$lib/server/notifications';
-import { addTrust as addTrustEdge, removeTrust as removeTrustEdge, isTrusting } from '$lib/server/trust';
+import { addTrustAndNotify, removeTrust as removeTrustEdge, isTrusting } from '$lib/server/trust';
 
 export async function load({ params, locals }) {
 
@@ -123,40 +122,18 @@ export const actions = {
 		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
 		if (params.id === locals.user.id) return fail(400, { message: texts.errors.noPermission });
 
-		// Cannot trust a deleted (anonymized) account.
-		try {
-			const target = await locals.pb.collection('users_public').getOne(params.id);
-			if (target.deleted) return fail(400, { message: texts.account.cannotTrustDeleted });
-		} catch {
-			return fail(404, { message: texts.errors.noPermission });
-		}
-
-		const profileUserId = params.id;
-		try {
-			await addTrustEdge(locals.pb, locals.user.id, profileUserId);
-		} catch (err) {
-			console.error('Failed to add trust', err);
-		}
-
-		// Notify the newly trusted user — fire and forget.
-		const adderName = locals.user.username ?? locals.user.name ?? texts.pages.itemDetail.unknownRequester;
-		const notificationBody = texts.notifications.trustAdded(adderName);
-		try {
-			await createNotification(locals.pb, profileUserId, locals.user.id, 'trust_added', locals.user.id, notificationBody);
-			await sendPushToUser(locals.pb, profileUserId, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
-		} catch (err) {
-			console.error('Trust notification failed', err);
-		}
+		const result = await addTrustAndNotify(locals.pb, locals.user, params.id);
+		if (!result.ok) return fail(result.status, { message: result.message });
 	},
 
 	removeTrust: async ({ params, locals }) => {
 		if (!locals.user) return fail(401, { message: texts.errors.noPermission });
 
-		const profileUserId = params.id;
 		try {
-			await removeTrustEdge(locals.pb, locals.user.id, profileUserId);
+			await removeTrustEdge(locals.pb, locals.user.id, params.id);
 		} catch (err) {
 			console.error('Failed to remove trust', err);
+			return fail(500, { message: texts.errors.somethingWentWrong });
 		}
 	},
 };

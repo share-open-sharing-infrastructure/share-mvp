@@ -1,5 +1,7 @@
 import type PocketBase from 'pocketbase';
 import type { Trust, UserId } from '$lib/types/models';
+import { texts } from '$lib/texts';
+import { createNotification, sendPushToUser } from '$lib/server/notifications';
 
 // Central access point for the `trusts` join collection (replacing the old
 // users.trusts[] array). A row {truster, trustee} means "truster trusts trustee":
@@ -35,6 +37,51 @@ export async function addTrust(pb: PocketBase, trusterId: UserId, trusteeId: Use
 		// edge exists now, the intent is satisfied — treat it as a no-op; otherwise rethrow.
 		if (!(await isTrusting(pb, trusterId, trusteeId))) throw err;
 	}
+}
+
+export type AddTrustResult = { ok: true } | { ok: false; status: number; message: string };
+
+/**
+ * The full "trust someone" flow shared by /social, /users/[id] and onboarding:
+ * refuses deleted (anonymized) targets, creates the trust edge, then notifies the
+ * new trustee (in-app + push).
+ *
+ * An edge-creation failure is returned as an error so callers surface a fail()
+ * instead of pretending success; a notification failure is non-fatal (the edge
+ * exists — which is what the caller's UI reflects) and only logged.
+ */
+export async function addTrustAndNotify(
+	pb: PocketBase,
+	truster: { id: UserId; username?: string; name?: string },
+	trusteeId: UserId
+): Promise<AddTrustResult> {
+	// Cannot trust a deleted (anonymized) account.
+	try {
+		const target = await pb.collection('users_public').getOne(trusteeId, { fields: 'id,deleted' });
+		if (target.deleted) {
+			return { ok: false, status: 400, message: texts.account.cannotTrustDeleted };
+		}
+	} catch {
+		return { ok: false, status: 404, message: texts.errors.somethingWentWrong };
+	}
+
+	try {
+		await addTrust(pb, truster.id, trusteeId);
+	} catch (err) {
+		console.error('Failed to add trust', err instanceof Error ? err.message : err);
+		return { ok: false, status: 500, message: texts.errors.somethingWentWrong };
+	}
+
+	const adderName = truster.username ?? truster.name ?? texts.pages.itemDetail.unknownRequester;
+	const notificationBody = texts.notifications.trustAdded(adderName);
+	try {
+		await createNotification(pb, trusteeId, truster.id, 'trust_added', truster.id, notificationBody);
+		await sendPushToUser(pb, trusteeId, texts.notifications.pushTitle, notificationBody, `/users/${truster.id}`);
+	} catch (err) {
+		console.error('Trust notification failed', err instanceof Error ? err.message : err);
+	}
+
+	return { ok: true };
 }
 
 /** Remove the trust edge {truster, trustee} if it exists. */
