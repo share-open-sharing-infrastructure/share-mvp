@@ -4,18 +4,11 @@ AllerLeih is a platform for sharing! The app's purpose is to allow users to find
 
 This repository holds the **SvelteKit frontend**. The PocketBase server it talks to lives in a separate repo, [allerleih-backend](https://github.com/share-open-sharing-infrastructure/allerleih-backend) — you need both checked out to develop locally.
 
-Here, we develop a first minimum viable product. Next milestones are roughly:
-
-- 03/2026: Ready for user testing
-- 05/2026: Most important feedback incorporated, remaining issues documented and planned for
-- 06/2026: Ready for integration with lending organisations
-- 12/2026: Integration with lending organisations possible and demonstrated
-
-For a more fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
+Here, we develop a first minimum viable product. For a fine-grained timeline, see the attached [GitHub Project](https://github.com/orgs/share-open-sharing-infrastructure/projects/2).
 
 If you wish to contribute or are otherwise interested in the project, please don't hesitate to get in touch via kontakt@allerleih.org.
 
-> **The UI is entirely in German.** All user-facing strings live in `src/lib/texts.ts`; code, comments, docs and PR descriptions are English.
+> **The UI is prsenetly in German.** All user-facing strings live in `src/lib/texts.ts`; code, comments, docs and PR descriptions are English. We will internationalise the platfrom asap.
 
 ---
 
