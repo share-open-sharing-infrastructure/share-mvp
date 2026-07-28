@@ -1,5 +1,5 @@
 import type PocketBase from 'pocketbase';
-import type { RecordModel } from 'pocketbase';
+import type { Item } from '$lib/types/models';
 import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 import { deleteConversation } from './conversations';
 
@@ -10,7 +10,7 @@ export type DeleteItemResult =
 	| { status: 'has_open_conversations'; conversationIds: string[] };
 
 export type OwnedItemResult =
-	| { status: 'ok'; item: RecordModel }
+	| { status: 'ok'; item: Item }
 	| { status: 'not_found' }
 	| { status: 'not_owner' };
 
@@ -27,7 +27,7 @@ export async function getOwnedItem(
 ): Promise<OwnedItemResult> {
 	let item;
 	try {
-		item = await pb.collection('items').getOne(itemId);
+		item = await pb.collection('items').getOne<Item>(itemId);
 	} catch {
 		return { status: 'not_found' };
 	}
