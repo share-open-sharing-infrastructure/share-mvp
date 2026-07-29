@@ -95,6 +95,11 @@ These prevent the most common bugs/security issues here — follow them without 
   position) via `class`, never colors. → `docs/design-system.md`
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.
+- **Place components by usage scope, not habit.** Single-use → co-locate flat in the route folder
+  (e.g. `src/routes/items/[id]/LinkifiedText.svelte`). A cluster of components local to one route
+  (or route subtree) → a `components/` subfolder under it (e.g. `src/routes/components/`,
+  `src/routes/auth/components/`). Used across unrelated route subtrees → `src/lib/components`
+  (design-system primitives in `ui/`). → `/new-route` scaffolds new routes with this baked in.
 - **Resolve internal navigation with `resolve()` from `$app/paths` at the call site**, in route-ID
   form (`resolve('/users/[id]', { id })`) — never template-string interpolation, never a wrapper.
   Query/hash go inside the `resolve()` arg; static `static/` files use `asset()`. Only builders

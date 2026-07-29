@@ -278,7 +278,7 @@ A detailed click-through checklist is kept out of the repo (personal QA notes).
   `…/items/UserItemRow.svelte`, `…/items/bulk-add/**` — item sharing controls + AI
   upload group picker
 - `src/lib/components/ShareButton.svelte` — reused for sharing group invites
-- `src/lib/components/NavBarComponent.svelte` — "Mein Netzwerk" dropdown
+- `src/routes/components/NavBarComponent.svelte` — "Mein Netzwerk" dropdown
 - `src/lib/types/models.ts` — `Group` (+`isPublic`), `GroupMember` (+`role`),
   `GroupInvite`, `Item.groups`
 - `src/lib/texts.ts` — `texts.groups.*` strings

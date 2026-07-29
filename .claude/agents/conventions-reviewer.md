@@ -96,6 +96,13 @@ The lint rule `svelte/no-navigation-without-resolve` passes on any direct `resol
 - Other UI builds on **Flowbite-Svelte** + Tailwind utilities per `docs/design-system.md` — no
   hand-rolled equivalent of an existing Flowbite component (Button excepted, see above), no ad-hoc
   colour values outside the theme tokens.
+- **Component placement follows usage scope**, not habit: single-use → co-located flat in the
+  route folder; a cluster local to one route (or subtree) → a `components/` subfolder under it
+  (e.g. `src/routes/components/`, `src/routes/auth/components/`); used across unrelated route
+  subtrees → `src/lib/components` (design-system primitives in `ui/`). Flag a single-use component
+  dropped into `$lib/components` (dead-weight indirection, harder to find) and, conversely, a
+  component actually used from multiple unrelated routes that got buried inside one route's folder
+  (should have moved to `$lib/components` instead). → `.claude/CLAUDE.md` guardrails, `/new-route`.
 
 ### 6. Backend (`Allerleih-Backend/`)
 If the diff touches the backend, its own `CLAUDE.md` applies: mind hook isolation (hooks share no
