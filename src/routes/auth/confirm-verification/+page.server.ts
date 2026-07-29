@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { setFlash } from '$lib/server/flash';
 
 export async function load({ url }) {
 	return { token: url.searchParams.get('token') };
@@ -23,18 +24,7 @@ export const actions = {
 			return fail(400, { fail: true, message: texts.errors.invalidOrExpiredVerificationToken });
 		}
 
-		// universal flash pattern:
-		cookies.set(
-			'flash',
-			JSON.stringify({
-				type: 'success',
-				message: texts.success.emailVerified,
-			}),
-			{
-				path: '/',
-				maxAge: 60, // seconds
-			}
-		);
+		setFlash(cookies, texts.success.emailVerified);
 		redirect(303, '/auth/login');
 	},
 };

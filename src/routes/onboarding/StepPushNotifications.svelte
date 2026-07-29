@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { texts } from '$lib/texts';
-	import { PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
+	import { setupPushSubscription } from '$lib/utils/pushSubscription';
 	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
@@ -21,47 +21,6 @@
 		cancelled = true;
 		if (advanceTimer) clearTimeout(advanceTimer);
 	});
-
-	function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-		const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-		const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-		const rawData = atob(base64);
-		const output = new Uint8Array(rawData.length);
-		for (let i = 0; i < rawData.length; i++) {
-			output[i] = rawData.charCodeAt(i);
-		}
-		return output;
-	}
-
-	async function setupPushSubscription() {
-		if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-		try {
-			// `serviceWorker.ready` can hang indefinitely if the SW never activates,
-			// so we race it against a 10 s failsafe to avoid a silent hang here.
-			const swReadyTimeout = new Promise<never>((_, reject) =>
-				setTimeout(() => reject(new Error('serviceWorker.ready timeout')), 10000)
-			);
-			const registration = await Promise.race([navigator.serviceWorker.ready, swReadyTimeout]);
-			const existing = await registration.pushManager.getSubscription();
-			const subscription =
-				existing ??
-				(await registration.pushManager.subscribe({
-					userVisibleOnly: true,
-					applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_PUBLIC_KEY),
-				}));
-			const { endpoint, keys } = subscription.toJSON() as {
-				endpoint: string;
-				keys: { p256dh: string; auth: string };
-			};
-			await fetch('/api/push-subscribe', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ endpoint, keys }),
-			});
-		} catch (err) {
-			console.error('Push subscription failed:', err);
-		}
-	}
 
 	async function request() {
 		if (!('Notification' in window)) {

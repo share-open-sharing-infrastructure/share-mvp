@@ -1,4 +1,5 @@
 import type PocketBase from 'pocketbase';
+import { upsertSingletonRow } from '$lib/server/singletonRow';
 
 export type UserContact = {
 	telegramUsername: string;
@@ -31,20 +32,26 @@ export async function getOwnContact(pb: PocketBase, userId: string): Promise<Par
 	}
 }
 
+/** The current user's contact row id, or null if none exists yet. */
+async function findOwnContactRow(pb: PocketBase, userId: string): Promise<{ id: string } | null> {
+	try {
+		return await pb
+			.collection('user_contacts')
+			.getFirstListItem(pb.filter('user = {:u}', { u: userId }), { fields: 'id' });
+	} catch {
+		return null;
+	}
+}
+
 /** Upserts the current user's own contact row. */
 export async function upsertOwnContact(pb: PocketBase, userId: string, contact: UserContact): Promise<void> {
-	let existingId: string | null = null;
-	try {
-		const rec = await pb
-			.collection('user_contacts')
-			.getFirstListItem(pb.filter('user = {:u}', { u: userId }));
-		existingId = rec.id;
-	} catch {
-		// no existing row
-	}
-	const data = { user: userId, ...contact };
-	if (existingId) await pb.collection('user_contacts').update(existingId, data);
-	else await pb.collection('user_contacts').create(data);
+	await upsertSingletonRow({
+		pb,
+		collection: 'user_contacts',
+		find: () => findOwnContactRow(pb, userId),
+		createData: { user: userId, ...contact },
+		patch: contact,
+	});
 }
 
 /** Resolves another user's visible contact handles via the privileged `/api/contact` hook. */

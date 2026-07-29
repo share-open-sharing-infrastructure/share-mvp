@@ -1,20 +1,23 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
-	import { formatTimestamp, displayName } from '$lib/utils/utils';
+	import { itemStatusBadgeClasses, itemStatusLabel } from '$lib/utils/itemStatus';
+	import { formatTimestamp, displayName, itemOwnFileUrls, buildItemRedirectHref } from '$lib/utils/utils';
+	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
 	import { Tooltip } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+	import InitialsAvatar from '$lib/components/InitialsAvatar.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import type { User, Conversation } from '$lib/types/models';
+	import type { ConversationPartner } from '$lib/types/models';
+	import type { ConversationDetail } from './conversationDetail';
 	import telegramLogo from '$lib/images/telegram-logo.svg';
 	import signalLogo from '$lib/images/Signal-Logo-White.svg';
 
-	let { chatPartner, conversation, PB_URL, onDelete, loggedInUserIsItemOwner = false, partnerContact } : {
-		chatPartner: User;
-		conversation: Conversation;
-		PB_URL: string;
+	let { chatPartner, conversation, onDelete, loggedInUserIsItemOwner = false, partnerContact } : {
+		chatPartner: ConversationPartner;
+		conversation: ConversationDetail;
 		onDelete?: () => void;
 		loggedInUserIsItemOwner?: boolean;
 		partnerContact: { telegramUsername: string | null; telegramHidden: boolean; signalLink: string | null; signalHidden: boolean };
@@ -34,30 +37,49 @@
 
 	const chatPartnerName = $derived(displayName(chatPartner));
 
-	// `image` is a multi-file field; the first entry is the cover thumbnail.
-	const requestedItemCoverUrl = $derived(
-		conversation.requestedItem.image?.[0]
-			? `${PB_URL}api/files/${conversation.requestedItem.collectionId}/${conversation.requestedItem.id}/${conversation.requestedItem.image[0]}`
-			: null
-	);
+	// The requested item can go dangling (deleted/inaccessible) while the conversation
+	// persists — every read below falls back to a safe placeholder instead of crashing.
+	const item = $derived(conversation.requestedItem);
+	const itemName = $derived(item?.name ?? texts.ui.itemUnavailable);
+	const itemRedirectItemId = $derived(item?.id ?? '');
+
+	const requestedItemCoverUrl = $derived(item ? (itemOwnFileUrls(PUBLIC_PB_URL, item)[0] ?? null) : null);
 
 	const chatPartnerAvatarUrl = $derived(
-		chatPartner.profileImage
-			? `${PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}`
-			: `https://ui-avatars.com/api/?name=${encodeURIComponent(chatPartnerName)}&background=random`
+		chatPartner.profileImage ? `${PUBLIC_PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}` : null
 	);
 </script>
 
-{#snippet messengerBtn(href: string | null, available: boolean, hidden: boolean, logo: string, activeColors: string, label: string, logoSize: string)}
+{#snippet messengerBtn({ href, available, hidden, logo, activeColors, label, logoSize }: {
+	href: string | null;
+	available: boolean;
+	hidden: boolean;
+	logo: string;
+	activeColors: string;
+	label: string;
+	logoSize: string;
+})}
 	{#if available || hidden}
-		<button
-			disabled={!available}
-			onclick={available ? () => window.open(`/api/redirect?to=${encodeURIComponent(href!)}&source=conversation&item=${conversation.requestedItem.id}`, '_blank', 'noopener,noreferrer') : undefined}
-			class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 {available ? `${activeColors} transition-colors cursor-pointer` : 'bg-tinte-100 dark:bg-tinte-800 opacity-40 cursor-not-allowed'}"
-			aria-label={label}
-		>
-			<img src={logo} class="{logoSize} {available ? '' : 'opacity-50'}" alt={label} />
-		</button>
+		{#if available}
+			<!-- eslint-disable svelte/no-navigation-without-resolve -- buildItemRedirectHref() returns an already-resolved URL; the rule cannot see through the call -->
+			<a
+				href={buildItemRedirectHref(href!, itemRedirectItemId, 'conversation')}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 {activeColors} transition-colors cursor-pointer"
+				aria-label={label}
+			>
+				<img src={logo} class={logoSize} alt={label} />
+			</a>
+			<!-- eslint-enable svelte/no-navigation-without-resolve -->
+		{:else}
+			<span
+				class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-tinte-100 dark:bg-tinte-800 opacity-40 cursor-not-allowed"
+				aria-label={label}
+			>
+				<img src={logo} class="{logoSize} opacity-50" alt={label} />
+			</span>
+		{/if}
 		<Tooltip type="light" placement="bottom">{available ? `Auf ${label} schreiben` : texts.messenger.onlyForTrusted}</Tooltip>
 	{/if}
 {/snippet}
@@ -75,58 +97,72 @@
 	</Button>
 
 	<!-- Item info (left) -->
-	<a
-		href={resolve('/items/[id]', { id: conversation.requestedItem.id })}
-		class="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
-	>
-		<img
-			src={requestedItemCoverUrl ?? ''}
-			class="w-10 h-10 rounded-full object-cover shrink-0"
-			alt={conversation.requestedItem.name}
-		/>
-		<div class="flex flex-col min-w-0">
-			<span class="text-sm font-semibold truncate">{conversation.requestedItem.name}</span>
+	{#if item}
+		<a
+			href={resolve('/items/[id]', { id: item.id })}
+			class="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
+		>
+			<img
+				src={requestedItemCoverUrl ?? ''}
+				class="w-10 h-10 rounded-full object-cover shrink-0"
+				alt={itemName}
+			/>
+			<div class="flex flex-col min-w-0">
+				<span class="text-sm font-semibold truncate">{itemName}</span>
 
-			<!-- Status badge: hidden on mobile -->
-			<div class="hidden md:block">
-				{#if loggedInUserIsItemOwner}
-					<form method="POST" action="?/toggleStatus" use:enhance class="w-fit">
-						<input type="hidden" name="itemId" value={conversation.requestedItem.id} />
-						<button
-							type="submit"
-							class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border transition-colors cursor-pointer
-								{conversation.requestedItem.status === 'available'
-									? 'bg-green-100 text-green-800 border-green-300 hover:bg-green-200'
-									: 'bg-accent-100 text-accent-800 border-accent-300 hover:bg-accent-200'}"
+				<!-- Status badge: hidden on mobile -->
+				<div class="hidden md:block">
+					{#if loggedInUserIsItemOwner}
+						<form method="POST" action="?/toggleStatus" use:enhance class="w-fit">
+							<button
+								type="submit"
+								class="mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border transition-colors cursor-pointer
+									{itemStatusBadgeClasses(item.status, { interactive: true })}"
+							>
+								{itemStatusLabel(item.status)}
+							</button>
+						</form>
+					{:else}
+						<span
+							class="mt-0.5 self-start inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border
+								{itemStatusBadgeClasses(item.status)}"
 						>
-							{conversation.requestedItem.status === 'available'
-								? texts.itemStatus.available
-								: texts.itemStatus.unavailable}
-						</button>
-					</form>
-				{:else}
-					<span
-						class="mt-0.5 self-start inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold border
-							{conversation.requestedItem.status === 'available'
-								? 'bg-green-100 text-green-800 border-green-300'
-								: 'bg-accent-100 text-accent-800 border-accent-300'}"
-					>
-						{conversation.requestedItem.status === 'available'
-							? texts.itemStatus.available
-							: texts.itemStatus.unavailable}
-					</span>
-				{/if}
+							{itemStatusLabel(item.status)}
+						</span>
+					{/if}
+				</div>
 			</div>
+		</a>
+	{:else}
+		<div class="flex items-center gap-3 min-w-0">
+			<div class="w-10 h-10 rounded-full bg-tinte-200 dark:bg-tinte-700 shrink-0"></div>
+			<span class="text-sm font-semibold truncate text-tinte-400 dark:text-tinte-500">{itemName}</span>
 		</div>
-	</a>
+	{/if}
 
 	<!-- Right side: messenger icons + chat partner + delete -->
 	<div class="ml-auto flex items-center gap-2 shrink-0">
 		<!-- Messenger contact icon buttons -->
 		{#if showMessengerSection}
 			<div class="flex items-center gap-1.5">
-				{@render messengerBtn(telegramLink, telegramAvailable, telegramHidden, telegramLogo, 'bg-[#2CA5E0] hover:bg-[#229ED9]', texts.messenger.telegram, 'w-5 h-5')}
-				{@render messengerBtn(signalLink, signalAvailable, signalHidden, signalLogo, 'bg-[#2C6BED] hover:bg-[#2460D4]', texts.messenger.signal, 'w-3.5 h-3.5')}
+				{@render messengerBtn({
+					href: telegramLink,
+					available: telegramAvailable,
+					hidden: telegramHidden,
+					logo: telegramLogo,
+					activeColors: 'bg-[#2CA5E0] hover:bg-[#229ED9]',
+					label: texts.messenger.telegram,
+					logoSize: 'w-5 h-5',
+				})}
+				{@render messengerBtn({
+					href: signalLink,
+					available: signalAvailable,
+					hidden: signalHidden,
+					logo: signalLogo,
+					activeColors: 'bg-[#2C6BED] hover:bg-[#2460D4]',
+					label: texts.messenger.signal,
+					logoSize: 'w-3.5 h-3.5',
+				})}
 			</div>
 		{/if}
 
@@ -142,11 +178,15 @@
 				</span>
 			</div>
 			<div class="relative shrink-0">
-				<img
-					src={chatPartnerAvatarUrl}
-					class="w-9 h-9 rounded-full border object-cover"
-					alt="Avatar"
-				/>
+				{#if chatPartnerAvatarUrl}
+					<img
+						src={chatPartnerAvatarUrl}
+						class="w-9 h-9 rounded-full border object-cover"
+						alt={chatPartnerName}
+					/>
+				{:else}
+					<InitialsAvatar name={chatPartnerName} class="w-9 h-9 rounded-full border" />
+				{/if}
 				{#if chatPartner.verified}
 					<VerifiedIcon class="absolute -top-1 -right-1 h-3.5 w-3.5" />
 				{/if}

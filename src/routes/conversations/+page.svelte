@@ -13,10 +13,10 @@
 		<MessageDotsOutline class="w-7 h-7 text-tinte-400 dark:text-tinte-500" />
 	</div>
 	<div class="flex flex-col gap-1">
-		<p class="text-sm font-semibold text-tinte-700 dark:text-tinte-200">Kein Gespräch ausgewählt</p>
+		<p class="text-sm font-semibold text-tinte-700 dark:text-tinte-200">{texts.pages.conversations.noConversationSelectedTitle}</p>
 		<p class="text-xs text-tinte-400 dark:text-tinte-500 max-w-48">
-			Wähle eine Unterhaltung aus der Liste oder starte eine neue über die Suche.
+			{texts.pages.conversations.noConversationSelectedBody}
 		</p>
 	</div>
-	<Button href={resolve('/search')}>Zur Suche</Button>
+	<Button href={resolve('/search')}>{texts.pages.conversations.goToSearch}</Button>
 </div>

@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
-import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { failFromPbError } from '$lib/server/pbErrors';
 import { getUserGroups } from '$lib/server/groups';
 
 export async function load({ locals }) {
@@ -25,8 +25,7 @@ export const actions = {
 				owner: locals.user.id,
 			});
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 
 		return { success: true };
@@ -47,8 +46,7 @@ export const actions = {
 				);
 			await locals.pb.collection('group_members').delete(membership.id);
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 
 		return { success: true };

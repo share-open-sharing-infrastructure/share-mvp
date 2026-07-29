@@ -1,8 +1,12 @@
 <script lang="ts">
 	import { formatTimestamp } from '$lib/utils/utils';
-	let { message, isFromCurrentUser } = $props();
+	import type { Message } from '$lib/types/models';
 
-	const isSent = $derived(message.from === isFromCurrentUser);
+	// `isSent` is an explicit boolean the caller derives (`message.from === currentUser.id`)
+	// — previously this component took the current user's id and called it
+	// `isFromCurrentUser`, then compared it internally, which reads like a boolean but was
+	// actually an id.
+	let { message, isSent }: { message: Message; isSent: boolean } = $props();
 </script>
 
 <div

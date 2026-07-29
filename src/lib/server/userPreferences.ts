@@ -1,5 +1,6 @@
 import type PocketBase from 'pocketbase';
 import type { UserPreferences, UserId } from '$lib/types/models';
+import { upsertSingletonRow } from '$lib/server/singletonRow';
 
 // Central access point for the `user_preferences` sidecar collection (issue #426).
 // One owner-only row per user (unique index on `user`) holds settings pulled off the
@@ -41,26 +42,18 @@ export async function getUserPreferences(
 /**
  * Upserts the user's own preferences row, patching only the given fields. Creates it
  * on first save, updates it thereafter (one row per user, enforced by a unique index
- * on `user`). If two saves race and both try to create, the loser's unique-index error
- * is caught and retried as an update, so the user never sees a spurious failure.
+ * on `user`); a lost create race is retried as an update by the shared helper.
  */
 export async function upsertUserPreferences(
 	pb: PocketBase,
 	userId: UserId,
 	patch: UserPreferencesPatch
 ): Promise<void> {
-	const existing = await getUserPreferences(pb, userId);
-	if (existing) {
-		await pb.collection('user_preferences').update(existing.id, patch);
-		return;
-	}
-	try {
-		await pb.collection('user_preferences').create({ user: userId, ...patch });
-	} catch (err) {
-		// Lost a create race (unique index on user) — fall back to updating the row
-		// that the other writer just created.
-		const row = await getUserPreferences(pb, userId);
-		if (row) await pb.collection('user_preferences').update(row.id, patch);
-		else throw err;
-	}
+	await upsertSingletonRow({
+		pb,
+		collection: 'user_preferences',
+		find: () => getUserPreferences(pb, userId),
+		createData: { user: userId, ...patch },
+		patch,
+	});
 }
