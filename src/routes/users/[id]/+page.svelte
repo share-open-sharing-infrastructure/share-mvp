@@ -34,7 +34,7 @@
 <SeoHead
 	title={texts.seo.userProfile(profileName)}
 	description={texts.seo.userProfileDescription(profileName)}
-	canonical={shareUrl}
+	canonical
 />
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-8">

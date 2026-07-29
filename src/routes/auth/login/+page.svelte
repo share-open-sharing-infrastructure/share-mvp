@@ -15,7 +15,7 @@
 <SeoHead
 	title={texts.seo.login.title}
 	description={texts.seo.login.description}
-	canonical="https://allerleih.org/auth/login"
+	canonical
 />
 
 <Section name="login">

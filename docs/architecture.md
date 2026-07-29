@@ -50,7 +50,7 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
 | API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync`, `/api/refresh` | Varies |
-| Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/misc/stats`, `/sitemap.xml` | No |
+| Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/misc/stats`, `/sitemap.xml`, `/robots.txt` | No |
 | Legal consent | `/legal/accept`, `/legal/locked` | Yes (gate-exempt) |
 | Business metrics | `/admin/metrics` (`users.isAdmin` only, 404 otherwise), `/misc/stats` (public headline numbers, also teased on the home page) | `/admin/metrics`: yes + admin flag; `/misc/stats`/`/`: no |
 
@@ -97,6 +97,81 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 | partner lending software instances | Server → partner software | Sync partner item catalogues into `items` (via `POST /api/sync` or `POST /api/refresh`) | Polled by a cronjob every X min; reads each institution's items and upserts/archives items owned by that institution's account. See [integrations.md](integrations.md) for details |
 
 
+## Instance configuration (multi-city)
+
+**`src/lib/instance.ts` is the single source of everything that differs between AllerLeih
+instances** (city, origin, contact addresses, analytics) — routes and components read from it
+instead of hardcoding `allerleih.org` or a city name. `src/lib/texts.ts` imports it and
+interpolates the German copy at module load (e.g. `pages.landing.whoBodyPart1`, the PWA install
+steps); everything else in the app reads URLs/emails straight from `instance`.
+
+| Field | Env var | Default |
+|---|---|---|
+| `origin` | `PUBLIC_SITE_ORIGIN` | `https://allerleih.org` |
+| `city` | `PUBLIC_INSTANCE_CITY` | `Lüneburg` |
+| `appName` | `PUBLIC_APP_NAME` | `AllerLeih` |
+| `contactEmail` | `PUBLIC_CONTACT_EMAIL` | `kontakt@allerleih.org` |
+| `analytics.scriptOrigin` | `PUBLIC_ANALYTICS_ORIGIN` | *(unset ⇒ off)* |
+| `analytics.websiteId` | `PUBLIC_ANALYTICS_WEBSITE_ID` | *(unset ⇒ off)* |
+
+All six are optional; an unset/invalid value falls back to the Lüneburg/allerleih.org default
+(never throws — a bad env var must not 500 the whole app). Operator-owned values that don't vary
+per city (feedback address, social links, GitHub/Notion links, the legal imprint address) are
+hardcoded in the same module rather than env-fed.
+
+**The origin rule** — stated once, applied everywhere: crawler-facing absolute URLs (sitemap,
+robots, `canonical` via `SeoHead`'s opt-in `canonical` flag, `og:url`, `og:image`) always come
+from `instance.origin` / `instanceUrl()`, called with a **literal root-absolute path** (or, for
+canonical/`og:url`, the current page's own `page.url.pathname` from `$app/state` — never a
+passed-in path). User-facing share/invite links keep `url.origin`, because a copied link must
+work on the host the user is actually on (LAN dev, preview, custom domain) — switching those to
+the configured origin would make dev/preview share links point at production.
+
+**Never write `instanceUrl(resolve(...))`.** `svelte.config.js` has no `paths` block, so
+SvelteKit's default `paths.relative: true` applies, and `resolve()` (`$app/paths`) returns a
+**page-relative** path during server-side rendering (e.g. `'./'` for `/`, `'../misc/imprint'`
+for a nested route) — not the root-absolute path `instanceUrl()` expects. Concatenating the two
+produced malformed `canonical`/`og:url` tags in the raw server-rendered HTML
+(`https://allerleih.org../misc/imprint`) that looked correct in a browser only because the
+client recomputes a right-looking value after hydration (issue #473, caught only by an e2e test
+reading the raw SSR response — see `e2e/tests/seo-canonical.spec.ts`). `instanceUrl()` logs a
+DEV-only console error if given a non-root-absolute path, to make a repeat loud instead of silent.
+
+**This is the only place in the frontend that uses `$env/dynamic/public`** — every other env
+access in the repo goes through `$env/static/*` (build-time replaced). The exception is
+deliberate: one build artefact must serve N city instances, and `adapter-node` reads environment
+variables from `process.env` at **server start** (runtime), not at build time — `$env/static/public`
+would bake a single instance's values into the build, requiring one build per city.
+`$lib/instance.ts` (and therefore `$lib/texts.ts`) must never be imported from
+`src/service-worker.ts` — `$env/dynamic/public` is a hard error there (no request context).
+
+**Consequence for every future `PUBLIC_*` var:** `$env/static/public` only ships the `PUBLIC_*`
+constants a module actually references (build-time, tree-shaken), but `$env/dynamic/public`
+serialises the **entire** `PUBLIC_*` env into every rendered page (SvelteKit ships the whole
+dynamic-public object to the client so it can hydrate) — and since `$lib/instance.ts` is
+transitively imported by `$lib/texts.ts`, which reaches the client bundle, that whole-object
+broadcast now applies repo-wide, not just to the six vars above. Harmless today because only
+already-public vars exist, but treat any new `PUBLIC_*` var as fully public from the moment it is
+set in the server env — it is shipped to every visitor whether or not any module reads it.
+
+**Branding is only partially instance-configurable.** `PUBLIC_APP_NAME` overrides `texts.names.app`
+(used in `<title>`s, meta tags, a handful of UI strings), but it does **not** rewrite the ~89
+literal "AllerLeih" occurrences baked into the German copy in `src/lib/texts.ts`, nor the image
+assets (logo, favicon, PWA icons). Per-instance visuals are handled **outside** this config, by two
+separate, unrelated mechanisms:
+- **Colours** re-skin via the `[data-theme]` CSS override described in
+  [design-system.md](design-system.md) → "White-Labeling".
+- **Binary assets** (logo, icons, `static/manifest.webmanifest`) are swapped **statically**, under
+  unchanged filenames, via a per-instance rsync overlay applied on top of `build/client/` at deploy
+  time — `static/manifest.webmanifest` stays a plain static file (not an SSR route) for this
+  reason, since it lives in the same per-instance asset overlay as the icons it references.
+
+**Deploy note:** analytics is opt-in with no fallback instance, so omitting the two vars silently
+stops Umami tracking rather than falling back to a default. Production therefore has to supply
+`PUBLIC_ANALYTICS_ORIGIN=https://analytics.allerleih.org` and
+`PUBLIC_ANALYTICS_WEBSITE_ID=6cfb6acd-259e-4771-baa7-c677387ea292` in its **runtime** environment —
+see "Current Deployment Pipeline" below for where that has to live and which two traps to avoid.
+
 ## Current Deployment Pipeline for "AllerLeih" (proof-of-concept instance)
 
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
@@ -105,6 +180,17 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 - **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`, and the integration-sync vars `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (see [operations/integration-sync.md](operations/integration-sync.md)); a tracked `.env.example` lists all required vars
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
+- **Instance config vars** (`PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
+  `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`) are read via
+  `$env/dynamic/public` at **runtime** from `process.env` (adapter-node), not baked into the build
+  like the other `PUBLIC_*` vars above — so one build artefact serves every city instance and only
+  each instance's runtime environment differs. Two traps when adding one: (1) putting it in the
+  workflow's `npm run build` step has **no** effect, that only reaches `$env/static/*`; (2) the
+  deploy's SSH step runs `echo "BODY_SIZE_LIMIT=…" > .env` — with `>`, so anything hand-added to that
+  file on the server is discarded on the next deploy. Add runtime vars to that line in
+  `deploy-to-uberspace.yaml` (these six are public values, so GitHub Actions *variables*, not
+  secrets), or to the `svelte` supervisord service's own environment. See "Instance configuration"
+  above.
 
 **CI on pull requests:** Vitest runs with coverage (json + lcov) on every PR to `main` via `.github/workflows/vitest.yaml`. Coverage is posted as a PR comment via `davelosert/vitest-coverage-report-action`. The build step also catches TypeScript and Svelte compilation errors before merging.
 

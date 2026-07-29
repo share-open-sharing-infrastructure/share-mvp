@@ -55,7 +55,7 @@
 <SeoHead
 	title={texts.seo.app.title}
 	description={texts.seo.app.description}
-	canonical="https://allerleih.org/misc/app"
+	canonical
 />
 
 <!-- Intro / install call-to-action -->

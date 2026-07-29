@@ -141,6 +141,12 @@ no markup or component changes:
 Every component built on the tokens — including `Button` — re-skins automatically. An
 `example` block in `app.css` documents the pattern.
 
+This covers **colours** only. The other two axes of "run this for another city" are handled
+elsewhere: **name/origin/contact/analytics** come from `src/lib/instance.ts` (see
+`docs/architecture.md` → "Instance configuration"), and **binary assets** (logo, icons,
+`manifest.webmanifest`) are swapped statically under unchanged filenames via a per-instance
+overlay — not part of this CSS mechanism.
+
 ## Adding new design-system components
 
 New shared primitives (`Chip`, `Input`, …) go in `src/lib/components/ui/`, follow the
