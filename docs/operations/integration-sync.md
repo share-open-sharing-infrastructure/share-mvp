@@ -13,6 +13,16 @@ Both are session-unauthenticated (listed in `hooks.server.ts`'s unprotected pref
 
 Each institution is first matched to the integrations serving its source (`claimsInstitution`, detected from the base URL — `/webopac` ⇒ WINBIAP), then each stored item is routed to whichever remaining integration `claimsItem(item)` recognizes (by `externalUrl`/`externalId`).
 
+> **⚠️ #487 Phase 1 — the scheduled per-item refresh now runs in the backend, not here.** The
+> `integration_refresh` cron job no longer POSTs `/api/refresh`; it executes the same logic
+> **locally inside PocketBase** (`Allerleih-Backend/pb_hooks/integrations/`, native `$app`, a
+> per-institution transaction, and a `$app.store()` overlap lock) — no bearer secret, no
+> superuser HTTP client. This frontend `/api/refresh` endpoint **still exists** and is unchanged
+> (use it for a manual `?institution=` trigger), but is no longer on the cron path. The full
+> `/api/sync` pull is **not** part of Phase 1 and still runs here (see below). See the backend
+> section under *Scheduling* for the current refresh config, lock caveat, pacing, and the redirect
+> residual.
+
 ## Prerequisite: enable the PocketBase Batch API
 
 All integration writes (full sync, per-item refresh, **and** the CSV import at `/user/import`) go through PocketBase **batch requests** (`pb.createBatch()`), and the Batch API is **disabled by default**. On an instance running the `allerleih-backend` migrations this is handled automatically (`pb_migrations/1783101579_enable_batch_api.js` enables it). On any other PocketBase instance every write batch fails until it is enabled — enable it once, either:
@@ -71,19 +81,31 @@ curl -X POST "https://allerleih.org/api/refresh?institution=<users-id>" \
 
 ### Built-in PocketBase cron jobs (preferred)
 
-The backend (`allerleih-backend`, `pb_hooks/integration_sync.pb.js`) can trigger both endpoints itself. Configure in the **backend's** environment:
+The backend (`allerleih-backend`, `pb_hooks/integration_sync.pb.js`) registers two cron jobs. As of **#487 Phase 1** the two jobs work **differently**:
+
+- **`integration_sync`** (full pull) — still POSTs the frontend's `POST /api/sync` (needs `FRONTEND_URL` + `SYNC_SECRET`). Unchanged.
+- **`integration_refresh`** (per-item refresh) — now runs **locally in the backend** (`pb_hooks/integrations/refresh.js`): no HTTP call, no bearer secret, direct `$app` writes in a per-institution transaction. It needs only a valid `REFRESH_CRON`.
+
+Configure in the **backend's** environment:
 
 | Variable | Example | Purpose |
 |---|---|---|
-| `FRONTEND_URL` | `https://allerleih.org` | SvelteKit origin the cron calls (no trailing slash) |
-| `SYNC_SECRET` | — | Must equal the frontend's `SYNC_SECRET` (the token is now needed in **both** environments) |
 | `SYNC_CRON` | `*/15 * * * *` | Schedule for the full pull (`POST /api/sync`); unset/empty = job disabled |
-| `REFRESH_CRON` | `0 * * * *` | Schedule for the per-item refresh (`POST /api/refresh`); unset/empty = job disabled |
-| `SYNC_TIMEOUT_SECONDS` | `540` (default) | HTTP timeout of the cron's call |
+| `REFRESH_CRON` | `0 * * * *` | Schedule for the **local** per-item refresh; unset/empty = job disabled |
+| `FRONTEND_URL` | `https://allerleih.org` | SvelteKit origin the **sync** cron calls (no trailing slash). **Sync only** — refresh no longer uses it |
+| `SYNC_SECRET` | — | Bearer token for the **sync** call; must equal the frontend's `SYNC_SECRET`. **Sync only** — refresh no longer uses it |
+| `SYNC_TIMEOUT_SECONDS` | `540` (default) | HTTP timeout of the **sync** cron's call. Refresh writes direct via `$app`, no HTTP timeout |
+| `INTEGRATION_ALLOW_INSECURE_URL` | `false` (default) | Refresh only: allow `http://` and private/loopback source base URLs, bypassing the SSRF guard. **Local dev / integration tests only — never set in production.** |
 
-Schedules are standard 5-field cron expressions (minute granularity). The jobs appear as `integration_sync` / `integration_refresh` in the PocketBase admin UI (Settings → Crons), where a superuser can also fire them manually; `GET /api/crons` and `POST /api/crons/{id}` do the same over HTTP. If a cron variable is set but `FRONTEND_URL` or `SYNC_SECRET` is missing, the backend logs an error at startup and does not schedule the job. `DRY_MODE=true` skips the outbound call.
+Schedules are standard 5-field cron expressions (minute granularity). The jobs appear as `integration_sync` / `integration_refresh` in the PocketBase admin UI (Settings → Crons), where a superuser can also fire them manually; `GET /api/crons` and `POST /api/crons/{id}` do the same over HTTP. **Fail-soft** is per job: an invalid expression (or, for sync, a missing `FRONTEND_URL`/`SYNC_SECRET`) logs an error at startup and leaves that job unscheduled without affecting the sibling. `DRY_MODE=true` makes **both** jobs skip their work (sync skips the outbound call; refresh logs and skips all upstream fetches + writes).
 
-> **Overlap protection & long first runs:** the frontend holds a process-wide **in-flight lock** shared by `/api/sync` and `/api/refresh` — while one run is active, any further request answers `429` without doing work, so an overlapping cron tick is harmless (it just skips a beat). Be aware of durations, though: creates are batched 15-at-a-time with 5.5 s pauses (≈2.7 items/s), so a **first sync** of a large catalogue can far exceed `SYNC_TIMEOUT_SECONDS` — 5000 items take ≈30 min. The backend cron then logs a timeout while the run **keeps completing server-side**; subsequent ticks 429 until it finishes. For a first import of a big catalogue, prefer a manual `curl` without a timeout (see above) instead of waiting for the cron. Per-item refresh makes one upstream request per stored item — heavier per institution than a bulk pull; size `REFRESH_CRON` accordingly.
+> **⚠️ Interim two-lock-domain caveat (until Phase 3).** The backend refresh guards overlap with a `$app.store()` lock (`integrationRunLock`); the still-frontend `/api/sync` uses a *separate* process-wide in-flight lock. **The two cannot see each other.** So during Phase 1: do **not** overlap the `SYNC_CRON` and `REFRESH_CRON` windows, and do **not** fire a manual frontend `/api/sync` (or `/api/refresh`) while a backend refresh window is active — both write `items`. Within each domain, overlap is still safe (a second backend refresh tick skips with a warning; a second frontend call answers `429`).
+
+> **Pacing (refresh).** WINBIAP's per-item WebOPAC courtesy pause (`pauseMsBetweenFetches: 500`) is preserved in the backend via the JSVM's blocking `sleep(ms)` (spike #487 §4.4). Per-item refresh makes one upstream request per stored item — heavier per institution than a bulk pull, and the WINBIAP pause adds ~0.5 s/item — so size `REFRESH_CRON` conservatively (a large WINBIAP catalogue takes minutes).
+
+> **Redirect residual (refresh, security).** The backend uses `$http.send`, which **follows** HTTP redirects and exposes neither the intermediate 3xx nor the final URL (no policy hook in the JSVM — spike #487 §4.4). The literal-URL SSRF guard (`urlGuard.js`) therefore **cannot** catch a source base URL that 302-redirects onto an internal host. Base URLs are admin-onboarded (bounded risk), but treat a partner-supplied URL as you would any server-side fetch target. The frontend `fetch` path used `redirect: 'manual'`; that exact semantics is not reproducible in Goja.
+
+> **Long first sync (sync only):** creates are batched 15-at-a-time with 5.5 s pauses (≈2.7 items/s), so a **first `/api/sync`** of a large catalogue can far exceed `SYNC_TIMEOUT_SECONDS` — 5000 items take ≈30 min. The backend cron then logs a timeout while the run **keeps completing server-side**; the frontend's in-flight lock 429s subsequent ticks until it finishes. For a first import of a big catalogue, prefer a manual `curl` without a timeout (see above). *(Refresh writes direct via `$app` in a transaction — no batching, no HTTP timeout.)*
 
 ### OS crontab (fallback)
 
@@ -109,8 +131,9 @@ Tune the cadence to each source's freshness needs and politeness limits.
 - **Feed exceeds the item cap (full sync)** — treated as a fetch failure (zero writes, error recorded).
 - **Source answers with an empty or collapsed feed (full sync)** — an **archive circuit-breaker** skips the archive phase (creates/updates still apply) when the feed is empty or would archive ≥50% of the institution's stored items, and records an error. A source mid-migration or an emptied view can't mass-archive a catalogue; a genuine mass-removal must be archived manually (or the guard relaxed for one run).
 - **Many per-item fetches fail or report "gone" (refresh)** — a per-institution **circuit-breaker** aborts that institution with zero writes if ≥50% of items error **or come back "gone"** (a collection-level 404 or a WebOPAC in maintenance reports every item gone), so a source outage can't mass-archive a catalogue. Individual transient errors leave their item untouched; individually gone items below the threshold are archived normally.
-- **PocketBase batch write fails for some items** — that batch is skipped, the error is recorded in `errors`, and the rest of the run continues.
-- **Every batch fails (typically "Batch requests are not allowed")** — the Batch API is disabled on the PocketBase instance; see the prerequisite section above.
+- **PocketBase batch write fails for some items (full sync)** — that batch is skipped, the error is recorded in `errors`, and the rest of the run continues.
+- **A write fails during the backend refresh (Phase 1)** — refresh writes go through `$app.runInTransaction` per institution (no batching), so a failed write **rolls the whole institution back** (all-or-nothing); the error is recorded in that institution's `errors` and the other institutions still run. The Batch API prerequisite does **not** apply to the backend refresh.
+- **Every batch fails (typically "Batch requests are not allowed")** — the Batch API is disabled on the PocketBase instance; see the prerequisite section above. *(Full sync + CSV import only — the backend refresh does not use batches.)*
 
 ## Item lifecycle
 
