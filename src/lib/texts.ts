@@ -1363,11 +1363,18 @@ export const texts = {
 		importNoCsvData: 'Keine CSV-Daten vorhanden.',
 		importLoadExistingFailed:
 			'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+		importApplyFailed: 'Import fehlgeschlagen. Bitte später erneut versuchen.',
+		/** Backend answered 409: a sync/refresh/import is already running (shared lock). */
+		importBusy:
+			'Es läuft gerade eine Synchronisierung. Bitte in ein paar Minuten noch einmal versuchen.',
 		importLoaderLabel: 'Importiere …',
 		importLoaderHint: 'Bitte warten …',
 		importRefreshButton: 'Alle Gegenstände synchronisieren',
 		importRefreshTriggered: 'Synchronisierung abgeschlossen.',
 		importRefreshFailed: 'Synchronisierung fehlgeschlagen. Bitte später erneut versuchen.',
+		/** No `sync_config` row for this institution — the button has nothing to synchronise. */
+		importRefreshNoIntegration:
+			'Für diesen Account ist keine automatische Quelle eingerichtet — es gibt nichts zu synchronisieren. Bitte an die AllerLeih-Administration wenden.',
 		importActionLabels: {
 			create: 'Neu',
 			update: 'Update',

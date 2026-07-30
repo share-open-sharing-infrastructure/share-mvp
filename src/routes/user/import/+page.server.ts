@@ -1,17 +1,12 @@
-import { error, fail, type ActionFailure } from '@sveltejs/kit';
-import { SYNC_SECRET } from '$env/static/private';
-import type PocketBase from 'pocketbase';
+import { error, fail } from '@sveltejs/kit';
+import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import {
-	validateFileLimits,
 	parseAndMapCsv,
-	type MappedRow,
+	validateFileLimits,
 	type RowResult,
+	type MappedItem
 } from '$lib/server/integrations/winbiap/csv';
-import { loadExistingItems } from '$lib/server/integrations/core/pocketbase';
-import { diffItems } from '$lib/server/integrations/core/diff';
-import { applyDiff } from '$lib/server/integrations/core/write';
-import type { DiffResult } from '$lib/server/integrations/core/types';
 
 export async function load({ locals }) {
 	if (!locals.user?.isInstitution) {
@@ -25,97 +20,43 @@ function institutionOwnerId(locals: App.Locals): string | null {
 	return locals.user?.isInstitution ? locals.user.id : null;
 }
 
-type FormFailure = ActionFailure<{ error: true; message: string }>;
-
-interface CsvDiff {
-	mappedRows: MappedRow[];
-	rowErrors: RowResult[];
-	totalRows: number;
-	diff: DiffResult;
+/**
+ * A `SyncSummary` as returned by the backend `/api/import/apply` + `/api/import/refresh` endpoints.
+ * `errors` is the list of write-error messages (frontend maps its length into the count summary).
+ */
+interface ImportSummary {
+	institution: string;
+	fetched: number;
+	created: number;
+	updated: number;
+	archived: number;
+	skipped: number;
+	errors: string[];
+	durationMs: number;
+	/** `/api/import/refresh` only: false when the institution has no `sync_config` row at all. */
+	configured?: boolean;
 }
 
 /**
- * Outcome of `loadCsvDiff`: either a usable `CsvDiff` (`ok`) or a ready-to-return action
- * `failure` the caller should hand straight back to SvelteKit.
+ * True when the backend refused a write because another integration run (cron sync/refresh or
+ * another import) holds the shared lock — a "try again shortly", not a failure.
  */
-type LoadCsvDiffResult = { ok: true; value: CsvDiff } | { ok: false; failure: FormFailure };
-
-/**
- * Parses + maps a CSV once and diffs it against the institution's current items — the shared
- * orchestration behind both the `preview` and `apply` actions. Translates the two non-success
- * outcomes into action failures: a fatally malformed CSV (`400`, before any DB read) and a
- * failed item load (`503`, rather than silently treating every row as a create).
- */
-async function loadCsvDiff(
-	pb: PocketBase,
-	csvText: string,
-	ownerId: string
-): Promise<LoadCsvDiffResult> {
-	const { mappedRows, rowErrors, totalRows, parseError } = parseAndMapCsv(csvText, ownerId);
-	if (parseError) {
-		return { ok: false, failure: fail(400, { error: true, message: parseError }) };
-	}
-
-	let existingItems;
-	try {
-		existingItems = await loadExistingItems(pb, ownerId);
-	} catch {
-		return {
-			ok: false,
-			failure: fail(503, {
-				error: true,
-				message: texts.institutional.importLoadExistingFailed,
-			}),
-		};
-	}
-
-	const diff = diffItems(
-		mappedRows.map((r) => r.item),
-		existingItems
-	);
-	return { ok: true, value: { mappedRows, rowErrors, totalRows, diff } };
+function isBusy(err: unknown): boolean {
+	return (err as Partial<ClientResponseError>)?.status === 409;
 }
 
-/** Builds the preview payload: per-row actions, the archive list, and a count summary. */
-function toPreviewResponse({ mappedRows, rowErrors, totalRows, diff }: CsvDiff, csvText: string) {
-	// Derive the per-row action from which diff list each item landed in.
-	const createIds = new Set(diff.toCreate.map((i) => i.externalId));
-	const updateIds = new Set(diff.toUpdate.map((u) => u.data.externalId));
-	const previewRows: RowResult[] = mappedRows.map(({ rowIndex, item, warnings }) => ({
-		rowIndex,
-		externalId: item.externalId,
-		name: item.name,
-		action: createIds.has(item.externalId)
-			? 'create'
-			: updateIds.has(item.externalId)
-				? 'update'
-				: 'skip',
-		errors: warnings,
-	}));
+/** Diff forecast returned by the backend `/api/import/preview` dryRun endpoint (no write). */
+interface ImportPreview {
+	summary: { create: number; update: number; archive: number; skip: number };
+	rowActions: Array<{ externalId: string; action: 'create' | 'update' | 'skip' }>;
+	archiveRows: Array<{ id: string; externalId: string; name: string }>;
+}
 
-	const rowResults = [...previewRows, ...rowErrors].sort((a, b) => a.rowIndex - b.rowIndex);
-	const archiveRows = diff.toArchive.map((i) => ({
-		id: i.id,
-		externalId: i.externalId ?? '',
-		name: i.name,
-		action: 'archive' as const,
-	}));
-
-	return {
-		success: true,
-		preview: true,
-		csvText,
-		rowResults: rowResults.slice(0, 50),
-		archiveRows,
-		summary: {
-			create: diff.toCreate.length,
-			update: diff.toUpdate.length,
-			archive: archiveRows.length,
-			skip: previewRows.filter((r) => r.action === 'skip').length,
-			errors: rowErrors.length,
-		},
-		totalRows,
-	};
+/** Strips the (server-stamped) `owner` before sending mapped rows to the backend. */
+function toRow(item: MappedItem): Omit<MappedItem, 'owner'> {
+	const { externalId, name, description, status, categories, externalUrl, externalImgUrl, place, trusteesOnly } =
+		item;
+	return { externalId, name, description, status, categories, externalUrl, externalImgUrl, place, trusteesOnly };
 }
 
 export const actions = {
@@ -131,22 +72,59 @@ export const actions = {
 		if (!file || !(file instanceof File) || file.size === 0) {
 			return fail(400, { error: true, message: texts.institutional.importNoFile });
 		}
-
 		if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
 			return fail(400, { error: true, message: texts.institutional.importXlsxError });
 		}
 
 		const csvText = await file.text();
-
-		const result = await loadCsvDiff(locals.pb, csvText, ownerId);
-		if (!result.ok) return result.failure;
-
-		const limitError = validateFileLimits(csvText, result.value.totalRows);
+		const { mappedRows, rowErrors, totalRows, parseError } = parseAndMapCsv(csvText, ownerId);
+		if (parseError) {
+			return fail(400, { error: true, message: parseError });
+		}
+		const limitError = validateFileLimits(csvText, totalRows);
 		if (limitError) {
 			return fail(400, { error: true, message: limitError });
 		}
 
-		return toPreviewResponse(result.value, csvText);
+		// Backend computes the diff (dryRun) — the FE no longer reads the DB or diffs itself.
+		let preview: ImportPreview;
+		try {
+			preview = await locals.pb.send('/api/import/preview', {
+				method: 'POST',
+				body: { rows: mappedRows.map(({ item }) => toRow(item)) }
+			});
+		} catch (err) {
+			console.error('import preview failed:', (err as Partial<ClientResponseError>)?.message ?? err);
+			return fail(503, { error: true, message: texts.institutional.importLoadExistingFailed });
+		}
+
+		// Merge the backend's per-externalId action onto the locally-parsed rows (for row number +
+		// name + CSV warnings), then interleave the parser's row errors.
+		const actionByExternalId = new Map(preview.rowActions.map((r) => [r.externalId, r.action]));
+		const previewRows: RowResult[] = mappedRows.map(({ rowIndex, item, warnings }) => ({
+			rowIndex,
+			externalId: item.externalId,
+			name: item.name,
+			action: actionByExternalId.get(item.externalId) ?? 'skip',
+			errors: warnings
+		}));
+		const rowResults = [...previewRows, ...rowErrors].sort((a, b) => a.rowIndex - b.rowIndex);
+
+		return {
+			success: true,
+			preview: true,
+			csvText,
+			rowResults: rowResults.slice(0, 50),
+			archiveRows: preview.archiveRows.map((r) => ({ ...r, action: 'archive' as const })),
+			summary: {
+				create: preview.summary.create,
+				update: preview.summary.update,
+				archive: preview.summary.archive,
+				skip: preview.summary.skip,
+				errors: rowErrors.length
+			},
+			totalRows
+		};
 	},
 
 	apply: async ({ locals, request }) => {
@@ -157,48 +135,72 @@ export const actions = {
 
 		const formData = await request.formData();
 		const csvText = formData.get('csvText')?.toString() ?? '';
-
 		if (!csvText) {
 			return fail(400, { error: true, message: texts.institutional.importNoCsvData });
 		}
 
-		const result = await loadCsvDiff(locals.pb, csvText, ownerId);
-		if (!result.ok) return result.failure;
+		const { mappedRows, rowErrors, totalRows, parseError } = parseAndMapCsv(csvText, ownerId);
+		if (parseError) {
+			return fail(400, { error: true, message: parseError });
+		}
+		const limitError = validateFileLimits(csvText, totalRows);
+		if (limitError) {
+			return fail(400, { error: true, message: limitError });
+		}
 
-		// User-session client: never re-authenticate as superuser (default identity retry).
-		const writes = await applyDiff(locals.pb, result.value.diff);
+		// One user-session request; the backend stamps owner = caller and writes in a transaction.
+		let summary: ImportSummary;
+		try {
+			summary = await locals.pb.send('/api/import/apply', {
+				method: 'POST',
+				body: { rows: mappedRows.map(({ item }) => toRow(item)) }
+			});
+		} catch (err) {
+			if (isBusy(err)) {
+				return fail(409, { error: true, message: texts.institutional.importBusy });
+			}
+			console.error('import apply failed:', (err as Partial<ClientResponseError>)?.message ?? err);
+			return fail(503, { error: true, message: texts.institutional.importApplyFailed });
+		}
 
 		return {
 			success: true,
 			done: true,
 			summary: {
-				created: writes.created,
-				updated: writes.updated,
-				archived: writes.archived,
-				skipped: result.value.diff.skipped,
-				errors: writes.errors.length + result.value.rowErrors.length,
+				created: summary.created,
+				updated: summary.updated,
+				archived: summary.archived,
+				skipped: summary.skipped,
+				errors: summary.errors.length + rowErrors.length
 			},
-			rowErrors: writes.errors,
+			rowErrors: summary.errors
 		};
 	},
-	refresh: async ({ locals, fetch }) => {
+
+	refresh: async ({ locals }) => {
 		const ownerId = institutionOwnerId(locals);
 		if (!ownerId) {
 			return fail(403, { error: true, message: texts.institutional.importNoPermission });
 		}
 
+		// Refreshes only the caller's own items (user session — no SYNC_SECRET, no ?institution=).
+		let summary: ImportSummary;
 		try {
-			const response = await fetch(`/api/refresh?institution=${encodeURIComponent(ownerId)}`, {
-				method: 'POST',
-				headers: { authorization: `Bearer ${SYNC_SECRET}` },
-			});
-			if (!response.ok) {
-				return fail(503, { error: true, message: texts.institutional.importRefreshFailed });
+			summary = await locals.pb.send('/api/import/refresh', { method: 'POST' });
+		} catch (err) {
+			if (isBusy(err)) {
+				return fail(409, { error: true, message: texts.institutional.importBusy });
 			}
-		} catch {
+			console.error('import refresh failed:', (err as Partial<ClientResponseError>)?.message ?? err);
 			return fail(503, { error: true, message: texts.institutional.importRefreshFailed });
 		}
 
+		// A refresh without any configured source is a guaranteed no-op — say so instead of
+		// reporting success for work that never happened.
+		if (summary.configured === false) {
+			return fail(400, { error: true, message: texts.institutional.importRefreshNoIntegration });
+		}
+
 		return { success: true, refreshed: true, message: texts.institutional.importRefreshTriggered };
-	},
+	}
 };

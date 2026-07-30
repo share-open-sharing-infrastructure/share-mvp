@@ -6,7 +6,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import PasswordInput from '$lib/components/PasswordInput.svelte';
+	import PasswordInput from '../../components/PasswordInput.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();

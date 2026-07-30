@@ -19,6 +19,12 @@ src/routes/<path>/
 There is **no REST layer for app data** — every read goes through `load()`, every mutation through a
 **form action**. Read `docs/best-practices.md` for the canonical CRUD-form pattern before starting.
 
+**Component placement:** a component used by only this route → co-locate it flat in the route folder
+(e.g. `src/routes/items/[id]/LinkifiedText.svelte`). A cluster of components local to this route or a
+subtree of it → a `components/` subfolder under that route (e.g. `src/routes/components/` for the
+root layout's cluster, `src/routes/auth/components/` for auth-only pieces). A component used across
+unrelated route subtrees → `src/lib/components` (design-system primitives go in `ui/`).
+
 ## 1. `load()` — reading data
 
 ```ts

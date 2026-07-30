@@ -25,8 +25,6 @@ const unprotectedPrefix = [
 	'/robots.txt',
 	'/api/redirect',
 	'/api/diagnostics',
-	'/api/sync',
-	'/api/refresh',
 ];
 
 // Paths exempt from the legal-consent gate (Issue #399) — otherwise a not-yet-

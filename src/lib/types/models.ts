@@ -152,21 +152,6 @@ export interface User extends PocketBaseEntity {
 	bio?: string;
 
 	/**
-	 * Bare origin of a leihbackend instance (no trailing slash, no /api), e.g.
-	 * "https://allerlei.uber.space". When set together with `isInstitution = true`,
-	 * this institution's items are periodically synced from leihbackend's `item_public` view.
-	 */
-	leihbackendUrl?: string;
-
-	/**
-	 * Human-facing deep-link template for an institution's leihbackend items, e.g.
-	 * "https://allerlei.uber.space/reservierung/{iid}". Placeholders `{id}` and `{iid}`
-	 * are substituted with the leihbackend record id / inventory number. Empty if no
-	 * public catalogue page exists.
-	 */
-	leihbackendItemUrlTemplate?: string;
-
-	/**
 	 * Set when the user has deleted their account (phase 1 "deactivate"). The row is
 	 * anonymized in place; login is blocked and the UI shows "Gelöschtes Konto".
 	 */
@@ -829,4 +814,33 @@ export interface MetricsDaily extends PocketBaseEntity {
 	/** "YYYY-MM-DD", unique per row. */
 	date: string;
 	metrics: DailyMetrics;
+}
+
+/**
+ * Per-institution integration configuration (backend `sync_config` collection, #487).
+ * **Superuser-only**: no client CRUD — rows are managed in the PocketBase admin UI (see the
+ * onboarding runbook). Not exposed through any `*_public` view.
+ *
+ * The single source of truth for integration discovery: the backend cron (full sync + per-item
+ * refresh) and the CSV-import refresh (`/api/import/refresh`) all read it. (The former interim
+ * `users.leihbackendUrl` field was removed in #487 Phase 3.)
+ */
+export interface SyncConfig extends PocketBaseEntity {
+	/** Foreign key: the institution `users` record this config belongs to (cascadeDelete). */
+	institution: UserId;
+
+	/** Which integration serves this institution's source. */
+	integration: 'leihbackend' | 'winbiap';
+
+	/** Source base URL — leihbackend origin, or a WINBIAP WebOPAC base ending in `/webopac`. */
+	baseUrl: string;
+
+	/** Optional human-facing deep-link template with `{id}`/`{iid}` placeholders. */
+	itemUrlTemplate?: string;
+
+	/**
+	 * When false the backend cron skips this institution. In Phase 2 this only affects the cron;
+	 * the manual frontend endpoints ignore it until Phase 3.
+	 */
+	enabled?: boolean;
 }

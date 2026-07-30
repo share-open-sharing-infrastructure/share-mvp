@@ -14,7 +14,7 @@
 	import OwnerCard from './OwnerCard.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import LinkifiedText from '$lib/components/LinkifiedText.svelte';
+	import LinkifiedText from './LinkifiedText.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
