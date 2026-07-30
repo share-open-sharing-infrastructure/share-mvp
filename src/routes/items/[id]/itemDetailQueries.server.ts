@@ -1,5 +1,5 @@
 import type { ItemPublic } from '$lib/types/models';
-import { getActiveTerms, hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
+import { getActiveTerms, hasAcceptedTerms } from '$lib/server/lendingTerms';
 import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 
 // items_public masks RESTRICTED items (trustees-only OR shared with a group):
@@ -107,6 +107,9 @@ export async function resolveExistingConversation(
 }
 
 // Does this owner publish lending terms, and if so has the viewer accepted them?
+// Threads the already-resolved `activeTerms` into `hasAcceptedTerms` directly
+// instead of calling `hasAcceptedActiveTerms` (which would re-fetch `getActiveTerms`
+// itself) — avoids a duplicated round-trip for the same lookup within one load().
 export async function resolveTermsGate(
 	pb: App.Locals['pb'],
 	currentUserId: string,
@@ -114,7 +117,7 @@ export async function resolveTermsGate(
 ): Promise<boolean> {
 	const activeTerms = await getActiveTerms(pb, ownerId);
 	if (!activeTerms) return false;
-	return !(await hasAcceptedActiveTerms(pb, currentUserId, ownerId));
+	return !(await hasAcceptedTerms(pb, currentUserId, activeTerms));
 }
 
 // Total items listed by this owner (all statuses); 0 on failure.

@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ItemPublic } from '$lib/types/models';
 import { makeMockPb } from '$lib/test-utils/pocketbase';
 
-const { getActiveTerms, hasAcceptedActiveTerms } = vi.hoisted(() => ({
+const { getActiveTerms, hasAcceptedTerms } = vi.hoisted(() => ({
 	getActiveTerms: vi.fn(),
-	hasAcceptedActiveTerms: vi.fn(),
+	hasAcceptedTerms: vi.fn(),
 }));
-vi.mock('$lib/server/lendingTerms', () => ({ getActiveTerms, hasAcceptedActiveTerms }));
+vi.mock('$lib/server/lendingTerms', () => ({ getActiveTerms, hasAcceptedTerms }));
 
 import {
 	resolveViewerAccess,
@@ -212,12 +212,12 @@ describe('resolveTermsGate', () => {
 		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
 
 		expect(result).toBe(false);
-		expect(hasAcceptedActiveTerms).not.toHaveBeenCalled();
+		expect(hasAcceptedTerms).not.toHaveBeenCalled();
 	});
 
 	it('returns false when active terms exist and the viewer already accepted them', async () => {
 		getActiveTerms.mockResolvedValue({ id: 'terms1' });
-		hasAcceptedActiveTerms.mockResolvedValue(true);
+		hasAcceptedTerms.mockResolvedValue(true);
 
 		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
 
@@ -226,11 +226,24 @@ describe('resolveTermsGate', () => {
 
 	it('returns true (gate the request) when active terms exist and the viewer has not accepted them', async () => {
 		getActiveTerms.mockResolvedValue({ id: 'terms1' });
-		hasAcceptedActiveTerms.mockResolvedValue(false);
+		hasAcceptedTerms.mockResolvedValue(false);
 
 		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
 
 		expect(result).toBe(true);
+	});
+
+	// The point of #525's terms dedupe: the already-resolved terms are threaded into
+	// the acceptance check, so the gate costs one `getActiveTerms` round-trip, not two.
+	it('fetches the active terms exactly once and threads them into the acceptance check', async () => {
+		const activeTerms = { id: 'terms1' };
+		getActiveTerms.mockResolvedValue(activeTerms);
+		hasAcceptedTerms.mockResolvedValue(true);
+
+		await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
+
+		expect(getActiveTerms).toHaveBeenCalledTimes(1);
+		expect(hasAcceptedTerms).toHaveBeenCalledWith(pb, VIEWER_ID, activeTerms);
 	});
 });
 

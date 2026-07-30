@@ -405,7 +405,11 @@ API rules: `listRule`/`viewRule` = `@request.auth.id = truster || @request.auth.
 parties may read an edge — the trustee needs to see who trusts them); `createRule`/`deleteRule` =
 `@request.auth.id = truster` (only the granter adds or revokes); `updateRule` = `null`. A backend
 hook (`trust.pb.js`) rejects a self-trust edge. The frontend reads/writes it exclusively through
-`$lib/server/trust.ts` (`isTrusting`, `addTrust`, `removeTrust`, `getTrustees`, `getTrusters`).
+`$lib/server/trust.ts` (`isTrusting`, `getTrustDirections`, `addTrust`, `removeTrust`,
+`getTrustees`, `getTrusters`). `getTrustDirections` resolves both directions between two users in
+one query — callers that need both (e.g. item detail, user profile) must not run two concurrent
+`isTrusting` calls, since PocketBase's request auto-cancellation keys by `method + path` and both
+directions hit the identical `trusts` list endpoint.
 
 Item/search/conversation visibility rules match trust via the back-relation
 `…trusts_via_truster.trustee.id ?= @request.auth.id` (rows where the owner is the truster; see the

@@ -90,6 +90,20 @@ export async function getAcceptance(
 }
 
 /**
+ * True if `userId` has accepted the given (already-resolved) `terms` version. Split
+ * out from `hasAcceptedActiveTerms` so a caller that has already fetched the active
+ * terms (e.g. the item detail load) can check acceptance without re-fetching them —
+ * one definition of "has accepted" instead of two modules re-implementing it.
+ */
+export async function hasAcceptedTerms(
+	pb: PocketBase,
+	userId: string,
+	terms: LendingTerms
+): Promise<boolean> {
+	return (await getAcceptance(pb, userId, terms.id)) !== null;
+}
+
+/**
  * Convenience: true if the user has already accepted the currently active terms
  * of the given owner. Returns false if there are no active terms (no gating needed).
  */
@@ -100,6 +114,5 @@ export async function hasAcceptedActiveTerms(
 ): Promise<boolean> {
 	const active = await getActiveTerms(pb, ownerId);
 	if (!active) return true; // no terms → nothing to accept → consider satisfied
-	const acceptance = await getAcceptance(pb, userId, active.id);
-	return acceptance !== null;
+	return hasAcceptedTerms(pb, userId, active);
 }

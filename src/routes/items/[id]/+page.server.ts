@@ -1,11 +1,11 @@
 import { PUBLIC_PB_URL } from '../../../hooks.server';
 import { error, fail, redirect } from '@sveltejs/kit';
-import type { ItemPublic } from '$lib/types/models';
+import type { ItemPublic, UnmetRequirement } from '$lib/types/models';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
 import { hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
 import { evaluateUnmetRequirements } from '$lib/server/lendingRequirements';
-import { isTrusting } from '$lib/server/trust';
+import { getTrustDirections, NO_TRUST_DIRECTIONS } from '$lib/server/trust';
 import { toggleItemStatus } from '$lib/server/items';
 import {
 	findResumableConversation,
@@ -32,22 +32,54 @@ export async function load({ params, locals }) {
 	const currentUserId = locals.user?.id ?? null;
 	const isAuthenticated = locals.pb.authStore.isValid;
 	const isOwnItem = currentUserId === item.userId;
-	// Viewer → Owner direction (does the viewer trust this owner).
-	const viewerTrustsOwner = currentUserId
-		? await isTrusting(locals.pb, currentUserId, item.userId)
-		: false;
 
+	// From here, load() runs in three more stages ("waves"): a wave of five
+	// concurrent, independent lookups right below, then two more stages that each
+	// depend on the previous stage's result and so can't join that wave —
+	// resolveOwnerContact needs isTrustRestricted (derived from the wave below), and
+	// resolveTermsGate/evaluateUnmetRequirements need resolveOwnerContact's result.
+	// `resolveViewerAccess` is the only task in the wave allowed to mutate `item` (in
+	// place); every other task only reads `item.id` / `item.userId`.
+
+	// Both trust directions in one query — see the doc comment on getTrustDirections
+	// in trust.ts for why a Promise.all of two directional lookups would collide.
+	const trustDirectionsTask = currentUserId
+		? getTrustDirections(locals.pb, currentUserId, item.userId, 'trust-directions-item')
+		: NO_TRUST_DIRECTIONS;
+	const viewerAccessTask = resolveViewerAccess(locals.pb, item, currentUserId);
+	const existingConversationTask =
+		currentUserId && !isOwnItem
+			? resolveExistingConversation(locals.pb, currentUserId, item.id)
+			: null;
+	const ownerItemCountTask = item.userId ? countOwnerItems(locals.pb, item.userId) : 0;
+	// Transport mode lives in the user_preferences sidecar (issue #426), not on the
+	// auth record — fetch it directly (only when authenticated) rather than via the
+	// layout's `parent()`, so this already query-heavy load doesn't serialize behind
+	// it. Distinct requestKey from the layout's fetch so the two concurrent reads
+	// don't auto-cancel each other (PB keys by method+path).
+	const preferencesTask = currentUserId
+		? getUserPreferences(locals.pb, currentUserId, 'user-preferences-item')
+		: null;
+
+	const [trustDirections, viewerAccess, existingConversation, ownerItemCount, preferences] =
+		await Promise.all([
+			trustDirectionsTask,
+			viewerAccessTask,
+			existingConversationTask,
+			ownerItemCountTask,
+			preferencesTask,
+		]);
+
+	// Viewer → Owner direction (does the viewer trust this owner).
+	const { aTrustsB: viewerTrustsOwner, bTrustsA: rawOwnerTrustsViewer } = trustDirections;
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
 	// Resolved server-side against the `trusts` join so no trust list reaches the client.
-	const ownerTrustsViewer =
-		currentUserId && !isOwnItem ? await isTrusting(locals.pb, item.userId, currentUserId) : false;
+	const ownerTrustsViewer = !isOwnItem && rawOwnerTrustsViewer;
 
-	const { wasMasked, viewerHasFullAccess } = await resolveViewerAccess(
-		locals.pb,
-		item,
-		currentUserId
-	);
+	const { wasMasked, viewerHasFullAccess } = viewerAccess;
 	const isTrustRestricted = wasMasked && isAuthenticated && !viewerHasFullAccess;
+
+	const preferredTransportMode = preferences?.preferredTransportMode || 'bicycle';
 
 	const ownerContact = await resolveOwnerContact(
 		locals.pb,
@@ -56,38 +88,20 @@ export async function load({ params, locals }) {
 		!isOwnItem && !isTrustRestricted
 	);
 
-	const existingConversation =
-		currentUserId && !isOwnItem
-			? await resolveExistingConversation(locals.pb, currentUserId, item.id)
-			: null;
-
 	// Terms + borrower requirements only gate the in-app request flow: viewer must be
 	// logged in, not the owner, and the owner must not handle requests off-platform.
-	const requiresTermsAcceptance =
+	// Neither task depends on the other, so they still run concurrently.
+	const [requiresTermsAcceptance, unmetRequirements] = await Promise.all([
 		currentUserId && !isOwnItem && !ownerContact
-			? await resolveTermsGate(locals.pb, currentUserId, item.userId)
-			: false;
-
-	// Lender-defined borrower requirements (#423/#389): which enabled requirements
-	// does the current viewer NOT yet meet for this owner? UX only — the backend
-	// hook on conversation create is the authoritative gate.
-	const unmetRequirements =
+			? resolveTermsGate(locals.pb, currentUserId, item.userId)
+			: false,
+		// Lender-defined borrower requirements (#423/#389): which enabled requirements
+		// does the current viewer NOT yet meet for this owner? UX only — the backend
+		// hook on conversation create is the authoritative gate.
 		currentUserId && !isOwnItem && !ownerContact && locals.user
-			? await evaluateUnmetRequirements(locals.pb, item.userId, locals.user)
-			: [];
-
-	const ownerItemCount = item.userId ? await countOwnerItems(locals.pb, item.userId) : 0;
-
-	// Transport mode lives in the user_preferences sidecar (issue #426), not on the
-	// auth record — fetch it directly (only when authenticated) rather than via the
-	// layout's `parent()`, so this already query-heavy load doesn't serialize behind it.
-	// Distinct requestKey from the layout's fetch so the two concurrent reads don't
-	// auto-cancel each other (PB keys by method+path).
-	const preferredTransportMode =
-		(currentUserId
-			? (await getUserPreferences(locals.pb, currentUserId, 'user-preferences-item'))
-					?.preferredTransportMode
-			: null) || 'bicycle';
+			? evaluateUnmetRequirements(locals.pb, item.userId, locals.user)
+			: ([] as UnmetRequirement[]),
+	]);
 
 	return {
 		item,

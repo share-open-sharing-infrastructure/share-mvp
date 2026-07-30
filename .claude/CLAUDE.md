@@ -88,8 +88,9 @@ These prevent the most common bugs/security issues here — follow them without 
 - **Trust visibility is enforced at the data layer**, not in app code: the `items` /
   `items_searchable` rules only return a trustees-only item to the owner's trustees (via the
   `trusts` join back-relation `owner.trusts_via_truster.trustee.id ?= @request.auth.id`). Read
-  trust through `$lib/server/trust.ts` (`isTrusting` / `getTrustees` / `getTrusters`; `addTrust` /
-  `removeTrust` for mutations); never re-implement trust filtering client-side. Unauthenticated
+  trust through `$lib/server/trust.ts` (`isTrusting` / `getTrustDirections` / `getTrustees` /
+  `getTrusters`; `addTrust` / `removeTrust` for mutations); never re-implement trust filtering
+  client-side. Unauthenticated
   browsing uses the `*_public` views — never leak email, raw coordinates, trusted items, or
   trust-graph data through them.
 - **Lending status values & groupings come only from `$lib/lending.ts`** (`LendingStatus`,

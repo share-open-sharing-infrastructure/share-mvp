@@ -11,12 +11,18 @@ vi.mock('$lib/server/notifications.js', () => ({
 	sendPushToUser: vi.fn(),
 }));
 // Lending-flow helpers are exercised by their own suites; stub them here.
-const { getActiveTerms, hasAcceptedActiveTerms, evaluateUnmetRequirements } = vi.hoisted(() => ({
-	getActiveTerms: vi.fn(),
-	hasAcceptedActiveTerms: vi.fn(),
-	evaluateUnmetRequirements: vi.fn(),
+const { getActiveTerms, hasAcceptedTerms, hasAcceptedActiveTerms, evaluateUnmetRequirements } =
+	vi.hoisted(() => ({
+		getActiveTerms: vi.fn(),
+		hasAcceptedTerms: vi.fn(),
+		hasAcceptedActiveTerms: vi.fn(),
+		evaluateUnmetRequirements: vi.fn(),
+	}));
+vi.mock('$lib/server/lendingTerms', () => ({
+	getActiveTerms,
+	hasAcceptedTerms,
+	hasAcceptedActiveTerms,
 }));
-vi.mock('$lib/server/lendingTerms', () => ({ getActiveTerms, hasAcceptedActiveTerms }));
 vi.mock('$lib/server/lendingRequirements', () => ({
 	evaluateUnmetRequirements,
 	requirementRegistry: [],
@@ -61,6 +67,12 @@ function makePb(opts: {
 	itemExtra?: Record<string, unknown>;
 	conversationsGetFirstListItem?: ReturnType<typeof vi.fn>;
 	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
+	/** Raw {truster, trustee} rows the mocked `trusts.getList` (getTrustDirections) returns. */
+	trustEdges?: Array<{ truster: string; trustee: string }>;
+	/** Per-collection method overrides, merged over the defaults below — lets a test
+	 *  swap in e.g. deferred-promise mocks for specific methods without hand-building
+	 *  a whole separate pb (and drifting from this factory as collections are added). */
+	overrides?: Partial<Record<string, Record<string, ReturnType<typeof vi.fn>>>>;
 }) {
 	const usersGetOne = vi.fn().mockResolvedValue({
 		contactMethod: opts.contactMethod ?? '',
@@ -77,38 +89,33 @@ function makePb(opts: {
 				preferredTransportMode: opts.preferredTransportMode,
 			})
 		: vi.fn().mockRejectedValue(new Error('none'));
+	// getTrustDirections() probes here in ONE request; default: no trust edge either way.
+	const trustsGetList = vi.fn().mockResolvedValue({ items: opts.trustEdges ?? [] });
 	const base = publicItem(opts.itemExtra);
 	const itemRow = opts.masked ? { ...base, name: null } : base;
+	const collections: Record<string, Record<string, ReturnType<typeof vi.fn>>> = {
+		items_public: {
+			getOne: vi.fn().mockResolvedValue(itemRow),
+			getList: vi.fn().mockResolvedValue({ totalItems: 3 }),
+		},
+		// Unmask attempt: denied for a restricted viewer.
+		items_searchable: { getOne: vi.fn().mockRejectedValue(new Error('no access')) },
+		trusts: { getList: trustsGetList },
+		users: { getOne: usersGetOne },
+		conversations: { getFirstListItem: convGetFirstListItem },
+		user_preferences: { getFirstListItem: prefsGetFirstListItem },
+	};
+	for (const [name, methods] of Object.entries(opts.overrides ?? {})) {
+		collections[name] = { ...collections[name], ...methods };
+	}
 	const pb = {
-		collection: vi.fn((name: string) => {
-			switch (name) {
-				case 'items_public':
-					return {
-						getOne: vi.fn().mockResolvedValue(itemRow),
-						getList: vi.fn().mockResolvedValue({ totalItems: 3 }),
-					};
-				case 'items_searchable':
-					// Unmask attempt: denied for a restricted viewer.
-					return { getOne: vi.fn().mockRejectedValue(new Error('no access')) };
-				case 'trusts':
-					// isTrusting() probes here; default: no trust edge in either direction.
-					return { getFirstListItem: vi.fn().mockRejectedValue(new Error('not trusted')) };
-				case 'users':
-					return { getOne: usersGetOne };
-				case 'conversations':
-					return { getFirstListItem: convGetFirstListItem };
-				case 'user_preferences':
-					return { getFirstListItem: prefsGetFirstListItem };
-				default:
-					return {};
-			}
-		}),
+		collection: vi.fn((name: string) => collections[name] ?? {}),
 		filter: vi.fn(mockFilter),
 		// Real PocketBase: authStore.isValid is false for a guest. Driven per-call in
 		// callLoad() from whether a user is passed, so the anonymous path is faithful.
 		authStore: { isValid: true },
 	};
-	return { pb, usersGetOne, convGetFirstListItem, prefsGetFirstListItem };
+	return { pb, usersGetOne, convGetFirstListItem, prefsGetFirstListItem, trustsGetList };
 }
 
 function callLoad(
@@ -333,6 +340,127 @@ describe('items/[id] load — preferred transport mode (#426, from user_preferen
 		expect(data.preferredTransportMode).toBe('bicycle');
 		// The `currentUserId ? … : null` guard must short-circuit — no query for a guest.
 		expect(prefsGetFirstListItem).not.toHaveBeenCalled();
+	});
+});
+
+describe('items/[id] load — wave concurrency and the trust auto-cancellation trap (#525)', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		getActiveTerms.mockResolvedValue(null);
+		hasAcceptedTerms.mockResolvedValue(true);
+		hasAcceptedActiveTerms.mockResolvedValue(true);
+		evaluateUnmetRequirements.mockResolvedValue([]);
+	});
+
+	function createDeferred<T>() {
+		let resolve!: (value: T) => void;
+		let reject!: (reason?: unknown) => void;
+		const promise = new Promise<T>((res, rej) => {
+			resolve = res;
+			reject = rej;
+		});
+		return { promise, resolve, reject };
+	}
+
+	// A macrotask boundary drains every pending microtask, incl. Promise.all's
+	// internal `.then` hops — a bare `await Promise.resolve()` only advances one
+	// tick and can leave those hops unresolved (flaky).
+	async function flushPendingPromises() {
+		await new Promise((resolve) => setTimeout(resolve, 0));
+	}
+
+	it('issues all five W2 requests concurrently — none has resolved before the others start', async () => {
+		const trustsDeferred = createDeferred<{ items: Array<{ truster: string; trustee: string }> }>();
+		const searchableDeferred = createDeferred<Record<string, unknown>>();
+		const convDeferred = createDeferred<never>();
+		const itemsPublicListDeferred = createDeferred<{ totalItems: number }>();
+		const prefsDeferred = createDeferred<never>();
+
+		const trustsGetList = vi.fn().mockReturnValue(trustsDeferred.promise);
+		const searchableGetOne = vi.fn().mockReturnValue(searchableDeferred.promise);
+		const convGetFirstListItem = vi.fn().mockReturnValue(convDeferred.promise);
+		const itemsPublicGetList = vi.fn().mockReturnValue(itemsPublicListDeferred.promise);
+		const prefsGetFirstListItem = vi.fn().mockReturnValue(prefsDeferred.promise);
+
+		// Masked item + authenticated non-owner viewer so every one of the five W2
+		// tasks actually issues its request (viewer-access unmask included).
+		const { pb } = makePb({
+			masked: true,
+			overrides: {
+				trusts: { getList: trustsGetList },
+				items_searchable: { getOne: searchableGetOne },
+				conversations: { getFirstListItem: convGetFirstListItem },
+				items_public: { getList: itemsPublicGetList },
+				user_preferences: { getFirstListItem: prefsGetFirstListItem },
+			},
+		});
+
+		const loadPromise = callLoad(pb);
+
+		await flushPendingPromises();
+
+		// All five W2 collection calls have fired while every one of them is still
+		// pending — if load() ran them sequentially instead, a task after the first
+		// pending one would never have been called at all.
+		expect(trustsGetList).toHaveBeenCalledTimes(1);
+		expect(searchableGetOne).toHaveBeenCalledTimes(1);
+		expect(convGetFirstListItem).toHaveBeenCalledTimes(1);
+		expect(itemsPublicGetList).toHaveBeenCalledTimes(1);
+		expect(prefsGetFirstListItem).toHaveBeenCalledTimes(1);
+
+		trustsDeferred.resolve({ items: [] });
+		searchableDeferred.resolve({
+			collectionId: 'c1',
+			name: 'Bohrmaschine',
+			image: 'img.png',
+			externalImgUrl: '',
+			externalUrl: '',
+			description: 'desc',
+		});
+		convDeferred.reject(new Error('none'));
+		itemsPublicListDeferred.resolve({ totalItems: 3 });
+		prefsDeferred.reject(new Error('none'));
+
+		await loadPromise;
+	});
+
+	it('queries trusts exactly once and still reports viewerTrustsOwner=true from a single directional edge (regression — would catch a naive Promise.all of two isTrusting calls colliding on the same path)', async () => {
+		const { pb, trustsGetList } = makePb({
+			trustEdges: [{ truster: VIEWER_ID, trustee: OWNER_ID }],
+		});
+
+		const data = await callLoad(pb);
+
+		expect(trustsGetList).toHaveBeenCalledTimes(1);
+		expect(data.viewerTrustsOwner).toBe(true);
+		expect(data.ownerTrustsViewer).toBe(false);
+	});
+
+	it('still queries trusts on the viewer\'s own item (request count per persona unchanged)', async () => {
+		const { pb, trustsGetList } = makePb({});
+
+		const data = await callLoad(pb, { id: OWNER_ID });
+
+		expect(data.isOwnItem).toBe(true);
+		expect(trustsGetList).toHaveBeenCalledTimes(1);
+		// ownerTrustsViewer stays forced false on your own item, regardless of edges.
+		expect(data.ownerTrustsViewer).toBe(false);
+	});
+
+	it('calls getActiveTerms exactly once per load, threading the resolved terms into hasAcceptedTerms instead of re-fetching via hasAcceptedActiveTerms', async () => {
+		const activeTerms = { id: 'terms1' };
+		getActiveTerms.mockResolvedValue(activeTerms);
+		hasAcceptedTerms.mockResolvedValue(false);
+		const { pb } = makePb({});
+
+		const data = await callLoad(pb);
+
+		expect(getActiveTerms).toHaveBeenCalledTimes(1);
+		expect(hasAcceptedTerms).toHaveBeenCalledWith(pb, VIEWER_ID, activeTerms);
+		// hasAcceptedActiveTerms would re-fetch getActiveTerms internally — the load
+		// path must not use it (the startConversation action still does).
+		expect(hasAcceptedActiveTerms).not.toHaveBeenCalled();
+		expect(data.requiresTermsAcceptance).toBe(true);
 	});
 });
 

@@ -8,6 +8,7 @@ import {
 	removeTrust,
 	getTrustees,
 	getTrusters,
+	getTrustDirections,
 } from './trust';
 
 vi.mock('$lib/server/notifications', () => ({
@@ -240,5 +241,62 @@ describe('getTrustees / getTrusters', () => {
 		expect(k1).toBeTruthy();
 		expect(k2).toBeTruthy();
 		expect(k1).not.toBe(k2);
+	});
+});
+
+describe('getTrustDirections', () => {
+	it('resolves both true when both edges exist', async () => {
+		const getList = vi.fn().mockResolvedValue({
+			items: [
+				{ truster: 'a', trustee: 'b' },
+				{ truster: 'b', trustee: 'a' },
+			],
+		});
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'a', 'b')).toEqual({ aTrustsB: true, bTrustsA: true });
+	});
+
+	it('resolves only aTrustsB when just the a→b edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [{ truster: 'a', trustee: 'b' }] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'a', 'b')).toEqual({ aTrustsB: true, bTrustsA: false });
+	});
+
+	it('resolves only bTrustsA when just the b→a edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [{ truster: 'b', trustee: 'a' }] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'a', 'b')).toEqual({ aTrustsB: false, bTrustsA: true });
+	});
+
+	it('resolves both false when neither edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'a', 'b')).toEqual({ aTrustsB: false, bTrustsA: false });
+	});
+
+	it('fails closed to both false when the query rejects', async () => {
+		const getList = vi.fn().mockRejectedValue(new Error('network error'));
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'a', 'b')).toEqual({ aTrustsB: false, bTrustsA: false });
+	});
+
+	it('issues exactly one request, built via pb.filter covering both directions, with a stable requestKey', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [] });
+		const pb = makePb({ getList });
+		await getTrustDirections(pb, 'a', 'b');
+
+		expect(getList).toHaveBeenCalledTimes(1);
+		expect(pb.filter).toHaveBeenCalledWith(
+			'(truster={:a} && trustee={:b}) || (truster={:b} && trustee={:a})',
+			{ a: 'a', b: 'b' }
+		);
+		const callArgs = getList.mock.calls[0];
+		expect(callArgs[0]).toBe(1);
+		expect(callArgs[1]).toBe(2);
+		expect(callArgs[2]).toMatchObject({
+			filter: "(truster='a' && trustee='b') || (truster='b' && trustee='a')",
+			fields: 'truster,trustee',
+			requestKey: 'trust-directions',
+		});
 	});
 });

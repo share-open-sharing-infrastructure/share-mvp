@@ -98,6 +98,65 @@ export async function removeTrust(pb: PocketBase, trusterId: UserId, trusteeId: 
 	}
 }
 
+/** Fail-closed result for `getTrustDirections` — no trust either direction. Shared so
+ *  callers' anonymous-viewer and error fallbacks all point at one literal. */
+export const NO_TRUST_DIRECTIONS = { aTrustsB: false, bTrustsA: false } as const;
+
+/**
+ * Both trust directions between two users in ONE request: whether `a` trusts `b`
+ * and whether `b` trusts `a`.
+ *
+ * Why one query instead of two concurrent `isTrusting()` calls: the PocketBase JS
+ * SDK auto-cancels an in-flight request when a second one hits the same
+ * `method + path` and no distinct `requestKey` is given (see
+ * `pocketbase.es.mjs`: `requestKey || method + path`). Both directions of
+ * `isTrusting` hit the identical `GET /api/collections/trusts/records` path, so a
+ * naive `Promise.all([isTrusting(a,b), isTrusting(b,a)])` makes the SDK abort the
+ * first call — and `isTrusting`'s `catch` swallows that `AbortError` and returns
+ * `false`, silently reporting "no trust" even when the edge exists. Giving each
+ * call a distinct `requestKey` would dodge the cancellation, but still costs two
+ * round-trips; querying both directions in a single `getList` avoids the race
+ * entirely and is cheaper. See also the `getUserPreferences` doc comment for the
+ * same bug class.
+ *
+ * `requestKey` defaults to a stable value but MUST be overridden per concurrent
+ * call site on the same `pb` (mirrors `getUserPreferences`) — two calls sharing a
+ * key would re-trigger exactly the collision this function exists to avoid.
+ */
+export async function getTrustDirections(
+	pb: PocketBase,
+	a: UserId,
+	b: UserId,
+	requestKey = 'trust-directions'
+): Promise<{ aTrustsB: boolean; bTrustsA: boolean }> {
+	try {
+		// Page size 2 is safe because `UNIQUE (truster, trustee)` (docs/data-model.md
+		// → "trusts") guarantees at most one row per direction, so at most 2 rows can
+		// ever match this two-direction filter — a third OR branch here would need a
+		// bigger page or it could silently truncate a row into a wrong `false`.
+		const { items } = await pb.collection('trusts').getList(1, 2, {
+			filter: pb.filter('(truster={:a} && trustee={:b}) || (truster={:b} && trustee={:a})', {
+				a,
+				b,
+			}),
+			fields: 'truster,trustee',
+			requestKey,
+		});
+		let aTrustsB = false;
+		let bTrustsA = false;
+		for (const row of items) {
+			if (row.truster === a && row.trustee === b) aTrustsB = true;
+			if (row.truster === b && row.trustee === a) bTrustsA = true;
+		}
+		return { aTrustsB, bTrustsA };
+	} catch (err) {
+		// Unlike isTrusting()'s catch (which loses only one direction), this loses
+		// both — log so a real failure (vs. "no rows") doesn't vanish silently.
+		console.error('getTrustDirections failed', err instanceof Error ? err.message : err);
+		return NO_TRUST_DIRECTIONS;
+	}
+}
+
 // getTrustees + getTrusters both hit the `trusts` collection and are typically awaited
 // together (e.g. Promise.all on /social). PocketBase auto-cancellation keys concurrent
 // requests by path, so without distinct requestKeys the second would cancel the first —
