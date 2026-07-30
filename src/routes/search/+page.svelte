@@ -124,9 +124,12 @@
 <!-- HEADER -->
 <div class="mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<h2 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
+		<!-- h1, nicht h2: /search steht in der Sitemap, ist ohne Auth erreichbar und trägt kein
+		     noindex — eine indexierbare Landingpage ohne h1. Klassen unverändert (Tailwind
+		     Preflight entstylt Headings), der Tausch ist optisch folgenlos. -->
+		<h1 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.pages.search.title}
-		</h2>
+		</h1>
 	</div>
 </div>
 
@@ -157,11 +160,29 @@
 		onApply={handleApply}
 	/>
 
-	<div class="w-full items-center justify-center text-center mt-2" aria-live="polite">
+	<!--
+		Statuszeile, KEIN Heading. Vorher standen hier zwei <h5> — die richtige Antwort auf den
+		daraus folgenden `heading-order`-Sprung unter dem neuen h1 ist nicht ein höheres Heading,
+		sondern gar keins: "12 Dinge gefunden" ist eine Statusmeldung, keine Abschnitts-
+		überschrift. Als Heading wäre die Dokumentgliederung von /search instabil (der Text
+		wechselt bei jedem Filter) und Screenreader würden bei jedem Ergebnis-Update die Rolle
+		mit ansagen ("Überschrift Ebene 2, 12 Dinge gefunden"). WCAG 1.3.1.
+		`role="status"` impliziert `aria-live="polite"` und `aria-atomic="true"` bereits; beide
+		stehen defensiv trotzdem explizit da, weil ältere Screenreader/Browser-Kombinationen die
+		impliziten Werte nicht zuverlässig anwenden. Kein `aria-busy` — die Zeile hat keinen
+		eigenen Ladezustand, Ergebnis-Updates laufen über die SvelteKit-Navigation und deren
+		globaler Loader in `+layout.svelte` trägt es bereits.
+	-->
+	<div
+		class="w-full items-center justify-center text-center mt-2"
+		role="status"
+		aria-live="polite"
+		aria-atomic="true"
+	>
 		{#if data.q || data.selectedCategories.length > 0 || data.selectedGroup}
-			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : (data.totalItems ?? 0))}</h5>
+			<p>{texts.ui.resultsFound(filterActive ? filteredItems.length : (data.totalItems ?? 0))}</p>
 		{:else}
-			<h5>{texts.pages.search.newestItemsHeading}</h5>
+			<p>{texts.pages.search.newestItemsHeading}</p>
 		{/if}
 	</div>
 

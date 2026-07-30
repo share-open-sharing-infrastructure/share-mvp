@@ -48,6 +48,7 @@ export default defineConfig({
 				'tests/search-focus.spec.ts',
 				'tests/search-focus.mobile.spec.ts',
 				'tests/seo-canonical.spec.ts',
+				'tests/seo-local.spec.ts',
 			],
 		},
 		{

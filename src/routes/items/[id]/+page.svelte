@@ -51,7 +51,7 @@
 			: null
 	);
 
-	const seoTitle = $derived(texts.seo.itemDetail(item.name, item.username ?? ''));
+	const seoTitle = $derived(texts.seo.itemDetail(item.name));
 	const seoDesc = $derived(
 		item.description
 			? item.description.replace(/\s+/g, ' ').trim().slice(0, 155)

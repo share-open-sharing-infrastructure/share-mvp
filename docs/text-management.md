@@ -94,7 +94,7 @@ return fail(400, {
 | `onboarding` | 10-step post-registration onboarding wizard texts |
 | `notifications` | Notification inbox text; also contains the push notification title |
 | `lending` | Lending workflow status labels, action buttons, and role-specific descriptions (owner vs. borrower) |
-| `seo` | `<title>` and `<meta description>` values for each page |
+| `seo` | `<title>` and `<meta description>` values for each page. The entries with local search intent (`home`, `search`, `about`, `guide`, `contact`, `itemDetail*`) interpolate the city from `CITY` (`$lib/instance.ts`) and must never hardcode it — one build serves several city instances, and a test enforces it. `APP_NAME` is only partially adopted; the block comment above `seo` in `texts.ts` explains why and lists the pages deliberately left without a city. Title ≤ 60 / description ≤ 155 chars is the guideline; it is enforced only for the local-intent entries (`LOCAL_PAGES` in `src/lib/texts.test.ts`) — some older strings exceed it |
 | `onboardingPrompt` | Nudge banner shown to users who skipped or have not completed onboarding |
 | `pwa` | PWA install prompt and browser notification permission banner |
 | `alerts` | Flash message prefix strings |
