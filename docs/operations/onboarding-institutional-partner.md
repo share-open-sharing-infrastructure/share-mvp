@@ -18,7 +18,22 @@ Short checklist for bringing a new institution onto AllerLeih.
 
 If the institution runs lending software AllerLeih supports, its catalogue can be kept in sync automatically instead of (or in addition to) manual CSV uploads. Configuration is a couple of fields on the institution's `users` record in the PocketBase admin dashboard. See [integration-sync.md](integration-sync.md) for how the sync runs operationally and [../integrations.md](../integrations.md) for the architecture.
 
-> **Heads-up — one shared field for now:** the base URL for *every* integration type currently goes into the `leihbackendUrl` field (it's overloaded as a generic base URL until a dedicated `sync_config` collection exists). Paste the appropriate URL below into `leihbackendUrl` regardless of the software.
+> **Heads-up — one shared field for now:** the base URL for *every* integration type currently goes into the `leihbackendUrl` field (it's overloaded as a generic base URL). Paste the appropriate URL below into `leihbackendUrl` regardless of the software.
+
+> **⚠️ Interim double-step (#487 Phase 2, until Phase 3).** Discovery is split during Phase 2: the
+> **scheduled backend cron** (full sync **and** per-item refresh) reads a dedicated **`sync_config`**
+> collection, while the **manual** `/api/sync` + `/api/refresh` endpoints and the CSV import still
+> read `users.leihbackendUrl`. **So a new partner needs BOTH, set by hand in the PocketBase admin UI:**
+>
+> 1. `users.leihbackendUrl` (+ optional `leihbackendItemUrlTemplate`) — as described below (frontend manual/CSV).
+> 2. A **`sync_config`** row — open the `sync_config` collection → *New record*:
+>    - `institution` → the institution's `users` record
+>    - `integration` → `leihbackend` **or** `winbiap`
+>    - `baseUrl` → the same URL as `leihbackendUrl`
+>    - `itemUrlTemplate` → same as `leihbackendItemUrlTemplate` (optional)
+>    - `enabled` → `true` (set `false` to pause **only** the cron; the manual endpoints ignore `enabled` until Phase 3)
+>
+> Keep the two in sync until Phase 3 unifies discovery on `sync_config` and removes `users.leihbackendUrl`.
 
 ### leihbackend (Leihladen software)
 
@@ -43,7 +58,7 @@ WINBIAP has no bulk feed, so the lifecycle is two-step:
 1. **Initial import:** the institution uploads its catalogue once via the CSV import at `/user/import` (this is what sets each item's `externalId` and `externalUrl`).
 2. **Keeping fresh:** the **per-item refresh** (`POST /api/refresh`) re-checks each stored item against the WebOPAC on a cron, updating changed items and archiving ones that disappear.
 
-> Do **not** rely on `POST /api/sync` for a WINBIAP institution — it will try (and fail) to fetch `item_public`. The failure is isolated and harmless, but WINBIAP institutions are kept current by `/api/refresh`, not the full sync.
+> For a WINBIAP institution, give its `sync_config` row `integration = winbiap` — the **backend cron** full sync then skips it entirely (it only pulls `leihbackend` rows), so the old "full sync tries and fails on WINBIAP" footgun no longer applies to the cron. The **manual** frontend `POST /api/sync` still reads `users.leihbackendUrl` and would still try (and harmlessly fail) to fetch `item_public` — so don't run the manual full sync against a WINBIAP institution. WINBIAP institutions are kept current by the refresh, not the full sync.
 
 ## Notes
 
