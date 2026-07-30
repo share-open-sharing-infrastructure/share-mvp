@@ -71,6 +71,51 @@ describe('Root layout load', () => {
 		expect(depends).toHaveBeenCalledWith(NOTIFICATIONS_DEP);
 	});
 
+	it('issues the three authenticated reads concurrently, not sequentially', async () => {
+		// Hold the notifications read open. The load issues all three reads synchronously before
+		// its first await, so all three mocks are hit before this promise ever settles.
+		// Under the old sequential `await`s, preferences and isAdmin were awaited *after* the
+		// notifications read resolved, so neither would have been called at this point —
+		// that's what makes this assertion a real guard against a regression to sequencing.
+		let releaseNotifications!: (value: { totalItems: number }) => void;
+		getList.mockReturnValueOnce(
+			new Promise<{ totalItems: number }>((resolve) => {
+				releaseNotifications = resolve;
+			})
+		);
+
+		const pending = load(buildEvent({ id: 'user1' }));
+
+		expect(prefsGetFirstListItem).toHaveBeenCalled();
+		expect(isAdmin).toHaveBeenCalled();
+
+		releaseNotifications({ totalItems: 7 });
+		expect((await pending).unreadNotificationCount).toBe(7);
+	});
+
+	it('reads the unread count with a distinct requestKey so a concurrent read cannot auto-cancel it', async () => {
+		await load(buildEvent({ id: 'user1' }));
+		expect(getList).toHaveBeenCalledWith(
+			1,
+			1,
+			expect.objectContaining({ requestKey: 'notifications-unread-layout' })
+		);
+	});
+
+	it('keeps the preferences and admin reads when the notifications query fails', async () => {
+		getList.mockRejectedValueOnce(new Error('collection missing'));
+		isAdmin.mockResolvedValue(true);
+		const result = await load(buildEvent({ id: 'user1' }));
+		// Promise.all rejects as soon as any input rejects, so the notifications read's own
+		// try/catch is what stops one missing collection from sinking the other two.
+		expect(result.unreadNotificationCount).toBe(0);
+		expect(result.currentUserPreferences).toEqual({
+			hasOnboarded: true,
+			preferredTransportMode: 'car',
+		});
+		expect(result.isAdminUser).toBe(true);
+	});
+
 	it('surfaces the user preferences with a distinct requestKey (issue #426)', async () => {
 		const result = await load(buildEvent({ id: 'user1' }));
 		expect(result.currentUserPreferences).toEqual({ hasOnboarded: true, preferredTransportMode: 'car' });
