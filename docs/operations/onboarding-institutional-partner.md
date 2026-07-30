@@ -43,6 +43,7 @@ The full sync only pulls `leihbackend` configs, so a WINBIAP institution is neve
 
 ## Notes
 
+- An institution may combine sources: a `leihbackend` feed **and** CSV-imported WebOPAC items, or one `sync_config` row per integration (the unique index is `(institution, integration)`). Each sync/refresh only touches the items belonging to its own source, so the combination is safe — nothing archives the other side's items.
 - The CSV import and both cron jobs write in the backend via PocketBase transactions (`$app.runInTransaction`) — no Batch API needed.
 - `isInstitution` can only be toggled by an admin via the PocketBase dashboard. The user UI has no control over this field.
 - Items with a non-empty `externalUrl` show a deep-link CTA on the detail page instead of the AllerLeih request flow. Make sure this is the intended behaviour before publishing items with `externalUrl` set.
