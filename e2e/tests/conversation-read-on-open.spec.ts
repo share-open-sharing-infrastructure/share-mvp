@@ -55,7 +55,34 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 		await viewerCtx.close();
 	});
 
+	/**
+	 * Counts the `markRead` action calls a page makes, to pin down that read-marking cannot fan
+	 * out. Opening an unread thread costs up to two (the mount request plus one follow-up for
+	 * the presence heartbeat's echo of the pre-request state) and every further signal is
+	 * coalesced into at most one more — see readMarker.ts for why that echo is answered rather
+	 * than suppressed.
+	 */
+	function countMarkRead(page: Page): () => number {
+		let n = 0;
+		page.on('response', (r) => {
+			if (r.url().includes('markRead')) n++;
+		});
+		return () => n;
+	}
+
+	/**
+	 * Deliberate fixed wait: these assertions are about the ABSENCE of a further request, and
+	 * there is no event to wait for. The echo that used to trigger a redundant markRead arrives
+	 * within ~10 ms of the mount (measured), so a second is three orders of magnitude of slack —
+	 * without waiting for the next 15 s heartbeat tick.
+	 */
+	async function settleAfterOpen(page: Page): Promise<void> {
+		await page.waitForTimeout(1000);
+	}
+
 	test('hovering a conversation link keeps it unread; opening it marks it read', async () => {
+		const markReads = countMarkRead(owner);
+
 		// Borrower requests the owner's item → fresh conversation, unread for the owner.
 		await viewer.goto('/search?q=' + encodeURIComponent(ITEM));
 		await viewer.getByRole('link', { name: ITEM }).first().click();
@@ -95,6 +122,12 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 		]);
 		await expect(owner).toHaveURL(new RegExp(`/conversations/${convId}$`));
 
+		// The hover contributed nothing, and the open did not fan out: the mount request plus at
+		// most one coalesced follow-up.
+		await settleAfterOpen(owner);
+		expect(markReads()).toBeGreaterThanOrEqual(1);
+		expect(markReads()).toBeLessThanOrEqual(2);
+
 		// Back on the list (reloaded from the server) the thread is now READ — no unread label.
 		await owner.goto('/conversations');
 		const convLinkRead = owner.getByRole('link', { name: ITEM });
@@ -107,6 +140,8 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 		// read flag to false server-side, and the open-mark only runs when the page mounts —
 		// so a message arriving while the recipient is reading the thread made it pop back to
 		// unread and stay there. The page now re-asserts read-state from the realtime event.
+		const markReads = countMarkRead(owner);
+
 		await viewer.goto('/search?q=' + encodeURIComponent(ITEM_OPEN_THREAD));
 		await viewer.getByRole('link', { name: ITEM_OPEN_THREAD }).first().click();
 		await expect(viewer).toHaveURL(/\/items\/[^/]+$/);
@@ -134,6 +169,11 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 		// The message reaches the open thread (realtime works) and the re-mark POST ran.
 		await expect(owner.getByText(text)).toBeVisible();
 		await remarked;
+
+		// No fan-out: the open (up to two) plus one coalesced re-mark for the message.
+		await settleAfterOpen(owner);
+		expect(markReads()).toBeGreaterThanOrEqual(2);
+		expect(markReads()).toBeLessThanOrEqual(4);
 
 		// Server truth: the thread is READ for the owner despite the new message.
 		await owner.goto('/conversations');

@@ -7,6 +7,7 @@
 	import { getClientPB } from '$lib/client-pb';
 	import { realtimeSynced } from '$lib/stores/realtimeSynced.svelte';
 	import { subscribeConversation } from './conversationRealtime';
+	import { createReadMarker } from './readMarker';
 	import { stickToBottom } from './chatScroll';
 	import { startPresenceHeartbeat } from './presenceHeartbeat';
 
@@ -77,11 +78,15 @@
 	// realtime subscription and makes PocketBase auto-cancel its getList; the conversation
 	// list's unread dot already updates from the realtime `conversations` event echoed by
 	// markRead.
-	function markRead(id: string) {
-		fetch(`/conversations/${id}?/markRead`, { method: 'POST', body: new FormData() })
-			.then(() => invalidate(NOTIFICATIONS_DEP))
-			.catch(() => {});
-	}
+	//
+	// WHEN to send is decided by the co-located readMarker: it serialises requests and drops the
+	// stale echo of its own write, which would otherwise cost a second request on every open of
+	// an unread thread. See readMarker.ts for the sequencing contract.
+	const readMarker = createReadMarker((id: string) =>
+		fetch(`/conversations/${id}?/markRead`, { method: 'POST', body: new FormData() }).then(() =>
+			invalidate(NOTIFICATIONS_DEP)
+		)
+	);
 
 	// Set up real-time subscription. The merge/refetch/dedupe logic lives in the
 	// co-located conversationRealtime helper (issue #469).
@@ -101,14 +106,16 @@
 				// partner flips MY read flag back to false server-side (sendMessage), and the
 				// open-mark effect below only runs on mount — so without this the thread pops
 				// back to unread in the list while the reader is looking at it. Sending our own
-				// markRead echoes the flag back as true, so this cannot loop, and the 15 s
-				// presence heartbeat echo makes it self-healing if a POST was ever lost.
+				// markRead echoes the flag back as true, which both stops this from looping and
+				// tells the readMarker its write landed; the 15 s presence heartbeat echo makes
+				// it self-healing if a POST was ever lost.
 				// No visibility gate, deliberately: "the page is open" is the same signal the
 				// layout's notification auto-read already uses for the open conversation.
-				onReadState: ({ readByRequester, readByOwner }) => {
-					if (loggedInUserIsItemOwner ? readByOwner : readByRequester) return;
-					markRead(conversationId);
-				},
+				onReadState: ({ readByRequester, readByOwner }) =>
+					readMarker.observe(
+						loggedInUserIsItemOwner ? readByOwner : readByRequester,
+						conversationId
+					),
 			},
 			// Messages sent while the stream was down (e.g. the phone was asleep)
 			// aren't replayed by realtime — refetch the conversation on reconnect
@@ -132,7 +139,7 @@
 	// other reactive reads would make it re-fire and re-mark.
 	$effect(() => {
 		if (!pb) return;
-		markRead(conversationId);
+		readMarker.open(conversationId);
 	});
 
 	// Presence heartbeat: periodically update the lastSeenAt timestamp so the backend
