@@ -22,6 +22,10 @@ jobs:
       VAPID_SUBJECT: mailto:ci@example.com
       ORS_API_KEY: dummy
       MISTRAL_API_KEY: dummy
+      # Read by `$lib/server/superuser.ts` for the superuser-only `metrics_daily` reads.
+      # (SYNC_SECRET is gone with #487 Phase 3 — the integrations moved into the backend.)
+      PB_SUPERUSER_EMAIL: ci@example.com
+      PB_SUPERUSER_PASSWORD: dummy
     steps:
       - name: Check out code
         uses: actions/checkout@v4
