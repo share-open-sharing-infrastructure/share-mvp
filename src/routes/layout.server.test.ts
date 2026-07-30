@@ -53,6 +53,15 @@ describe('Root layout load', () => {
 		expect(filter).toHaveBeenCalledWith('recipient={:userId} && read=false', { userId: 'user1' });
 	});
 
+	it('opts the notifications count out of PocketBase auto-cancellation', async () => {
+		await load(buildEvent({ id: 'user1' }));
+		// The SDK dedupes concurrent requests by method+path on the shared per-request
+		// `locals.pb`. This load runs alongside the page load, so on /notifications — whose
+		// load lists the same collection — one of the two was cancelled at random: the badge
+		// silently fell back to 0, or the list rendered empty.
+		expect(getList).toHaveBeenCalledWith(1, 1, expect.objectContaining({ requestKey: null }));
+	});
+
 	it('returns a zero count without querying when there is no user', async () => {
 		const result = await load(buildEvent(null));
 		expect(result.unreadNotificationCount).toBe(0);

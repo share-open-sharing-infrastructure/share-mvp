@@ -24,6 +24,13 @@ export const load = async (event) => {
 					filter: event.locals.pb.filter('recipient={:userId} && read=false', {
 						userId: currentUser.id,
 					}),
+					// requestKey: null opts out of the SDK's auto-cancellation, which dedupes by
+					// method+path on the shared per-request `locals.pb`. This layout load runs
+					// concurrently with the page load, so on /notifications — whose load lists the
+					// same collection — one of the two was cancelled at random: either the badge
+					// silently fell back to 0 or the list rendered empty ("badge says 4, list is
+					// empty"). Same trap as $lib/server/trust.ts / userPreferences.ts.
+					requestKey: null,
 				});
 			unreadNotificationCount = result.totalItems;
 		} catch {
