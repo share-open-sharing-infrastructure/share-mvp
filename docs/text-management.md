@@ -12,7 +12,7 @@ AllerLeih uses a centralized text management system to keep all German UI string
 
 ```typescript
 export const texts = {
-    names: { ... },           // App display name, contact email
+    names: { ... },           // App display name, city, contact email
     auth: { ... },            // Login, registration, password reset
     nav: { ... },             // Navigation menu items
     footer: { ... },          // Social media links
@@ -77,7 +77,7 @@ return fail(400, {
 
 | Key | Contents |
 |---|---|
-| `names` | App display name, contact email |
+| `names` | App display name, city, contact email — `app`/`city`/`mainContactMail` are interpolated from `$lib/instance.ts` at module load, not hardcoded |
 | `auth` | Login/register/reset form labels and placeholders |
 | `nav` | Navigation menu items |
 | `footer` | Social media link labels |

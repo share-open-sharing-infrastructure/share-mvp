@@ -134,11 +134,21 @@ export function buildMailtoHref(email: string, subject: string, body: string): s
 
 /**
  * Build an outbound-link href routed through `/api/redirect` (which enforces https +
- * records the click, tagged with `source` for analytics). Used for external-item deep
- * links, an owner's off-platform contact link (issue #438), and the conversation header's
- * messenger buttons. The destination is URL-encoded so it rides safely as a query param;
- * `/api/redirect` is the authoritative https guard.
+ * records the click, tagged with `source` for analytics). Both `target` and `source` are
+ * URL-encoded so neither can inject extra query params into the href; `/api/redirect` is
+ * the authoritative https guard. Used directly for links that aren't scoped to an item
+ * (footer social/contribute links); {@link buildItemRedirectHref} delegates to this for the
+ * item-scoped case so the `/api/redirect?...` format lives in exactly one place.
+ */
+export function buildRedirectHref(target: string, source: string): string {
+	return `/api/redirect?to=${encodeURIComponent(target)}&source=${encodeURIComponent(source)}`;
+}
+
+/**
+ * Item-scoped variant of {@link buildRedirectHref}: same `/api/redirect` proxy, plus an
+ * `item=<itemId>` query param. Used for external-item deep links, an owner's off-platform
+ * contact link (issue #438), and the conversation header's messenger buttons.
  */
 export function buildItemRedirectHref(target: string, itemId: string, source: string = 'item-detail'): string {
-	return `/api/redirect?to=${encodeURIComponent(target)}&source=${source}&item=${itemId}`;
+	return `${buildRedirectHref(target, source)}&item=${itemId}`;
 }

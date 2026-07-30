@@ -14,7 +14,7 @@
 <SeoHead
 	title={texts.seo.reset.title}
 	description={texts.seo.reset.description}
-	canonical="https://allerleih.org/auth/reset"
+	canonical
 />
 
 <Section name="reset">

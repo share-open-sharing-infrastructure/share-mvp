@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { HeartSolid, InfoCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
+	import { instanceUrl } from '$lib/instance';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
 	import { itemImageUrl, itemImageUrls } from '$lib/utils/utils';
 	import type { ItemPublic, UserPublic } from '$lib/types/models';
@@ -59,12 +60,15 @@
 					item.username ?? ''
 				)
 	);
-	const seoImage = $derived(
-		itemImageUrl(data.PB_IMG_URL, item) ?? 'https://allerleih.org/og-invite.png'
-	);
+	const seoImage = $derived(itemImageUrl(data.PB_IMG_URL, item) ?? instanceUrl('/og-invite.png'));
 </script>
 
-<SeoHead title={seoTitle} description={seoDesc} image={seoImage} canonical={shareUrl} />
+<SeoHead
+	title={seoTitle}
+	description={seoDesc}
+	image={seoImage}
+	canonical
+/>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<!-- Archived banner -->

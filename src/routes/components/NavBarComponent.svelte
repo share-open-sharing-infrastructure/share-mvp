@@ -53,11 +53,11 @@
 		<NavBrand href={resolve('/')}>
 			<div id="beta" class="relative flex flex-col items-center">
 				<img src="/AllerLeih.png" alt={texts.names.app} class="h-10" />
-				<span class="text-sm text-gray-400 tracking-wide leading-none mt-0.5">Lüneburg</span>
+				<span class="text-sm text-gray-400 tracking-wide leading-none mt-0.5">{texts.names.city}</span>
 				<span
 						class="absolute top-7 bg-accent-100 -right-3 -rotate-25 text-[12px] font-bold tracking-widest uppercase border-2 border-red-500 text-red-500 rounded px-1 opacity-80 leading-tight pointer-events-none"
 					>
-						Beta
+						{texts.nav.beta.badge}
 					</span>
 
 			</div>
@@ -192,11 +192,9 @@
 	>
 		<div class="space-y-2 p-3">
 			<h3 class="font-semibold text-tinte-900 dark:text-white">
-				Beta-Zugang
+				{texts.nav.beta.popoverTitle}
 			</h3>
-			Wir testen AllerLeih gerade in Lüneburg! Die Plattform kann noch Fehler haben und wird beständig verbessert. 
-			Wenn du uns dabei unterstützen magst, <a href={resolve('/misc/contact')} class="text-accent hover:underline font-medium">frag uns gerne nach einem Zugang</a>, nutze die Plattform und teile uns dein Feedback über den Feedback-Button mit!
-
+			{texts.nav.beta.popoverBodyPart1}<a href={resolve('/misc/contact')} class="text-accent hover:underline font-medium">{texts.nav.beta.popoverLinkText}</a>{texts.nav.beta.popoverBodyPart2}
 		</div>
 	</Popover>
 </Navbar>

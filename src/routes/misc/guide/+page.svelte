@@ -9,7 +9,7 @@
 <SeoHead
 	title={texts.seo.guide.title}
 	description={texts.seo.guide.description}
-	canonical="https://allerleih.org/misc/guide"
+	canonical
 />
 
 <div class="mb-8 aspect-video w-full overflow-hidden rounded-2xl">

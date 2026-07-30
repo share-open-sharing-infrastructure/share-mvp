@@ -1,12 +1,24 @@
 import { USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH } from '$lib/utils/username';
+import { instance } from '$lib/instance';
 
 /** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
-const APP_NAME = 'AllerLeih';
+const APP_NAME = instance.appName;
+// Instance config feeds the interpolated strings below (object literals can't self-reference
+// via `this`). Any email address RENDERED AS VISIBLE TEXT goes through a `texts.names.*`
+// constant here (mainContactMail, feedbackMail) so the "user-facing strings live in texts.ts"
+// rule holds even though the value originates in `$lib/instance.ts`; a `mailto:` href (not
+// itself visible text) may still read straight from `instance` at the call site, like URLs do.
+const CITY = instance.city;
+const CONTACT_MAIL = instance.contactEmail;
+const FEEDBACK_MAIL = instance.feedbackEmail;
+const ORIGIN_HOST = instance.originHost; // 'allerleih.org' by default
 
 export const texts = {
 	names: {
 		app: APP_NAME,
-		mainContactMail: 'kontakt@allerleih.org',
+		mainContactMail: CONTACT_MAIL,
+		feedbackMail: FEEDBACK_MAIL,
+		city: CITY,
 	},
 
 	// Share / "Teilen" buttons (items, profiles)
@@ -63,6 +75,15 @@ export const texts = {
 		privacy: 'Datenschutz',
 		tos: 'AGB',
 		app: 'App',
+		// Beta badge + popover in NavBarComponent.svelte (split like landing.whoBodyPart1/
+		// whoLinkText/whoBodyPart2 so the inline contact link survives the interpolation).
+		beta: {
+			badge: 'Beta',
+			popoverTitle: 'Beta-Zugang',
+			popoverBodyPart1: `Wir testen ${APP_NAME} gerade in ${CITY}! Die Plattform kann noch Fehler haben und wird beständig verbessert. Wenn du uns dabei unterstützen magst, `,
+			popoverLinkText: 'frag uns gerne nach einem Zugang',
+			popoverBodyPart2: ', nutze die Plattform und teile uns dein Feedback über den Feedback-Button mit!',
+		},
 	},
 
 	// Footer
@@ -413,7 +434,6 @@ export const texts = {
 			tagline: 'Leihe und teile kostenlos Dinge in',
 			ctaButtonSearch: 'Dinge Finden',
 			ctaButtonUpload: 'Dinge Verleihen',
-			city: 'Lüneburg',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',
@@ -424,7 +444,7 @@ export const texts = {
 			howBodyPart2: '. Oder schau dich einfach um!',
 			howVideoTitle: 'Erklärvideo: Wie funktioniert AllerLeih?',
 			who: 'Wer seid ihr?',
-			whoBodyPart1: 'Wir sind eine gemeinwohl-orientierte Initiative aus Lüneburg. Unter',
+			whoBodyPart1: `Wir sind eine gemeinwohl-orientierte Initiative aus ${CITY}. Unter`,
 			whoLinkText: 'Über Uns',
 			whoBodyPart2: ' erfährst du mehr!',
 			support: 'Was passiert gerade?',
@@ -438,12 +458,24 @@ export const texts = {
 		about: {
 			title: 'Über AllerLeih',
 			description: 'von und für Freunde, Familie und die lokale Gemeinschaft',
+			joinMailSubject: `Interesse an Mitmachen Bei ${APP_NAME}`,
 		},
 		contact: {
 			title: 'Kontakt',
 		},
 		imprint: {
 			title: 'Impressum',
+			// Betreiber-Postadresse (§5 TMG) — instanzabhängig, daher aus $lib/instance gespeist
+			// statt hier hart hinterlegt (siehe Guardrail: URLs/Adressdaten kommen aus `instance`).
+			// Heißt bewusst `address`, nicht `operator`: `instance.imprint.operator` ist der
+			// Betreiber-NAME (string), dieses Objekt ist die ganze Postadresse (Name+Straße+…).
+			address: {
+				name: instance.imprint.operator,
+				street: instance.imprint.street,
+				postalCode: instance.imprint.postalCode,
+				city: instance.imprint.city,
+				country: instance.imprint.country,
+			},
 		},
 		faq: {
 			title: 'Häufige Fragen (FAQ)',
@@ -506,6 +538,9 @@ export const texts = {
 			faqItems: [
 				{
 					q: 'Wer seid ihr?',
+					// Gründer-Biografie: Betreiber-Inhalt, bewusst NICHT instanzabhängig — die beiden
+					// Gründer haben tatsächlich in Lüneburg studiert; das bliebe wahr für jede Instanz,
+					// eine Interpolation von CITY würde den Satz für eine andere Stadt verfälschen.
 					a: 'Derzeit sind wir ein Duo: Timo und Matteo! Wir haben beide in Lüneburg studiert und wollen mit AllerLeih einen Beitrag zum Gemeinwohl leisten. Wir sind der Auffassung, dass das Teilen und Leihen in vielerlei Hinsicht eine bessere Alternative zum Kaufen ist. Und wir wollen, dass die Infrastruktur dafür nicht nur einfach und zugänglich ist, sondern auch nachhaltig für alle funktioniert. Deswegen entwickeln wir AllerLeih als gemeinnützige Organisation und Open-Source-Software. So verhindern wir die Kommerzialisierung und manipulative Algorithmen.',
 				},
 				{
@@ -572,7 +607,7 @@ export const texts = {
 						id: 'ios',
 						label: 'iPhone / iPad (Safari)',
 						steps: [
-							'Öffne allerleih.org in Safari.',
+							`Öffne ${ORIGIN_HOST} in Safari.`,
 							'Tippe unten auf das Teilen-Symbol (Quadrat mit Pfeil nach oben).',
 							'Wähle „Zum Home-Bildschirm".',
 							'Tippe oben rechts auf „Hinzufügen".',
@@ -582,7 +617,7 @@ export const texts = {
 						id: 'android-chrome',
 						label: 'Android (Chrome, Edge, Brave)',
 						steps: [
-							'Öffne allerleih.org im Browser.',
+							`Öffne ${ORIGIN_HOST} im Browser.`,
 							'Tippe oben rechts auf das Menü (⋮).',
 							'Wähle „App installieren" oder „Zum Startbildschirm hinzufügen".',
 							'Bestätige mit „Installieren".',
@@ -592,7 +627,7 @@ export const texts = {
 						id: 'android-firefox',
 						label: 'Android (Firefox)',
 						steps: [
-							'Öffne allerleih.org in Firefox.',
+							`Öffne ${ORIGIN_HOST} in Firefox.`,
 							'Tippe oben rechts auf das Menü (⋮).',
 							'Wähle „Zum Startbildschirm hinzufügen". Möglicherweise musst du zuerst auf „Mehr" tippen, bevor dieser Menüpunkt erscheint.',
 							'Bestätige mit „Hinzufügen".',
@@ -602,7 +637,7 @@ export const texts = {
 						id: 'desktop-chromium',
 						label: 'Computer (Chrome, Edge)',
 						steps: [
-							'Öffne allerleih.org im Browser.',
+							`Öffne ${ORIGIN_HOST} im Browser.`,
 							'Klicke rechts in der Adressleiste auf das Installations-Symbol (Bildschirm mit Pfeil nach unten).',
 							'Alternativ: Menü (⋮) → „AllerLeih installieren".',
 							'Bestätige mit „Installieren".',
@@ -620,7 +655,7 @@ export const texts = {
 						id: 'other',
 						label: 'Anderer Browser',
 						steps: [
-							'Öffne allerleih.org im Browser.',
+							`Öffne ${ORIGIN_HOST} im Browser.`,
 							'Öffne das Browser-Menü.',
 							'Suche nach „App installieren" oder „Zum Startbildschirm hinzufügen".',
 						],
@@ -1462,7 +1497,7 @@ export const texts = {
 				'Du kannst es dir jederzeit anders überlegen und den Bedingungen nachträglich zustimmen, um dein Konto sofort wieder freizuschalten:',
 			acceptInstead: 'Bedingungen jetzt akzeptieren',
 			contactPrompt: 'Du hast Fragen oder möchtest den Sachverhalt klären? Wende dich an:',
-			contactEmail: 'kontakt@allerleih.org',
+			contactEmail: CONTACT_MAIL,
 			logout: 'Abmelden',
 		},
 	},

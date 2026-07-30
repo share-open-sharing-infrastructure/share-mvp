@@ -6,7 +6,7 @@
 <SeoHead
 	title={texts.seo.contact.title}
 	description={texts.seo.contact.description}
-	canonical="https://allerleih.org/misc/contact"
+	canonical
 />
 
 <h1 class="mb-4 text-2xl font-bold">{texts.pages.contact.title}</h1>

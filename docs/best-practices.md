@@ -187,8 +187,8 @@ Exactly **three** permitted exceptions:
   ```
 
 - **C — External / user-supplied URLs** are **never** resolved: `LinkifiedText.svelte`
-  (`rel="external"`) and the footer redirect via `/api/redirect?to=…` (internal https guard +
-  click tracking) stay untouched.
+  (`rel="external"`) and the redirect-proxy builders `buildRedirectHref()`/`buildItemRedirectHref()`
+  (`/api/redirect?to=…`; internal https guard + click tracking) stay untouched.
 
 **Static files** from `static/` (e.g. CSV templates) go through `asset()` (also `$app/paths`,
 since 2.26), not `resolve()`:

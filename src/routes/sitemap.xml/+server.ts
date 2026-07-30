@@ -1,6 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-
-const ORIGIN = 'https://allerleih.org';
+import { instanceUrl } from '$lib/instance';
 
 const STATIC_PATHS = [
 	'/',
@@ -28,14 +27,16 @@ export const GET: RequestHandler = async ({ locals }) => {
 		locals.pb.collection('users').getFullList({ fields: 'id,updated' }),
 	]);
 
+	// <loc> values are crawler-facing output, not internal navigation — `resolve()` (which
+	// needs literal route IDs) buys nothing here, so these are built directly via instanceUrl().
 	const urls = [
-		...STATIC_PATHS.map((path) => ({ loc: `${ORIGIN}${path}`, lastmod: today })),
+		...STATIC_PATHS.map((path) => ({ loc: instanceUrl(path), lastmod: today })),
 		...items.map((item) => ({
-			loc: `${ORIGIN}/items/${item.id}`,
+			loc: instanceUrl(`/items/${item.id}`),
 			lastmod: (item.updated as string).split(' ')[0],
 		})),
 		...users.map((user) => ({
-			loc: `${ORIGIN}/users/${user.id}`,
+			loc: instanceUrl(`/users/${user.id}`),
 			lastmod: (user.updated as string).split(' ')[0],
 		})),
 	];
