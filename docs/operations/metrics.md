@@ -99,7 +99,10 @@ keep it in sync with `computeDailyMetrics()` in `jobs/metrics.js` when the catal
   Cached in-process for ~1h so it never hammers PocketBase; fails soft (`null`) instead of
   throwing so a transient hiccup never takes down the landing page either.
 - Both read through `src/lib/server/metrics.ts` (`isAdmin`, `getLiveCoreMetrics`,
-  `getMetricsHistory`, `getPublicStats`), which reuses `getSuperuserClient()`.
+  `getMetricsHistory`, `getPublicStats`), which uses `getSuperuserClient()` from
+  `src/lib/server/superuser.ts`. That helper lived in the frontend integration core until #487
+  Phase 3 tore it down; it reads `PB_SUPERUSER_*` from `$env/static/private`, so those two vars
+  must be present at **build** time (they are set in the lint/vitest/deploy workflows).
 
 ## Adding a new metric
 
