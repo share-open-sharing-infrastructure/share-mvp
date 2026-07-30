@@ -3,7 +3,7 @@
 	import { Label, Input } from 'flowbite-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
-	import PasswordInput from '$lib/components/PasswordInput.svelte';
+	import PasswordInput from '../components/PasswordInput.svelte';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import debounce from 'debounce';

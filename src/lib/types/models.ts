@@ -830,3 +830,33 @@ export interface MetricsDaily extends PocketBaseEntity {
 	date: string;
 	metrics: DailyMetrics;
 }
+
+/**
+ * Per-institution integration configuration (backend `sync_config` collection, #487 Phase 2).
+ * **Superuser-only**: no client CRUD — rows are managed in the PocketBase admin UI (see the
+ * onboarding runbook). Not exposed through any `*_public` view.
+ *
+ * As of Phase 2 the backend **cron** discovers institutions to sync/refresh from here. The
+ * frontend's *manual* `/api/sync` + `/api/refresh` (and the CSV import) still read
+ * `users.leihbackendUrl` — a documented dual-truth interim removed in Phase 3, when
+ * `users.leihbackendUrl`/`leihbackendItemUrlTemplate` are dropped.
+ */
+export interface SyncConfig extends PocketBaseEntity {
+	/** Foreign key: the institution `users` record this config belongs to (cascadeDelete). */
+	institution: UserId;
+
+	/** Which integration serves this institution's source. */
+	integration: 'leihbackend' | 'winbiap';
+
+	/** Source base URL — leihbackend origin, or a WINBIAP WebOPAC base ending in `/webopac`. */
+	baseUrl: string;
+
+	/** Optional human-facing deep-link template with `{id}`/`{iid}` placeholders. */
+	itemUrlTemplate?: string;
+
+	/**
+	 * When false the backend cron skips this institution. In Phase 2 this only affects the cron;
+	 * the manual frontend endpoints ignore it until Phase 3.
+	 */
+	enabled?: boolean;
+}
