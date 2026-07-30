@@ -17,24 +17,31 @@ export const load = async (event) => {
 	// $lib/server/metrics.ts), so the nav's admin link needs its own lookup here.
 	let isAdminUser = false;
 	if (currentUser) {
-		try {
-			const result = await event.locals.pb
+		// Independent reads, so they go out concurrently: one round trip instead of three
+		// sequential ones on *every* authenticated SSR request. Safe together — the two
+		// `locals.pb` reads hit different paths and isAdmin runs on the separate superuser
+		// client, so the SDK's path-keyed auto-cancellation can't have them cancel each
+		// other. The catch stays per-promise: Promise.all rejects on the first rejection,
+		// so a group-level catch would drop the other two reads with it.
+		const [notificationList, preferences, adminFlag] = await Promise.all([
+			event.locals.pb
 				.collection('notifications')
 				.getList(1, 1, {
 					filter: event.locals.pb.filter('recipient={:userId} && read=false', {
 						userId: currentUser.id,
 					}),
-				});
-			unreadNotificationCount = result.totalItems;
-		} catch {
-			// notifications collection may not exist yet during setup
-		}
-		currentUserPreferences = await getUserPreferences(
-			event.locals.pb,
-			currentUser.id,
-			'user-preferences-layout'
-		);
-		isAdminUser = await isAdmin(currentUser.id);
+					// Distinct requestKey per concurrent call site, per $lib/server/userPreferences.ts —
+					// precautionary here (no other notifications read is concurrent with this one today).
+					requestKey: 'notifications-unread-layout',
+				})
+				// notifications collection may not exist yet during setup
+				.catch(() => null),
+			getUserPreferences(event.locals.pb, currentUser.id, 'user-preferences-layout'),
+			isAdmin(currentUser.id),
+		]);
+		unreadNotificationCount = notificationList?.totalItems ?? 0;
+		currentUserPreferences = preferences;
+		isAdminUser = adminFlag;
 	}
 
 	return {
