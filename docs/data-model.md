@@ -27,8 +27,6 @@ erDiagram
         string externalLendingInfo "issue #368 — per-institution 'how borrowing works' text for external items (max 1000); public help text surfaced via items_public.ownerExternalLendingInfo"
         string inviteCode
         string invitedBy FK
-        string leihbackendUrl "leihbackend instance origin, for institutional sync"
-        string leihbackendItemUrlTemplate "deep-link template, {id}/{iid} placeholders"
         string tosAcceptedVersion "legal-consent cache (Issue #399) — server-only"
         string privacyAcceptedVersion "legal-consent cache — server-only"
         bool legalLocked "decline lock — set/cleared only by backend hooks"
@@ -348,19 +346,18 @@ metadata from the base column, so view migrations are never needed for a categor
 
 ## sync_config
 
-Per-institution integration configuration (#487 Phase 2), the dedicated replacement for the
-overloaded `users.leihbackendUrl` discovery field. One row per source type per institution
-(unique index on `(institution, integration)`); `integration` is a select of
-`leihbackend | winbiap`. **Superuser-only** — all five API rules are `null` (not `""`), so no
-authenticated user can read or write it; rows are managed in the PocketBase admin UI (see
-`operations/onboarding-institutional-partner.md`). It is **not** exposed by any `*_public` view.
+Per-institution integration configuration (#487), the **single source of truth** for integration
+discovery (it replaced the former overloaded `users.leihbackendUrl` field, removed in Phase 3). One
+row per source type per institution (unique index on `(institution, integration)`); `integration`
+is a select of `leihbackend | winbiap`. **Superuser-only** — all five API rules are `null` (not
+`""`), so no authenticated user can read or write it; rows are managed in the PocketBase admin UI
+(see `operations/onboarding-institutional-partner.md`). It is **not** exposed by any `*_public` view.
 
-As of Phase 2 the **backend cron** (`integration_sync` full pull + `integration_refresh` per-item)
-discovers institutions from `sync_config`. The **manual** frontend `/api/sync` + `/api/refresh` and
-the CSV import still read `users.leihbackendUrl` — a documented **dual-truth interim** until Phase 3
-drops `users.leihbackendUrl`/`leihbackendItemUrlTemplate`. `enabled=false` affects only the cron in
-Phase 2; the manual endpoints ignore it until Phase 3. A one-time backfill migration
-(`pb_hooks/services/syncConfig.js` → `backfillSyncConfigs`) seeds rows from the existing
+Everything reads `sync_config`: the **backend cron** (`integration_sync` full pull +
+`integration_refresh` per-item) and the CSV-import on-demand refresh (`POST /api/import/refresh`).
+`enabled=false` pauses the backend cron for that institution. Fields: `institution` (→ users,
+cascadeDelete), `integration`, `baseUrl`, `itemUrlTemplate`, `enabled`. A one-time backfill migration
+(`pb_hooks/services/syncConfig.js` → `backfillSyncConfigs`) seeded rows from the historical
 `users.leihbackendUrl` values (`/webopac` → `winbiap`, else `leihbackend`, `enabled=true`).
 
 ## user_geolocations

@@ -26,9 +26,12 @@ jobs:
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          # PB_SUPERUSER_*: still required at build time — `$lib/server/superuser.ts` reads them
+          # via `$env/static/private` for the superuser-only `metrics_daily` reads in
+          # `$lib/server/metrics.ts`. No SYNC_SECRET: #487 Phase 3 moved the integrations into
+          # the backend, so the frontend shares no sync secret anymore.
           PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
           PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
-          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:

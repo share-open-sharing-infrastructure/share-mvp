@@ -152,21 +152,6 @@ export interface User extends PocketBaseEntity {
 	bio?: string;
 
 	/**
-	 * Bare origin of a leihbackend instance (no trailing slash, no /api), e.g.
-	 * "https://allerlei.uber.space". When set together with `isInstitution = true`,
-	 * this institution's items are periodically synced from leihbackend's `item_public` view.
-	 */
-	leihbackendUrl?: string;
-
-	/**
-	 * Human-facing deep-link template for an institution's leihbackend items, e.g.
-	 * "https://allerlei.uber.space/reservierung/{iid}". Placeholders `{id}` and `{iid}`
-	 * are substituted with the leihbackend record id / inventory number. Empty if no
-	 * public catalogue page exists.
-	 */
-	leihbackendItemUrlTemplate?: string;
-
-	/**
 	 * Set when the user has deleted their account (phase 1 "deactivate"). The row is
 	 * anonymized in place; login is blocked and the UI shows "Gelöschtes Konto".
 	 */
@@ -832,14 +817,13 @@ export interface MetricsDaily extends PocketBaseEntity {
 }
 
 /**
- * Per-institution integration configuration (backend `sync_config` collection, #487 Phase 2).
+ * Per-institution integration configuration (backend `sync_config` collection, #487).
  * **Superuser-only**: no client CRUD — rows are managed in the PocketBase admin UI (see the
  * onboarding runbook). Not exposed through any `*_public` view.
  *
- * As of Phase 2 the backend **cron** discovers institutions to sync/refresh from here. The
- * frontend's *manual* `/api/sync` + `/api/refresh` (and the CSV import) still read
- * `users.leihbackendUrl` — a documented dual-truth interim removed in Phase 3, when
- * `users.leihbackendUrl`/`leihbackendItemUrlTemplate` are dropped.
+ * The single source of truth for integration discovery: the backend cron (full sync + per-item
+ * refresh) and the CSV-import refresh (`/api/import/refresh`) all read it. (The former interim
+ * `users.leihbackendUrl` field was removed in #487 Phase 3.)
  */
 export interface SyncConfig extends PocketBaseEntity {
 	/** Foreign key: the institution `users` record this config belongs to (cascadeDelete). */

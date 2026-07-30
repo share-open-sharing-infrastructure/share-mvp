@@ -7,7 +7,7 @@ This document is the leihbackend-specific reference for the AllerLeih integratio
 1. **External-system reference** — the verified leihbackend public API surface (§2), including the reservation and opening-hours endpoints needed for Phase 2.
 2. **Phase 2 plan** — the reservation-forwarding architecture (§3.3) that has not yet been built.
 
-> **Where the implementation lives now:** the sync machinery was generalized into a pluggable integration system shared with other sources (e.g. WINBIAP). The generic pipeline, folder layout, and "how to add an integration" guide are in [integrations.md](integrations.md); operations (endpoints, cron, env) are in [operations/integration-sync.md](operations/integration-sync.md). leihbackend code lives in `src/lib/server/integrations/leihbackend/`; the trigger endpoint is `POST /api/sync`. The field mapping (§3.1) and sync contract (§3.2) below remain accurate and double as the leihbackend mapping contract; the original Phase-1 work-package breakdown has been removed now that it is shipped.
+> **Where the implementation lives now:** the sync machinery was generalized into a pluggable integration system shared with other sources (e.g. WINBIAP). The generic pipeline, folder layout, and "how to add an integration" guide are in [integrations.md](integrations.md); operations (endpoints, cron, env) are in [operations/integration-sync.md](operations/integration-sync.md). leihbackend code lives in the backend at `Allerleih-Backend/pb_hooks/integrations/leihbackend.js`; the pull is driven by the backend `integration_sync` cron (no HTTP trigger endpoint). The field mapping (§3.1) and sync contract (§3.2) below remain accurate and double as the leihbackend mapping contract; the original Phase-1 work-package breakdown has been removed now that it is shipped.
 
 **Scope decisions (Matteo, 2026-06-10):**
 
@@ -99,8 +99,8 @@ Side effects handled entirely by leihbackend: item statuses flip to `reserved`, 
 ## 3. Architecture (both phases)
 
 ```
-                         every 15 min (cron)
-  ┌────────────────┐   POST /api/sync                ┌─────────────────┐
+                    every 15 min (integration_sync cron)
+  ┌────────────────┐   backend pb_hooks               ┌─────────────────┐
   │ leihbackend CZ │ ◄──── GET item_public ───────── │    share-mvp    │
   └────────────────┘                                 │                 │
   ┌────────────────┐ ◄──── GET item_public ───────── │  upsert items   │
@@ -134,7 +134,7 @@ Not mapped (intentionally dropped): `synonyms` (appended to description would po
 
 ### 3.2 Sync algorithm
 
-Per configured institution (a `users` record with `isInstitution = true` and non-empty `leihbackendUrl`):
+Per configured institution (a `users` record with `isInstitution = true` and a `sync_config` row whose `integration = leihbackend`):
 
 1. Page through `item_public` (`perPage=200`) until exhausted. Abort the **whole institution** on any HTTP/network error — partial data must never trigger archiving.
 2. Map every record per §3.1.
@@ -143,12 +143,12 @@ Per configured institution (a `users` record with `isInstitution = true` and non
 5. Un-archive: if a previously archived item reappears in the feed, the normal update path overwrites status and description — strip the archive prefix when the source item is present again.
 6. Write a summary log line per institution: `{institution, fetched, created, updated, archived, skipped, errors, durationMs}`.
 
-Writes use a **PocketBase superuser client** (the sync runs unattended; institution-user impersonation would require storing their password). Batched via `pb.createBatch()` in chunks, mirroring `src/routes/user/import/+page.server.ts` (batch size 50, short pauses).
+Writes run in the backend via **native `$app`** (elevated, the cron runs unattended) inside one `$app.runInTransaction` per institution — all-or-nothing, no batching and no PocketBase Batch API. See `Allerleih-Backend/pb_hooks/integrations/{sync.js,db.js}`. (The CSV-import write path shares the same `db.js applyDiff`, reached via `POST /api/import/apply`.)
 
 ### 3.3 Phase 2 — reservation forwarding (architecture only, no work packages yet)
 **NEEDS REWORK - MIGHT REQUIRE A CART/CHECKOUT PROCESS TO WORK IDEALLY**
 
-- **UI:** on the item detail page, if the owner has `leihbackendUrl` and the item is not protected and `status = available`: replace the conversation CTA with "Reservieren" → small form: pickup date + time slot (slots computed from `GET {base}/api/opening-hours`), optional phone number.
+- **UI:** on the item detail page, if the owner has a `sync_config` (`integration = leihbackend`) row and the item is not protected and `status = available`: replace the conversation CTA with "Reservieren" → small form: pickup date + time slot (slots computed from `GET {base}/api/opening-hours`), optional phone number.
 - **Server:** SvelteKit form action (repo convention; no REST layer) POSTs to the leihbackend reservation endpoint with `items: [externalId]`, `customer_name = username`, `customer_email = user.email`. leihbackend sends the confirmation + cancellation mail — share-mvp builds no mail logic.
 - **State:** new collection `external_reservations` (`user`, `item`, `institution`, `pickup`, `createdAt`; superuser-only rules) purely as a pointer for a "Meine Reservierungen" view. Cancellation happens via the link in leihbackend's mail (MVP).
 - **Conflict window:** within the ≤15-min sync lag an item can already be taken; leihbackend rejects the POST and the form surfaces a clear German error ("Der Gegenstand wurde gerade anderweitig reserviert."). No data inconsistency possible.
@@ -160,17 +160,17 @@ Writes use a **PocketBase superuser client** (the sync runs unattended; institut
 
 Phase 1 shipped. The detailed work-package breakdown that used to live here has been removed; the code and the generic docs are now the source of truth:
 
-- **Code:** `src/lib/server/integrations/leihbackend/` (`client.ts`, `mapping.ts`, `index.ts`), built on the shared core in `src/lib/server/integrations/core/`.
+- **Code:** `Allerleih-Backend/pb_hooks/integrations/leihbackend.js` (`fetchAllItems`/`fetchItemById` + `mapItem`), built on the shared core `pb_hooks/integrations/{diff.js,db.js}`.
 - **Architecture & how to add an integration:** [integrations.md](integrations.md).
 - **Operations** (endpoints, env vars, cron, failure modes): [operations/integration-sync.md](operations/integration-sync.md).
 - **Onboarding** (which URLs go on the `users` record): [operations/onboarding-institutional-partner.md](operations/onboarding-institutional-partner.md).
-- **Schema:** the `users` fields `leihbackendUrl` / `leihbackendItemUrlTemplate` are documented in [data-model.md](data-model.md). `leihbackendUrl` is the bare instance origin (validity check: `{leihbackendUrl}/api/collections/item_public/records` returns items JSON — only leihbackend exposes `item_public`).
+- **Schema:** the source config lives in the `sync_config` collection (`baseUrl` / `itemUrlTemplate`), documented in [data-model.md](data-model.md). `baseUrl` is the bare instance origin (validity check: `{baseUrl}/api/collections/item_public/records` returns items JSON — only leihbackend exposes `item_public`).
 
 ## 5. Risks
 
 | Risk | Mitigation |
 |---|---|
-| Schema drift in leihbackend (`item_public` view changes) | All leihbackend knowledge is isolated in `src/lib/server/integrations/leihbackend/`; mapping tests double as a contract. Pin expectations to the view fields listed in §2.1 |
+| Schema drift in leihbackend (`item_public` view changes) | All leihbackend knowledge is isolated in `Allerleih-Backend/pb_hooks/integrations/leihbackend.js`; the mapping cases in `Allerleih-Backend/tests/integration-sync.test.mjs` double as a contract. Pin expectations to the view fields listed in §2.1 |
 | Double-reservation in the sync window (Phase 2) | leihbackend rejects; surface error; no inconsistency |
 | Superuser credentials in env | Same trust level as existing VAPID/API secrets on prod; scoped alternative (impersonation tokens) can replace it later without architectural change |
 | Conversation requests to unmonitored institution accounts | CZ is monitored by the team; for external operators (Starterkit), require either `leihbackendItemUrlTemplate` or Phase-2 reservations before onboarding |

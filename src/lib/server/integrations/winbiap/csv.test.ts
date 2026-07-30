@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { diffItems } from '../core/diff';
 import {
 	parseAndValidateRow,
 	parseCsv,
@@ -183,19 +182,6 @@ describe('parseAndMapCsv', () => {
 		expect(survivor?.rowIndex).toBe(4);
 		expect(survivor?.warnings.join(' ')).toContain('Doppelter');
 		expect(mappedRows.find((r) => r.item.externalId === 'ABC-002')?.warnings).toHaveLength(0);
-	});
-
-	it('a first-import diff of a file with duplicates yields a single create per externalId', () => {
-		const csv = `${header}\nABC-001,Erste,,,,,,,\nABC-001,Zweite,,,,,,,`;
-		const { mappedRows } = parseAndMapCsv(csv, 'inst1');
-
-		const diff = diffItems(
-			mappedRows.map((r) => r.item),
-			[]
-		);
-
-		expect(diff.toCreate).toHaveLength(1);
-		expect(diff.toCreate[0].name).toBe('Zweite');
 	});
 
 	it('returns no parseError for a clean file', () => {

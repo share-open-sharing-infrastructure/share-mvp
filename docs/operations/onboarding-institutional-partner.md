@@ -16,53 +16,34 @@ Short checklist for bringing a new institution onto AllerLeih.
 
 ## Connecting an automatic integration
 
-If the institution runs lending software AllerLeih supports, its catalogue can be kept in sync automatically instead of (or in addition to) manual CSV uploads. Configuration is a couple of fields on the institution's `users` record in the PocketBase admin dashboard. See [integration-sync.md](integration-sync.md) for how the sync runs operationally and [../integrations.md](../integrations.md) for the architecture.
+If the institution runs lending software AllerLeih supports, its catalogue can be kept in sync automatically instead of (or in addition to) manual CSV uploads. Configuration is a **`sync_config`** row in the PocketBase admin dashboard — the single source of truth for integration discovery. See [integration-sync.md](integration-sync.md) for how the sync runs operationally and [../integrations.md](../integrations.md) for the architecture.
 
-> **Heads-up — one shared field for now:** the base URL for *every* integration type currently goes into the `leihbackendUrl` field (it's overloaded as a generic base URL). Paste the appropriate URL below into `leihbackendUrl` regardless of the software.
+Open the `sync_config` collection → *New record*:
 
-> **⚠️ Interim double-step (#487 Phase 2, until Phase 3).** Discovery is split during Phase 2: the
-> **scheduled backend cron** (full sync **and** per-item refresh) reads a dedicated **`sync_config`**
-> collection, while the **manual** `/api/sync` + `/api/refresh` endpoints and the CSV import still
-> read `users.leihbackendUrl`. **So a new partner needs BOTH, set by hand in the PocketBase admin UI:**
->
-> 1. `users.leihbackendUrl` (+ optional `leihbackendItemUrlTemplate`) — as described below (frontend manual/CSV).
-> 2. A **`sync_config`** row — open the `sync_config` collection → *New record*:
->    - `institution` → the institution's `users` record
->    - `integration` → `leihbackend` **or** `winbiap`
->    - `baseUrl` → the same URL as `leihbackendUrl`
->    - `itemUrlTemplate` → same as `leihbackendItemUrlTemplate` (optional)
->    - `enabled` → `true` (set `false` to pause **only** the cron; the manual endpoints ignore `enabled` until Phase 3)
->
-> Keep the two in sync until Phase 3 unifies discovery on `sync_config` and removes `users.leihbackendUrl`.
+| Field | Value |
+|---|---|
+| `institution` | The institution's `users` record. |
+| `integration` | `leihbackend` **or** `winbiap`. |
+| `baseUrl` | **leihbackend:** the bare instance origin — no trailing slash, no `/api`, no path (e.g. `https://allerlei.uber.space`). **WINBIAP:** the WebOPAC base (e.g. `https://rblg.stadt.lueneburg.de/webopac`). |
+| `itemUrlTemplate` *(optional)* | Human-facing deep-link template with `{id}`/`{iid}` placeholders, e.g. `https://allerlei.uber.space/reservierung/{iid}`. Leave empty if there's no public catalogue page. |
+| `enabled` | `true` (set `false` to pause the backend cron for this institution). |
 
 ### leihbackend (Leihladen software)
 
-| Field | Value |
-|---|---|
-| `leihbackendUrl` | The bare instance origin — no trailing slash, no `/api`, no path. Example: `https://allerlei.uber.space`. |
-| `leihbackendItemUrlTemplate` *(optional)* | Human-facing deep-link template with `{id}`/`{iid}` placeholders, e.g. `https://allerlei.uber.space/reservierung/{iid}`. Leave empty if there's no public catalogue page. |
-
-**Validity check:** `{leihbackendUrl}/api/collections/item_public/records` should return items JSON. (This is also what distinguishes a leihbackend instance — only leihbackend exposes `item_public`.)
-
-Items are pulled by the **full sync** (`POST /api/sync`), driven by cron. No manual CSV upload is needed.
+Set `integration = leihbackend`. **Validity check:** `{baseUrl}/api/collections/item_public/records` should return items JSON — only leihbackend exposes `item_public`. Items are pulled automatically by the **full sync** (`integration_sync` cron); no manual CSV upload is needed.
 
 ### WINBIAP (library catalogue software)
 
-| Field | Value |
-|---|---|
-| `leihbackendUrl` | The institution's **WebOPAC base URL**, e.g. `https://rblg.stadt.lueneburg.de/webopac`. |
-| `leihbackendItemUrlTemplate` *(optional)* | Deep-link template to the public catalogue record, if one exists. |
+Set `integration = winbiap`. WINBIAP has no bulk feed, so the lifecycle is two-step:
 
-WINBIAP has no bulk feed, so the lifecycle is two-step:
+1. **Initial import:** the institution uploads its catalogue once via the CSV import at `/user/import` (this sets each item's `externalId` and `externalUrl`).
+2. **Keeping fresh:** the **per-item refresh** (`integration_refresh` cron, or the on-demand "Alle Gegenstände synchronisieren" button on `/user/import`) re-checks each stored item against the WebOPAC, updating changed items and archiving ones that disappear.
 
-1. **Initial import:** the institution uploads its catalogue once via the CSV import at `/user/import` (this is what sets each item's `externalId` and `externalUrl`).
-2. **Keeping fresh:** the **per-item refresh** (`POST /api/refresh`) re-checks each stored item against the WebOPAC on a cron, updating changed items and archiving ones that disappear.
-
-> For a WINBIAP institution, give its `sync_config` row `integration = winbiap` — the **backend cron** full sync then skips it entirely (it only pulls `leihbackend` rows), so the old "full sync tries and fails on WINBIAP" footgun no longer applies to the cron. The **manual** frontend `POST /api/sync` still reads `users.leihbackendUrl` and would still try (and harmlessly fail) to fetch `item_public` — so don't run the manual full sync against a WINBIAP institution. WINBIAP institutions are kept current by the refresh, not the full sync.
+The full sync only pulls `leihbackend` configs, so a WINBIAP institution is never touched by it.
 
 ## Notes
 
-- The CSV import and all integration syncs write via PocketBase **batch requests**, which are disabled by default in PocketBase. The `allerleih-backend` migrations enable the Batch API automatically; on other instances enable it manually (see [integration-sync.md](integration-sync.md#prerequisite-enable-the-pocketbase-batch-api)).
+- The CSV import and both cron jobs write in the backend via PocketBase transactions (`$app.runInTransaction`) — no Batch API needed.
 - `isInstitution` can only be toggled by an admin via the PocketBase dashboard. The user UI has no control over this field.
 - Items with a non-empty `externalUrl` show a deep-link CTA on the detail page instead of the AllerLeih request flow. Make sure this is the intended behaviour before publishing items with `externalUrl` set.
 - If the institution's external system (e.g. WinBIAP) does not yet have a confirmed permalink format, leave `externalUrl` empty in the CSV. Items will then use the normal AllerLeih request flow until the URL format is confirmed and the CSV is re-imported.
