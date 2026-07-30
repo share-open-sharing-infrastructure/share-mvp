@@ -18,7 +18,7 @@ import {
 	resolveOwnerContact,
 	resolveTermsGate,
 	resolveViewerAccess,
-} from './itemDetailQueries';
+} from './itemDetailQueries.server';
 
 export async function load({ params, locals }) {
 	let item: ItemPublic;

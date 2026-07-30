@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ItemPublic } from '$lib/types/models';
+import { makeMockPb } from '$lib/test-utils/pocketbase';
 
 const { getActiveTerms, hasAcceptedActiveTerms } = vi.hoisted(() => ({
 	getActiveTerms: vi.fn(),
@@ -12,31 +14,22 @@ import {
 	resolveExistingConversation,
 	resolveTermsGate,
 	countOwnerItems,
-} from './itemDetailQueries';
-
-function mockFilter(raw: string, params?: Record<string, unknown>): string {
-	if (!params) return raw;
-	let result = raw;
-	for (const [key, value] of Object.entries(params)) {
-		const escaped = typeof value === 'string' ? `'${value.replace(/'/g, "\\'")}'` : `${value}`;
-		result = result.replaceAll(`{:${key}}`, escaped);
-	}
-	return result;
-}
+} from './itemDetailQueries.server';
 
 const OWNER_ID = 'owner1';
 const VIEWER_ID = 'viewer1';
 
-function publicItem(extra: Record<string, unknown> = {}): Record<string, unknown> {
+// Only the fields these helpers actually read; cast once here instead of at every call site.
+function publicItem(extra: Record<string, unknown> = {}): ItemPublic {
 	return {
 		id: 'item1',
 		name: 'Bohrmaschine',
 		userId: OWNER_ID,
 		status: 'available',
 		trusteesOnly: false,
-		ownerHasLocation: false,
+		ownerHasLocation: 0,
 		...extra,
-	};
+	} as unknown as ItemPublic;
 }
 
 describe('resolveViewerAccess', () => {
@@ -44,11 +37,10 @@ describe('resolveViewerAccess', () => {
 
 	it('reports no mask and full access when the item was not masked', async () => {
 		const getOne = vi.fn();
-		const pb = { collection: vi.fn(() => ({ getOne })) };
+		const pb = makeMockPb({ items_searchable: { getOne } });
 		const item = publicItem();
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveViewerAccess(pb as any, item as any, VIEWER_ID);
+		const result = await resolveViewerAccess(pb, item, VIEWER_ID);
 
 		expect(result).toEqual({ wasMasked: false, viewerHasFullAccess: true });
 		expect(getOne).not.toHaveBeenCalled();
@@ -56,11 +48,10 @@ describe('resolveViewerAccess', () => {
 
 	it('does not attempt to unmask a masked item for an anonymous viewer', async () => {
 		const getOne = vi.fn();
-		const pb = { collection: vi.fn(() => ({ getOne })) };
+		const pb = makeMockPb({ items_searchable: { getOne } });
 		const item = publicItem({ name: null });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveViewerAccess(pb as any, item as any, null);
+		const result = await resolveViewerAccess(pb, item, null);
 
 		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: false });
 		expect(getOne).not.toHaveBeenCalled();
@@ -76,11 +67,10 @@ describe('resolveViewerAccess', () => {
 			externalUrl: null,
 			description: 'Kraftvoll',
 		});
-		const pb = { collection: vi.fn(() => ({ getOne })) };
+		const pb = makeMockPb({ items_searchable: { getOne } });
 		const item = publicItem({ name: null, image: null });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveViewerAccess(pb as any, item as any, VIEWER_ID);
+		const result = await resolveViewerAccess(pb, item, VIEWER_ID);
 
 		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: true });
 		expect(item.name).toBe('Bohrmaschine');
@@ -93,11 +83,10 @@ describe('resolveViewerAccess', () => {
 
 	it('leaves the item masked when items_searchable denies access', async () => {
 		const getOne = vi.fn().mockRejectedValue(new Error('no access'));
-		const pb = { collection: vi.fn(() => ({ getOne })) };
+		const pb = makeMockPb({ items_searchable: { getOne } });
 		const item = publicItem({ name: null });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveViewerAccess(pb as any, item as any, VIEWER_ID);
+		const result = await resolveViewerAccess(pb, item, VIEWER_ID);
 
 		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: false });
 		expect(item.name).toBeNull();
@@ -109,41 +98,38 @@ describe('resolveOwnerContact', () => {
 
 	it('reads the public ownerContact* columns for an anonymous viewer', async () => {
 		const usersGetOne = vi.fn();
-		const pb = { collection: vi.fn(() => ({ getOne: usersGetOne })) };
+		const pb = makeMockPb({ users: { getOne: usersGetOne } });
 		const item = publicItem({
 			ownerContactMethod: 'email',
 			ownerContactEmail: 'verleih@asta.de',
 			ownerContactUrl: null,
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveOwnerContact(pb as any, item as any, null, true);
+		const result = await resolveOwnerContact(pb, item, null, true);
 
 		expect(result).toEqual({ method: 'email', target: 'verleih@asta.de' });
 		expect(usersGetOne).not.toHaveBeenCalled();
 	});
 
 	it('returns null for an anonymous viewer when the public columns are NULL', async () => {
-		const pb = { collection: vi.fn(() => ({ getOne: vi.fn() })) };
+		const pb = makeMockPb({ users: { getOne: vi.fn() } });
 		const item = publicItem({
 			ownerContactMethod: null,
 			ownerContactEmail: null,
 			ownerContactUrl: null,
 		});
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveOwnerContact(pb as any, item as any, null, true);
+		const result = await resolveOwnerContact(pb, item, null, true);
 
 		expect(result).toBeNull();
 	});
 
 	it('returns null without reading the owner record when the viewer may not see the item', async () => {
 		const usersGetOne = vi.fn();
-		const pb = { collection: vi.fn(() => ({ getOne: usersGetOne })) };
+		const pb = makeMockPb({ users: { getOne: usersGetOne } });
 		const item = publicItem();
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveOwnerContact(pb as any, item as any, VIEWER_ID, false);
+		const result = await resolveOwnerContact(pb, item, VIEWER_ID, false);
 
 		expect(result).toBeNull();
 		expect(usersGetOne).not.toHaveBeenCalled();
@@ -153,11 +139,10 @@ describe('resolveOwnerContact', () => {
 		const usersGetOne = vi
 			.fn()
 			.mockResolvedValue({ contactMethod: 'link', contactEmail: '', contactUrl: 'https://x.de' });
-		const pb = { collection: vi.fn(() => ({ getOne: usersGetOne })) };
+		const pb = makeMockPb({ users: { getOne: usersGetOne } });
 		const item = publicItem();
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveOwnerContact(pb as any, item as any, VIEWER_ID, true);
+		const result = await resolveOwnerContact(pb, item, VIEWER_ID, true);
 
 		expect(result).toEqual({ method: 'link', target: 'https://x.de' });
 		expect(usersGetOne).toHaveBeenCalledWith(
@@ -170,22 +155,20 @@ describe('resolveOwnerContact', () => {
 		const usersGetOne = vi
 			.fn()
 			.mockResolvedValue({ contactMethod: 'email', contactEmail: '', contactUrl: '' });
-		const pb = { collection: vi.fn(() => ({ getOne: usersGetOne })) };
+		const pb = makeMockPb({ users: { getOne: usersGetOne } });
 		const item = publicItem();
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveOwnerContact(pb as any, item as any, VIEWER_ID, true);
+		const result = await resolveOwnerContact(pb, item, VIEWER_ID, true);
 
 		expect(result).toBeNull();
 	});
 
 	it('falls back to null when the owner record is unreadable', async () => {
 		const usersGetOne = vi.fn().mockRejectedValue(new Error('unreadable'));
-		const pb = { collection: vi.fn(() => ({ getOne: usersGetOne })) };
+		const pb = makeMockPb({ users: { getOne: usersGetOne } });
 		const item = publicItem();
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveOwnerContact(pb as any, item as any, VIEWER_ID, true);
+		const result = await resolveOwnerContact(pb, item, VIEWER_ID, true);
 
 		expect(result).toBeNull();
 	});
@@ -195,16 +178,10 @@ describe('resolveExistingConversation', () => {
 	beforeEach(() => vi.clearAllMocks());
 
 	it('returns the id and lendingStatus of a matching open conversation', async () => {
-		const getFirstListItem = vi
-			.fn()
-			.mockResolvedValue({ id: 'conv1', lendingStatus: 'accepted' });
-		const pb = {
-			collection: vi.fn(() => ({ getFirstListItem })),
-			filter: vi.fn(mockFilter),
-		};
+		const getFirstListItem = vi.fn().mockResolvedValue({ id: 'conv1', lendingStatus: 'accepted' });
+		const pb = makeMockPb({ conversations: { getFirstListItem } });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveExistingConversation(pb as any, VIEWER_ID, 'item1');
+		const result = await resolveExistingConversation(pb, VIEWER_ID, 'item1');
 
 		expect(result).toEqual({ id: 'conv1', lendingStatus: 'accepted' });
 		expect(getFirstListItem).toHaveBeenCalledWith(
@@ -215,13 +192,9 @@ describe('resolveExistingConversation', () => {
 
 	it('returns null when no matching conversation exists', async () => {
 		const getFirstListItem = vi.fn().mockRejectedValue(new Error('none'));
-		const pb = {
-			collection: vi.fn(() => ({ getFirstListItem })),
-			filter: vi.fn(mockFilter),
-		};
+		const pb = makeMockPb({ conversations: { getFirstListItem } });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveExistingConversation(pb as any, VIEWER_ID, 'item1');
+		const result = await resolveExistingConversation(pb, VIEWER_ID, 'item1');
 
 		expect(result).toBeNull();
 	});
@@ -230,11 +203,13 @@ describe('resolveExistingConversation', () => {
 describe('resolveTermsGate', () => {
 	beforeEach(() => vi.clearAllMocks());
 
+	// `pb` is only forwarded to the mocked lendingTerms helpers, never queried here.
+	const pb = makeMockPb({});
+
 	it('returns false when the owner has no active terms', async () => {
 		getActiveTerms.mockResolvedValue(null);
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveTermsGate({} as any, VIEWER_ID, OWNER_ID);
+		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
 
 		expect(result).toBe(false);
 		expect(hasAcceptedActiveTerms).not.toHaveBeenCalled();
@@ -244,8 +219,7 @@ describe('resolveTermsGate', () => {
 		getActiveTerms.mockResolvedValue({ id: 'terms1' });
 		hasAcceptedActiveTerms.mockResolvedValue(true);
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveTermsGate({} as any, VIEWER_ID, OWNER_ID);
+		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
 
 		expect(result).toBe(false);
 	});
@@ -254,8 +228,7 @@ describe('resolveTermsGate', () => {
 		getActiveTerms.mockResolvedValue({ id: 'terms1' });
 		hasAcceptedActiveTerms.mockResolvedValue(false);
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await resolveTermsGate({} as any, VIEWER_ID, OWNER_ID);
+		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
 
 		expect(result).toBe(true);
 	});
@@ -266,21 +239,23 @@ describe('countOwnerItems', () => {
 
 	it('returns the total item count for the owner', async () => {
 		const getList = vi.fn().mockResolvedValue({ totalItems: 5 });
-		const pb = { collection: vi.fn(() => ({ getList })), filter: vi.fn(mockFilter) };
+		const pb = makeMockPb({ items_public: { getList } });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await countOwnerItems(pb as any, OWNER_ID);
+		const result = await countOwnerItems(pb, OWNER_ID);
 
 		expect(result).toBe(5);
-		expect(getList).toHaveBeenCalledWith(1, 1, expect.objectContaining({ filter: expect.any(String) }));
+		expect(getList).toHaveBeenCalledWith(
+			1,
+			1,
+			expect.objectContaining({ filter: expect.stringContaining(`userId = '${OWNER_ID}'`) })
+		);
 	});
 
 	it('returns 0 when the query fails', async () => {
 		const getList = vi.fn().mockRejectedValue(new Error('boom'));
-		const pb = { collection: vi.fn(() => ({ getList })), filter: vi.fn(mockFilter) };
+		const pb = makeMockPb({ items_public: { getList } });
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const result = await countOwnerItems(pb as any, OWNER_ID);
+		const result = await countOwnerItems(pb, OWNER_ID);
 
 		expect(result).toBe(0);
 	});
