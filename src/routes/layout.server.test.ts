@@ -72,8 +72,8 @@ describe('Root layout load', () => {
 	});
 
 	it('issues the three authenticated reads concurrently, not sequentially', async () => {
-		// Hold the notifications read open. Promise.all invokes all three calls synchronously
-		// before awaiting, so all three mocks are hit before this promise ever settles.
+		// Hold the notifications read open. The load issues all three reads synchronously before
+		// its first await, so all three mocks are hit before this promise ever settles.
 		// Under the old sequential `await`s, preferences and isAdmin were awaited *after* the
 		// notifications read resolved, so neither would have been called at this point —
 		// that's what makes this assertion a real guard against a regression to sequencing.
@@ -106,10 +106,13 @@ describe('Root layout load', () => {
 		getList.mockRejectedValueOnce(new Error('collection missing'));
 		isAdmin.mockResolvedValue(true);
 		const result = await load(buildEvent({ id: 'user1' }));
-		// Promise.all rejects as soon as any input rejects, so the per-promise catch on the
-		// notifications read is what stops one missing collection from sinking the other two.
+		// Promise.all rejects as soon as any input rejects, so the notifications read's own
+		// try/catch is what stops one missing collection from sinking the other two.
 		expect(result.unreadNotificationCount).toBe(0);
-		expect(result.currentUserPreferences).toEqual({ hasOnboarded: true, preferredTransportMode: 'car' });
+		expect(result.currentUserPreferences).toEqual({
+			hasOnboarded: true,
+			preferredTransportMode: 'car',
+		});
 		expect(result.isAdminUser).toBe(true);
 	});
 
