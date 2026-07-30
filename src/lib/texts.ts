@@ -235,7 +235,7 @@ export const texts = {
 		offerSomething: 'Biete selbst etwas an!',
 		newsletter: 'Für Newsletter registrieren',
 		search: 'Suchen',
-		showAll: 'Alles anzeigen',
+		clearSearch: 'Suche zurücksetzen',
 	},
 
 	// Groups feature
@@ -663,6 +663,7 @@ export const texts = {
 				maxMinutes: (n: number) => `<${n} min`,
 				paginationHidden:
 					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf >30 min", um alle Seiten zu sehen.',
+				sliderLabel: 'Maximale Reisezeit in Minuten',
 			},
 			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
@@ -676,6 +677,24 @@ export const texts = {
 			ownerTypePrivate: 'Personen',
 			groupFilterLabel: 'Gruppe',
 			groupFilterAll: 'Alle Gruppen',
+			// Filter trigger button + modal (issue #505: consolidated filter modal)
+			filterButton: 'Filter',
+			filterButtonActive: (count: number) => `Filter (${count})`,
+			sortLabel: 'Sortierung',
+			sortOptions: {
+				newest: 'Neueste zuerst',
+				name_asc: 'Name A–Z',
+				name_desc: 'Name Z–A',
+			} as Record<string, string>,
+			filterModalTitle: 'Filter',
+			filterSectionAvailability: 'Verfügbarkeit',
+			filterAvailabilitySubtext: 'Zeigt nur Dinge, die aktuell verliehen werden können.',
+			filterSectionOwnerType: 'Anbieter',
+			filterSectionDistance: 'Entfernung',
+			filterSectionCategories: 'Kategorien',
+			filterSectionGroup: 'Gruppen',
+			filterReset: 'Zurücksetzen',
+			filterApply: 'Filter anwenden',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -733,6 +752,10 @@ export const texts = {
 			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
 			noBorrowingConversations: 'Du hast noch nichts angefragt.',
+			backToConversations: '← Zurück zu deinen Anfragen',
+			noConversationSelectedTitle: 'Kein Gespräch ausgewählt',
+			noConversationSelectedBody: 'Wähle eine Unterhaltung aus der Liste oder starte eine neue über die Suche.',
+			goToSearch: 'Zur Suche',
 		},
 		items: {
 			title: 'Meine Dinge',
@@ -1085,11 +1108,17 @@ export const texts = {
 			confirmReturn: 'Rückgabe bestätigen',
 			abort: 'Anfrage abbrechen',
 		},
-		// Confirmation modal shown before aborting (mirrors the delete modal).
+		// Confirmation modal shown before aborting (mirrors confirmDelete below).
 		confirmAbort: {
 			title: 'Anfrage abbrechen',
 			body: 'Willst du diese Anfrage wirklich abbrechen? Die andere Person wird benachrichtigt und der Gegenstand wird wieder freigegeben.',
 			confirm: 'Anfrage abbrechen',
+		},
+		// Confirmation modal shown before deleting a conversation (mirrors confirmAbort above).
+		confirmDelete: {
+			title: 'Anfrage löschen',
+			body: 'Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung gehen dabei verloren.',
+			confirm: 'Anfrage löschen',
 		},
 		statusDescription: {
 			pending: {
@@ -1301,11 +1330,18 @@ export const texts = {
 		importNoCsvData: 'Keine CSV-Daten vorhanden.',
 		importLoadExistingFailed:
 			'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+		importApplyFailed: 'Import fehlgeschlagen. Bitte später erneut versuchen.',
+		/** Backend answered 409: a sync/refresh/import is already running (shared lock). */
+		importBusy:
+			'Es läuft gerade eine Synchronisierung. Bitte in ein paar Minuten noch einmal versuchen.',
 		importLoaderLabel: 'Importiere …',
 		importLoaderHint: 'Bitte warten …',
 		importRefreshButton: 'Alle Gegenstände synchronisieren',
 		importRefreshTriggered: 'Synchronisierung abgeschlossen.',
 		importRefreshFailed: 'Synchronisierung fehlgeschlagen. Bitte später erneut versuchen.',
+		/** No `sync_config` row for this institution — the button has nothing to synchronise. */
+		importRefreshNoIntegration:
+			'Für diesen Account ist keine automatische Quelle eingerichtet — es gibt nichts zu synchronisieren. Bitte an die AllerLeih-Administration wenden.',
 		importActionLabels: {
 			create: 'Neu',
 			update: 'Update',

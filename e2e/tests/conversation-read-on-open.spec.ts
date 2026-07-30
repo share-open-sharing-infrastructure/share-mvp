@@ -19,12 +19,20 @@ import { STORAGE_STATE, VIEWER_STORAGE_STATE } from '../fixtures/users';
  * conversation in the list (waiting for the preload `__data.json` to actually run
  * server-side) and it must stay unread; opening it must mark it read.
  *
+ * The second test covers the other half of the contract, on its own reserved item ("E2E
+ * Leinwand") so both tests can run in parallel without sharing a conversation: while the
+ * thread is open, a message from the chat partner flips the reader's read flag back to false
+ * server-side, so the page must re-assert read-state from the realtime event instead of
+ * leaving the thread unread.
+ *
  * The unread state exposes a semantic handle: an `sr-only` "Ungelesen" label inside the
  * conversation list row (ConversationListItem.svelte), so we locate the conversation by its
  * link role/name and detect unread via that label — no CSS class selectors.
  */
 
 const ITEM = 'E2E Beamer';
+// A second reserved item, so the two tests never share a conversation (they run in parallel).
+const ITEM_OPEN_THREAD = 'E2E Leinwand';
 // The sr-only label rendered inside a conversation list row while it is unread
 // (ConversationListItem.svelte → texts.pages.conversations.unread).
 const UNREAD_LABEL = 'Ungelesen';
@@ -92,5 +100,45 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 		const convLinkRead = owner.getByRole('link', { name: ITEM });
 		await expect(convLinkRead).toBeVisible();
 		await expect(convLinkRead.getByText(UNREAD_LABEL)).toHaveCount(0);
+	});
+
+	test('a message arriving while the thread is open leaves it read', async () => {
+		// Regression for the follow-up found in review: `sendMessage` flips the recipient's
+		// read flag to false server-side, and the open-mark only runs when the page mounts —
+		// so a message arriving while the recipient is reading the thread made it pop back to
+		// unread and stay there. The page now re-asserts read-state from the realtime event.
+		await viewer.goto('/search?q=' + encodeURIComponent(ITEM_OPEN_THREAD));
+		await viewer.getByRole('link', { name: ITEM_OPEN_THREAD }).first().click();
+		await expect(viewer).toHaveURL(/\/items\/[^/]+$/);
+		await viewer.getByRole('button', { name: 'Anfragen' }).click();
+		await expect(viewer).toHaveURL(/\/conversations\/[^/]+$/);
+		const convId = new URL(viewer.url()).pathname.split('/').pop()!;
+
+		// Owner opens the thread (direct URL) — that marks it read.
+		await Promise.all([
+			owner.waitForResponse(
+				(r) => r.url().includes(`/conversations/${convId}`) && r.url().includes('markRead')
+			),
+			owner.goto(`/conversations/${convId}`),
+		]);
+
+		// With the owner's page still open, the viewer sends a message. The owner's client gets
+		// the realtime `conversations` update whose read flag is now false, and re-fires markRead.
+		const text = `E2E Nachricht ${convId}`;
+		const remarked = owner.waitForResponse(
+			(r) => r.url().includes(`/conversations/${convId}`) && r.url().includes('markRead')
+		);
+		await viewer.locator('input[name="messageContent"]').fill(text);
+		await viewer.locator('form[action="?/sendMessage"] button[type="submit"]').click();
+
+		// The message reaches the open thread (realtime works) and the re-mark POST ran.
+		await expect(owner.getByText(text)).toBeVisible();
+		await remarked;
+
+		// Server truth: the thread is READ for the owner despite the new message.
+		await owner.goto('/conversations');
+		const convLink = owner.getByRole('link', { name: ITEM_OPEN_THREAD });
+		await expect(convLink).toBeVisible();
+		await expect(convLink.getByText(UNREAD_LABEL)).toHaveCount(0);
 	});
 });

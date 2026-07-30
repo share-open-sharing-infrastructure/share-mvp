@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ImageOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
+	import { itemStatusBadgeClasses, itemStatusLabel } from '$lib/utils/itemStatus';
 
 	interface Props {
 		/** All image URLs for this item, cover first. Empty when there is no uploaded image. */
@@ -17,16 +18,8 @@
 	// Guard against the index pointing past the list (e.g. after a data refresh).
 	const activeUrl = $derived(imageUrls[activeIndex] ?? imageUrls[0] ?? null);
 
-	const statusLabel = $derived(
-		status === 'available' ? texts.itemStatus.available :
-		status === 'unavailable' ? texts.itemStatus.unavailable :
-		texts.itemStatus.unknown
-	);
-	const statusClass = $derived(
-		status === 'available' ? 'bg-green-100 text-green-800 border-green-800' :
-		status === 'unavailable' ? 'bg-accent-100 text-accent-800' :
-		'bg-gray-100 text-gray-500'
-	);
+	const statusLabel = $derived(itemStatusLabel(status));
+	const statusClass = $derived(itemStatusBadgeClasses(status));
 </script>
 
 {#snippet statusBadge()}

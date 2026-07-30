@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { page } from '$app/state';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
@@ -7,8 +7,8 @@
 <div class="max-w-2xl mx-auto px-4 py-16 text-center">
 	{#if page.status === 404}
 		<p class="text-lg font-semibold text-tinte-700">{texts.errors.conversationNotFound}</p>
-		<a href={resolve("/conversations")} class="mt-4 inline-block text-sm text-primary-600 hover:underline">
-			← Zurück zu deinen Anfragen
+		<a href={resolve('/conversations')} class="mt-4 inline-block text-sm text-primary-600 hover:underline">
+			{texts.pages.conversations.backToConversations}
 		</a>
 	{:else}
 		<p class="text-lg font-semibold text-tinte-700">{texts.errors.somethingWentWrong}</p>

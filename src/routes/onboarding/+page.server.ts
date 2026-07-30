@@ -3,12 +3,12 @@ import { fail } from '@sveltejs/kit';
 import { texts } from '$lib/texts';
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { User } from '$lib/types/models';
-import { createNotification, sendPushToUser } from '$lib/server/notifications';
-import { addTrust, removeTrust, getTrustees } from '$lib/server/trust';
+import { addTrustAndNotify, removeTrust, getTrustees } from '$lib/server/trust';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { getUserGeolocation, upsertUserGeolocation } from '$lib/server/geolocation';
 import { getOwnContact, upsertOwnContact } from '$lib/server/contacts';
 import { upsertUserPreferences } from '$lib/server/userPreferences';
+import { parseGeolocationFields, parseMessengerContact } from '$lib/server/profileForm';
 
 export async function load({ locals, url }) {
 	let inviteCode = locals.user.inviteCode as string | undefined;
@@ -39,6 +39,9 @@ export async function load({ locals, url }) {
 	};
 }
 
+/** Shared fallback for onboarding actions with no more specific error mapping. */
+const genericFailure = () => fail(500, { error: true, message: texts.errors.somethingWentWrong });
+
 export const actions = {
 	saveLocation: async ({ locals, request }) => {
 		const formData = await request.formData();
@@ -50,25 +53,14 @@ export const actions = {
 			updateData['city'] = city.trim();
 		}
 
-		let geo: { lon: number; lat: number } | null | undefined;
-		const geoLon = formData.get('geolocation_lon')?.toString();
-		const geoLat = formData.get('geolocation_lat')?.toString();
-		if (geoLon && geoLat) {
-			const lon = parseFloat(geoLon);
-			const lat = parseFloat(geoLat);
-			if (!isNaN(lon) && !isNaN(lat)) {
-				geo = { lon, lat };
-			}
-		} else if (city === '') {
-			geo = null;
-		}
+		const geo = parseGeolocationFields(formData, city);
 
 		try {
 			await locals.pb.collection('users').update(locals.user.id, updateData);
 			if (geo !== undefined) await upsertUserGeolocation(locals.pb, locals.user.id, geo);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
@@ -76,16 +68,8 @@ export const actions = {
 		const formData = await request.formData();
 		const newTrusteeId = formData.get('trusteeId') as string;
 
-		try {
-			await addTrust(locals.pb, locals.user.id, newTrusteeId);
-		} catch (error: Error | any) {
-			console.error(error?.message ?? error);
-		}
-
-		const adderName = locals.user.username ?? 'Jemand';
-		const notificationBody = texts.notifications.trustAdded(adderName);
-		await createNotification(locals.pb, newTrusteeId as string, locals.user.id, 'trust_added', locals.user.id, notificationBody);
-		await sendPushToUser(locals.pb, newTrusteeId as string, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+		const result = await addTrustAndNotify(locals.pb, locals.user, newTrusteeId);
+		if (!result.ok) return fail(result.status, { error: true, message: result.message });
 	},
 
 	saveProfile: async ({ locals, request }) => {
@@ -104,7 +88,7 @@ export const actions = {
 			await locals.pb.collection('users').update(locals.user.id, pbFormData);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 
@@ -128,48 +112,23 @@ export const actions = {
 			await removeTrust(locals.pb, locals.user.id, toRemoveTrusteeId);
 		} catch (error: Error | any) {
 			console.error(error?.message ?? error);
+			return genericFailure();
 		}
 	},
 
 	complete: async ({ locals, request }) => {
 		const formData = await request.formData();
 
-		const contact = {
-			telegramUsername: '',
-			signalLink: '',
-			telegramVisibleToTrustedOnly: formData.get('telegramVisibleToTrustedOnly') === 'on',
-			signalVisibleToTrustedOnly: formData.get('signalVisibleToTrustedOnly') === 'on',
-		};
-
-		const telegramUsername = formData.get('telegramUsername')?.toString();
-		if (telegramUsername !== undefined) {
-			const trimmed = telegramUsername.trim();
-			if (trimmed !== '') {
-				const cleaned = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
-				if (!/^[a-zA-Z0-9_]{5,32}$/.test(cleaned)) {
-					return fail(400, { error: true, message: texts.errors.invalidTelegramUsername });
-				}
-				contact.telegramUsername = cleaned;
-			}
-		}
-
-		const signalLink = formData.get('signalLink')?.toString();
-		if (signalLink !== undefined) {
-			const trimmed = signalLink.trim();
-			if (trimmed !== '') {
-				if (!trimmed.includes('signal.me')) {
-					return fail(400, { error: true, message: texts.errors.invalidSignalLink });
-				}
-				contact.signalLink = trimmed;
-			}
-		}
+		// Same messenger fields (and validation) as the profile settings form.
+		const parsed = parseMessengerContact(formData);
+		if (!parsed.ok) return fail(400, { error: true, message: parsed.message });
 
 		try {
 			await upsertUserPreferences(locals.pb, locals.user.id, { hasOnboarded: true });
-			await upsertOwnContact(locals.pb, locals.user.id, contact);
+			await upsertOwnContact(locals.pb, locals.user.id, parsed.value);
 			return { success: true };
 		} catch {
-			return fail(500, { error: true, message: texts.errors.somethingWentWrong });
+			return genericFailure();
 		}
 	},
 };

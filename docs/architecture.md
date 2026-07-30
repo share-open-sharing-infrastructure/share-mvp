@@ -36,8 +36,6 @@ Auth runs as a two-handle sequence in `src/hooks.server.ts` on every request:
 
 2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list as defined in `hooks.server.ts`.
 
-   `/api/sync` protects itself via a bearer token (`SYNC_SECRET`) instead of session auth.
-
 For client-side PocketBase WebSocket subscriptions (live chat), the auth token is passed from the server to the client via `page.data.token`, since the httpOnly cookie is not accessible to browser JS.
 
 ---
@@ -49,7 +47,7 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 | Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/reset/confirm`, `/auth/confirm-verification`, `/auth/confirm-email-change`, `/auth/logout` | No |
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
-| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics`, `/api/sync`, `/api/refresh` | Varies |
+| API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics` | Varies |
 | Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/misc/stats`, `/sitemap.xml` | No |
 | Legal consent | `/legal/accept`, `/legal/locked` | Yes (gate-exempt) |
 | Business metrics | `/admin/metrics` (`users.isAdmin` only, 404 otherwise), `/misc/stats` (public headline numbers, also teased on the home page) | `/admin/metrics`: yes + admin flag; `/misc/stats`/`/`: no |
@@ -94,7 +92,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 | OpenRouteService (ORS) | PocketBase hook → ORS | Travel time matrix (`POST /api/travel-times` hook) | Supports foot, bicycle, car; reads coords from owner-only `user_geolocations`, returns only bucketed minutes; SvelteKit `/api/travel-times/{item,search}` relay to it |
 | Mistral AI | Server → Mistral | Item photo analysis (`/api/analyze-item`) | pixtral-12b-2409 vision model; server-side only |
 | Web Push (VAPID) | Server → Push service | Push notifications | Per-device subscriptions stored in `push_subscriptions`; stale subscriptions auto-removed on HTTP 410/404 |
-| partner lending software instances | Server → partner software | Sync partner item catalogues into `items` (via `POST /api/sync` or `POST /api/refresh`) | Polled by a cronjob every X min; reads each institution's items and upserts/archives items owned by that institution's account. See [integrations.md](integrations.md) for details |
+| partner lending software instances | Backend (PocketBase hooks) → partner software | Sync partner item catalogues into `items` | Polled by the backend `integration_sync` / `integration_refresh` cron jobs; each institution's `sync_config` row is read and items owned by that account are upserted/archived. See [integrations.md](integrations.md) for details |
 
 
 ## Current Deployment Pipeline for "AllerLeih" (proof-of-concept instance)
@@ -102,7 +100,7 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
 - **Deploy trigger:** push to `main` → GitHub Actions (`.github/workflows/deploy-to-uberspace.yaml`) → `npm ci && npm run build` → `rsync` to Uberspace
 - **Process restart:** `supervisorctl restart svelte`
-- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`, and the integration-sync vars `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (see [operations/integration-sync.md](operations/integration-sync.md)); a tracked `.env.example` lists all required vars
+- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`; a tracked `.env.example` lists all required vars. (Integration sync/refresh + the CSV write path run entirely in the backend as of #487 Phase 3 — no frontend sync secret. `PB_SUPERUSER_*` are used only by local seed/e2e tooling, not the app runtime.)
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
 
@@ -119,9 +117,19 @@ AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat 
 
 Domain-specific reconciliation lives next to its route in rune-free helper modules rather than in the components themselves:
 
-- `src/routes/conversations/conversationListRealtime.ts` — keeps the conversation sidebar list in sync.
-- `src/routes/conversations/[conversationId]/conversationRealtime.ts` — keeps a single open conversation in sync (lending status, counterfactual, and the fetch/dedupe of newly appended messages). State is read/written through accessor closures so the page keeps ownership of the reactive state.
+- `src/routes/conversations/conversationListRealtime.ts` — keeps the conversation sidebar list in sync: `update` events sync `readByOwner`/`readByRequester`/`lastMessageAt`/`lendingStatus` and re-sort (mirroring the server's `-lastMessageAt,-updated` sort), `create` events insert the fetched record at its sorted position, `delete` events remove the entry.
+- `src/routes/conversations/[conversationId]/conversationRealtime.ts` — keeps a single open conversation in sync (lending status, counterfactual, and the fetch/dedupe of every newly appended message id in a coalesced/batched event, not just the last one). State is read/written through accessor closures so the page keeps ownership of the reactive state.
 
 Pages hold "server-load data that a realtime handler also writes to" in a `realtimeSynced()` box (`src/lib/stores/realtimeSynced.svelte.ts`) — a writable `$derived` that re-syncs from `load()` while staying directly assignable by the handler (issue #469).
+
+### Conversations: server-helper layout
+
+The `/conversations` area's server logic is split by ownership, following the "libs never import from routes" rule:
+
+- `src/lib/server/conversations.ts` — `deleteConversation()`, shared by the route's `?/deleteConversation` action and `$lib/server/items.ts`'s cascade-on-item-delete (an item's conversations are deleted with it).
+- `src/lib/server/items.ts` — `toggleItemStatus()` (flips an item's availability from the conversation header) alongside the existing `setItemStatus`/`deleteItem`/`deleteMultipleItems`.
+- `src/lib/server/notifications.ts` — `notifyAndPush()` bundles the create-notification + send-push pair every call site needs; `sendMessage` (route-local `conversation.server.ts`) and the 6 lending transitions (`[conversationId]/lending.server.ts`) both call it.
+- `[conversationId]/lending.server.ts` — the 6 `?/actionName` transitions are table-driven: `$lib/lending.ts`'s `LENDING_TRANSITIONS` supplies the role/from/to per action, and a local `TRANSITION_EFFECTS` table supplies the per-action item/notification side effects, both consumed by a single `executeLendingTransition()`.
+- `[conversationId]/conversationDetail.ts` — `toConversationDetail()` maps the raw `conversations` wire record (ids + optional `expand`) to the flattened, dangling-item-safe view-model the detail page and its header render from.
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.

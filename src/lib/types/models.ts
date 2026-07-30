@@ -152,21 +152,6 @@ export interface User extends PocketBaseEntity {
 	bio?: string;
 
 	/**
-	 * Bare origin of a leihbackend instance (no trailing slash, no /api), e.g.
-	 * "https://allerlei.uber.space". When set together with `isInstitution = true`,
-	 * this institution's items are periodically synced from leihbackend's `item_public` view.
-	 */
-	leihbackendUrl?: string;
-
-	/**
-	 * Human-facing deep-link template for an institution's leihbackend items, e.g.
-	 * "https://allerlei.uber.space/reservierung/{iid}". Placeholders `{id}` and `{iid}`
-	 * are substituted with the leihbackend record id / inventory number. Empty if no
-	 * public catalogue page exists.
-	 */
-	leihbackendItemUrlTemplate?: string;
-
-	/**
 	 * Set when the user has deleted their account (phase 1 "deactivate"). The row is
 	 * anonymized in place; login is blocked and the UI shows "Gelöschtes Konto".
 	 */
@@ -473,15 +458,58 @@ export type CounterfactualAnswer =
 	| 'unsure'
 	| 'skipped';
 
+/**
+ * The valid non-'pending' answers a participant can actually submit for
+ * `submitCounterfactual` — 'pending' is the server-assigned initial sentinel, never a
+ * submittable answer. Single source of truth for that action's validation; the UI-only
+ * 'other' sentinel (replaced by free text before it reaches the server) is intentionally
+ * NOT included here — see `CounterfactualAnswer`'s `(string & {})` widening below.
+ */
+export const COUNTERFACTUAL_ANSWERS = [
+	'would_buy',
+	'not_important',
+	'too_expensive',
+	'borrow_elsewhere',
+	'unsure',
+	'skipped',
+] as const satisfies readonly Exclude<CounterfactualAnswer, 'pending'>[];
+
+/**
+ * Safe subset of `User` fields for a conversation's `requester`/`itemOwner` expand —
+ * deliberately excludes `email` and other PII (`User.email` is documented as "should not
+ * be visible publicly"). The conversations `load()`s restrict the expand to exactly this
+ * shape via PocketBase's `fields` param (see `$lib/conversationPartnerFields.ts`'s
+ * `conversationFieldsWithSafePartners()`) — keep both in sync with what `ConversationHeader.svelte`
+ * and `ConversationListItem.svelte` actually read from the expanded user.
+ */
+export interface ConversationPartner {
+	id: string;
+	username: string;
+	/** True if this account has been deleted/anonymized — used by `displayName()`. */
+	deleted?: boolean;
+	profileImage?: string;
+	verified?: boolean;
+	created: string;
+}
+
+/**
+ * Honest wire/record shape of the `conversations` collection: relations are plain ids,
+ * matching what PocketBase actually returns. Expanded relations (when requested via
+ * `expand: '...'`) are available under `expand`, each individually optional since an
+ * expand can be omitted or fail to resolve (e.g. a dangling/deleted `requestedItem`).
+ * For a flattened, dangling-item-safe view-model, see `toConversationDetail()` in
+ * `src/routes/conversations/[conversationId]/conversationDetail.ts`.
+ */
 export interface Conversation extends PocketBaseEntity {
-	requester: User;
-	itemOwner: User;
-	requestedItem: Item;
-	messages: Message[];
+	requester: UserId;
+	itemOwner: UserId;
+	requestedItem: ItemId;
+	messages: MessageId[];
 	readByRequester: boolean;
 	readByOwner: boolean;
 	lendingStatus?: LendingStatus;
-	counterfactual?: CounterfactualAnswer;
+	/** Free text is allowed for the 'other' answer — see `COUNTERFACTUAL_ANSWERS`. */
+	counterfactual?: CounterfactualAnswer | (string & {});
 	lastMessageAt?: string;
 	requesterLastSeenAt?: string;
 	ownerLastSeenAt?: string;
@@ -496,6 +524,13 @@ export interface Conversation extends PocketBaseEntity {
 
 	/** Same as `acceptedAt`, for the first transition into 'completed'. */
 	completedAt?: string;
+
+	expand?: {
+		requester?: ConversationPartner;
+		itemOwner?: ConversationPartner;
+		requestedItem?: Item;
+		messages?: Message[];
+	};
 }
 
 // --- NOTIFICATION ---
@@ -779,4 +814,33 @@ export interface MetricsDaily extends PocketBaseEntity {
 	/** "YYYY-MM-DD", unique per row. */
 	date: string;
 	metrics: DailyMetrics;
+}
+
+/**
+ * Per-institution integration configuration (backend `sync_config` collection, #487).
+ * **Superuser-only**: no client CRUD — rows are managed in the PocketBase admin UI (see the
+ * onboarding runbook). Not exposed through any `*_public` view.
+ *
+ * The single source of truth for integration discovery: the backend cron (full sync + per-item
+ * refresh) and the CSV-import refresh (`/api/import/refresh`) all read it. (The former interim
+ * `users.leihbackendUrl` field was removed in #487 Phase 3.)
+ */
+export interface SyncConfig extends PocketBaseEntity {
+	/** Foreign key: the institution `users` record this config belongs to (cascadeDelete). */
+	institution: UserId;
+
+	/** Which integration serves this institution's source. */
+	integration: 'leihbackend' | 'winbiap';
+
+	/** Source base URL — leihbackend origin, or a WINBIAP WebOPAC base ending in `/webopac`. */
+	baseUrl: string;
+
+	/** Optional human-facing deep-link template with `{id}`/`{iid}` placeholders. */
+	itemUrlTemplate?: string;
+
+	/**
+	 * When false the backend cron skips this institution. In Phase 2 this only affects the cron;
+	 * the manual frontend endpoints ignore it until Phase 3.
+	 */
+	enabled?: boolean;
 }

@@ -2,6 +2,7 @@ import webpush from 'web-push';
 import { VAPID_PRIVATE_KEY, VAPID_SUBJECT } from '$env/static/private';
 import { PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
 import type { NotificationType } from '$lib/types/models.js';
+import { texts } from '$lib/texts';
 import type PocketBase from 'pocketbase';
 
 webpush.setVapidDetails(VAPID_SUBJECT, PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
@@ -58,6 +59,30 @@ export async function createNotification(
 	} catch (err) {
 		console.error('Failed to create notification:', err);
 	}
+}
+
+/**
+ * Creates an in-app notification AND sends the matching push to a recipient in one call —
+ * the pairing every call site needs (previously duplicated between `lending.server.ts`'s
+ * `notifyUser` helper and an inline notification+push pair in `conversation.server.ts`'s
+ * `sendMessage`). Defaults `url` to the conversation the notification is `relatedId` to,
+ * which covers every current call site (all conversation-scoped notification types).
+ */
+export async function notifyAndPush(
+	pb: PocketBase,
+	params: {
+		recipient: string;
+		sender?: string;
+		type: NotificationType;
+		relatedId: string;
+		body: string;
+		url?: string;
+	}
+): Promise<void> {
+	const { recipient, sender, type, relatedId, body } = params;
+	const url = params.url ?? `/conversations/${relatedId}`;
+	await createNotification(pb, recipient, sender, type, relatedId, body);
+	await sendPushToUser(pb, recipient, texts.notifications.pushTitle, body, url);
 }
 
 /**

@@ -50,6 +50,17 @@
 	const PAGE_SIZE = 12;
 	let visibleCount = $state(PAGE_SIZE);
 	const pagedItems = $derived(displayedItems.slice(0, visibleCount));
+
+	// Empty-state message. Only shown while a filter is active — with no filters,
+	// displayedItems === items, which is non-empty wherever this section renders —
+	// so exactly one of the three filter cases applies.
+	const emptyStateMessage = $derived(
+		normalizedSearch !== ''
+			? texts.groups.noItemsForSearch
+			: onlyAvailable
+				? texts.groups.noAvailableItems
+				: texts.groups.noItemsInCategory
+	);
 </script>
 
 <section class="bg-sand border border-tinte-200 rounded-lg shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-6 sm:p-8 space-y-4">
@@ -115,13 +126,7 @@
 
 		{#if displayedItems.length === 0}
 			<p class="text-tinte-500 dark:text-tinte-400 text-sm text-center">
-				{normalizedSearch !== ''
-					? texts.groups.noItemsForSearch
-					: onlyAvailable
-						? texts.groups.noAvailableItems
-						: selectedCategory !== null
-							? texts.groups.noItemsInCategory
-							: texts.groups.noItemsForSearch}
+				{emptyStateMessage}
 			</p>
 		{:else}
 			<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -27,8 +27,6 @@ erDiagram
         string externalLendingInfo "issue #368 — per-institution 'how borrowing works' text for external items (max 1000); public help text surfaced via items_public.ownerExternalLendingInfo"
         string inviteCode
         string invitedBy FK
-        string leihbackendUrl "leihbackend instance origin, for institutional sync"
-        string leihbackendItemUrlTemplate "deep-link template, {id}/{iid} placeholders"
         string tosAcceptedVersion "legal-consent cache (Issue #399) — server-only"
         string privacyAcceptedVersion "legal-consent cache — server-only"
         bool legalLocked "decline lock — set/cleared only by backend hooks"
@@ -284,7 +282,19 @@ erDiagram
         date updated
     }
 
+    SYNC_CONFIG{
+        string id PK
+        User institution FK "cascadeDelete — the institution this config belongs to"
+        string integration "select: leihbackend | winbiap"
+        string baseUrl "source base URL (leihbackend origin, or WINBIAP WebOPAC base ending /webopac)"
+        string itemUrlTemplate "optional deep-link template, {id}/{iid} placeholders"
+        bool enabled "false → backend cron skips this institution (manual endpoints ignore it until Phase 3)"
+        date created
+        date updated
+    }
+
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
+    USER 1 to zero or more SYNC_CONFIG: configures
 
     METRICS_DAILY{
         string id PK
@@ -323,16 +333,32 @@ metadata from the base column, so view migrations are never needed for a categor
 2. **Backend test:** update `CANONICAL_CATEGORIES` in `tests/categories.test.mjs`; run
    `npm test`.
 3. **Frontend:** update `ITEM_CATEGORIES` in `src/lib/categories.ts` (order = UI order).
-4. **Compile-time ripples** surface via `npm run check`:
-   `src/lib/utils/categoryPlaceholder.ts` needs a placeholder SVG per category, and
-   `CATEGORY_MAP` in `src/lib/server/integrations/leihbackend/mapping.ts` must be
-   reviewed (`'Sonstiges'` is its fallback and must always exist).
+4. **Compile-time ripple** surfaces via `npm run check`:
+   `src/lib/utils/categoryPlaceholder.ts` needs a placeholder SVG per category. Separately,
+   `CATEGORY_MAP` in the backend `Allerleih-Backend/pb_hooks/integrations/leihbackend.js` must be
+   reviewed by hand (Goja, not type-checked here — `'Sonstiges'` is its fallback and must always exist).
 5. **Auto-following consumers** need no edits: the AI prompt in
    `src/routes/api/analyze-item/+server.ts` joins the array, and the WINBIAP CSV import
    validates against it.
 6. **Docs:** update this section and any doc citing the values or their count.
 7. Run both suites: frontend `npm run check && npm run lint && npx vitest run`; backend
    `npm test`.
+
+## sync_config
+
+Per-institution integration configuration (#487), the **single source of truth** for integration
+discovery (it replaced the former overloaded `users.leihbackendUrl` field, removed in Phase 3). One
+row per source type per institution (unique index on `(institution, integration)`); `integration`
+is a select of `leihbackend | winbiap`. **Superuser-only** — all five API rules are `null` (not
+`""`), so no authenticated user can read or write it; rows are managed in the PocketBase admin UI
+(see `operations/onboarding-institutional-partner.md`). It is **not** exposed by any `*_public` view.
+
+Everything reads `sync_config`: the **backend cron** (`integration_sync` full pull +
+`integration_refresh` per-item) and the CSV-import on-demand refresh (`POST /api/import/refresh`).
+`enabled=false` pauses the backend cron for that institution. Fields: `institution` (→ users,
+cascadeDelete), `integration`, `baseUrl`, `itemUrlTemplate`, `enabled`. A one-time backfill migration
+(`pb_hooks/services/syncConfig.js` → `backfillSyncConfigs`) seeded rows from the historical
+`users.leihbackendUrl` values (`/webopac` → `winbiap`, else `leihbackend`, `enabled=true`).
 
 ## user_geolocations
 

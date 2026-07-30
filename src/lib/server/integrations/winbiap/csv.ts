@@ -1,11 +1,33 @@
 import Papa from 'papaparse';
 import { texts } from '$lib/texts';
 import { ITEM_CATEGORIES } from '$lib/categories';
-import type { MappedItem } from '../core/types';
+import type { Item } from '$lib/types/models';
 
 const csvErrors = texts.institutional.importCsvErrors;
 
 export type ImportStatus = 'available' | 'unavailable' | 'unknown';
+
+/**
+ * The item fields the CSV import produces for one row — the synced content fields plus `owner`,
+ * `trusteesOnly`, and the `externalId` upsert key. Sent (minus `owner`) to the backend
+ * `/api/import/*` endpoints, which stamp the owner and run the authoritative diff/write.
+ *
+ * #487 Phase 3: this used to live in `integrations/core/types.ts` (`MappedItem`); that whole core
+ * layer moved to the backend (`pb_hooks/integrations/`), so the shape now lives here beside its
+ * only remaining producer. It must stay field-compatible with the backend's `SYNCED_FIELDS`.
+ */
+export type MappedItem = Pick<
+	Item,
+	| 'name'
+	| 'description'
+	| 'status'
+	| 'categories'
+	| 'externalUrl'
+	| 'externalImgUrl'
+	| 'place'
+	| 'owner'
+	| 'trusteesOnly'
+> & { externalId: string };
 export type RowAction = 'create' | 'update' | 'skip' | 'archive';
 
 /** One validated CSV row, before being mapped to a core `MappedItem`. */
@@ -191,8 +213,9 @@ export function parseAndMapCsv(csvText: string, ownerId: string): ParseAndMapRes
 	const mappedRows: MappedRow[] = [];
 	const rowErrors: RowResult[] = [];
 	// Keep-last dedupe: a duplicate externalId must yield exactly one MappedRow, otherwise a
-	// first import would issue two creates for the same (owner, externalId) and fail the
-	// whole write batch on the unique index.
+	// first import would issue two creates for the same (owner, externalId) — and since `items`
+	// has NO unique index on externalId, that means two silent duplicates rather than an error.
+	// The backend dedupes the same way (`prepareRows`); this copy keeps the preview honest.
 	const rowByExternalId = new Map<string, MappedRow>();
 
 	rows.forEach((raw, i) => {

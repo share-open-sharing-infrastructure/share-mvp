@@ -35,13 +35,43 @@ export function nextPushRegistration(
 	return { register: false, lastRegisteredUserId };
 }
 
+/** `serviceWorker.ready` can hang indefinitely if the SW never activates, so every
+ *  caller races it against a 10 s failsafe to avoid a silent hang. */
+function swReady(): Promise<ServiceWorkerRegistration> {
+	const timeout = new Promise<never>((_, reject) =>
+		setTimeout(() => reject(new Error('serviceWorker.ready timeout')), 10000)
+	);
+	return Promise.race([navigator.serviceWorker.ready, timeout]);
+}
+
+/** DELETE against /api/push-subscribe, bounded to 4 s. Callers (e.g. logout, the
+ *  notification-settings toggles) await the teardown, and a slow or hanging
+ *  connection must not stall them. The local unsubscribe has already detached this
+ *  device before this runs, so aborting doesn't weaken the guarantee — the server
+ *  record is also cleaned up lazily on the next push (410 Gone) if the request
+ *  never lands. */
+async function boundedUnsubscribeRequest(body: Record<string, unknown>): Promise<void> {
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 4000);
+	try {
+		await fetch('/api/push-subscribe', {
+			method: 'DELETE',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify(body),
+			signal: controller.signal,
+		});
+	} finally {
+		clearTimeout(timeout);
+	}
+}
+
 /** Sets up the Web Push subscription and registers it with the server.
  *  Called either silently (permission already granted) or after the user
  *  taps "Aktivieren" (satisfying the user-gesture requirement). */
 export async function setupPushSubscription(): Promise<void> {
 	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 	try {
-		const registration = await navigator.serviceWorker.ready;
+		const registration = await swReady();
 		const existing = await registration.pushManager.getSubscription();
 		const subscription =
 			existing ??
@@ -71,16 +101,12 @@ export async function setupPushSubscription(): Promise<void> {
 export async function teardownAllPushSubscriptions(): Promise<void> {
 	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 	try {
-		const registration = await navigator.serviceWorker.ready;
+		const registration = await swReady();
 		const subscription = await registration.pushManager.getSubscription();
 		if (subscription) {
 			await subscription.unsubscribe();
 		}
-		await fetch('/api/push-subscribe', {
-			method: 'DELETE',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({ all: true }),
-		});
+		await boundedUnsubscribeRequest({ all: true });
 	} catch (err) {
 		console.error('Push unsubscription (all devices) failed:', err);
 	}
@@ -91,29 +117,12 @@ export async function teardownAllPushSubscriptions(): Promise<void> {
 export async function teardownPushSubscription(): Promise<void> {
 	if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 	try {
-		const registration = await navigator.serviceWorker.ready;
+		const registration = await swReady();
 		const subscription = await registration.pushManager.getSubscription();
 		if (!subscription) return;
 
 		await subscription.unsubscribe();
-
-		// Bound the server round-trip: callers (e.g. logout) await this, and a slow
-		// or hanging connection must not stall them. The local unsubscribe above has
-		// already detached this device, so aborting the DELETE doesn't weaken the
-		// guarantee — the server record is also cleaned up lazily on the next push
-		// (410 Gone) if this request never lands.
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), 4000);
-		try {
-			await fetch('/api/push-subscribe', {
-				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ endpoint: subscription.endpoint }),
-				signal: controller.signal,
-			});
-		} finally {
-			clearTimeout(timeout);
-		}
+		await boundedUnsubscribeRequest({ endpoint: subscription.endpoint });
 	} catch (err) {
 		console.error('Push unsubscription failed:', err);
 	}

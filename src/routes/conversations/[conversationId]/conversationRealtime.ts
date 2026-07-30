@@ -1,5 +1,5 @@
 import type PocketBase from 'pocketbase';
-import { subscribeRealtime } from '$lib/client-pb';
+import { subscribeRealtime } from '$lib/realtime';
 import type { Conversation, Message } from '$lib/types/models';
 
 /**
@@ -17,7 +17,10 @@ import type { Conversation, Message } from '$lib/types/models';
  *
  * @param pb             Shared client PocketBase instance (from `getClientPB()`).
  * @param conversationId Record id of the conversation to subscribe to.
- * @param accessors      Read/write hooks for the caller's reactive state.
+ * @param accessors      Read/write hooks for the caller's reactive state, plus `onReadState`:
+ *   a notification (not a state mirror) carrying the record's `readByRequester`/`readByOwner`
+ *   on every update event, so the caller can re-assert read-state while the thread is open —
+ *   an incoming message flips the recipient's flag back to `false` server-side (issue #412).
  * @param onReconnect    Optional callback run after the stream reconnects —
  *   messages sent while the stream was down are not replayed, so the caller
  *   should refetch (e.g. `invalidateAll()`). Fixes the "doesn't update for one
@@ -36,11 +39,12 @@ export function subscribeConversation(
 		setMessages: (next: Message[]) => void;
 		setLendingStatus: (s: Conversation['lendingStatus']) => void;
 		setCounterfactual: (c: Conversation['counterfactual']) => void;
+		onReadState: (flags: { readByRequester: boolean; readByOwner: boolean }) => void;
 	},
 	onReconnect?: () => void,
 	expectsHeartbeat?: boolean
 ): () => void {
-	const { getMessages, setMessages, setLendingStatus, setCounterfactual } = accessors;
+	const { getMessages, setMessages, setLendingStatus, setCounterfactual, onReadState } = accessors;
 
 	return subscribeRealtime<Conversation>({
 		collection: 'conversations',
@@ -56,23 +60,45 @@ export function subscribeConversation(
 				setCounterfactual(event.record.counterfactual || undefined);
 			}
 
-			// Extract the last message id from the updated conversation record.
+			// Report the record's read flags on every update — the caller re-asserts read-state
+			// from them while the thread is open (issue #412; see `onReadState` above). Both
+			// flags must be real booleans: a record that omits them must never be read as
+			// "unread", or every event (incl. the 15 s heartbeat echo) would trigger a re-mark.
+			if (
+				typeof event.record.readByRequester === 'boolean' &&
+				typeof event.record.readByOwner === 'boolean'
+			) {
+				onReadState({
+					readByRequester: event.record.readByRequester,
+					readByOwner: event.record.readByOwner,
+				});
+			}
+
+			// A coalesced/batched SSE event can carry more than one new message at once
+			// (e.g. two messages sent in quick succession before the client processes the
+			// first event) — fetch every id not already held locally, not just the last one,
+			// or earlier messages in the same batch are silently dropped until the next full
+			// reload.
 			const messageIds = event.record.messages as unknown as string[] | undefined;
-			const lastMessageId = messageIds?.[messageIds.length - 1];
+			if (!messageIds || messageIds.length === 0) return;
 
-			// Skip fetch if there's no new message or we already have it.
-			if (!lastMessageId || getMessages().some((m) => m.id === lastMessageId)) return;
+			const existingIds = new Set(getMessages().map((m) => m.id));
+			const newIds = messageIds.filter((id) => !existingIds.has(id));
 
-			// Get the last message's contents from PocketBase.
+			// Skip fetch if there's nothing new.
+			if (newIds.length === 0) return;
+
+			// Get the new messages' contents from PocketBase, in their conversation order.
 			try {
-				const latestMessage = await pb.collection('messages').getOne<Message>(lastMessageId);
-				// Deduplicate: a server reload via use:enhance may have already added this
-				// message while the fetch was in flight.
-				if (!getMessages().some((m) => m.id === latestMessage.id)) {
-					setMessages([...getMessages(), latestMessage]);
+				const newMessages = await Promise.all(newIds.map((id) => pb.collection('messages').getOne<Message>(id)));
+				// Deduplicate: a server reload via use:enhance may have already added some of
+				// these messages while the fetch was in flight.
+				const stillMissing = newMessages.filter((m) => !getMessages().some((existing) => existing.id === m.id));
+				if (stillMissing.length > 0) {
+					setMessages([...getMessages(), ...stillMissing]);
 				}
 			} catch (error) {
-				console.error('Failed to fetch last message record:', error);
+				console.error('Failed to fetch new message records:', error);
 			}
 		},
 		onReconnect,

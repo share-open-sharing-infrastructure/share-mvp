@@ -56,8 +56,12 @@ PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- 
 
 Required in `.env` (see `docs/architecture.md` for what each does; template: `.env.example`):
 `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
-`MISTRAL_API_KEY` (prod only). Integration sync (`/api/sync`, `/api/refresh`; see
-`docs/operations/integration-sync.md`): `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`.
+`MISTRAL_API_KEY` (prod only), `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`. The superuser
+credentials are read at runtime by `$lib/server/superuser.ts` (`getSuperuserClient`), which backs
+the superuser-only `metrics_daily` reads in `$lib/server/metrics.ts`; local tooling (seed scripts,
+Playwright e2e) reads the same two vars via `process.env`. `SYNC_SECRET` is **gone** as of #487
+Phase 3 — the integrations run entirely in the backend, so the frontend holds no sync secret and
+no `/api/sync`/`/api/refresh` endpoints.
 For personal local overrides (local ports, sandbox creds) that shouldn't be shared with the team,
 use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this file.
 
@@ -95,6 +99,15 @@ These prevent the most common bugs/security issues here — follow them without 
   position) via `class`, never colors. → `docs/design-system.md`
 - **Never render `user.username` directly** for any user who might be deleted — use
   `displayName()` from `$lib/utils/utils.ts` instead.
+- **Place components by usage scope, not habit.** Single-use → co-locate flat in the route folder
+  (e.g. `src/routes/items/[id]/LinkifiedText.svelte`). A cluster of components local to one route
+  (or route subtree) → a `components/` subfolder under it (e.g. `src/routes/components/`,
+  `src/routes/auth/components/`). Used across unrelated route subtrees → `src/lib/components`
+  (design-system primitives in `ui/`). → `/new-route` scaffolds new routes with this baked in.
+- **Resolve internal navigation with `resolve()` from `$app/paths` at the call site**, in route-ID
+  form (`resolve('/users/[id]', { id })`) — never template-string interpolation, never a wrapper.
+  Query/hash go inside the `resolve()` arg; static `static/` files use `asset()`. Only builders
+  (`buildSearchUrl`/`notificationHref`) and external/user URLs are exempt. → `docs/best-practices.md`
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
   `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
   Authentication loads PocketBase auth from cookies and refreshes the token. Authorization
@@ -118,8 +131,8 @@ These prevent the most common bugs/security issues here — follow them without 
 | Writing tests + PocketBase mocks | `docs/testing-strategy.md` |
 | UI strings / categories | `docs/text-management.md`, `src/lib/texts.ts` |
 | Groups: roles, public/self-join, visibility model | `docs/groups.md` |
-| Partner catalogue integrations (leihbackend, WINBIAP), `/api/sync` + `/api/refresh`, adding a new integration | `docs/integrations.md`; leihbackend API reference: `docs/leihbackend-integration-spec.md` |
-| Operating the sync/refresh endpoints (env vars, cron, failure modes) | `docs/operations/integration-sync.md` |
+| Partner catalogue integrations (leihbackend, WINBIAP); CSV import writes via `/api/import/*`; adding a new integration | `docs/integrations.md`; leihbackend API reference: `docs/leihbackend-integration-spec.md` |
+| Operating the integration sync/refresh cron + CSV import (all backend-run; discovery via `sync_config`) | `docs/operations/integration-sync.md` |
 | Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
 | Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
 | Business metrics (`/admin/metrics`, `/misc/stats`, the nightly `metrics_daily` snapshot) | `docs/operations/metrics.md`; helper in `$lib/server/metrics.ts` |

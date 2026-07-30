@@ -2,17 +2,15 @@
 	// Imports for pocketbase real-time subcription
 	import type PocketBase from 'pocketbase';
 	import { onMount } from 'svelte';
-	import { enhance } from '$app/forms';
 	import { invalidate, invalidateAll } from '$app/navigation';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
-	import { PUBLIC_PB_URL } from '$env/static/public';
 	import { getClientPB } from '$lib/client-pb';
 	import { realtimeSynced } from '$lib/stores/realtimeSynced.svelte';
 	import { subscribeConversation } from './conversationRealtime';
+	import { stickToBottom } from './chatScroll';
+	import { startPresenceHeartbeat } from './presenceHeartbeat';
 
 	// Other imports
-	import { Modal, Input } from 'flowbite-svelte';
-	import Button from '$lib/components/ui/Button.svelte';
 	import MessageElement from './MessageElement.svelte';
 	import { displayName } from '$lib/utils/utils';
 	import { ABORTABLE_LENDING_STATES, isLendingStatusIn } from '$lib/lending';
@@ -21,6 +19,7 @@
 	import MessageForm from './MessageForm.svelte';
 	import LendingStatusBar from './LendingStatusBar.svelte';
 	import CounterfactualModal from './CounterfactualModal.svelte';
+	import ConfirmActionModal from './ConfirmActionModal.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	// Props and state variables
@@ -44,7 +43,6 @@
 			? data.conversation.requester
 			: data.conversation.itemOwner
 	);
-	let messageText: string = $state('');
 
 	// UI state variables
 	let deleteConversationModal = $state(false);
@@ -63,58 +61,27 @@
 	let showCounterfactualModal = $derived(
 		counterfactual.value === 'pending' && !loggedInUserIsItemOwner
 	);
-	let isSubmitting: boolean = $state(false);
-	let chatWindow: HTMLDivElement;
-
-	function scrollToBottom(smooth = true) {
-		if (!chatWindow) return;
-		chatWindow.scrollTo({
-			top: chatWindow.scrollHeight,
-			behavior: smooth ? 'smooth' : 'auto',
-		});
-	}
-
-	// Scroll chat window to bottom when messages change
-	$effect(() => {
-		if (messages.value && messages.value.length > 0 && chatWindow) {
-			setTimeout(() => scrollToBottom(true), 0);
-		}
-	});
 
 	// Grab the shared client once mounted.
 	// Must be $state so the subscription $effect re-runs when pb is set.
 	let pb: PocketBase | undefined = $state();
 	onMount(() => {
 		pb = getClientPB();
-
-		// Keep the newest messages in view when the visual viewport changes height — e.g.
-		// when the mobile keyboard opens and the layout shrinks the chat container. The
-		// container is resized by the layout's own resize handler, which runs in the same
-		// event; scrolling synchronously here would target the pre-resize height (a no-op)
-		// and leave the latest messages hidden below the raised input bar. Defer with rAF
-		// so we scroll after the resize + reflow, then once more after the open/close
-		// animation settles.
-		// Also re-scroll after the layout's cold-load height correction (push/share link,
-		// reload): that correction fires on window `load` / `orientationchange` — not
-		// necessarily via a vv resize — so mirror those triggers here to land at the bottom
-		// once the container has grown to its settled height.
-		const vv = window.visualViewport;
-		let settleTimer: ReturnType<typeof setTimeout>;
-		const keepAtBottom = () => {
-			requestAnimationFrame(() => scrollToBottom(false));
-			clearTimeout(settleTimer);
-			settleTimer = setTimeout(() => scrollToBottom(false), 150);
-		};
-		vv?.addEventListener('resize', keepAtBottom);
-		window.addEventListener('load', keepAtBottom);
-		window.addEventListener('orientationchange', keepAtBottom);
-		return () => {
-			vv?.removeEventListener('resize', keepAtBottom);
-			window.removeEventListener('load', keepAtBottom);
-			window.removeEventListener('orientationchange', keepAtBottom);
-			clearTimeout(settleTimer);
-		};
 	});
+
+	// Marks this conversation read server-side (the viewer's read flag + this thread's unread
+	// notifications) and resyncs the nav badge. Fire-and-forget: a failed mark-read must never
+	// block the page. The POST targets the CURRENT conversation by explicit path so a mid-flight
+	// client-side navigation can't retarget the wrong thread. Deliberately NOT invalidateAll():
+	// that re-runs every load (incl. this page's own), which tears down and recreates the
+	// realtime subscription and makes PocketBase auto-cancel its getList; the conversation
+	// list's unread dot already updates from the realtime `conversations` event echoed by
+	// markRead.
+	function markRead(id: string) {
+		fetch(`/conversations/${id}?/markRead`, { method: 'POST', body: new FormData() })
+			.then(() => invalidate(NOTIFICATIONS_DEP))
+			.catch(() => {});
+	}
 
 	// Set up real-time subscription. The merge/refetch/dedupe logic lives in the
 	// co-located conversationRealtime helper (issue #469).
@@ -130,6 +97,18 @@
 				setMessages: (next) => (messages.value = next),
 				setLendingStatus: (s) => (lendingStatus.value = s),
 				setCounterfactual: (c) => (counterfactual.value = c),
+				// Re-assert read-state while the thread is open: a message from the chat
+				// partner flips MY read flag back to false server-side (sendMessage), and the
+				// open-mark effect below only runs on mount — so without this the thread pops
+				// back to unread in the list while the reader is looking at it. Sending our own
+				// markRead echoes the flag back as true, so this cannot loop, and the 15 s
+				// presence heartbeat echo makes it self-healing if a POST was ever lost.
+				// No visibility gate, deliberately: "the page is open" is the same signal the
+				// layout's notification auto-read already uses for the open conversation.
+				onReadState: ({ readByRequester, readByOwner }) => {
+					if (loggedInUserIsItemOwner ? readByOwner : readByRequester) return;
+					markRead(conversationId);
+				},
 			},
 			// Messages sent while the stream was down (e.g. the phone was asleep)
 			// aren't replayed by realtime — refetch the conversation on reconnect
@@ -144,42 +123,26 @@
 		);
 	});
 
-	// Mark the conversation as read once it is actually opened. Read-state is no longer
-	// touched in load() because load() runs on hover-preload
-	// (data-sveltekit-preload-data="hover"), which would mark threads read on mere hover
-	// (issue #412). Fire-and-forget: the POST targets the CURRENT conversation by explicit
-	// path so a mid-flight client-side nav can't retarget the wrong thread; on success we
-	// invalidate(NOTIFICATIONS_DEP) to resync the nav unread badge. We deliberately do NOT
-	// invalidateAll() here — that re-runs every load (incl. this page's own), which tears
-	// down and recreates the realtime getList and makes PocketBase auto-cancel it; the
-	// conversation list's unread dot already updates from the realtime `conversations`
-	// update echoed by markRead. This effect intentionally reads ONLY `pb` (mounted gate)
-	// and `conversationId` — adding other reactive reads would make it re-fire and re-mark.
+	// Mark the conversation as read once it is actually OPENED. Read-state is no longer touched
+	// in load() because load() runs on hover-preload (data-sveltekit-preload-data="hover"),
+	// which flipped threads to read on mere hover (issue #412). Unconditional (not gated on the
+	// loaded read flag) because markRead also clears this thread's unread notifications, which
+	// can outlive a read conversation — a lending-status notification never flips readBy*.
+	// This effect intentionally reads ONLY `pb` (mounted gate) and `conversationId` — adding
+	// other reactive reads would make it re-fire and re-mark.
 	$effect(() => {
 		if (!pb) return;
-		const id = conversationId;
-		fetch(`/conversations/${id}?/markRead`, { method: 'POST', body: new FormData() })
-			.then(() => invalidate(NOTIFICATIONS_DEP))
-			.catch(() => {});
+		markRead(conversationId);
 	});
 
 	// Presence heartbeat: periodically update the lastSeenAt timestamp so the backend
-	// knows the user is actively viewing this conversation and can suppress email notifications.
+	// knows the user is actively viewing this conversation and can suppress email
+	// notifications. See presenceHeartbeat.ts for the cadence/field-name/SSE-watchdog
+	// contract this must preserve.
 	$effect(() => {
 		if (!pb) return;
 		const field = loggedInUserIsItemOwner ? 'ownerLastSeenAt' : 'requesterLastSeenAt';
-
-		const ping = () => {
-			if (document.visibilityState !== 'visible') return;
-			pb!.collection('conversations').update(conversationId, {
-				[field]: new Date().toISOString(),
-			}).catch(() => {});
-		};
-
-		// Ping immediately on mount, then every 15 seconds
-		ping();
-		const interval = setInterval(ping, 15_000);
-		return () => clearInterval(interval);
+		return startPresenceHeartbeat(pb, conversationId, field);
 	});
 </script>
 
@@ -188,7 +151,6 @@
 <ConversationHeader
 	{chatPartner}
 	conversation={data.conversation}
-	PB_URL={PUBLIC_PB_URL}
 	onDelete={canDelete ? () => (deleteConversationModal = true) : undefined}
 	{loggedInUserIsItemOwner}
 	partnerContact={data.partnerContact}
@@ -203,7 +165,7 @@
 
 <!-- Messages list -->
 <div
-	bind:this={chatWindow}
+	use:stickToBottom={messages.value}
 	class="flex flex-col flex-1 overflow-auto px-4 py-4 gap-0.5 bg-papier dark:bg-tinte-900"
 >
 	{#if lendingStatus.value === 'pending' && messages.value.length === 0 && !loggedInUserIsItemOwner}
@@ -212,12 +174,12 @@
 		>
 			{texts.lending.statusDescription.pending.requesterNudge(
 				displayName(chatPartner),
-				data.conversation.requestedItem.name
+				data.conversation.requestedItem?.name ?? texts.ui.itemUnavailable
 			)}
 		</p>
 	{/if}
 	{#each messages.value as message (message.id)}
-		<MessageElement {message} isFromCurrentUser={data.currentUser?.id} />
+		<MessageElement {message} isSent={message.from === data.currentUser?.id} />
 	{/each}
 </div>
 
@@ -225,42 +187,24 @@
 <div
 	class="border-t border-tinte-100 dark:border-tinte-800 bg-white dark:bg-tinte-900 px-4 py-3"
 >
-	<MessageForm {chatPartner} bind:isSubmitting bind:messageText />
+	<MessageForm />
 </div>
 
-<CounterfactualModal
-	open={showCounterfactualModal}
-	conversationId={data.conversation.id}
+<CounterfactualModal open={showCounterfactualModal} />
+
+<ConfirmActionModal
+	bind:open={deleteConversationModal}
+	title={texts.lending.confirmDelete.title}
+	body={texts.lending.confirmDelete.body}
+	confirmLabel={texts.lending.confirmDelete.confirm}
+	action="?/deleteConversation"
 />
 
-<Modal title="Anfrage löschen" form bind:open={deleteConversationModal}>
-	Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung
-	gehen dabei verloren.
-
-	<form
-		class="flex justify-end ml-2"
-		method="POST"
-		action="?/deleteConversation"
-	>
-		<Input name="conversationId" value={data.conversation.id} hidden></Input>
-		<Button variant="danger" type="submit">Anfrage löschen</Button>
-	</form>
-</Modal>
-
-<Modal title={texts.lending.confirmAbort.title} form bind:open={abortRequestModal}>
-	{texts.lending.confirmAbort.body}
-
-	<form
-		class="flex justify-end gap-2 ml-2"
-		method="POST"
-		action="?/abortRequest"
-		use:enhance={() =>
-			async ({ update }) => {
-				abortRequestModal = false;
-				await update();
-			}}
-	>
-		<Input name="conversationId" value={data.conversation.id} hidden></Input>
-		<Button variant="danger" type="submit">{texts.lending.confirmAbort.confirm}</Button>
-	</form>
-</Modal>
+<ConfirmActionModal
+	bind:open={abortRequestModal}
+	title={texts.lending.confirmAbort.title}
+	body={texts.lending.confirmAbort.body}
+	confirmLabel={texts.lending.confirmAbort.confirm}
+	action="?/abortRequest"
+	onConfirm={() => (abortRequestModal = false)}
+/>

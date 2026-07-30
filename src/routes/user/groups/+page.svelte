@@ -43,7 +43,7 @@
 			<p class="text-sm text-tinte-400">{texts.groups.noOwnedGroups}</p>
 		{:else}
 			{#each data.owned as g (g.id)}
-				<a href={resolve(`/user/groups/${g.id}`)} class="block">
+				<a href={resolve('/user/groups/[id]', { id: g.id })} class="block">
 					<Card class="w-full max-w-none flex-row items-center justify-between p-4 hover:shadow-md transition">
 						<div class="flex items-center gap-3">
 							<UsersGroupOutline class="h-6 w-6 text-accent" />
@@ -74,7 +74,7 @@
 		{:else}
 			{#each data.member as g (g.id)}
 				<Card class="w-full max-w-none flex-row items-center justify-between p-4">
-					<a href={resolve(`/user/groups/${g.id}`)} class="flex flex-1 items-center gap-3 hover:underline">
+					<a href={resolve('/user/groups/[id]', { id: g.id })} class="flex flex-1 items-center gap-3 hover:underline">
 						<UsersGroupOutline class="h-6 w-6 text-tinte-400" />
 						<div>
 							<p class="font-semibold text-tinte-900">

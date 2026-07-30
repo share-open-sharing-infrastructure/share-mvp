@@ -23,8 +23,6 @@ const unprotectedPrefix = [
 	'/sitemap.xml',
 	'/api/redirect',
 	'/api/diagnostics',
-	'/api/sync',
-	'/api/refresh',
 ];
 
 // Paths exempt from the legal-consent gate (Issue #399) — otherwise a not-yet-
@@ -108,7 +106,8 @@ export const authorization: Handle = async ({ event, resolve }) => {
 
 export const handle = sequence(authentication, authorization);
 
-// TODO: Check if this is used anywhere implicitly
+// Standard SvelteKit hook: the framework calls this for every unhandled error
+// during request processing — the log line below is our only server-side trace.
 export function handleError({ error, event }): void {
 	console.error('Error occurred during request processing:', {
 		error,

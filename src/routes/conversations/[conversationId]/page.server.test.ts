@@ -1,162 +1,174 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// +page.server reads PUBLIC_PB_URL at import time.
-vi.mock('$env/static/public', () => ({
-	PUBLIC_PB_URL: 'http://localhost/',
-	PUBLIC_VAPID_PUBLIC_KEY: 'x',
-}));
-// Partner contact resolution is exercised by its own suite; stub it.
-vi.mock('$lib/server/contacts', () => ({ fetchPartnerContact: vi.fn(async () => null) }));
-// Lending-flow action helpers have their own suite; stub the whole module.
-vi.mock('./lending.server.js', () => ({
-	acceptRequest: vi.fn(),
-	rejectRequest: vi.fn(),
-	abortRequest: vi.fn(),
-	confirmHandover: vi.fn(),
-	requestReturn: vi.fn(),
-	confirmReturn: vi.fn(),
-}));
-// Messaging helpers — spy on the participant-fetch + markConversationRead; the others are
-// unused here. NotParticipantError must be a real class so the action's `instanceof` check works.
-const { markConversationRead, fetchConversationForParticipant, NotParticipantError, toActionFailResult } =
-	vi.hoisted(() => {
-		class NotParticipantError extends Error {}
-		return {
-			markConversationRead: vi.fn(),
-			fetchConversationForParticipant: vi.fn(),
-			NotParticipantError,
-			toActionFailResult: vi.fn(),
-		};
-	});
-vi.mock('./conversation.server.js', () => ({
-	markConversationRead,
-	fetchConversationForParticipant,
-	NotParticipantError,
-	toActionFailResult,
-	sendMessage: vi.fn(),
-	toggleItemStatus: vi.fn(),
-	deleteConversation: vi.fn(),
-}));
-
-import { fail } from '@sveltejs/kit';
-import { load, actions } from './+page.server';
+import { conversationFieldsWithSafePartners } from '$lib/conversationPartnerFields';
+import { makeMockPb } from '$lib/test-utils/pocketbase';
 import { texts } from '$lib/texts';
 
-// Faithful stand-in for the real helper (its module is mocked above): translate a
-// NotParticipantError to fail(403, …) via the mock's own class, everything else to the
-// caller-supplied fallback message. Mirrors conversation.server.ts#toActionFailResult.
-toActionFailResult.mockImplementation((err: unknown, fallbackMessage: string) => {
-	if (err instanceof NotParticipantError) {
-		return fail(403, { fail: true, message: texts.errors.noPermission });
-	}
-	const status = (err as { status?: number })?.status ?? 500;
-	return fail(status, { fail: true, message: fallbackMessage });
-});
+// Avoid loading the real notifications module (web-push + VAPID env) at import time —
+// pulled in transitively via ./lending.server.js and ./conversation.server.js.
+vi.mock('$lib/server/notifications.js', () => ({
+	createNotification: vi.fn(),
+	sendPushToUser: vi.fn(),
+	isMessageNotificationThrottled: vi.fn(),
+	notifyAndPush: vi.fn(),
+}));
 
-const REQUESTER_ID = 'userA';
-const OWNER_ID = 'userB';
-const CONV_ID = 'conv1';
+// Contact resolution is exercised by its own suite; stub it here so `load()` doesn't need a
+// real `user_contacts` collection wired into the mock pb.
+vi.mock('$lib/server/contacts', () => ({
+	fetchPartnerContact: vi.fn().mockResolvedValue(null),
+}));
 
-/** A conversation record as returned by conversations.getOne (unread for the requester). */
-function convRecord(extra: Record<string, unknown> = {}) {
+import { load, actions } from './+page.server';
+
+const REQUESTER = 'userA';
+const OWNER = 'userB';
+
+function conversationRecord(overrides: Record<string, unknown> = {}) {
 	return {
-		id: CONV_ID,
-		requester: REQUESTER_ID,
-		itemOwner: OWNER_ID,
-		readByRequester: false,
+		id: 'conv1',
+		requester: REQUESTER,
+		itemOwner: OWNER,
+		requestedItem: 'item1',
+		lendingStatus: 'pending',
+		readByRequester: true,
 		readByOwner: true,
+		created: '2026-01-01',
+		updated: '2026-01-01',
 		expand: {
-			requester: { id: REQUESTER_ID },
-			itemOwner: { id: OWNER_ID },
+			requester: { id: REQUESTER, username: 'requesterName', deleted: false },
+			itemOwner: { id: OWNER, username: 'ownerName', deleted: false },
 			requestedItem: { id: 'item1', name: 'Bohrmaschine' },
 			messages: [],
 		},
-		...extra,
+		...overrides,
 	};
 }
 
-function makeEvent(opts: {
-	user: Record<string, unknown> | null;
-	getOne?: ReturnType<typeof vi.fn>;
-}) {
-	const getOne = opts.getOne ?? vi.fn(async () => convRecord());
-	const update = vi.fn(async () => ({}));
-	const getFullList = vi.fn(async () => []);
-	const pb = {
-		collection: vi.fn(() => ({ getOne, update, getFullList })),
-		filter: vi.fn((raw: string) => raw),
-	};
-	return {
-		locals: { pb, user: opts.user },
-		params: { conversationId: CONV_ID },
-		request: { formData: async () => new FormData() },
-		__pb: pb,
-		__update: update,
-	} as unknown as Parameters<typeof load>[0] & {
-		__pb: typeof pb;
-		__update: ReturnType<typeof vi.fn>;
-	};
-}
+describe('conversations/[conversationId] load()', () => {
+	it("requests the requester/itemOwner expand restricted to conversationFieldsWithSafePartners' safe subset (never email)", async () => {
+		const getOne = vi.fn().mockResolvedValue(conversationRecord());
+		const pb = makeMockPb({
+			conversations: { getOne, update: vi.fn() },
+			notifications: { getFullList: vi.fn().mockResolvedValue([]) },
+		});
 
-const asAction = (e: ReturnType<typeof makeEvent>) => e as unknown as Parameters<typeof actions.markRead>[0];
-const updateOf = (e: ReturnType<typeof makeEvent>) => e.__update;
+		await load({
+			params: { conversationId: 'conv1' },
+			locals: { pb, user: { id: REQUESTER } },
+		} as unknown as Parameters<typeof load>[0]);
 
-beforeEach(() => {
-	markConversationRead.mockClear();
-	fetchConversationForParticipant.mockReset();
-});
-
-describe('load', () => {
-	it('does NOT mutate read-state (no conversations.update) — regression for hover-preload #412', async () => {
-		// The viewer is the requester and the thread is unread for them; the old code
-		// would have flipped readByRequester here. load() must now leave it untouched.
-		const event = makeEvent({ user: { id: REQUESTER_ID } });
-		const data = await load(event);
-
-		expect(updateOf(event)).not.toHaveBeenCalled();
-		expect(markConversationRead).not.toHaveBeenCalled();
-		expect(data.conversation.id).toBe(CONV_ID);
-	});
-});
-
-describe('markRead action', () => {
-	it('fails 401 when unauthenticated', async () => {
-		const event = makeEvent({ user: null });
-		const result = await actions.markRead(asAction(event));
-		expect(result).toMatchObject({ status: 401, data: { message: texts.errors.noPermission } });
-		expect(fetchConversationForParticipant).not.toHaveBeenCalled();
-		expect(markConversationRead).not.toHaveBeenCalled();
-	});
-
-	it('fails 403 for a non-participant', async () => {
-		const event = makeEvent({ user: { id: 'intruder' } });
-		fetchConversationForParticipant.mockRejectedValueOnce(new NotParticipantError());
-		const result = await actions.markRead(asAction(event));
-		expect(result).toMatchObject({ status: 403, data: { message: texts.errors.noPermission } });
-		expect(markConversationRead).not.toHaveBeenCalled();
-	});
-
-	it('fetches the conversation once and hands the record to the helper (happy path)', async () => {
-		const record = {
-			id: CONV_ID,
-			requester: REQUESTER_ID,
-			itemOwner: OWNER_ID,
-			readByRequester: true,
-			readByOwner: false,
-		};
-		const event = makeEvent({ user: { id: OWNER_ID } });
-		fetchConversationForParticipant.mockResolvedValueOnce(record);
-		const result = await actions.markRead(asAction(event));
-		expect(result).toBeUndefined();
-		// Authorised + fetched exactly once, requesting the read flags as extra fields.
-		expect(fetchConversationForParticipant).toHaveBeenCalledTimes(1);
-		expect(fetchConversationForParticipant).toHaveBeenCalledWith(
-			event.__pb,
-			CONV_ID,
-			OWNER_ID,
-			'readByRequester,readByOwner'
+		expect(getOne).toHaveBeenCalledWith(
+			'conv1',
+			expect.objectContaining({
+				fields: conversationFieldsWithSafePartners('*,expand.requestedItem.*,expand.messages.*'),
+			})
 		);
-		// The already-fetched record is passed on — no re-fetch inside markConversationRead.
-		expect(markConversationRead).toHaveBeenCalledWith(event.__pb, record, OWNER_ID);
+		// Belt-and-suspenders: whatever the fields builder produces, this call site must
+		// never end up requesting the partners' `email` field.
+		const requestedFields = getOne.mock.calls[0][1].fields as string;
+		expect(requestedFields).not.toMatch(/email/i);
+	});
+
+	it('does NOT mutate read-state — regression for the hover-preload bug (#412)', async () => {
+		// The viewer is the requester and the thread is unread for them: the old load() flipped
+		// readByRequester right here, so a mere hover (app.html sets
+		// data-sveltekit-preload-data="hover", which runs load()) marked the thread read.
+		// Read-marking now happens exclusively in the markRead action below.
+		const update = vi.fn();
+		const notifUpdate = vi.fn();
+		const pb = makeMockPb({
+			conversations: {
+				getOne: vi.fn().mockResolvedValue(conversationRecord({ readByRequester: false })),
+				update,
+			},
+			notifications: { getFullList: vi.fn().mockResolvedValue([{ id: 'n1' }]), update: notifUpdate },
+		});
+
+		const data = await load({
+			params: { conversationId: 'conv1' },
+			locals: { pb, user: { id: REQUESTER } },
+		} as unknown as Parameters<typeof load>[0]);
+
+		expect(update).not.toHaveBeenCalled();
+		// Nor may it clear the thread's notifications — the other half of read-state.
+		expect(notifUpdate).not.toHaveBeenCalled();
+		expect(data.conversation.id).toBe('conv1');
+	});
+});
+
+describe('conversations/[conversationId] markRead action', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	/** Builds an action event plus handles on the mocked collection methods. */
+	function makeEvent(
+		user: { id: string } | null,
+		record: Record<string, unknown> = conversationRecord()
+	) {
+		const getOne = vi.fn().mockResolvedValue(record);
+		const update = vi.fn().mockResolvedValue(true);
+		const notifUpdate = vi.fn().mockResolvedValue(true);
+		const pb = makeMockPb({
+			conversations: { getOne, update },
+			notifications: { getFullList: vi.fn().mockResolvedValue([]), update: notifUpdate },
+		});
+		const event = {
+			params: { conversationId: 'conv1' },
+			locals: { pb, user },
+		} as unknown as Parameters<typeof actions.markRead>[0];
+		return { event, getOne, update, notifUpdate };
+	}
+
+	it('fails 401 when unauthenticated', async () => {
+		const { event, getOne, update } = makeEvent(null);
+
+		const result = await actions.markRead(event);
+
+		expect(result).toMatchObject({ status: 401, data: { message: texts.errors.noPermission } });
+		expect(getOne).not.toHaveBeenCalled();
+		expect(update).not.toHaveBeenCalled();
+	});
+
+	it('fails 403 for a non-participant and writes nothing', async () => {
+		const { event, update, notifUpdate } = makeEvent({ id: 'intruder' });
+
+		const result = await actions.markRead(event);
+
+		expect(result).toMatchObject({ status: 403, data: { message: texts.errors.noPermission } });
+		expect(update).not.toHaveBeenCalled();
+		expect(notifUpdate).not.toHaveBeenCalled();
+	});
+
+	it('marks the thread read for the viewer, fetching the record once with the read flags', async () => {
+		const { event, getOne, update } = makeEvent(
+			{ id: OWNER },
+			conversationRecord({ readByRequester: true, readByOwner: false })
+		);
+
+		const result = await actions.markRead(event);
+
+		expect(result).toBeUndefined();
+		// One getOne that both authorises and supplies the flags markConversationRead needs.
+		expect(getOne).toHaveBeenCalledTimes(1);
+		expect(getOne).toHaveBeenCalledWith('conv1', {
+			fields: 'id,requester,itemOwner,readByRequester,readByOwner',
+		});
+		expect(update).toHaveBeenCalledWith('conv1', { readByOwner: true });
+	});
+
+	it("propagates PocketBase's status when the conversation cannot be fetched", async () => {
+		const getOne = vi.fn().mockRejectedValue(Object.assign(new Error('nope'), { status: 404 }));
+		const update = vi.fn();
+		const pb = makeMockPb({
+			conversations: { getOne, update },
+			notifications: { getFullList: vi.fn().mockResolvedValue([]), update: vi.fn() },
+		});
+
+		const result = await actions.markRead({
+			params: { conversationId: 'conv1' },
+			locals: { pb, user: { id: OWNER } },
+		} as unknown as Parameters<typeof actions.markRead>[0]);
+
+		expect(result).toMatchObject({ status: 404 });
+		expect(update).not.toHaveBeenCalled();
 	});
 });

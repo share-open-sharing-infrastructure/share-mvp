@@ -1,6 +1,20 @@
 import { ITEM_CATEGORIES, type ItemCategory } from '$lib/categories';
 import type { ItemPublic } from '$lib/types/models';
 
+export type SortOption = 'newest' | 'name_asc' | 'name_desc';
+
+export type OwnerType = 'all' | 'institution' | 'private';
+
+/** The full set of filter fields `FilterModal` edits as a local draft before committing them. */
+export interface FilterDraft {
+	sort: SortOption;
+	onlyAvailable: boolean;
+	ownerType: OwnerType;
+	selectedCategories: string[];
+	op: 'or' | 'and';
+	selectedGroup: string | null;
+}
+
 export type SearchParameters = {
 	query: string;
 	page: number;
@@ -8,7 +22,7 @@ export type SearchParameters = {
 	selectedCategories: ItemCategory[];
 	op: 'or' | 'and';
 	onlyAvailable: boolean;
-	ownerType: 'all' | 'institution' | 'private';
+	ownerType: OwnerType;
 	/**
 	 * Raw, format-plausible group id parsed from the URL (or `null`). This is NOT yet a
 	 * proven-membership id: `parseSearchParameters` stays pure/sync and only shape-checks it.
@@ -17,7 +31,27 @@ export type SearchParameters = {
 	 * a validated value is therefore the caller's responsibility.
 	 */
 	selectedGroup: string | null;
+	sort: SortOption;
 };
+
+const SORT_OPTIONS: SortOption[] = ['newest', 'name_asc', 'name_desc'];
+
+/**
+ * Maps a validated `SortOption` to the PocketBase `sort` query string for the
+ * `items_searchable` view. `newest` (the default) sorts by creation date, descending, so edits
+ * don't resurface old items.
+ */
+export function sortToPbSort(sort: SortOption): string {
+	switch (sort) {
+		case 'name_asc':
+			return 'name';
+		case 'name_desc':
+			return '-name';
+		case 'newest':
+		default:
+			return '-created';
+	}
+}
 
 /**
  * Returns the field name as a string, validated at compile time against the `items_public` view schema.
@@ -69,7 +103,7 @@ export function parseSearchParameters(url: URL): SearchParameters {
 	const onlyAvailable = url.searchParams.get('onlyAvailable') === 'true';
 
 	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
-	const ownerType: 'all' | 'institution' | 'private' =
+	const ownerType: OwnerType =
 		ownerTypeParam === 'institution' || ownerTypeParam === 'private' ? ownerTypeParam : 'all';
 
 	// Shape-check only: a PocketBase record id is 15 alphanumerics. Garbage is dropped to `null`
@@ -79,7 +113,12 @@ export function parseSearchParameters(url: URL): SearchParameters {
 	const groupParam = url.searchParams.get('group')?.trim() ?? '';
 	const selectedGroup = /^[a-z0-9]{15}$/i.test(groupParam) ? groupParam : null;
 
-	return { query, page, perPage, selectedCategories, op, onlyAvailable, ownerType, selectedGroup };
+	const sortParam = url.searchParams.get('sort') ?? 'newest';
+	const sort: SortOption = SORT_OPTIONS.includes(sortParam as SortOption)
+		? (sortParam as SortOption)
+		: 'newest';
+
+	return { query, page, perPage, selectedCategories, op, onlyAvailable, ownerType, selectedGroup, sort };
 }
 
 /**

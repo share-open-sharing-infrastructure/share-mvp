@@ -1,12 +1,13 @@
 <script lang="ts">
 	import '../app.css';
-	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
-	import FooterComponent from '$lib/components/FooterComponent.svelte';
-	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
-	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
-	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
-	import ToastHost from '$lib/components/ToastHost.svelte';
-	import { getClientPB, syncClientPBAuth, subscribeRealtime } from '$lib/client-pb';
+	import NavBarComponent from './components/NavBarComponent.svelte';
+	import FooterComponent from './components/FooterComponent.svelte';
+	import FeedbackButton from './components/FeedbackButton.svelte';
+	import PwaPrompts from './components/PwaPrompts.svelte';
+	import OnboardingPrompt from './components/OnboardingPrompt.svelte';
+	import ToastHost from './components/ToastHost.svelte';
+	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
+	import { subscribeRealtime } from '$lib/realtime';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
 	import { navigationLoader } from '$lib/stores/navigationLoader.svelte';

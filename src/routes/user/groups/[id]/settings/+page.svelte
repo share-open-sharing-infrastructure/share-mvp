@@ -42,7 +42,7 @@
 </script>
 
 <div class="mx-auto max-w-5xl px-4 py-6 space-y-6">
-	<a href={resolve(`/user/groups/${data.group.id}`)} class="inline-flex items-center text-sm text-accent hover:underline">
+	<a href={resolve('/user/groups/[id]', { id: data.group.id })} class="inline-flex items-center text-sm text-accent hover:underline">
 		<ArrowLeftOutline class="me-1 h-4 w-4" />{texts.groups.backToGroup}
 	</a>
 

@@ -2,10 +2,15 @@ import { describe, it, expect } from 'vitest';
 import {
 	LENDING_LIFECYCLE,
 	LENDING_STATUSES,
+	LENDING_ACTIONS,
+	LENDING_TRANSITIONS,
 	ACTIVE_LENDING_STATES,
 	OPEN_LENDING_STATES,
+	ABORTABLE_LENDING_STATES,
 	isLendingStatusIn,
 	lendingStatusFilter,
+	canTransition,
+	canAbortUi,
 	type LendingStatus,
 } from './lending';
 import { texts } from './texts';
@@ -108,6 +113,74 @@ describe('isLendingStatusIn', () => {
 		expect(isLendingStatusIn(ACTIVE_LENDING_STATES, 42)).toBe(false);
 		expect(isLendingStatusIn(ACTIVE_LENDING_STATES, null)).toBe(false);
 		expect(isLendingStatusIn(ACTIVE_LENDING_STATES, { s: 'active' })).toBe(false);
+	});
+});
+
+describe('LENDING_TRANSITIONS', () => {
+	it('has exactly one row per LENDING_ACTIONS entry', () => {
+		expect(new Set(Object.keys(LENDING_TRANSITIONS))).toEqual(new Set(LENDING_ACTIONS));
+	});
+
+	it("reuses ABORTABLE_LENDING_STATES for abortRequest's `from` (not a re-derived equivalent list)", () => {
+		expect(LENDING_TRANSITIONS.abortRequest.from).toBe(ABORTABLE_LENDING_STATES);
+	});
+});
+
+describe('canTransition', () => {
+	it('allows the owner to accept a pending request', () => {
+		expect(canTransition('acceptRequest', { isOwner: true, isRequester: false }, 'pending')).toBe(true);
+	});
+
+	it('denies the requester from accepting their own request', () => {
+		expect(canTransition('acceptRequest', { isOwner: false, isRequester: true }, 'pending')).toBe(false);
+	});
+
+	it('denies an accept from a non-pending state', () => {
+		expect(canTransition('acceptRequest', { isOwner: true, isRequester: false }, 'accepted')).toBe(false);
+	});
+
+	it('denies when currentStatus is undefined', () => {
+		expect(canTransition('acceptRequest', { isOwner: true, isRequester: false }, undefined)).toBe(false);
+	});
+
+	it('allows the requester (not the owner) to request a return of an active loan', () => {
+		expect(canTransition('requestReturn', { isOwner: false, isRequester: true }, 'active')).toBe(true);
+		expect(canTransition('requestReturn', { isOwner: true, isRequester: false }, 'active')).toBe(false);
+	});
+
+	it("allows EITHER participant to abort — role: 'participant' matches owner or requester", () => {
+		expect(canTransition('abortRequest', { isOwner: true, isRequester: false }, 'pending')).toBe(true);
+		expect(canTransition('abortRequest', { isOwner: false, isRequester: true }, 'accepted')).toBe(true);
+		expect(canTransition('abortRequest', { isOwner: false, isRequester: false }, 'pending')).toBe(false);
+	});
+
+	it('allows the owner to confirm a return from either active or return_requested', () => {
+		expect(canTransition('confirmReturn', { isOwner: true, isRequester: false }, 'active')).toBe(true);
+		expect(canTransition('confirmReturn', { isOwner: true, isRequester: false }, 'return_requested')).toBe(true);
+		expect(canTransition('confirmReturn', { isOwner: true, isRequester: false }, 'pending')).toBe(false);
+	});
+});
+
+describe('canAbortUi (#373 — intentionally divergent from the server-side abort rule)', () => {
+	it('shows abort to the requester (not the owner) while pending', () => {
+		expect(canAbortUi('pending', false)).toBe(true);
+		expect(canAbortUi('pending', true)).toBe(false);
+	});
+
+	it('shows abort to either party once accepted', () => {
+		expect(canAbortUi('accepted', false)).toBe(true);
+		expect(canAbortUi('accepted', true)).toBe(true);
+	});
+
+	it('hides abort for every other status', () => {
+		for (const status of ['active', 'return_requested', 'completed', 'rejected', 'aborted'] as const) {
+			expect(canAbortUi(status, false)).toBe(false);
+			expect(canAbortUi(status, true)).toBe(false);
+		}
+	});
+
+	it('hides abort when status is undefined', () => {
+		expect(canAbortUi(undefined, false)).toBe(false);
 	});
 });
 

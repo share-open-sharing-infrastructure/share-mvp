@@ -1,162 +1,133 @@
-import { describe, it, expect, vi } from 'vitest';
-import type PocketBase from 'pocketbase';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { makeMockPb } from '$lib/test-utils/pocketbase';
 
 // Avoid loading the real notifications module (web-push + VAPID env) at import time.
 vi.mock('$lib/server/notifications.js', () => ({
 	createNotification: vi.fn(),
 	sendPushToUser: vi.fn(),
 	isMessageNotificationThrottled: vi.fn(),
+	notifyAndPush: vi.fn(),
 }));
 
-import {
-	deleteConversation,
-	fetchConversationForParticipant,
-	markConversationRead,
-	NotParticipantError,
-	sendMessage,
-} from './conversation.server';
+import { sendMessage, markConversationRead } from './conversation.server';
+import { notifyAndPush } from '$lib/server/notifications.js';
 
-function mockFilter(raw: string, params?: Record<string, unknown>): string {
-	if (!params) return raw;
-	let result = raw;
-	for (const [key, value] of Object.entries(params)) {
-		const escaped = typeof value === 'string' ? `'${value.replace(/'/g, "\\'")}'` : `${value}`;
-		result = result.replaceAll(`{:${key}}`, escaped);
-	}
-	return result;
-}
+describe('sendMessage', () => {
+	beforeEach(() => vi.clearAllMocks());
 
-function makeMockPb(impls: Record<string, Record<string, ReturnType<typeof vi.fn>>>): PocketBase {
-	return {
-		collection: vi.fn((name: string) => impls[name]),
-		filter: vi.fn(mockFilter),
-	} as unknown as PocketBase;
-}
-
-describe('deleteConversation', () => {
-	it('deletes the conversation and every notification referencing it', async () => {
-		const convDelete = vi.fn().mockResolvedValue(true);
-		const notifDelete = vi.fn().mockResolvedValue(true);
+	it('creates the message with conversation relation and atomically appends it via the messages+ modifier', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg1' });
+		const convUpdate = vi.fn().mockResolvedValue(true);
 		const pb = makeMockPb({
-			conversations: { delete: convDelete },
-			notifications: {
-				getFullList: vi.fn().mockResolvedValue([{ id: 'n1' }, { id: 'n2' }]),
-				delete: notifDelete,
-			},
+			messages: { create: msgCreate },
+			conversations: { update: convUpdate },
 		});
 
-		await deleteConversation(pb, 'conv1');
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
 
-		expect(convDelete).toHaveBeenCalledWith('conv1');
-		expect(notifDelete).toHaveBeenCalledTimes(2);
-		expect(notifDelete).toHaveBeenCalledWith('n1');
-		expect(notifDelete).toHaveBeenCalledWith('n2');
+		await sendMessage(pb, 'conv1', 'Hello!', { fromUserId: 'userB', toUserId: 'userA', senderName: 'Owner', recipientIsRequester: true });
+
+		// messages.create is called with conversation relation
+		expect(msgCreate).toHaveBeenCalledWith({
+			messageContent: 'Hello!',
+			from: 'userB',
+			to: 'userA',
+			conversation: 'conv1',
+		});
+
+		// conversations.update appends the new message id atomically via the 'messages+'
+		// modifier (no read-modify-write, no race under concurrent sends), and sets
+		// lastMessageAt but NOT requesterLastSeenAt or ownerLastSeenAt.
+		expect(convUpdate).toHaveBeenCalledTimes(1);
+		const [, updatePayload] = convUpdate.mock.calls[0];
+		expect(updatePayload).toMatchObject({ 'messages+': 'msg1' });
+		expect(updatePayload).toHaveProperty('lastMessageAt');
+		expect(updatePayload).not.toHaveProperty('messages');
+		expect(updatePayload).not.toHaveProperty('requesterLastSeenAt');
+		expect(updatePayload).not.toHaveProperty('ownerLastSeenAt');
 	});
 
-	it('deletes the conversation even when no notifications reference it', async () => {
-		const convDelete = vi.fn().mockResolvedValue(true);
-		const notifDelete = vi.fn();
+	it('marks readByRequester as false when the recipient is the requester', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg2' });
+		const convUpdate = vi.fn().mockResolvedValue(true);
 		const pb = makeMockPb({
-			conversations: { delete: convDelete },
-			notifications: { getFullList: vi.fn().mockResolvedValue([]), delete: notifDelete },
+			messages: { create: msgCreate },
+			conversations: { update: convUpdate },
 		});
 
-		await deleteConversation(pb, 'conv1');
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
 
-		expect(convDelete).toHaveBeenCalledWith('conv1');
-		expect(notifDelete).not.toHaveBeenCalled();
+		// Send from owner (userB) to requester (userA)
+		await sendMessage(pb, 'conv1', 'Hey', { fromUserId: 'userB', toUserId: 'userA', senderName: 'Owner', recipientIsRequester: true });
+
+		const updatePayload = convUpdate.mock.calls[0][1];
+		expect(updatePayload).toHaveProperty('readByRequester', false);
+		expect(updatePayload).not.toHaveProperty('readByOwner');
 	});
 
-	it('swallows a notification-cleanup failure (does not rethrow)', async () => {
+	it('marks readByOwner as false when the recipient is the owner', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg3' });
+		const convUpdate = vi.fn().mockResolvedValue(true);
 		const pb = makeMockPb({
-			conversations: { delete: vi.fn().mockResolvedValue(true) },
-			notifications: { getFullList: vi.fn().mockRejectedValue(new Error('boom')), delete: vi.fn() },
+			messages: { create: msgCreate },
+			conversations: { update: convUpdate },
 		});
 
-		await expect(deleteConversation(pb, 'conv1')).resolves.toBeUndefined();
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
+
+		// Send from requester (userA) to owner (userB)
+		await sendMessage(pb, 'conv1', 'Hi', { fromUserId: 'userA', toUserId: 'userB', senderName: 'Requester', recipientIsRequester: false });
+
+		const updatePayload = convUpdate.mock.calls[0][1];
+		expect(updatePayload).toHaveProperty('readByOwner', false);
+		expect(updatePayload).not.toHaveProperty('readByRequester');
 	});
 
-	it('propagates a conversation-deletion failure (it is outside the cleanup try/catch)', async () => {
+	it('notifies and pushes to the recipient via notifyAndPush when not throttled', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg4' });
 		const pb = makeMockPb({
-			conversations: { delete: vi.fn().mockRejectedValue(new Error('cannot delete')) },
-			notifications: { getFullList: vi.fn(), delete: vi.fn() },
+			messages: { create: msgCreate },
+			conversations: { update: vi.fn().mockResolvedValue(true) },
 		});
 
-		await expect(deleteConversation(pb, 'conv1')).rejects.toThrow('cannot delete');
-	});
-});
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(false);
 
-describe('fetchConversationForParticipant', () => {
-	it('returns the record when the caller is the requester', async () => {
-		const record = { id: 'conv1', requester: 'userA', itemOwner: 'userB' };
-		const getOne = vi.fn().mockResolvedValue(record);
-		const pb = makeMockPb({ conversations: { getOne } });
+		await sendMessage(pb, 'conv1', 'Hi', { fromUserId: 'userA', toUserId: 'userB', senderName: 'Requester', recipientIsRequester: false });
 
-		await expect(fetchConversationForParticipant(pb, 'conv1', 'userA')).resolves.toBe(record);
-		// A single getOne fetching the base fields.
-		expect(getOne).toHaveBeenCalledTimes(1);
-		expect(getOne).toHaveBeenCalledWith('conv1', { fields: 'id,requester,itemOwner' });
-	});
-
-	it('returns the record when the caller is the itemOwner', async () => {
-		const record = { id: 'conv1', requester: 'userA', itemOwner: 'userB' };
-		const pb = makeMockPb({ conversations: { getOne: vi.fn().mockResolvedValue(record) } });
-
-		await expect(fetchConversationForParticipant(pb, 'conv1', 'userB')).resolves.toBe(record);
-	});
-
-	it('appends extraFields to the single getOne', async () => {
-		const getOne = vi
-			.fn()
-			.mockResolvedValue({ id: 'conv1', requester: 'userA', itemOwner: 'userB' });
-		const pb = makeMockPb({ conversations: { getOne } });
-
-		await fetchConversationForParticipant(pb, 'conv1', 'userA', 'readByRequester,readByOwner');
-
-		expect(getOne).toHaveBeenCalledTimes(1);
-		expect(getOne).toHaveBeenCalledWith('conv1', {
-			fields: 'id,requester,itemOwner,readByRequester,readByOwner',
+		expect(notifyAndPush).toHaveBeenCalledWith(pb, {
+			recipient: 'userB',
+			sender: 'userA',
+			type: 'new_message',
+			relatedId: 'conv1',
+			body: expect.any(String),
 		});
 	});
 
-	it('throws NotParticipantError when the caller is neither participant', async () => {
+	it('does not notify when the message-notification cooldown is active', async () => {
+		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg5' });
 		const pb = makeMockPb({
-			conversations: {
-				getOne: vi.fn().mockResolvedValue({ id: 'conv1', requester: 'userA', itemOwner: 'userB' }),
-			},
+			messages: { create: msgCreate },
+			conversations: { update: vi.fn().mockResolvedValue(true) },
 		});
 
-		await expect(fetchConversationForParticipant(pb, 'conv1', 'intruder')).rejects.toBeInstanceOf(
-			NotParticipantError
-		);
-	});
+		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
+		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
 
-	it('throws NotParticipantError when userId is undefined', async () => {
-		const pb = makeMockPb({
-			conversations: {
-				getOne: vi.fn().mockResolvedValue({ id: 'conv1', requester: 'userA', itemOwner: 'userB' }),
-			},
-		});
+		await sendMessage(pb, 'conv1', 'Hi', { fromUserId: 'userA', toUserId: 'userB', senderName: 'Requester', recipientIsRequester: false });
 
-		await expect(fetchConversationForParticipant(pb, 'conv1', undefined)).rejects.toBeInstanceOf(
-			NotParticipantError
-		);
-	});
-
-	it('propagates a non-participant error such as a 404 from getOne', async () => {
-		const pb = makeMockPb({
-			conversations: { getOne: vi.fn().mockRejectedValue(new Error('not found')) },
-		});
-
-		await expect(fetchConversationForParticipant(pb, 'missing', 'userA')).rejects.toThrow(
-			'not found'
-		);
+		expect(notifyAndPush).not.toHaveBeenCalled();
 	});
 });
 
 describe('markConversationRead', () => {
-	// The caller now fetches the conversation (via fetchConversationForParticipant) and hands the
-	// record in — markConversationRead no longer re-fetches, so no conversations.getOne here.
+	beforeEach(() => vi.clearAllMocks());
+
+	// The caller (the `markRead` action) fetches the conversation and hands the record in —
+	// markConversationRead never re-fetches, so no conversations.getOne is stubbed here.
 	function convRecord(extra: Record<string, unknown> = {}) {
 		return {
 			id: 'conv1',
@@ -201,28 +172,27 @@ describe('markConversationRead', () => {
 			notifications: { getFullList: vi.fn().mockResolvedValue([]), update: vi.fn() },
 		});
 
-		// Requester's side is already read → no write.
+		// Requester's side is already read → no write (idempotent; the page re-fires markRead
+		// on every realtime unread signal, so this must stay a no-op).
 		await markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: false }), 'userA');
 
 		expect(convUpdate).not.toHaveBeenCalled();
 	});
 
-	it('marks matching unread notifications read (and passes the caller/conversation as pb.filter params)', async () => {
-		const notifGetFullList = vi.fn().mockResolvedValue([{ id: 'n1' }, { id: 'n2' }]);
+	it('marks matching unread notifications read (and passes caller/conversation as pb.filter params)', async () => {
 		const notifUpdate = vi.fn().mockResolvedValue(true);
-		const filter = vi.fn(mockFilter);
-		const pb = {
-			collection: vi.fn(() => ({
+		const pb = makeMockPb({
+			conversations: { update: vi.fn() },
+			notifications: {
+				getFullList: vi.fn().mockResolvedValue([{ id: 'n1' }, { id: 'n2' }]),
 				update: notifUpdate,
-				getFullList: notifGetFullList,
-			})),
-			filter,
-		} as unknown as PocketBase;
+			},
+		});
 
 		await markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: true }), 'userA');
 
-		// pb.filter was called with the caller id + conversation id as bound params (no interpolation).
-		expect(filter).toHaveBeenCalledWith(
+		// Bound params, never interpolation (filter-injection guardrail).
+		expect(pb.filter).toHaveBeenCalledWith(
 			'recipient={:userId} && relatedId={:conversationId} && read=false',
 			{ userId: 'userA', conversationId: 'conv1' }
 		);
@@ -255,104 +225,5 @@ describe('markConversationRead', () => {
 		await expect(
 			markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: true }), 'userA')
 		).resolves.toBeUndefined();
-	});
-});
-
-describe('sendMessage', () => {
-	it('creates the message with conversation relation and updates lastMessageAt (not *LastSeenAt)', async () => {
-		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg1' });
-		const convGetOne = vi.fn().mockResolvedValue({
-			id: 'conv1',
-			requester: 'userA',
-			itemOwner: 'userB',
-			messages: ['msg0'],
-		});
-		const convUpdate = vi.fn().mockResolvedValue(true);
-		const pb = makeMockPb({
-			messages: { create: msgCreate },
-			conversations: { getOne: convGetOne, update: convUpdate },
-			notifications: {
-				getFullList: vi.fn().mockResolvedValue([]),
-				delete: vi.fn(),
-			},
-		});
-
-		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
-		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
-
-		await sendMessage(pb, 'conv1', 'Hello!', 'userB', 'userA', 'Owner');
-
-		// messages.create is called with conversation relation
-		expect(msgCreate).toHaveBeenCalledWith({
-			messageContent: 'Hello!',
-			from: 'userB',
-			to: 'userA',
-			conversation: 'conv1',
-		});
-
-		// conversations.update sets lastMessageAt but NOT requesterLastSeenAt or ownerLastSeenAt
-		expect(convUpdate).toHaveBeenCalledTimes(1);
-		const updatePayload = convUpdate.mock.calls[0][1];
-		expect(updatePayload).toHaveProperty('lastMessageAt');
-		expect(updatePayload).not.toHaveProperty('requesterLastSeenAt');
-		expect(updatePayload).not.toHaveProperty('ownerLastSeenAt');
-	});
-
-	it('marks readByRequester as false when sending to the requester', async () => {
-		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg2' });
-		const convGetOne = vi.fn().mockResolvedValue({
-			id: 'conv1',
-			requester: 'userA',
-			itemOwner: 'userB',
-			messages: [],
-		});
-		const convUpdate = vi.fn().mockResolvedValue(true);
-		const pb = makeMockPb({
-			messages: { create: msgCreate },
-			conversations: { getOne: convGetOne, update: convUpdate },
-			notifications: {
-				getFullList: vi.fn().mockResolvedValue([]),
-				delete: vi.fn(),
-			},
-		});
-
-		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
-		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
-
-		// Send from owner (userB) to requester (userA)
-		await sendMessage(pb, 'conv1', 'Hey', 'userB', 'userA', 'Owner');
-
-		const updatePayload = convUpdate.mock.calls[0][1];
-		expect(updatePayload).toHaveProperty('readByRequester', false);
-		expect(updatePayload).not.toHaveProperty('readByOwner');
-	});
-
-	it('marks readByOwner as false when sending to the owner', async () => {
-		const msgCreate = vi.fn().mockResolvedValue({ id: 'msg3' });
-		const convGetOne = vi.fn().mockResolvedValue({
-			id: 'conv1',
-			requester: 'userA',
-			itemOwner: 'userB',
-			messages: ['msg0'],
-		});
-		const convUpdate = vi.fn().mockResolvedValue(true);
-		const pb = makeMockPb({
-			messages: { create: msgCreate },
-			conversations: { getOne: convGetOne, update: convUpdate },
-			notifications: {
-				getFullList: vi.fn().mockResolvedValue([]),
-				delete: vi.fn(),
-			},
-		});
-
-		const { isMessageNotificationThrottled } = await import('$lib/server/notifications.js');
-		vi.mocked(isMessageNotificationThrottled).mockResolvedValue(true);
-
-		// Send from requester (userA) to owner (userB)
-		await sendMessage(pb, 'conv1', 'Hi', 'userA', 'userB', 'Requester');
-
-		const updatePayload = convUpdate.mock.calls[0][1];
-		expect(updatePayload).toHaveProperty('readByOwner', false);
-		expect(updatePayload).not.toHaveProperty('readByRequester');
 	});
 });

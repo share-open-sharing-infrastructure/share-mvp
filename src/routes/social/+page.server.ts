@@ -2,8 +2,7 @@
 import { fail } from '@sveltejs/kit';
 import type { User } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
-import { createNotification, sendPushToUser } from '$lib/server/notifications.js';
-import { addTrust, removeTrust, getTrustees, getTrusters } from '$lib/server/trust.js';
+import { addTrustAndNotify, removeTrust, getTrustees, getTrusters } from '$lib/server/trust.js';
 import { generateInviteSlug } from '$lib/inviteSlug.js';
 
 export async function load({ locals, url }) {
@@ -79,33 +78,15 @@ export const actions = {
 		const newTrusteeId = formData.get('trusteeId') as string;
 		const newTrusteeUsername = formData.get('trusteeUsername') as string | null;
 
-		// Cannot trust a deleted (anonymized) account.
-		try {
-			const target = await locals.pb.collection('users_public').getOne(newTrusteeId);
-			if (target.deleted) return fail(400, { fail: true, message: texts.account.cannotTrustDeleted });
-		} catch {
-			return fail(404, { fail: true, message: texts.errors.somethingWentWrong });
-		}
-
-		try {
-			await addTrust(locals.pb, locals.user.id, newTrusteeId);
-		} catch (error: Error | any) {
-			console.error(error ? error.message : error);
-			return fail(500, { fail: true, message: texts.errors.somethingWentWrong });
-		}
-
-		const adderName = locals.user.username ?? locals.user.name ?? 'Jemand';
-		const notificationBody = texts.notifications.trustAdded(adderName);
-
-		await createNotification(locals.pb, newTrusteeId, locals.user.id, 'trust_added', locals.user.id, notificationBody);
-		await sendPushToUser(locals.pb, newTrusteeId, texts.notifications.pushTitle, notificationBody, `/users/${locals.user.id}`);
+		const result = await addTrustAndNotify(locals.pb, locals.user, newTrusteeId);
+		if (!result.ok) return fail(result.status, { fail: true, message: result.message });
 
 		return {
 			success: true,
 			message: texts.success.trusteeAdded(newTrusteeUsername ?? newTrusteeId),
 		};
 	},
-	removeTrustee: async ({ request, locals }): Promise<void> => {
+	removeTrustee: async ({ request, locals }) => {
 		const formData = await request.formData();
 		const toRemoveTrusteeId = formData.get('trusteeId') as string;
 
@@ -113,6 +94,7 @@ export const actions = {
 			await removeTrust(locals.pb, locals.user.id, toRemoveTrusteeId);
 		} catch (error: Error | any) {
 			console.error(error ? error.message : error);
+			return fail(500, { fail: true, message: texts.errors.somethingWentWrong });
 		}
 	},
 };
