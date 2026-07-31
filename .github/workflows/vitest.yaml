@@ -26,12 +26,20 @@ jobs:
         run: npm run build
         env:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
-          # Static private env members must exist at build time or `$env/static/private` fails
-          # with "Missing export". SYNC_SECRET is gone with #487 Phase 3 (the integrations moved
-          # into the backend); PB_SUPERUSER_* stay — `$lib/server/superuser.ts` reads them for the
-          # superuser-only `metrics_daily` reads. Dummy values are fine, nothing runs here.
+          # Every var read via $env/static/* must exist at build time or the build fails with
+          # "Missing export", even if nothing calls the code path that uses it. SYNC_SECRET is
+          # gone with #487 Phase 3 (the integrations moved into the backend); the rest below
+          # (VAPID push, ORS geocoding, Mistral item-photo analysis, PB_SUPERUSER_* for
+          # metrics_daily) are unused at build time, so dummy values are fine — see .env.example
+          # for the canonical list of required vars. VAPID keys must still be well-formed (web-push
+          # validates key length on import), so this is a throwaway keypair, not a real value.
           PB_SUPERUSER_EMAIL: ci@example.com
           PB_SUPERUSER_PASSWORD: dummy
+          PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ
+          VAPID_PRIVATE_KEY: Fz1mNiBa1Nk3mpy8KjzIjqKf8R0ff9ZHqw525Vy_d-4
+          VAPID_SUBJECT: mailto:ci@example.com
+          ORS_API_KEY: dummy
+          MISTRAL_API_KEY: dummy
   test:
     # This matrix tests both the main and pull request branches
     name: Test ${{ matrix.artifact }}
