@@ -38,8 +38,8 @@ export async function load({ params, locals }) {
 	// depend on the previous stage's result and so can't join that wave —
 	// resolveOwnerContact needs isTrustRestricted (derived from the wave below), and
 	// resolveTermsGate/evaluateUnmetRequirements need resolveOwnerContact's result.
-	// `resolveViewerAccess` is the only task in the wave allowed to mutate `item` (in
-	// place); every other task only reads `item.id` / `item.userId`.
+	// No task in the wave writes `item`: resolveViewerAccess hands its un-masked fields
+	// back and they are merged in once the whole wave has settled (see below).
 
 	// Both trust directions in one query — see the doc comment on getTrustDirections
 	// in trust.ts for why a Promise.all of two directional lookups would collide.
@@ -71,10 +71,14 @@ export async function load({ params, locals }) {
 		]);
 
 	// Viewer → Owner direction (does the viewer trust this owner).
-	const { aTrustsB: viewerTrustsOwner, bTrustsA: rawOwnerTrustsViewer } = trustDirections;
+	const viewerTrustsOwner = trustDirections.viewerTrustsOther;
 	// Whether the item owner trusts the logged-in viewer (Owner → Viewer direction).
 	// Resolved server-side against the `trusts` join so no trust list reaches the client.
-	const ownerTrustsViewer = !isOwnItem && rawOwnerTrustsViewer;
+	const ownerTrustsViewer = !isOwnItem && trustDirections.otherTrustsViewer;
+
+	// Apply the un-masked fields now that every wave task has settled — no sibling can
+	// observe a partially un-masked item.
+	if (viewerAccess.unmasked) Object.assign(item, viewerAccess.unmasked);
 
 	const { wasMasked, viewerHasFullAccess } = viewerAccess;
 	const isTrustRestricted = wasMasked && isAuthenticated && !viewerHasFullAccess;
@@ -91,16 +95,27 @@ export async function load({ params, locals }) {
 	// Terms + borrower requirements only gate the in-app request flow: viewer must be
 	// logged in, not the owner, and the owner must not handle requests off-platform.
 	// Neither task depends on the other, so they still run concurrently.
-	const [requiresTermsAcceptance, unmetRequirements] = await Promise.all([
+	const termsGateTask =
 		currentUserId && !isOwnItem && !ownerContact
 			? resolveTermsGate(locals.pb, currentUserId, item.userId)
-			: false,
-		// Lender-defined borrower requirements (#423/#389): which enabled requirements
-		// does the current viewer NOT yet meet for this owner? UX only — the backend
-		// hook on conversation create is the authoritative gate.
+			: false;
+	// Lender-defined borrower requirements (#423/#389): which enabled requirements does
+	// the current viewer NOT yet meet for this owner? UX only — the backend hook on
+	// conversation create is the authoritative gate. Distinct requestKey from the terms
+	// gate's reads so the two concurrent tasks can't auto-cancel each other.
+	const unmetRequirementsTask: Promise<UnmetRequirement[]> | UnmetRequirement[] =
 		currentUserId && !isOwnItem && !ownerContact && locals.user
-			? evaluateUnmetRequirements(locals.pb, item.userId, locals.user)
-			: ([] as UnmetRequirement[]),
+			? evaluateUnmetRequirements(
+					locals.pb,
+					item.userId,
+					locals.user,
+					'unmet-requirements-item'
+				)
+			: [];
+
+	const [requiresTermsAcceptance, unmetRequirements] = await Promise.all([
+		termsGateTask,
+		unmetRequirementsTask,
 	]);
 
 	return {

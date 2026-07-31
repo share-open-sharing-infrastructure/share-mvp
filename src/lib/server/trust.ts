@@ -9,13 +9,28 @@ import { createNotification, sendPushToUser } from '$lib/server/notifications';
 // handles. Keeping every join query here means the visibility model has one place
 // to read on the frontend side.
 
-/** True iff a trust edge {truster, trustee} exists (i.e. truster trusts trustee). */
-export async function isTrusting(pb: PocketBase, trusterId: UserId, trusteeId: UserId): Promise<boolean> {
+/**
+ * True iff a trust edge {truster, trustee} exists (i.e. truster trusts trustee).
+ *
+ * ONE direction only — for both directions use `getTrustDirections`, never two
+ * concurrent `isTrusting` calls on the same `pb`: they share a `method + path`, so
+ * PocketBase auto-cancels the first and the `catch` below reports the abort as a
+ * plain `false` (see `getTrustDirections`' doc comment). `requestKey` exists for the
+ * same reason as on `getTrustees`/`getTrusters` — override it at any call site that
+ * runs concurrently with another `trusts` read.
+ */
+export async function isTrusting(
+	pb: PocketBase,
+	trusterId: UserId,
+	trusteeId: UserId,
+	requestKey = 'is-trusting'
+): Promise<boolean> {
 	try {
 		await pb
 			.collection('trusts')
 			.getFirstListItem(pb.filter('truster = {:tr} && trustee = {:te}', { tr: trusterId, te: trusteeId }), {
 				fields: 'id',
+				requestKey,
 			});
 		return true;
 	} catch {
@@ -98,26 +113,36 @@ export async function removeTrust(pb: PocketBase, trusterId: UserId, trusteeId: 
 	}
 }
 
+/** Both trust directions between a viewer and the other user, named from the viewer's
+ *  perspective so a swapped argument pair can't silently invert the whole display. */
+export type TrustDirections = { viewerTrustsOther: boolean; otherTrustsViewer: boolean };
+
 /** Fail-closed result for `getTrustDirections` — no trust either direction. Shared so
- *  callers' anonymous-viewer and error fallbacks all point at one literal. */
-export const NO_TRUST_DIRECTIONS = { aTrustsB: false, bTrustsA: false } as const;
+ *  callers' anonymous-viewer and error fallbacks all point at one literal. Frozen at
+ *  runtime, not just `as const`: this module-global object is handed to every caller in
+ *  a long-lived Node process, so a single stray write would poison the fallback for all
+ *  subsequent requests. */
+export const NO_TRUST_DIRECTIONS: Readonly<TrustDirections> = Object.freeze({
+	viewerTrustsOther: false,
+	otherTrustsViewer: false,
+});
 
 /**
- * Both trust directions between two users in ONE request: whether `a` trusts `b`
- * and whether `b` trusts `a`.
+ * Both trust directions between two users in ONE request: whether `viewerId` trusts
+ * `otherId` and whether `otherId` trusts `viewerId`.
  *
  * Why one query instead of two concurrent `isTrusting()` calls: the PocketBase JS
  * SDK auto-cancels an in-flight request when a second one hits the same
  * `method + path` and no distinct `requestKey` is given (see
  * `pocketbase.es.mjs`: `requestKey || method + path`). Both directions of
  * `isTrusting` hit the identical `GET /api/collections/trusts/records` path, so a
- * naive `Promise.all([isTrusting(a,b), isTrusting(b,a)])` makes the SDK abort the
- * first call — and `isTrusting`'s `catch` swallows that `AbortError` and returns
- * `false`, silently reporting "no trust" even when the edge exists. Giving each
- * call a distinct `requestKey` would dodge the cancellation, but still costs two
- * round-trips; querying both directions in a single `getList` avoids the race
- * entirely and is cheaper. See also the `getUserPreferences` doc comment for the
- * same bug class.
+ * naive `Promise.all([isTrusting(viewer, other), isTrusting(other, viewer)])` makes
+ * the SDK abort the first call — and `isTrusting`'s `catch` swallows that
+ * `AbortError` and returns `false`, silently reporting "no trust" even when the edge
+ * exists. Giving each call a distinct `requestKey` would dodge the cancellation, but
+ * still costs two round-trips; querying both directions in a single `getList` avoids
+ * the race entirely and is cheaper. See also the `getUserPreferences` doc comment for
+ * the same bug class.
  *
  * `requestKey` defaults to a stable value but MUST be overridden per concurrent
  * call site on the same `pb` (mirrors `getUserPreferences`) — two calls sharing a
@@ -125,30 +150,30 @@ export const NO_TRUST_DIRECTIONS = { aTrustsB: false, bTrustsA: false } as const
  */
 export async function getTrustDirections(
 	pb: PocketBase,
-	a: UserId,
-	b: UserId,
+	viewerId: UserId,
+	otherId: UserId,
 	requestKey = 'trust-directions'
-): Promise<{ aTrustsB: boolean; bTrustsA: boolean }> {
+): Promise<Readonly<TrustDirections>> {
 	try {
 		// Page size 2 is safe because `UNIQUE (truster, trustee)` (docs/data-model.md
 		// → "trusts") guarantees at most one row per direction, so at most 2 rows can
 		// ever match this two-direction filter — a third OR branch here would need a
 		// bigger page or it could silently truncate a row into a wrong `false`.
 		const { items } = await pb.collection('trusts').getList(1, 2, {
-			filter: pb.filter('(truster={:a} && trustee={:b}) || (truster={:b} && trustee={:a})', {
-				a,
-				b,
-			}),
+			filter: pb.filter(
+				'(truster={:viewer} && trustee={:other}) || (truster={:other} && trustee={:viewer})',
+				{ viewer: viewerId, other: otherId }
+			),
 			fields: 'truster,trustee',
 			requestKey,
 		});
-		let aTrustsB = false;
-		let bTrustsA = false;
+		let viewerTrustsOther = false;
+		let otherTrustsViewer = false;
 		for (const row of items) {
-			if (row.truster === a && row.trustee === b) aTrustsB = true;
-			if (row.truster === b && row.trustee === a) bTrustsA = true;
+			if (row.truster === viewerId && row.trustee === otherId) viewerTrustsOther = true;
+			if (row.truster === otherId && row.trustee === viewerId) otherTrustsViewer = true;
 		}
-		return { aTrustsB, bTrustsA };
+		return { viewerTrustsOther, otherTrustsViewer };
 	} catch (err) {
 		// Unlike isTrusting()'s catch (which loses only one direction), this loses
 		// both — log so a real failure (vs. "no rows") doesn't vanish silently.

@@ -1,6 +1,15 @@
 import type { ItemPublic } from '$lib/types/models';
-import { getActiveTerms, hasAcceptedTerms } from '$lib/server/lendingTerms';
+import { getAcceptance, getActiveTerms } from '$lib/server/lendingTerms';
 import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
+
+export type ViewerAccess = {
+	wasMasked: boolean;
+	viewerHasFullAccess: boolean;
+	/** The un-masked fields for the caller to merge into its item, or null if nothing
+	 *  was un-masked. Returned rather than written into `item` so this can run inside a
+	 *  concurrency wave without its siblings observing a half-mutated item. */
+	unmasked: Partial<ItemPublic> | null;
+};
 
 // items_public masks RESTRICTED items (trustees-only OR shared with a group):
 // name/image/description come back NULL. The owner, trusted viewers and members
@@ -11,31 +20,40 @@ import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 // We read full fields from the trust/group-filtered `items_searchable` view —
 // incl. `collectionId` and the un-masked `image` — so the image file URL resolves
 // (a URL built from the items_public row would 404, since its image is NULL).
-// Un-masks `item` in place; returns whether the viewer may see full details.
+// Reads `item` but never writes it; the un-masked fields come back in `unmasked`
+// for the caller to apply once every concurrent sibling has settled.
 export async function resolveViewerAccess(
 	pb: App.Locals['pb'],
 	item: ItemPublic,
 	currentUserId: string | null
-): Promise<{ wasMasked: boolean; viewerHasFullAccess: boolean }> {
-	const wasMasked = item.name == null;
-	let viewerHasFullAccess = !wasMasked; // unmasked == public == visible to everyone
-	if (wasMasked && currentUserId) {
+): Promise<ViewerAccess> {
+	if (item.name != null) {
+		// not masked == public == visible to everyone, nothing to un-mask
+		return { wasMasked: false, viewerHasFullAccess: true, unmasked: null };
+	}
+	if (currentUserId) {
 		try {
 			const full = await pb.collection('items_searchable').getOne(item.id, {
 				fields: 'collectionId,name,image,externalImgUrl,externalUrl,description',
 			});
-			item.collectionId = full.collectionId;
-			item.name = full.name;
-			item.image = full.image;
-			item.externalImgUrl = full.externalImgUrl;
-			item.externalUrl = full.externalUrl;
-			item.description = full.description;
-			viewerHasFullAccess = true;
+			return {
+				wasMasked: true,
+				viewerHasFullAccess: true,
+				unmasked: {
+					collectionId: full.collectionId,
+					name: full.name,
+					image: full.image,
+					externalImgUrl: full.externalImgUrl,
+					externalUrl: full.externalUrl,
+					description: full.description,
+				},
+			};
 		} catch {
-			// No access (or not logged in) -> details stay masked.
+			// No access -> details stay masked.
 		}
 	}
-	return { wasMasked, viewerHasFullAccess };
+	// Masked and either anonymous or not permitted.
+	return { wasMasked: true, viewerHasFullAccess: false, unmasked: null };
 }
 
 export type OwnerContact =
@@ -106,18 +124,20 @@ export async function resolveExistingConversation(
 	}
 }
 
-// Does this owner publish lending terms, and if so has the viewer accepted them?
-// Threads the already-resolved `activeTerms` into `hasAcceptedTerms` directly
-// instead of calling `hasAcceptedActiveTerms` (which would re-fetch `getActiveTerms`
-// itself) — avoids a duplicated round-trip for the same lookup within one load().
+// Does this owner publish lending terms, and if so has the viewer NOT accepted them?
+// Composes `getActiveTerms` + `getAcceptance` instead of calling `hasAcceptedActiveTerms`
+// (which re-resolves the active terms itself) — one round-trip per lookup within one
+// load(). Both reads carry a call-site-specific requestKey so a sibling task in the same
+// concurrency wave reading `lending_terms`/`term_acceptances` (e.g. a future requirement's
+// `evaluate`) can't auto-cancel them into a silently open gate.
 export async function resolveTermsGate(
 	pb: App.Locals['pb'],
 	currentUserId: string,
 	ownerId: string
 ): Promise<boolean> {
-	const activeTerms = await getActiveTerms(pb, ownerId);
+	const activeTerms = await getActiveTerms(pb, ownerId, 'terms-gate-item');
 	if (!activeTerms) return false;
-	return !(await hasAcceptedTerms(pb, currentUserId, activeTerms));
+	return (await getAcceptance(pb, currentUserId, activeTerms.id, 'terms-acceptance-item')) === null;
 }
 
 // Total items listed by this owner (all statuses); 0 on failure.

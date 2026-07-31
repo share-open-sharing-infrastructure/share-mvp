@@ -10,17 +10,19 @@ vi.mock('$lib/server/notifications.js', () => ({
 	createNotification: vi.fn(),
 	sendPushToUser: vi.fn(),
 }));
-// Lending-flow helpers are exercised by their own suites; stub them here.
-const { getActiveTerms, hasAcceptedTerms, hasAcceptedActiveTerms, evaluateUnmetRequirements } =
+// Lending-flow helpers are exercised by their own suites; stub them here. The terms
+// gate itself is asserted in itemDetailQueries.server.test.ts (resolveTermsGate) — this
+// suite only needs the gate to stay closed so the load path runs.
+const { getActiveTerms, getAcceptance, hasAcceptedActiveTerms, evaluateUnmetRequirements } =
 	vi.hoisted(() => ({
 		getActiveTerms: vi.fn(),
-		hasAcceptedTerms: vi.fn(),
+		getAcceptance: vi.fn(),
 		hasAcceptedActiveTerms: vi.fn(),
 		evaluateUnmetRequirements: vi.fn(),
 	}));
 vi.mock('$lib/server/lendingTerms', () => ({
 	getActiveTerms,
-	hasAcceptedTerms,
+	getAcceptance,
 	hasAcceptedActiveTerms,
 }));
 vi.mock('$lib/server/lendingRequirements', () => ({
@@ -347,7 +349,6 @@ describe('items/[id] load — wave concurrency and the trust auto-cancellation t
 	beforeEach(() => {
 		vi.clearAllMocks();
 		getActiveTerms.mockResolvedValue(null);
-		hasAcceptedTerms.mockResolvedValue(true);
 		hasAcceptedActiveTerms.mockResolvedValue(true);
 		evaluateUnmetRequirements.mockResolvedValue([]);
 	});
@@ -445,22 +446,6 @@ describe('items/[id] load — wave concurrency and the trust auto-cancellation t
 		expect(trustsGetList).toHaveBeenCalledTimes(1);
 		// ownerTrustsViewer stays forced false on your own item, regardless of edges.
 		expect(data.ownerTrustsViewer).toBe(false);
-	});
-
-	it('calls getActiveTerms exactly once per load, threading the resolved terms into hasAcceptedTerms instead of re-fetching via hasAcceptedActiveTerms', async () => {
-		const activeTerms = { id: 'terms1' };
-		getActiveTerms.mockResolvedValue(activeTerms);
-		hasAcceptedTerms.mockResolvedValue(false);
-		const { pb } = makePb({});
-
-		const data = await callLoad(pb);
-
-		expect(getActiveTerms).toHaveBeenCalledTimes(1);
-		expect(hasAcceptedTerms).toHaveBeenCalledWith(pb, VIEWER_ID, activeTerms);
-		// hasAcceptedActiveTerms would re-fetch getActiveTerms internally — the load
-		// path must not use it (the startConversation action still does).
-		expect(hasAcceptedActiveTerms).not.toHaveBeenCalled();
-		expect(data.requiresTermsAcceptance).toBe(true);
 	});
 });
 

@@ -94,15 +94,25 @@ export function getRequirementSettings(req: LendingRequirements | null): Require
 	}));
 }
 
-/** Returns the owner's configured requirements, or null if none are set. */
+/**
+ * Returns the owner's configured requirements, or null if none are set.
+ *
+ * `requestKey` MUST be distinct per concurrent call site on the same `pb` (mirrors
+ * `getUserPreferences`): PocketBase's auto-cancellation keys by method+path, so a
+ * second identical GET aborts the first — and the `catch` below turns that
+ * `AbortError` into `null`, which reads as "no requirements" and opens the gate.
+ */
 export async function getOwnerRequirements(
 	pb: PocketBase,
-	ownerId: string
+	ownerId: string,
+	requestKey = 'owner-requirements'
 ): Promise<LendingRequirements | null> {
 	try {
 		return await pb
 			.collection('lending_requirements')
-			.getFirstListItem<LendingRequirements>(pb.filter('owner = {:ownerId}', { ownerId }));
+			.getFirstListItem<LendingRequirements>(pb.filter('owner = {:ownerId}', { ownerId }), {
+				requestKey,
+			});
 	} catch {
 		// PocketBase throws 404 when no record matches — translate to null.
 		return null;
@@ -132,13 +142,19 @@ export async function upsertOwnerRequirements(
  * Evaluates the owner's enabled requirements against a borrower and returns the
  * ones that are NOT met (empty array = borrower may request). Used for UX only;
  * the backend hook performs the binding check.
+ *
+ * `requestKey` is forwarded to `getOwnerRequirements` and MUST be distinct per
+ * concurrent call site on the same `pb` — see that function's doc comment. Note
+ * that a `RequirementDef.evaluate` issuing its own reads is subject to the same
+ * trap and must key them itself.
  */
 export async function evaluateUnmetRequirements(
 	pb: PocketBase,
 	ownerId: string,
-	borrower: Borrower
+	borrower: Borrower,
+	requestKey?: string
 ): Promise<UnmetRequirement[]> {
-	const req = await getOwnerRequirements(pb, ownerId);
+	const req = await getOwnerRequirements(pb, ownerId, requestKey);
 	if (!req) return [];
 
 	const unmet: UnmetRequirement[] = [];

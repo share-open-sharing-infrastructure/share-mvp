@@ -56,9 +56,15 @@ export async function load({ params, locals }) {
 	// trust list ever leaves the server. Both directions in ONE query (see
 	// getTrustDirections in trust.ts) rather than two separate lookups against the
 	// same `trusts` path.
-	const { aTrustsB: viewerTrustsProfile, bTrustsA: profileTrustsViewer } = currentUser
-		? await getTrustDirections(locals.pb, currentUser.id, profileUser.id, 'trust-directions-profile')
-		: NO_TRUST_DIRECTIONS;
+	const { viewerTrustsOther: viewerTrustsProfile, otherTrustsViewer: profileTrustsViewer } =
+		currentUser
+			? await getTrustDirections(
+					locals.pb,
+					currentUser.id,
+					profileUser.id,
+					'trust-directions-profile'
+				)
+			: NO_TRUST_DIRECTIONS;
 
 	// items_public masks RESTRICTED items (trustees-only OR group-shared): their
 	// name comes back NULL. Unmasked rows are public.
