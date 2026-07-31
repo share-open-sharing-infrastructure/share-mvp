@@ -38,8 +38,10 @@ test.describe('search bar focus (desktop)', () => {
 		// The submit establishes the search baseline; the two debounce auto-searches below
 		// each replaceState, so they collapse into a single entry instead of stacking — a
 		// single goBack therefore skips the intermediate queries and returns to /search.
+		// An empty submit navigates to plain /search (no `q` param, see SearchBar's
+		// handleSubmit) since #578 consolidated filters — everything is shown by default.
 		await input.press('Enter');
-		await expect(page).toHaveURL(/[?&]q=\*/);
+		await expect(page).toHaveURL(/\/search$/);
 
 		// Two successive auto-searches, each awaited so both actually navigate.
 		await input.pressSequentially('lampe');
