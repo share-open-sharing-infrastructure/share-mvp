@@ -10,8 +10,7 @@ import { test, expect } from '@playwright/test';
  *
  * Why this can't live in a unit test: `src/lib/texts.test.ts` pins the *strings*, but nothing
  * unit-level proves they reach the rendered `<title>`/`<meta>` or that the markup uses a
- * heading element. Note the trade-off — per `docs/testing-strategy.md` the e2e suite does not
- * run in CI, so this file is a local/manual gate, not an automated one.
+ * heading element.
  */
 
 import { CITY } from '../fixtures/instance';
