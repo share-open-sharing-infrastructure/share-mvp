@@ -1,6 +1,25 @@
 name: Vitest on PR
 env:
   node_version: '25.2.1'
+  # Shared by the build and test jobs below (step-level `env` inherits from here and may
+  # override). Every var read via $env/static/* must exist at build time or the build fails
+  # with "Missing export", even if nothing calls the code path that uses it. Tests aren't
+  # bundled, but code under test still reads these via $env/static/*, and Vite normally
+  # resolves them from a local .env (absent in CI) — so both jobs need them. SYNC_SECRET is
+  # gone with #487 Phase 3 (the integrations moved into the backend); the rest below (VAPID
+  # push, ORS geocoding, Mistral item-photo analysis, PB_SUPERUSER_* for metrics_daily) are
+  # never exercised for real here, so dummy values are fine — see .env.example for the
+  # canonical list of required vars. VAPID keys must still be well-formed (web-push validates
+  # key length on import), so this is a throwaway keypair, not an arbitrary string.
+  # PUBLIC_PB_URL is deliberately NOT here: it differs per job, and keeping it at step level
+  # avoids needing the `secrets` context at workflow level.
+  PB_SUPERUSER_EMAIL: ci@example.com
+  PB_SUPERUSER_PASSWORD: dummy
+  PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ
+  VAPID_PRIVATE_KEY: Fz1mNiBa1Nk3mpy8KjzIjqKf8R0ff9ZHqw525Vy_d-4
+  VAPID_SUBJECT: mailto:ci@example.com
+  ORS_API_KEY: dummy
+  MISTRAL_API_KEY: dummy
 on:
   pull_request:
     branches:
@@ -10,7 +29,9 @@ jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # Skip on fork PRs; still runs on manual dispatch. `test` and `report-coverage` hang off
+    # this job via `needs`, so gating here gates the whole workflow.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Check PR code
         uses: actions/checkout@v4
@@ -25,21 +46,10 @@ jobs:
       - name: Build
         run: npm run build
         env:
+          # Pre-existing and left as-is: `npm run build` inlines $env/static/public into the
+          # bundle, so this job takes the real origin from a repo secret. Everything else this
+          # step needs comes from the workflow-level `env` block above.
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
-          # Every var read via $env/static/* must exist at build time or the build fails with
-          # "Missing export", even if nothing calls the code path that uses it. SYNC_SECRET is
-          # gone with #487 Phase 3 (the integrations moved into the backend); the rest below
-          # (VAPID push, ORS geocoding, Mistral item-photo analysis, PB_SUPERUSER_* for
-          # metrics_daily) are unused at build time, so dummy values are fine — see .env.example
-          # for the canonical list of required vars. VAPID keys must still be well-formed (web-push
-          # validates key length on import), so this is a throwaway keypair, not a real value.
-          PB_SUPERUSER_EMAIL: ci@example.com
-          PB_SUPERUSER_PASSWORD: dummy
-          PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ
-          VAPID_PRIVATE_KEY: Fz1mNiBa1Nk3mpy8KjzIjqKf8R0ff9ZHqw525Vy_d-4
-          VAPID_SUBJECT: mailto:ci@example.com
-          ORS_API_KEY: dummy
-          MISTRAL_API_KEY: dummy
   test:
     # This matrix tests both the main and pull request branches
     name: Test ${{ matrix.artifact }}
@@ -70,17 +80,12 @@ jobs:
       - name: Run tests with coverage
         run: npx vitest run --coverage.enabled --coverage.reporter=json --coverage.reporter=json-summary --coverage.reporter=lcov
         env:
-          # Unlike the build job, tests aren't bundled — but code under test still reads these
-          # via $env/static/*, and Vite normally resolves them from a local .env (absent in CI).
-          # Same dummy values as the build job; see its comment for why they're safe here.
-          PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
-          PB_SUPERUSER_EMAIL: ci@example.com
-          PB_SUPERUSER_PASSWORD: dummy
-          PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ
-          VAPID_PRIVATE_KEY: Fz1mNiBa1Nk3mpy8KjzIjqKf8R0ff9ZHqw525Vy_d-4
-          VAPID_SUBJECT: mailto:ci@example.com
-          ORS_API_KEY: dummy
-          MISTRAL_API_KEY: dummy
+          # A literal loopback URL, not the production secret: the only test that reads this
+          # unmocked (src/routes/user/groups/[id]/page.server.test.ts) just asserts the value is
+          # truthy, a secret would be masked in the logs anyway, and the production origin has no
+          # business in a unit-test run. Matches lint.yaml. Everything else comes from the
+          # workflow-level `env` block above.
+          PUBLIC_PB_URL: http://127.0.0.1:8090
       - name: Copy thresholds config (if exists)
         run: |
           if [ -f vitest.thresholds.js ]; then

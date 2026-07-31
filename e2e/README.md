@@ -22,15 +22,6 @@ which starts the real-schema backend (and can seed) in one command:
 scripts/dev-stack.sh --no-web   # PB only, so `npm run test:e2e` starts its own dev server
 ```
 
-The suite now also runs in CI via [`.github/workflows/e2e.yaml`](/.github/workflows/e2e.yaml), on
-every PR to `main` (skipped on fork PRs, same gate as `vitest.yaml`) plus `workflow_dispatch`. The
-job checks out `allerleih-backend` at a pinned `main` ref into `allerleih-backend/`, downloads a
-pinned PocketBase release (the "known-good" version from that repo's README), starts it against
-the real schema on `127.0.0.1:8091`, upserts a throwaway CI superuser, then runs this suite the
-same way you would locally. Bumping either pin (the backend ref or the PocketBase version) is a
-deliberate, reviewable diff in the workflow file — not automatic — so frontend PRs aren't silently
-coupled to unrelated backend changes landing on `main`.
-
 ## Running
 
 ```bash
@@ -72,3 +63,35 @@ mirrored in `e2e/fixtures/users.ts` — keep the two in sync.
 - Locate by role/label/text (`getByRole`, `getByText`), not CSS selectors.
 - Web-first assertions (`await expect(locator)…`) that auto-retry; never `waitForTimeout`.
 - One behavior per test. Traces are captured `on-first-retry`.
+
+## CI
+
+The suite also runs in CI via [`.github/workflows/e2e.yaml`](/.github/workflows/e2e.yaml), on every
+PR to `main` (skipped on fork PRs, same gate as `vitest.yaml`) plus `workflow_dispatch`. The job
+checks out `allerleih-backend` into `allerleih-backend/`, downloads the PocketBase release named in
+the workflow, verifies its SHA256, upserts a throwaway CI-only superuser, starts it against the real
+schema on `127.0.0.1:8091`, then runs this suite the same way you would locally. On failure it
+uploads the Playwright report plus PocketBase's own log (`allerleih-backend/pb.log`) as artifacts —
+check the latter first if the symptom is a wall of timeouts, since a PocketBase that died mid-run
+looks exactly like that from Playwright's side.
+
+### What is pinned, and what isn't
+
+Only the **PocketBase version** is pinned — as a version _and_ a SHA256 checksum, since GitHub
+release assets are mutable per tag. Bumping it is a deliberate two-line diff in the workflow.
+
+The **backend itself is not pinned**: the job checks out `allerleih-backend` at `ref: main`, and a
+branch pointer re-resolves on every run. Two consequences worth knowing before you go hunting for a
+bug in your own diff:
+
+- **A backend merge can turn a frontend PR red without the PR changing.** If a commit lands on the
+  backend's `main` that breaks a flow this suite covers, every open frontend PR starts failing on
+  the next run. Check the backend's recent `main` history before assuming your branch is at fault.
+- **A frontend PR that needs an unmerged backend migration cannot go green.** CI only ever sees the
+  backend's `main`, so a change depending on a migration still sitting in a backend PR is
+  structurally unable to pass. Land the backend side first (or expect a known-red run and say so on
+  the PR).
+
+Pinning the backend to a commit SHA would trade this for the opposite failure mode — frontend PRs
+silently testing against a stale schema — so the current setup is a deliberate choice, not an
+oversight.

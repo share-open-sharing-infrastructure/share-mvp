@@ -35,13 +35,24 @@ test.describe('search bar focus (desktop)', () => {
 		await expect(input).toBeVisible();
 		await expect(input).toBeFocused();
 
-		// The submit establishes the search baseline; the two debounce auto-searches below
-		// each replaceState, so they collapse into a single entry instead of stacking — a
-		// single goBack therefore skips the intermediate queries and returns to /search.
-		// An empty submit navigates to plain /search (no `q` param, see SearchBar's
-		// handleSubmit) since #578 consolidated filters — everything is shown by default.
+		// The submit establishes the search baseline that the goBack at the end returns to.
+		// Asserting the URL here would be tautological: the page is already on /search (the
+		// goto above), and an empty submit targets that very same URL — SearchBar's
+		// handleSubmit calls goto(resolve('/search')) with no `q` param since #578
+		// consolidated filters, so everything is shown by default. A URL check would pass
+		// even if Enter did nothing at all. Assert what the submit actually *does* instead:
+		// it pushes a real history entry (no replaceState), unlike the two auto-searches
+		// below, and it leaves no `q` behind.
+		const historyDepthBefore = await page.evaluate(() => history.length);
 		await input.press('Enter');
-		await expect(page).toHaveURL(/\/search$/);
+		await expect
+			.poll(() =>
+				page.evaluate(() => ({
+					depth: history.length,
+					hasQ: new URL(location.href).searchParams.has('q'),
+				}))
+			)
+			.toEqual({ depth: historyDepthBefore + 1, hasQ: false });
 
 		// Two successive auto-searches, each awaited so both actually navigate.
 		await input.pressSequentially('lampe');

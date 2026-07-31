@@ -2,38 +2,71 @@ name: E2E on PR
 env:
   node_version: '25.2.1'
   # Known-good PocketBase version pinned in allerleih-backend/README.md. Bumping this is a
-  # deliberate, reviewable diff — see e2e/README.md.
+  # deliberate, reviewable diff — see e2e/README.md. A bump touches *two* lines: the version
+  # and the checksum below (upstream publishes it as `checksums.txt` on the release).
   pb_version: '0.39.4'
+  pb_sha256: '06a3ec70205b3eaf8343e226ab74c132013f7b1e9102e898dbca034bdd622d62'
 on:
   pull_request:
     branches:
       - main
   workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   e2e:
     name: Playwright e2e
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 30
+    # Skip on fork PRs (mirrors the Vitest workflow); still runs on manual dispatch.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - name: Check PR code
         uses: actions/checkout@v4
+        with:
+          # No step below shells out to git, so the checkout token doesn't need to stay in
+          # .git/config for the rest of the job.
+          persist-credentials: false
 
       - name: Checkout allerleih-backend
         uses: actions/checkout@v4
         with:
           repository: share-open-sharing-infrastructure/allerleih-backend
+          # Tracks `main` — this is NOT a pin: a branch pointer re-resolves on every run.
+          # See e2e/README.md for what that means for red/green PRs.
           ref: main
           path: allerleih-backend
+          persist-credentials: false
 
       - name: Download PocketBase
         working-directory: allerleih-backend
+        env:
+          # Passed through step env instead of interpolating `${{ }}` straight into the script:
+          # an expression is substituted verbatim before bash ever sees it, so the day this
+          # reads something attacker-controlled (e.g. github.head_ref) it becomes an injection
+          # vector. Env vars are never re-parsed as shell.
+          PB_VERSION: ${{ env.pb_version }}
+          PB_SHA256: ${{ env.pb_sha256 }}
         run: |
-          VERSION="${{ env.pb_version }}"
-          URL="https://github.com/pocketbase/pocketbase/releases/download/v${VERSION}/pocketbase_${VERSION}_linux_amd64.zip"
+          URL="https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_linux_amd64.zip"
           curl -fsSL "$URL" -o pocketbase.zip
+          # Release assets are mutable per tag, so the version alone doesn't pin the bytes.
+          echo "${PB_SHA256}  pocketbase.zip" | sha256sum -c -
           unzip -o pocketbase.zip pocketbase
           chmod +x pocketbase
           rm pocketbase.zip
+
+      - name: Create CI-only superuser
+        working-directory: allerleih-backend
+        # Runs *before* `serve`: it initialises the fresh pb_data itself, so nothing else holds
+        # the SQLite file open ("database is locked" flake). `serve` then applies the repo's
+        # migrations on top — the superuser created here survives that.
+        # Fixed placeholder password, hardcoded directly here: this PocketBase instance is
+        # ephemeral, CI-only, and never publicly exposed, so no repo secret is needed.
+        run: ./pocketbase superuser upsert ci@example.com ci-e2e-password-only --dir=pb_data
 
       - name: Start PocketBase (real schema)
         working-directory: allerleih-backend
@@ -43,19 +76,15 @@ jobs:
             --dir=pb_data \
             --migrationsDir=pb_migrations \
             --hooksDir=pb_hooks \
-            --publicDir=pb_public &
+            --publicDir=pb_public > pb.log 2>&1 &
           echo -n "  waiting for PocketBase"
           for _ in $(seq 1 30); do
             if curl -sf -o /dev/null http://127.0.0.1:8091/api/health; then echo " — up"; break; fi
             echo -n "."; sleep 1
           done
-          curl -sf -o /dev/null http://127.0.0.1:8091/api/health || { echo "PocketBase did not become healthy."; exit 1; }
-
-      - name: Create CI-only superuser
-        working-directory: allerleih-backend
-        # Fixed placeholder password, hardcoded directly here: this PocketBase instance is
-        # ephemeral, CI-only, and never publicly exposed, so no repo secret is needed.
-        run: ./pocketbase superuser upsert ci@example.com ci-e2e-password-only --dir=pb_data
+          curl -sf -o /dev/null http://127.0.0.1:8091/api/health || {
+            echo "PocketBase did not become healthy. Log:"; cat pb.log; exit 1;
+          }
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -76,11 +105,12 @@ jobs:
           PB_URL: http://127.0.0.1:8091
           PB_SUPERUSER_EMAIL: ci@example.com
           PB_SUPERUSER_PASSWORD: ci-e2e-password-only
-          E2E_BASE_URL: http://127.0.0.1:5173
           # playwright.config.ts's webServer only sets PUBLIC_PB_URL/DEV_DISABLE_MKCERT itself —
           # everything else the dev server reads via $env/static/* (e.g. web-push's VAPID setup
           # in $lib/server/notifications.ts) must already be in this step's env, since Playwright
-          # spawns the dev server inheriting process.env. Same dummy values as vitest.yaml.
+          # spawns the dev server inheriting process.env. vitest.yaml carries its own copy of
+          # these dummy values; the two are independent and nothing keeps them in sync, so treat
+          # a change here as a prompt to check that file too rather than assuming it matches.
           PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ
           VAPID_PRIVATE_KEY: Fz1mNiBa1Nk3mpy8KjzIjqKf8R0ff9ZHqw525Vy_d-4
           VAPID_SUBJECT: mailto:ci@example.com
@@ -95,4 +125,5 @@ jobs:
           path: |
             playwright-report/
             test-results/
+            allerleih-backend/pb.log
           retention-days: 7

@@ -45,17 +45,13 @@ Locally, [`scripts/dev-stack.sh`](/scripts/dev-stack.sh) brings up the backend (
 seeds) in one command. Conventions (role/label locators, web-first assertions, no
 `waitForTimeout`) and the full env reference are documented in [`e2e/README.md`](/e2e/README.md).
 
-The e2e suite now also runs in CI via
-[`.github/workflows/e2e.yaml`](/.github/workflows/e2e.yaml), on every PR to `main` (skipped on
-fork PRs, gated the same way as `vitest.yaml`) plus `workflow_dispatch`. The job checks out
-`allerleih-backend` at a pinned `main` ref, downloads a pinned "known-good" PocketBase release
-(see that repo's README), starts it against the real schema, upserts a throwaway CI-only
-superuser, and runs the suite against it. Both pins — the backend ref and the PocketBase
-version — live in the workflow file and only change via a deliberate, reviewable diff to it, not
-automatically on every run; this is what keeps frontend PRs from being silently coupled to
-whatever the backend repo's `main` happens to be doing at build time. Lint and type-checking
-**also** run on every PR via [`.github/workflows/lint.yaml`](/.github/workflows/lint.yaml)
-(`npm run lint` + `npm run check`), alongside the existing Vitest + build workflow.
+The e2e suite also runs in CI via [`.github/workflows/e2e.yaml`](/.github/workflows/e2e.yaml) on
+every PR to `main`, against a real-schema PocketBase it starts itself; note that it tracks the
+backend's `main` rather than pinning it, so a backend merge can turn an unchanged frontend PR red
+(and a frontend PR needing an unmerged backend migration cannot go green) — the operational detail
+lives in [`e2e/README.md`](/e2e/README.md) → "CI". Lint and type-checking **also** run on every PR
+via [`.github/workflows/lint.yaml`](/.github/workflows/lint.yaml) (`npm run lint` +
+`npm run check`), alongside the existing Vitest + build workflow.
 
 ## Practice
 
