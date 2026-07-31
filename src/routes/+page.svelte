@@ -114,11 +114,19 @@
 		>
 			<div class="text-center lg:text-left">
 				<img src="/AllerLeih.png" alt={texts.names.app} class="h-32 mx-auto" />
-				<p
+				<!--
+					The tagline is the homepage's <h1> — it contains both the activity and the
+					location, making it the only text here that qualifies as a page heading (the
+					logo is an image). It used to be a <p>, and the page had NO h1 at all, starting
+					instead with the info cards' headings (axe: `page-has-heading-one`, WCAG 1.3.1).
+					Tailwind Preflight strips heading styling (font-size/-weight/margin: inherit or
+					0), and the classes carried over unchanged — the swap is pixel-identical.
+				-->
+				<h1
 					class="text-center text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8"
 				>
 					{landingTexts.tagline} <span class="font-bold text-tinte-700">{texts.names.city}</span>
-				</p>
+				</h1>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
 						<Button href={cta.href} color={cta.color} size="xl" class="w-full sm:w-auto">
@@ -148,7 +156,9 @@
 		>
 			{#each internalInfoCards as card (card.title)}
 				<div class={styles.card}>
-					<h3 class={styles.cardTitle}>{card.title}</h3>
+					<!-- h2, not h3: under the new h1, h3 would be a skipped level (axe
+					     `heading-order`). Classes unchanged ⇒ visually identical. -->
+					<h2 class={styles.cardTitle}>{card.title}</h2>
 					<p class={styles.cardBody}>
 						{card.before}
 						<a href={resolve(card.route)} class={styles.cardLink}
@@ -158,7 +168,7 @@
 				</div>
 			{/each}
 			<div class={styles.card}>
-				<h3 class={styles.cardTitle}>{contributeInfoCard.title}</h3>
+				<h2 class={styles.cardTitle}>{contributeInfoCard.title}</h2>
 				<p class={styles.cardBody}>
 					{contributeInfoCard.before}
 					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- buildRedirectHref() returns an already-resolved /api/redirect proxy URL; the rule cannot see through the call -->

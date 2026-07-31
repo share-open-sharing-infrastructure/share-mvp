@@ -6,7 +6,7 @@
 	import { texts } from '$lib/texts';
 	import { instanceUrl } from '$lib/instance';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
-	import { itemImageUrl, itemImageUrls } from '$lib/utils/utils';
+	import { itemImageUrl, itemImageUrls, displayName } from '$lib/utils/utils';
 	import type { ItemPublic, UserPublic } from '$lib/types/models';
 	import ItemImage from './ItemImage.svelte';
 	import ItemTravelTime from './ItemTravelTime.svelte';
@@ -51,14 +51,11 @@
 			: null
 	);
 
-	const seoTitle = $derived(texts.seo.itemDetail(item.name, item.username ?? ''));
+	const seoTitle = $derived(texts.seo.itemDetail(item.name));
 	const seoDesc = $derived(
 		item.description
 			? item.description.replace(/\s+/g, ' ').trim().slice(0, 155)
-			: texts.seo.itemDetailDescription(
-					item.name,
-					item.username ?? ''
-				)
+			: texts.seo.itemDetailDescription(item.name, displayName(owner))
 	);
 	const seoImage = $derived(itemImageUrl(data.PB_IMG_URL, item) ?? instanceUrl('/og-invite.png'));
 </script>

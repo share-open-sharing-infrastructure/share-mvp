@@ -8,6 +8,8 @@ test.describe('smoke (logged out)', () => {
 		await page.goto('/');
 
 		await expect(page).toHaveTitle(/AllerLeih/);
+		// Stays a plain text assertion: the smoke test's job is "the page renders". The
+		// tagline's heading level is pinned once, in `seo-local.spec.ts`.
 		await expect(
 			page.getByText('Leihe und teile kostenlos Dinge in Lüneburg')
 		).toBeVisible();

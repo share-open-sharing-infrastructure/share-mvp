@@ -672,7 +672,10 @@ export const texts = {
 			},
 		},
 		search: {
-			title: 'Suche',
+			// Sichtbare <h1> von `/search` (nicht der Navigationslabel — das ist `nav.search`).
+			// Trägt den Ort, weil `/search` eine indexierbare Landingpage ist und ein blankes
+			// "Suche" als h1 kein lokales Signal liefert.
+			title: `Gegenstände leihen in ${CITY}`,
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
 				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
@@ -1211,22 +1214,44 @@ export const texts = {
 		},
 	},
 
-	// SEO meta titles and descriptions
+	// SEO meta titles and descriptions.
+	//
+	// Lokale Auffindbarkeit: die indexierbaren Seiten tragen den Ortsnamen (`CITY`) in Title
+	// und/oder Description. Ohne ihn rankte die Instanz nur auf den Markennamen — lokale
+	// Anfragen wie "leihen <Stadt>" oder "bohrmaschine leihen <Stadt>" fanden keinerlei
+	// Übereinstimmung. Der Ort kommt IMMER aus `CITY` (= `instance.city`), nie als Literal:
+	// ein Build-Artefakt bedient mehrere Stadt-Instanzen (siehe `$lib/instance.ts`).
+	// `src/lib/texts.test.ts` pinnt beides — Ortsbezug und Interpolierbarkeit.
+	//
+	// Bewusst OHNE Ort — Stand dieser Änderung vollständig, damit niemand einen der Fälle für ein
+	// Versehen hält (spätere Ergänzungen bitte hier nachpflegen):
+	//   · noindex-Seiten, die kein Crawler sieht: adminMetrics, conversations, social,
+	//     onboarding, userImport, register, resetConfirm, confirmVerification,
+	//     confirmEmailChange
+	//   · indexierbar, aber ohne lokale Suchintention: login, reset, app, publicStats,
+	//     newsletter
+	//   · userProfile/userProfileDescription: die Query ist der Username, nicht der Ort
+	//   · imprint: trägt die Postadresse ohnehin
+	//
+	// Gemischtes Bild `${APP_NAME}` vs. Literal "AllerLeih" ist ebenfalls Absicht: Fortsetzung
+	// der partiellen #473-Entscheidung (siehe `$lib/instance.ts` → `appName`). Umgestellt sind
+	// nur die ohnehin angefassten Strings; die übrigen ~89 Vorkommen in der deutschen Copy
+	// bleiben Literale. Neue oder überarbeitete Strings nutzen `${APP_NAME}`.
+	//
+	// Längenbudget der angefassten Strings: Title ≤ 60, Description ≤ 155 Zeichen (ab da
+	// kürzen Suchmaschinen). Im Test als `it.each` hinterlegt.
 	seo: {
 		home: {
-			title: 'AllerLeih',
-			description:
-				'Kostenlos Gegenstände leihen und teilen mit Menschen in deiner Umgebung. Spare Geld, Platz und Ressourcen und stärke deine Gemeinschaft.',
+			title: `Dinge leihen und verleihen in ${CITY} – ${APP_NAME}`,
+			description: `Kostenlos Dinge leihen und verleihen in ${CITY} und Umgebung: Werkzeug, Garten, Küche, Sport und mehr. Spare Geld, Platz und Ressourcen.`,
 		},
 		search: {
-			title: 'Gegenstände suchen – AllerLeih',
-			description:
-				'Durchsuche Gegenstände in deiner Nähe. Filtere nach Kategorie und Entfernung und finde, was du brauchst.',
+			title: `Gegenstände ausleihen in ${CITY} – ${APP_NAME}`,
+			description: `Durchsuche Gegenstände zum Ausleihen in ${CITY} und Umgebung. Filtere nach Kategorie und Entfernung und finde kostenlos, was du gerade brauchst.`,
 		},
 		about: {
-			title: 'Über uns – AllerLeih',
-			description:
-				'AllerLeih ist eine gemeinnützige Plattform für lokales Leihen und Teilen. Lerne das Team dahinter kennen.',
+			title: `Über uns – ${APP_NAME} ${CITY}`,
+			description: `${APP_NAME} ist eine gemeinnützige Initiative aus ${CITY} für lokales Leihen und Teilen. Lerne das Team dahinter kennen.`,
 		},
 		adminMetrics: {
 			title: 'Kennzahlen – Admin – AllerLeih',
@@ -1237,9 +1262,9 @@ export const texts = {
 				'Offene Kennzahlen der AllerLeih-Plattform: registrierte Nutzer:innen, verfügbare Gegenstände und abgeschlossene Ausleihen.',
 		},
 		guide: {
+			// Title bleibt ohne Ort: "Wie funktioniert AllerLeih?" ist eine Brand-Query.
 			title: 'Wie funktioniert AllerLeih? – Anleitung',
-			description:
-				'Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen auf AllerLeih. Tipps, FAQs und erste Schritte.',
+			description: `Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen in ${CITY}. Tipps, FAQs und erste Schritte mit ${APP_NAME}.`,
 		},
 		app: {
 			title: 'AllerLeih als App installieren',
@@ -1247,8 +1272,8 @@ export const texts = {
 				'Lege AllerLeih als App auf deinen Startbildschirm – ohne App-Store. So installierst du die Progressive Web App Schritt für Schritt auf iPhone, Android und Computer.',
 		},
 		contact: {
-			title: 'Kontakt – AllerLeih',
-			description: 'Schreib uns! Fragen, Feedback oder Kooperationsanfragen sind herzlich willkommen.',
+			title: `Kontakt – ${APP_NAME} ${CITY}`,
+			description: `Schreib uns! Fragen, Feedback oder Kooperationsanfragen rund um ${APP_NAME} in ${CITY} sind herzlich willkommen.`,
 		},
 		imprint: {
 			title: 'Impressum – AllerLeih',
@@ -1285,9 +1310,15 @@ export const texts = {
 			title: 'Neue E-Mail-Adresse bestätigen – AllerLeih',
 			description: 'Bestätige die Änderung deiner E-Mail-Adresse für dein AllerLeih-Konto.',
 		},
-		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
+		// Der Owner steht bewusst NICHT mehr im Title: er bringt kein Ranking und verdrängt
+		// bei langen Item-Namen den Ortsnamen aus dem angezeigten Snippet. Sein Platz ist die
+		// Description. Der Fixteil muss einem Item-Namen von ~29 Zeichen Platz im 60-Zeichen-
+		// Budget lassen (im Test gepinnt); bei längeren Namen kürzt Google nach Pixelbreite,
+		// der Ort steht direkt hinter dem Namen und überlebt das in aller Regel. Bewusst
+		// keine Kürzungslogik hier.
+		itemDetail: (name: string) => `${name} leihen in ${CITY} – ${APP_NAME}`,
 		itemDetailDescription: (name: string, owner: string) =>
-			`Leihe ${name} von ${owner} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
+			`Leihe ${name} von ${owner} in ${CITY} – kostenlos und nachbarschaftlich über ${APP_NAME}.`,
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
