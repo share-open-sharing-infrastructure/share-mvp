@@ -189,7 +189,7 @@
 								fieldName="telegramUsername"
 								label={texts.messenger.telegramUsername}
 								placeholder={texts.messenger.telegramUsernamePlaceholder}
-								value={data.contact.telegramUsername ?? ''}
+								initialValue={data.contact.telegramUsername ?? ''}
 								visibilityToggleName="telegramVisibleToTrustedOnly"
 								visibilityToggleChecked={data.contact
 									.telegramVisibleToTrustedOnly ?? true}
@@ -201,7 +201,7 @@
 								fieldName="signalLink"
 								label={texts.messenger.signalLink}
 								placeholder={texts.messenger.signalLinkPlaceholder}
-								value={data.contact.signalLink ?? ''}
+								initialValue={data.contact.signalLink ?? ''}
 								visibilityToggleName="signalVisibleToTrustedOnly"
 								visibilityToggleChecked={data.contact
 									.signalVisibleToTrustedOnly ?? true}
