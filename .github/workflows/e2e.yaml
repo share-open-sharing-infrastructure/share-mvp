@@ -77,6 +77,15 @@ jobs:
           PB_SUPERUSER_EMAIL: ci@example.com
           PB_SUPERUSER_PASSWORD: ci-e2e-password-only
           E2E_BASE_URL: http://127.0.0.1:5173
+          # playwright.config.ts's webServer only sets PUBLIC_PB_URL/DEV_DISABLE_MKCERT itself —
+          # everything else the dev server reads via $env/static/* (e.g. web-push's VAPID setup
+          # in $lib/server/notifications.ts) must already be in this step's env, since Playwright
+          # spawns the dev server inheriting process.env. Same dummy values as vitest.yaml.
+          PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ
+          VAPID_PRIVATE_KEY: Fz1mNiBa1Nk3mpy8KjzIjqKf8R0ff9ZHqw525Vy_d-4
+          VAPID_SUBJECT: mailto:ci@example.com
+          ORS_API_KEY: dummy
+          MISTRAL_API_KEY: dummy
 
       - name: Upload Playwright report on failure
         if: failure()
