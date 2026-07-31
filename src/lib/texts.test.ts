@@ -25,6 +25,9 @@ import { texts } from './texts';
 const TITLE_MAX = 60;
 const DESCRIPTION_MAX = 155;
 
+/** Mirrors `$lib/instance.ts`'s `city` fallback — the default instance's reference city. */
+const DEFAULT_CITY = 'Lüneburg';
+
 /**
  * Item name that must still fit inside `TITLE_MAX` alongside the fixed part of the item-detail
  * title. Expressed as a name budget rather than pinning the fixed part's exact length: pinning
@@ -53,26 +56,26 @@ const LOCAL_PAGES = [
 describe('texts.seo — local SEO strings (default instance)', () => {
 	it.each(LOCAL_PAGES)('$key: title names the city and fits the budget', (entry) => {
 		if ('cityInTitle' in entry && entry.cityInTitle === false) {
-			expect(entry.title).not.toContain('Lüneburg');
+			expect(entry.title).not.toContain(DEFAULT_CITY);
 		} else {
-			expect(entry.title).toContain('Lüneburg');
+			expect(entry.title).toContain(DEFAULT_CITY);
 		}
 		expect(entry.title.length).toBeLessThanOrEqual(TITLE_MAX);
 	});
 
 	it.each(LOCAL_PAGES)('$key: description names the city and fits the budget', (entry) => {
-		expect(entry.description).toContain('Lüneburg');
+		expect(entry.description).toContain(DEFAULT_CITY);
 		expect(entry.description.length).toBeLessThanOrEqual(DESCRIPTION_MAX);
 	});
 
 	it('uses the city in the visible /search heading', () => {
-		expect(texts.pages.search.title).toContain('Lüneburg');
+		expect(texts.pages.search.title).toContain(DEFAULT_CITY);
 	});
 
 	describe('item detail', () => {
 		it('names the city in both title and description', () => {
-			expect(texts.seo.itemDetail('Bohrmaschine')).toContain('Lüneburg');
-			expect(texts.seo.itemDetailDescription('Bohrmaschine', 'Anna')).toContain('Lüneburg');
+			expect(texts.seo.itemDetail('Bohrmaschine')).toContain(DEFAULT_CITY);
+			expect(texts.seo.itemDetailDescription('Bohrmaschine', 'Anna')).toContain(DEFAULT_CITY);
 		});
 
 		it('leaves room in the title budget for a typical item name', () => {
@@ -105,6 +108,11 @@ describe('texts.seo — city is interpolated, not hardcoded', () => {
 	 * Scoped to `texts.seo` on purpose: `texts.pages.imprint.address.city` is legitimately
 	 * "Lüneburg" — it comes from `instance.imprint`, the operator's postal address (§5 TMG),
 	 * which is deliberately *not* per-instance. A repo-wide walk would fail on it.
+	 *
+	 * Assumes every function under `texts.seo` takes 1–2 string args — it calls each with
+	 * `('X', 'Y')` regardless of arity. Adding a 3-arg entry will fail this test with an opaque
+	 * runtime error (wrong argument, `undefined` in the output, etc.); if that happens, extend
+	 * the call here rather than debugging the entry itself.
 	 */
 	function collectSeoStrings(node: unknown): string[] {
 		if (typeof node === 'string') return [node];
@@ -132,7 +140,7 @@ describe('texts.seo — city is interpolated, not hardcoded', () => {
 		// The regression this whole file exists for: any future hardcoded "Lüneburg" anywhere
 		// under `texts.seo` fails here, not just in the keys this change happened to touch.
 		for (const value of strings) {
-			expect(value).not.toContain('Lüneburg');
+			expect(value).not.toContain(DEFAULT_CITY);
 		}
 		expect(strings.filter((value) => value.includes('Marburg')).length).toBeGreaterThan(0);
 	});

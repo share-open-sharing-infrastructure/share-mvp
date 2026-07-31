@@ -124,9 +124,9 @@
 <!-- HEADER -->
 <div class="mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<!-- h1, nicht h2: /search steht in der Sitemap, ist ohne Auth erreichbar und trägt kein
-		     noindex — eine indexierbare Landingpage ohne h1. Klassen unverändert (Tailwind
-		     Preflight entstylt Headings), der Tausch ist optisch folgenlos. -->
+		<!-- h1, not h2: /search is in the sitemap, reachable without auth, and carries no
+		     noindex — an indexable landing page without an h1. Classes unchanged (Tailwind
+		     Preflight strips heading styling), the swap has no visual effect. -->
 		<h1 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.pages.search.title}
 		</h1>
@@ -161,17 +161,17 @@
 	/>
 
 	<!--
-		Statuszeile, KEIN Heading. Vorher standen hier zwei <h5> — die richtige Antwort auf den
-		daraus folgenden `heading-order`-Sprung unter dem neuen h1 ist nicht ein höheres Heading,
-		sondern gar keins: "12 Dinge gefunden" ist eine Statusmeldung, keine Abschnitts-
-		überschrift. Als Heading wäre die Dokumentgliederung von /search instabil (der Text
-		wechselt bei jedem Filter) und Screenreader würden bei jedem Ergebnis-Update die Rolle
-		mit ansagen ("Überschrift Ebene 2, 12 Dinge gefunden"). WCAG 1.3.1.
-		`role="status"` impliziert `aria-live="polite"` und `aria-atomic="true"` bereits; beide
-		stehen defensiv trotzdem explizit da, weil ältere Screenreader/Browser-Kombinationen die
-		impliziten Werte nicht zuverlässig anwenden. Kein `aria-busy` — die Zeile hat keinen
-		eigenen Ladezustand, Ergebnis-Updates laufen über die SvelteKit-Navigation und deren
-		globaler Loader in `+layout.svelte` trägt es bereits.
+		Status line, NOT a heading. This used to be two <h5>s — the right fix for the resulting
+		`heading-order` jump under the new h1 isn't a higher heading, it's no heading at all:
+		"12 items found" is a status message, not a section heading. As a heading, /search's
+		document outline would be unstable (the text changes on every filter) and screen readers
+		would announce the role on every result update ("heading level 2, 12 items found").
+		WCAG 1.3.1.
+		`role="status"` already implies `aria-live="polite"` and `aria-atomic="true"`; both are
+		still listed explicitly as a defensive measure, because some older screen reader/browser
+		combinations don't reliably apply the implicit values. No `aria-busy` — the line has no
+		loading state of its own, result updates go through SvelteKit navigation, and the global
+		loader in `+layout.svelte` already covers that.
 	-->
 	<div
 		class="w-full items-center justify-center text-center mt-2"

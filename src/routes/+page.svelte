@@ -115,12 +115,12 @@
 			<div class="text-center lg:text-left">
 				<img src="/AllerLeih.png" alt={texts.names.app} class="h-32 mx-auto" />
 				<!--
-					Die Tagline ist das <h1> der Startseite — sie enthält Tätigkeit und Ort und ist
-					damit der einzige Text hier, der als Seitenüberschrift taugt (das Logo ist ein
-					Bild). Vorher war sie ein <p>, die Seite hatte GAR KEIN h1 und begann mit den
-					Überschriften der Info-Cards (axe: `page-has-heading-one`, WCAG 1.3.1).
-					Tailwind Preflight entstylt Headings (font-size/-weight/margin: inherit bzw. 0),
-					und die Klassen sind unverändert übernommen — der Tausch ist pixelgleich.
+					The tagline is the homepage's <h1> — it contains both the activity and the
+					location, making it the only text here that qualifies as a page heading (the
+					logo is an image). It used to be a <p>, and the page had NO h1 at all, starting
+					instead with the info cards' headings (axe: `page-has-heading-one`, WCAG 1.3.1).
+					Tailwind Preflight strips heading styling (font-size/-weight/margin: inherit or
+					0), and the classes carried over unchanged — the swap is pixel-identical.
 				-->
 				<h1
 					class="text-center text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8"
@@ -156,8 +156,8 @@
 		>
 			{#each internalInfoCards as card (card.title)}
 				<div class={styles.card}>
-					<!-- h2, nicht h3: unter dem neuen h1 wäre h3 eine übersprungene Ebene (axe
-					     `heading-order`). Klassen unverändert ⇒ optisch identisch. -->
+					<!-- h2, not h3: under the new h1, h3 would be a skipped level (axe
+					     `heading-order`). Classes unchanged ⇒ visually identical. -->
 					<h2 class={styles.cardTitle}>{card.title}</h2>
 					<p class={styles.cardBody}>
 						{card.before}

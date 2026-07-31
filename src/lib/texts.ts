@@ -1223,8 +1223,8 @@ export const texts = {
 	// ein Build-Artefakt bedient mehrere Stadt-Instanzen (siehe `$lib/instance.ts`).
 	// `src/lib/texts.test.ts` pinnt beides — Ortsbezug und Interpolierbarkeit.
 	//
-	// Bewusst OHNE Ort — die Liste ist vollständig, damit niemand einen der Fälle für ein
-	// Versehen hält:
+	// Bewusst OHNE Ort — Stand dieser Änderung vollständig, damit niemand einen der Fälle für ein
+	// Versehen hält (spätere Ergänzungen bitte hier nachpflegen):
 	//   · noindex-Seiten, die kein Crawler sieht: adminMetrics, conversations, social,
 	//     onboarding, userImport, register, resetConfirm, confirmVerification,
 	//     confirmEmailChange
