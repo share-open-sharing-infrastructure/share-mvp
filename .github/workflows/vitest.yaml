@@ -69,6 +69,18 @@ jobs:
       # Run tests with coverage with summary in json format
       - name: Run tests with coverage
         run: npx vitest run --coverage.enabled --coverage.reporter=json --coverage.reporter=json-summary --coverage.reporter=lcov
+        env:
+          # Unlike the build job, tests aren't bundled — but code under test still reads these
+          # via $env/static/*, and Vite normally resolves them from a local .env (absent in CI).
+          # Same dummy values as the build job; see its comment for why they're safe here.
+          PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
+          PB_SUPERUSER_EMAIL: ci@example.com
+          PB_SUPERUSER_PASSWORD: dummy
+          PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ
+          VAPID_PRIVATE_KEY: Fz1mNiBa1Nk3mpy8KjzIjqKf8R0ff9ZHqw525Vy_d-4
+          VAPID_SUBJECT: mailto:ci@example.com
+          ORS_API_KEY: dummy
+          MISTRAL_API_KEY: dummy
       - name: Copy thresholds config (if exists)
         run: |
           if [ -f vitest.thresholds.js ]; then

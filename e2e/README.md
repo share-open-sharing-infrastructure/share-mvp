@@ -22,7 +22,14 @@ which starts the real-schema backend (and can seed) in one command:
 scripts/dev-stack.sh --no-web   # PB only, so `npm run test:e2e` starts its own dev server
 ```
 
-The suite runs locally only for now; wiring it into CI is a possible future step.
+The suite now also runs in CI via [`.github/workflows/e2e.yaml`](/.github/workflows/e2e.yaml), on
+every PR to `main` (skipped on fork PRs, same gate as `vitest.yaml`) plus `workflow_dispatch`. The
+job checks out `allerleih-backend` at a pinned `main` ref into `allerleih-backend/`, downloads a
+pinned PocketBase release (the "known-good" version from that repo's README), starts it against
+the real schema on `127.0.0.1:8091`, upserts a throwaway CI superuser, then runs this suite the
+same way you would locally. Bumping either pin (the backend ref or the PocketBase version) is a
+deliberate, reviewable diff in the workflow file — not automatic — so frontend PRs aren't silently
+coupled to unrelated backend changes landing on `main`.
 
 ## Running
 
