@@ -1,5 +1,5 @@
 import type { ItemPublic } from '$lib/types/models';
-import { getAcceptance, getActiveTerms } from '$lib/server/lendingTerms';
+import { hasAcceptedActiveTerms } from '$lib/server/lendingTerms';
 import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
 
 export type ViewerAccess = {
@@ -125,26 +125,35 @@ export async function resolveExistingConversation(
 }
 
 // Does this owner publish lending terms, and if so has the viewer NOT accepted them?
-// Composes `getActiveTerms` + `getAcceptance` instead of calling `hasAcceptedActiveTerms`
-// (which re-resolves the active terms itself) — one round-trip per lookup within one
-// load(). Both reads carry a call-site-specific requestKey so a sibling task in the same
-// concurrency wave reading `lending_terms`/`term_acceptances` (e.g. a future requirement's
-// `evaluate`) can't auto-cancel them into a silently open gate.
+// Delegates to `hasAcceptedActiveTerms` (the same helper the `startConversation` POST
+// guard in +page.server.ts uses) so the "no active terms → satisfied" / "acceptance is
+// the most recent row for that exact version" rules live in exactly one place — two
+// copies of that composition could silently drift out of sync. Still exactly 2
+// PocketBase reads (active terms + acceptance): each gets its own call-site-specific
+// requestKey via `opts` so a sibling task in the same concurrency wave reading
+// `lending_terms`/`term_acceptances` (e.g. a future requirement's `evaluate`) can't
+// auto-cancel either into a silently open gate.
 export async function resolveTermsGate(
 	pb: App.Locals['pb'],
 	currentUserId: string,
 	ownerId: string
 ): Promise<boolean> {
-	const activeTerms = await getActiveTerms(pb, ownerId, 'terms-gate-item');
-	if (!activeTerms) return false;
-	return (await getAcceptance(pb, currentUserId, activeTerms.id, 'terms-acceptance-item')) === null;
+	return !(await hasAcceptedActiveTerms(pb, currentUserId, ownerId, {
+		termsRequestKey: 'terms-gate-item',
+		acceptanceRequestKey: 'terms-acceptance-item',
+	}));
 }
 
-// Total items listed by this owner (all statuses); 0 on failure.
+// Total items listed by this owner (all statuses); 0 on failure. Explicit requestKey:
+// unlike getFirstListItem (whose SDK default key already folds in the filter), getList's
+// default auto-cancellation key is just `method + path` and ignores the query string —
+// so a second concurrent items_public.getList anywhere in the same request would
+// silently cancel this one and the count would fall back to 0.
 export async function countOwnerItems(pb: App.Locals['pb'], ownerId: string): Promise<number> {
 	try {
 		const { totalItems } = await pb.collection('items_public').getList(1, 1, {
 			filter: pb.filter('userId = {:userId}', { userId: ownerId }),
+			requestKey: 'owner-item-count-item',
 		});
 		return totalItems;
 	} catch {

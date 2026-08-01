@@ -343,4 +343,56 @@ describe('hasAcceptedActiveTerms', () => {
 		const [filter] = acceptanceGet.mock.calls[0];
 		expect(filter).toContain(`terms = '${stubTerms.id}'`);
 	});
+
+	// #615 fix 1: resolveTermsGate (item detail load) now delegates here instead of
+	// re-implementing this composition, so the round-trip count must stay at exactly
+	// one `getActiveTerms` + one `getAcceptance` call regardless of the opts passed.
+	it('resolves the active terms and the acceptance exactly once each', async () => {
+		const termsGet = vi.fn().mockResolvedValue(stubTerms);
+		const acceptanceGet = vi.fn().mockResolvedValue(stubAcceptance);
+		const pb = makeMockPb((name) => ({
+			getFirstListItem: name === 'lending_terms' ? termsGet : acceptanceGet
+		}));
+
+		await hasAcceptedActiveTerms(pb, 'user1', 'owner1', {
+			termsRequestKey: 'terms-gate-item',
+			acceptanceRequestKey: 'terms-acceptance-item'
+		});
+
+		expect(termsGet).toHaveBeenCalledTimes(1);
+		expect(acceptanceGet).toHaveBeenCalledTimes(1);
+	});
+
+	it('forwards opts.termsRequestKey / opts.acceptanceRequestKey to the underlying reads', async () => {
+		const termsGet = vi.fn().mockResolvedValue(stubTerms);
+		const acceptanceGet = vi.fn().mockResolvedValue(stubAcceptance);
+		const pb = makeMockPb((name) => ({
+			getFirstListItem: name === 'lending_terms' ? termsGet : acceptanceGet
+		}));
+
+		await hasAcceptedActiveTerms(pb, 'user1', 'owner1', {
+			termsRequestKey: 'terms-gate-item',
+			acceptanceRequestKey: 'terms-acceptance-item'
+		});
+
+		const [, termsOptions] = termsGet.mock.calls[0];
+		const [, acceptanceOptions] = acceptanceGet.mock.calls[0];
+		expect(termsOptions).toMatchObject({ requestKey: 'terms-gate-item' });
+		expect(acceptanceOptions).toMatchObject({ requestKey: 'terms-acceptance-item' });
+	});
+
+	it('falls back to the stable default requestKeys when opts is omitted', async () => {
+		const termsGet = vi.fn().mockResolvedValue(stubTerms);
+		const acceptanceGet = vi.fn().mockResolvedValue(stubAcceptance);
+		const pb = makeMockPb((name) => ({
+			getFirstListItem: name === 'lending_terms' ? termsGet : acceptanceGet
+		}));
+
+		await hasAcceptedActiveTerms(pb, 'user1', 'owner1');
+
+		const [, termsOptions] = termsGet.mock.calls[0];
+		const [, acceptanceOptions] = acceptanceGet.mock.calls[0];
+		expect(termsOptions).toMatchObject({ requestKey: 'active-terms' });
+		expect(acceptanceOptions).toMatchObject({ requestKey: 'terms-acceptance' });
+	});
 });

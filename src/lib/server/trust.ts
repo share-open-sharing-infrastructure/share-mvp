@@ -166,6 +166,9 @@ export async function getTrustDirections(
 			),
 			fields: 'truster,trustee',
 			requestKey,
+			// Only `items` is read below, never `totalItems` — skip the COUNT query PocketBase
+			// would otherwise run on every trust lookup on the item detail and profile pages.
+			skipTotal: true,
 		});
 		let viewerTrustsOther = false;
 		let otherTrustsViewer = false;

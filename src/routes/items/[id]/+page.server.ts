@@ -94,17 +94,18 @@ export async function load({ params, locals }) {
 
 	// Terms + borrower requirements only gate the in-app request flow: viewer must be
 	// logged in, not the owner, and the owner must not handle requests off-platform.
+	const canRequestInApp = currentUserId && !isOwnItem && !ownerContact;
+
 	// Neither task depends on the other, so they still run concurrently.
-	const termsGateTask =
-		currentUserId && !isOwnItem && !ownerContact
-			? resolveTermsGate(locals.pb, currentUserId, item.userId)
-			: false;
+	const termsGateTask = canRequestInApp
+		? resolveTermsGate(locals.pb, currentUserId, item.userId)
+		: false;
 	// Lender-defined borrower requirements (#423/#389): which enabled requirements does
 	// the current viewer NOT yet meet for this owner? UX only — the backend hook on
 	// conversation create is the authoritative gate. Distinct requestKey from the terms
 	// gate's reads so the two concurrent tasks can't auto-cancel each other.
 	const unmetRequirementsTask: Promise<UnmetRequirement[]> | UnmetRequirement[] =
-		currentUserId && !isOwnItem && !ownerContact && locals.user
+		canRequestInApp && locals.user
 			? evaluateUnmetRequirements(
 					locals.pb,
 					item.userId,
