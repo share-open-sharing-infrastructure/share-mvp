@@ -80,7 +80,9 @@ These prevent the most common bugs/security issues here — follow them without 
 - **Never destructure the `data` prop.** Access `data.x` directly in markup; assigning
   `let x = data.x` detaches `use:enhance` reactivity — and a *user-editable* field seeded from
   `data.x`/a prop needs a seed-once `$state` + `bind:value`, never one-way `value=`, or hydration
-  clobbers it (issue #558). → `docs/best-practices.md`
+  clobbers it (issue #558). A field that must keep *following* an external value (a URL-synced
+  filter box) needs the absorbing-derived variant of the same rule instead of seed-once —
+  issue #619. → `docs/best-practices.md`
 - **Always build PocketBase filters with `pb.filter(raw, {params})`** — never template-literal
   interpolation. Applies to *every* value, including IDs from `locals.user.id` / route params
   (filter injection). Use `locals.pb.filter(...)` in routes, `pb.filter(...)` in `$lib/server/*`.
