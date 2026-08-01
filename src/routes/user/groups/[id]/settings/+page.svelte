@@ -12,7 +12,25 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
 	// Track the public toggle so we can warn only when newly enabling it.
+	// (Pre-existing, not #613: seeded once from `data` and never re-synced, so
+	// state_referenced_locally fires here too — ignored for the same reason as the seeds below.)
+	// svelte-ignore state_referenced_locally
 	let makePublic = $state(data.group.isPublic);
+
+	// Issue #613: seed once from the loaded value, then let the field own it via bind: — never a
+	// one-way value= on an editable field. Flowbite's Input/Textarea binding internally does not
+	// make the outer one-way prop safe; the un-bound prop is a writable derived that the root
+	// layout's afterNavigate invalidate recomputes right after hydration, discarding what the
+	// user typed. Full mechanism: docs/best-practices.md → "Editable fields: seed-once + bind:,
+	// never one-way value=".
+	//
+	// Trade-off (same as #558/`bio`): ?/updateGroup runs update({ reset: false }) → invalidateAll(),
+	// so after a save these fields keep the value the user typed rather than the server-trimmed one.
+	// The page's <h1> still reads data.group.name, so the heading shows the stored value.
+	// svelte-ignore state_referenced_locally
+	let nameValue = $state(data.group.name);
+	// svelte-ignore state_referenced_locally
+	let descriptionValue = $state(data.group.description);
 
 	// Separate copy-feedback per target so the public-link and invite-link
 	// buttons don't both flip to "kopiert!" at once.
@@ -74,7 +92,7 @@
 				<Input
 					type="text"
 					name="name"
-					value={data.group.name}
+					bind:value={nameValue}
 					required
 					oninvalid={requireName}
 					oninput={clearValidity}
@@ -82,7 +100,7 @@
 			</Label>
 			<Label class="space-y-2 block w-full">
 				<span>{texts.groups.descriptionLabel}</span>
-				<Textarea name="description" class="h-24 w-full" value={data.group.description} />
+				<Textarea name="description" class="h-24 w-full" bind:value={descriptionValue} />
 			</Label>
 			<div class="space-y-1">
 				<Toggle name="isPublic" bind:checked={makePublic}>{texts.groups.publicToggle}</Toggle>

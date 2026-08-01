@@ -1,9 +1,11 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { STRANGER_STORAGE_STATE } from '../fixtures/users';
+import { expectFieldsSurvivePreHydration } from '../fixtures/preHydration';
 
 /**
  * Profile — saveProfile persists a changed bio, and a bio typed before hydration survives it
- * (regression for #558). Uses the stranger (owns nothing, not referenced by other tests'
+ * (regression for #558), as does a city typed into AddressInput (the same bug class, #613).
+ * Uses the stranger (owns nothing, not referenced by other tests'
  * assertions) so a concurrent run can't be disturbed. Only the bio is changed; the pre-filled
  * username is submitted unchanged. Runs in `multiuser`.
  *
@@ -113,24 +115,31 @@ test.describe('profile', () => {
 	});
 
 	test('text typed before hydration survives it (#558 regression)', async ({ browser }) => {
-		// Regression for #558: text typed before the page hydrates must survive hydration.
-		// `waitUntil: 'commit'` returns as soon as the SSR HTML starts arriving, so the fill
-		// lands in the (large, in dev) window before the client modules run. Before the fix,
-		// Svelte's first `set_value` pass reset the textarea to the loaded value ('' for the
-		// seeded user) and the following save persisted an empty bio behind a success toast.
-		// If hydration wins the race the test is trivially green — it can never be falsely red.
+		// Before the fix, Svelte's first `set_value` pass reset the textarea to the loaded value
+		// ('' for the seeded user) and the following save persisted an empty bio behind a success
+		// toast — which is what made this worth a browser test at all.
 		const ctx = await browser.newContext({ storageState: STRANGER_STORAGE_STATE });
 		const page = await ctx.newPage();
 		try {
-			const bio = `E2E Pre-Hydration Bio ${Date.now()}`;
-			await page.goto('/user/profile', { waitUntil: 'commit' });
+			await expectFieldsSurvivePreHydration(page, '/user/profile', {
+				'textarea[name="bio"]': `E2E Pre-Hydration Bio ${Date.now()}`,
+			});
+		} finally {
+			await ctx.close();
+		}
+	});
 
-			const bioField = page.locator('textarea[name="bio"]');
-			await bioField.fill(bio);
-			await expect(bioField).toHaveValue(bio);
-
-			// No save here: this test performs no DB write, so it can't collide with the
-			// save-and-reload test above under `fullyParallel`.
+	test('a city typed before hydration survives it (#613 regression)', async ({ browser }) => {
+		// Same bug class as #558, different component: AddressInput's city field is SSR-rendered
+		// on /user/profile and was fed a one-way `value={cityText}`. Every seed user has an empty
+		// city (scripts/seed/lib.js sets none), so the assertion is sharp — anything the field
+		// holds afterwards can only have come from the fill.
+		const ctx = await browser.newContext({ storageState: STRANGER_STORAGE_STATE });
+		const page = await ctx.newPage();
+		try {
+			await expectFieldsSurvivePreHydration(page, '/user/profile', {
+				'input[name="city"]': 'E2E Teststraße 1',
+			});
 		} finally {
 			await ctx.close();
 		}
