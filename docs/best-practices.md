@@ -121,6 +121,27 @@ itself stays one-way and un-destructured. That rule is about not *detaching* rea
 user can type into. Seeding a local `$state` from `data.x` once, at initialization, reads `data.x`
 exactly once and does not detach anything.
 
+**A wrapper that binds internally does not make an outer one-way `value=` safe** (issue #613).
+Flowbite's `Input`/`Textarea` declare `value = $bindable()` and bind the underlying element
+internally, so `bind_value`'s hydration guard already applies *inside* them — but without `bind:`
+from the outside the child's prop is a plain writable derived, and every recompute restores what
+the parent passed. `+layout.svelte` fires `invalidate(NOTIFICATIONS_DEP)` from `afterNavigate`
+even on first load, so the layout load re-runs right after hydration, SvelteKit rebuilds `data`
+for every node below it, and the adopted text is discarded. Seed once and `bind:` from the
+outside too.
+
+**Sweep criterion — "is the field in the server-rendered HTML?"** Only fields a user can reach
+*before* hydration are in this bug class. Fields behind an `{#if}` (modal bodies, wizard steps
+such as `src/routes/onboarding/`) are not, and there re-seeding on remount is usually the
+*desired* behaviour — see `src/routes/user/items/ItemModal.svelte`.
+
+**Open case — URL-synced fields** (tracked as issue #619). `/user/items`' search box syncs from the URL
+(`$derived(data.search)`) so back/forward and a filter reset win, which rules seed-once out. But
+`bind:value` on that writable `$derived` does not fix #613 either: measured in a hydrated browser
+reproduction, the binding *does* adopt the pre-hydration text, and the `afterNavigate` invalidate
+above then recomputes the derived and overwrites it a few ms later. Neither shape is correct
+today — don't "fix" such a field with either one without solving the re-sync trigger first.
+
 ### The submit action
 
 Submit actions are defined in the server-side `+page.server.ts` file like so:
