@@ -34,6 +34,18 @@ npm run test:e2e:ui       # interactive UI mode
 npm run test:e2e:report   # open the last HTML report
 ```
 
+### Repeating a spec (flake / hydration-race hunting)
+
+To confirm a fix isn't timing-dependent (e.g. #558's hydration-clobber regression), repeat a
+spec file several times with `--repeat-each`. Force `--workers=1` for any spec that saves a
+shared seed user — e.g. `profile.spec.ts` writes to `e2e_stranger_seed` — otherwise the
+repeated copies run in parallel workers that race to save/reload the _same_ row, and a
+"reload and find my bio" assertion stops holding by construction:
+
+```bash
+npx playwright test e2e/tests/profile.spec.ts --repeat-each=3 --workers=1
+```
+
 ### Environment variables
 
 | Var                     | Default                 | Purpose                                                                |

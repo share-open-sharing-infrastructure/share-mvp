@@ -22,7 +22,11 @@ export const THIRD = {
 	password: SEED_PASSWORD,
 };
 
-/** A stably-untrusted bystander: no test mutates it, so parallel tests can rely on it. */
+/**
+ * A bystander whose trust/group state no test mutates, so parallel tests can rely on it for
+ * untrusted-state assertions. profile.spec.ts does save its bio/contact/requirements/
+ * preferences fields, but no other spec asserts on those.
+ */
 export const STRANGER = {
 	username: 'e2e_stranger_seed',
 	email: 'e2e_stranger_seed@seed.test',

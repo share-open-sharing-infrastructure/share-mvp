@@ -9,9 +9,11 @@
  *  - e2e_viewer_seed — borrower/viewer. Trusted by the owner; member of the private group.
  *  - e2e_third_seed  — a third party. NOT trusted and not a group member (used to drive
  *                      "grant trust" and "join via invite token" flows from a clean slate).
- *  - e2e_stranger_seed — a pure bystander that NO test ever mutates. Used for assertions
- *                      that require a stably-untrusted user under `fullyParallel` (so a
- *                      concurrent trust test can't transiently flip the state).
+ *  - e2e_stranger_seed — a bystander whose trust/group state NO test mutates. Used for
+ *                      assertions that require a stably-untrusted user under `fullyParallel`
+ *                      (so a concurrent trust test can't transiently flip the state).
+ *                      profile.spec.ts does save its bio/contact/requirements/preferences —
+ *                      no other spec asserts on those fields, so that's still safe here.
  *
  * "E2E Bohrmaschine" is reserved for lending.spec, which drives a fresh request against it.
  * Login for all: password from lib.js (`password123`), email `<username>@seed.test`.

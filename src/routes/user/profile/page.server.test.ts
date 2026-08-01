@@ -314,3 +314,29 @@ describe('profile saveProfile — external-item lending info (#368)', () => {
 		expect(sent.get('externalLendingInfo')).toBeNull();
 	});
 });
+
+describe('profile saveProfile — bio field semantics (#558)', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	// The server can't tell "the user deliberately cleared their bio" apart from "hydration
+	// clobbered the textarea before the user typed anything" — both submit an empty string.
+	// That ambiguity is exactly why the #558 fix lives client-side (seed-once $state +
+	// bind:value in ProfileBasicsSection.svelte), not here. These two tests just pin the
+	// server's existing, intentional semantics so nobody "fixes" them on this side later.
+
+	it('writes an empty bio when the field is submitted empty (clearing is intended)', async () => {
+		const { result, update } = callSave({ bio: '' });
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.get('bio')).toBe('');
+	});
+
+	it('leaves bio untouched when the field is absent from the submission', async () => {
+		const { result, update } = callSave({});
+
+		expect(await result).toMatchObject({ success: true });
+		const sent = (update.mock.calls[0] as unknown[])[1] as FormData;
+		expect(sent.has('bio')).toBe(false);
+	});
+});

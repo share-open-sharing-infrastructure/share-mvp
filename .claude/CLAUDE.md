@@ -78,7 +78,9 @@ use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this 
 These prevent the most common bugs/security issues here — follow them without being asked.
 
 - **Never destructure the `data` prop.** Access `data.x` directly in markup; assigning
-  `let x = data.x` detaches `use:enhance` reactivity. → `docs/best-practices.md`
+  `let x = data.x` detaches `use:enhance` reactivity — and a *user-editable* field seeded from
+  `data.x`/a prop needs a seed-once `$state` + `bind:value`, never one-way `value=`, or hydration
+  clobbers it (issue #558). → `docs/best-practices.md`
 - **Always build PocketBase filters with `pb.filter(raw, {params})`** — never template-literal
   interpolation. Applies to *every* value, including IDs from `locals.user.id` / route params
   (filter injection). Use `locals.pb.filter(...)` in routes, `pb.filter(...)` in `$lib/server/*`.
