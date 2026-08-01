@@ -114,6 +114,38 @@ must stay green *unchanged*), and the bulk flow got a characterization test writ
 refactor. Any deliberate behavior change (here: the MIME whitelist now also applies to bulk rows)
 is called out in a test comment.
 
+### Sidecar singleton rows (`$lib/server/singletonRow.ts`)
+
+Several collections hold **at most one row per user** alongside the `users` record —
+`user_preferences`, `user_contacts`, `user_geolocations`, `lending_requirements`. Writing them is
+always a find-then-write, which is not atomic: a double-submit (or two tabs) makes two requests
+race over the same row, and the loser fails on a row that is already in the state it wanted.
+
+Never hand-roll that write. Route it through the two helpers, which carry the guard once:
+
+- `upsertSingletonRow({ pb, collection, find, createData, patch })` — update if the row exists,
+  otherwise create. A lost create race (unique index on the owning relation) is retried as an
+  update instead of surfacing as a failed save.
+- `deleteSingletonRow({ pb, collection, find })` — the clear path. Deletes if a row exists, no-ops
+  if not, and tolerates a lost delete race (someone else already removed the row).
+
+Both guards settle "did I lose the race?" by **re-reading the state**, never by trusting the status
+code: PocketBase answers 404 both for "already gone" and for "a rule or hook refused this delete",
+so the delete guard only swallows the 404 once `find` confirms the row really is gone. Everything
+else throws — a write that genuinely failed must never be reported as done.
+
+The same reasoning applies to the `find` callback itself: resolve "no row" from a **404 only** and
+rethrow the rest. A blanket `catch { return null }` turns a 500 into "the user has no row", which
+on the clear path skips the delete and still reports success — the data stays stored (#612). That
+is load-bearing wherever `deleteSingletonRow` is used. The upsert-only sidecars
+(`user_preferences`, `lending_requirements`) still use a blanket catch, which survives there
+because a swallowed error resurfaces on the create that follows.
+
+Both helpers take the same `find`, so a module like `$lib/server/geolocation.ts` defines the lookup
+once and reuses it for both directions. Keeping the guards here rather than at the call sites is
+deliberate: they were each fixed one call site at a time before being centralised (#586 for the
+create race, #612 for the delete race), and the next sidecar collection should get them for free.
+
 ### Data (Re-)Loading
 
 The load function passes the data to the UI component:
