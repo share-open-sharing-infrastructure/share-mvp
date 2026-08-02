@@ -163,6 +163,83 @@ describe('profile: saveProfile action', () => {
 	});
 });
 
+describe('profile: saveNotificationPrefs action (#607)', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	function callSaveNotificationPrefs(fields: Record<string, string>) {
+		const fd = new FormData();
+		for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+		const pb = {};
+		const result = actions.saveNotificationPrefs({
+			locals: { pb, user: { id: USER_ID } },
+			request: { formData: vi.fn().mockResolvedValue(fd) },
+		} as unknown as Parameters<typeof actions.saveNotificationPrefs>[0]);
+		return { result, pb };
+	}
+
+	it('saves both toggles on when both checkboxes are checked', async () => {
+		const { result, pb } = callSaveNotificationPrefs({
+			emailNotifications: 'on',
+			digestEmails: 'on',
+		});
+
+		expect(await result).toMatchObject({ success: true, message: texts.success.dataUpdated });
+		expect(upsertUserPreferences).toHaveBeenCalledWith(pb, USER_ID, {
+			emailNotifications: true,
+			digestEmails: true,
+		});
+	});
+
+	it('saves the digest opt-out while the email master switch stays on', async () => {
+		const { result, pb } = callSaveNotificationPrefs({ emailNotifications: 'on' });
+
+		expect(await result).toMatchObject({ success: true });
+		expect(upsertUserPreferences).toHaveBeenCalledWith(pb, USER_ID, {
+			emailNotifications: true,
+			digestEmails: false,
+		});
+	});
+
+	it('treats a missing field as false — an unchecked or disabled checkbox is absent from FormData', async () => {
+		const { result, pb } = callSaveNotificationPrefs({});
+
+		expect(await result).toMatchObject({ success: true });
+		expect(upsertUserPreferences).toHaveBeenCalledWith(pb, USER_ID, {
+			emailNotifications: false,
+			digestEmails: false,
+		});
+	});
+
+	it('returns an error result without throwing when the upsert fails', async () => {
+		vi.mocked(upsertUserPreferences).mockRejectedValueOnce(new Error('boom'));
+
+		const { result } = callSaveNotificationPrefs({ emailNotifications: 'on', digestEmails: 'on' });
+
+		expect(await result).toMatchObject({
+			error: true,
+			message: texts.errors.somethingWentWrong,
+		});
+	});
+
+	it('preserves an on digestEmails opt-in submitted while the master switch is off (#607 B1 regression)', async () => {
+		// Mirrors the FormData the fixed EmailNotificationForm.svelte now submits: the master
+		// switch's own `emailNotifications` checkbox is unchecked (so it's simply absent, same
+		// as any unchecked checkbox), but `digestEmails` comes from a hidden input whose value
+		// always reflects `digestEnabled` regardless of the visible digest toggle's aria-disabled
+		// state — unlike before the fix, where that field lived on the disabled toggle itself and
+		// silently vanished from FormData (a disabled input is never included), so a user turning
+		// the master switch off would have their standing digest opt-in read back as `false` and
+		// persisted, without ever touching the digest toggle.
+		const { result, pb } = callSaveNotificationPrefs({ digestEmails: 'on' });
+
+		expect(await result).toMatchObject({ success: true });
+		expect(upsertUserPreferences).toHaveBeenCalledWith(pb, USER_ID, {
+			emailNotifications: false,
+			digestEmails: true,
+		});
+	});
+});
+
 describe('profile saveProfile — off-platform-contact opt-in (#438)', () => {
 	beforeEach(() => vi.clearAllMocks());
 

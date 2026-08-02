@@ -245,8 +245,16 @@ export interface UserPreferences extends PocketBaseEntity {
 	/** Foreign key: the user these preferences belong to. */
 	user: UserId;
 
-	/** Email notifications opt-in. Absent/true = opted in; only an explicit false opts out. */
+	/** Email notifications opt-in. Absent/true = opted in; only an explicit false opts out.
+	 *  Master switch: false silences ALL notification mail, including the weekly digest below. */
 	emailNotifications?: boolean;
+
+	/** Weekly-digest opt-in (issue #607) — independent of `emailNotifications` above, so the
+	 *  digest's one-click unsubscribe link can turn this off without silencing transactional
+	 *  mail (new message, lending requests). Absent/true = opted in; only an explicit false
+	 *  opts out. `emailNotifications=false` still wins (no mail at all) regardless of this
+	 *  field's value. */
+	digestEmails?: boolean;
 
 	/** Preferred transport mode for distance-based search / travel-time UI. */
 	preferredTransportMode?: 'foot' | 'bicycle' | 'car';

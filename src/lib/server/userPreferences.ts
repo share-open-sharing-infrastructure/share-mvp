@@ -4,14 +4,21 @@ import { upsertSingletonRow } from '$lib/server/singletonRow';
 
 // Central access point for the `user_preferences` sidecar collection (issue #426).
 // One owner-only row per user (unique index on `user`) holds settings pulled off the
-// `users` table — currently `emailNotifications`, `preferredTransportMode` and
-// `hasOnboarded`. A missing row means "all defaults", so readers must tolerate null.
-// NOTE: NotificationSettings.svelte reads/writes `emailNotifications` client-side; keep
-// these writes field-scoped (never overwrite the whole row) so the two paths coexist.
+// `users` table — currently `emailNotifications`, `digestEmails` (#607),
+// `preferredTransportMode` and `hasOnboarded`. A missing row means "all defaults", so
+// readers must tolerate null.
+// NOTE: EmailNotificationForm.svelte (under the NotificationSettings.svelte wrapper) writes
+// emailNotifications/digestEmails via the saveNotificationPrefs form action (also
+// `upsertUserPreferences`, not a separate path) — keep these writes field-scoped (never
+// overwrite the whole row) so other callers (preferredTransportMode from saveProfile,
+// hasOnboarded from onboarding) coexist.
 
 /** The subset of preference fields callers may write. */
 export type UserPreferencesPatch = Partial<
-	Pick<UserPreferences, 'emailNotifications' | 'preferredTransportMode' | 'hasOnboarded'>
+	Pick<
+		UserPreferences,
+		'emailNotifications' | 'digestEmails' | 'preferredTransportMode' | 'hasOnboarded'
+	>
 >;
 
 /**
@@ -53,7 +60,15 @@ export async function upsertUserPreferences(
 		pb,
 		collection: 'user_preferences',
 		find: () => getUserPreferences(pb, userId),
-		createData: { user: userId, ...patch },
+		// #607 finding B2: PocketBase `bool` columns have no NULL state, so a row created
+		// WITHOUT emailNotifications/digestEmails reads back as `false` for both — the
+		// opposite of the documented default (missing row / true = opted in). The onboarding
+		// call site (`upsertUserPreferences(pb, uid, { hasOnboarded: true })`) creates exactly
+		// such a row today, silently opting every onboarded user out of ALL notification mail.
+		// Explicitly default both to true here, before the caller's patch is spread on top, so
+		// only an explicit `false` in the patch can opt a newly-created row out. Same trap this
+		// migration already warns about: pb_migrations/1783600001_copy_transport_onboarded_to_prefs.js:33-38.
+		createData: { user: userId, emailNotifications: true, digestEmails: true, ...patch },
 		patch,
 	});
 }

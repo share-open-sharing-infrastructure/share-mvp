@@ -175,4 +175,23 @@ export const actions = {
 			};
 		}
 	},
+
+	// #607: replaces EmailNotificationForm.svelte's (under NotificationSettings.svelte) old
+	// client-side PocketBase-SDK reads/writes with a real form action (both toggles auto-submit
+	// this one action together). Checkbox
+	// semantics: present + "on" = true, absent = false — matches the master-switch /
+	// digest-only-opt-out fields upsertUserPreferences hardens against a blank create (#607 B2).
+	saveNotificationPrefs: async ({ locals, request }) => {
+		const formData = await request.formData();
+		try {
+			await upsertUserPreferences(locals.pb, locals.user.id, {
+				emailNotifications: formData.get('emailNotifications') === 'on',
+				digestEmails: formData.get('digestEmails') === 'on',
+			});
+			return { success: true, message: texts.success.dataUpdated };
+		} catch (err) {
+			console.error('saveNotificationPrefs failed', err);
+			return { error: true, message: texts.errors.somethingWentWrong };
+		}
+	},
 };

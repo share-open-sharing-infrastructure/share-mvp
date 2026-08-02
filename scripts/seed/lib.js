@@ -97,9 +97,12 @@ export async function createUser(pb, username, overrides = {}) {
 	const {
 		hasOnboarded = true,
 		preferredTransportMode,
-		// emailNotifications is opt-out: default the created row to true so a seeded user
-		// matches a real "no row" user (opted in), consistent with the copy migration.
+		// emailNotifications/digestEmails are opt-out: default the created row to true so a
+		// seeded user matches a real "no row" user (opted in), consistent with the copy
+		// migration and the #607 digestEmails backfill — never omit these two, or the seeded
+		// row would fall into the bool-default trap (#607 finding B2) and read as opted out.
 		emailNotifications = true,
+		digestEmails = true,
 		...userOverrides
 	} = overrides;
 
@@ -112,7 +115,7 @@ export async function createUser(pb, username, overrides = {}) {
 		...userOverrides,
 	});
 
-	const prefs = { user: user.id, hasOnboarded, emailNotifications };
+	const prefs = { user: user.id, hasOnboarded, emailNotifications, digestEmails };
 	if (preferredTransportMode !== undefined) prefs.preferredTransportMode = preferredTransportMode;
 	await pb.collection('user_preferences').create(prefs);
 

@@ -238,7 +238,7 @@
 
 				<!-- BENACHRICHTIGUNGEN: auto-saving toggles (push + email) -->
 				<section id="benachrichtigungen" class="scroll-mt-28">
-					<NotificationSettings userId={data.currentUser.id} />
+					<NotificationSettings prefs={data.currentUserPreferences} />
 				</section>
 
 				<!-- E-MAIL: address, change link, verification. #email is a deep-link target. -->

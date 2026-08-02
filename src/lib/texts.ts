@@ -872,6 +872,10 @@ export const texts = {
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
 			emailToggleLabel: 'E-Mail-Benachrichtigungen',
 			emailToggleDescription: 'Erhalte eine E-Mail, wenn du neue Nachrichten oder Anfragen bekommst.',
+			digestToggleLabel: 'Wochen-Rückblick per E-Mail',
+			digestToggleDescription:
+				'Jeden Sonntag eine Zusammenfassung der neuen Dinge aus deinem Umfeld.',
+			emailMasterNote: 'Ist die E-Mail-Benachrichtigung aus, verschicken wir gar keine E-Mails an dich – auch keinen Wochen-Rückblick.',
 		},
 		},
 		invite: {

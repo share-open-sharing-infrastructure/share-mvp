@@ -94,7 +94,8 @@ erDiagram
     USER_PREFERENCES{
         string id PK
         User user FK "owner only — unique"
-        bool emailNotifications "issue #233 — opt-out; absent/true = opted in"
+        bool emailNotifications "issue #233 — master opt-out for ALL notification mail; absent/true = opted in"
+        bool digestEmails "issue #607 — weekly-digest-only opt-out, independent of emailNotifications; absent/true = opted in"
         string preferredTransportMode "issue #426 — foot|bicycle|car (was on users)"
         bool hasOnboarded "issue #426 — onboarding-complete flag (was on users)"
     }
@@ -371,26 +372,47 @@ Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visib
 ## user_preferences
 
 Per-user settings sidecar (issue #233 introduced it for `emailNotifications`; issue #426 pulled
-`preferredTransportMode` and `hasOnboarded` off the `users` table into it, so `users` stays lean).
-One row per user — a `UNIQUE` index on `user`, relation `cascadeDelete: true`. All API rules
-(`list`/`view`/`create`/`update`/`delete`) are `@request.auth.id = user`, so a user only ever
-reads/writes **their own** row. A **missing row means "all defaults"** (`emailNotifications` opted
-in, `preferredTransportMode` falls back to `bicycle` in the UI, `hasOnboarded` falsy → the
-onboarding prompt shows), so every reader must tolerate a null row. Fields:
+`preferredTransportMode` and `hasOnboarded` off the `users` table into it; issue #607 added
+`digestEmails`), so `users` stays lean. One row per user — a `UNIQUE` index on `user`, relation
+`cascadeDelete: true`. All API rules (`list`/`view`/`create`/`update`/`delete`) are
+`@request.auth.id = user`, so a user only ever reads/writes **their own** row. A **missing row
+means "all defaults"** (`emailNotifications`/`digestEmails` opted in, `preferredTransportMode`
+falls back to `bicycle` in the UI, `hasOnboarded` falsy → the onboarding prompt shows), so every
+reader must tolerate a null row. Fields:
 
-- `emailNotifications` (bool) — notification-email opt-out; absent/`true` = opted in, only an
-  explicit `false` opts out. Read server-side by the backend `notification.pb.js` / `digest.pb.js`
-  hooks (keyed on the `user` relation).
+- `emailNotifications` (bool) — **master** notification-email opt-out; absent/`true` = opted in,
+  only an explicit `false` opts out of **all** notification mail (transactional and digest alike).
+  Read server-side by the backend `notification.pb.js` / `jobs/digest.js` hooks (keyed on the
+  `user` relation).
+- `digestEmails` (bool, issue #607) — opts out of the weekly digest **only**, independent of
+  `emailNotifications` above. Exists so the digest's one-click unsubscribe link (backend
+  `services/unsubscribe.js`) can turn off the digest without also silencing transactional mail
+  like "new message"/lending requests. Absent/`true` = opted in; `emailNotifications=false` still
+  wins regardless of this field. Read server-side by `jobs/digest.js` only.
 - `preferredTransportMode` (`foot`|`bicycle`|`car`) — seeds the ORS travel-time UI on search and
   item-detail.
 - `hasOnboarded` (bool) — drives a soft onboarding prompt (there is **no** redirect gate).
 
+**Bool-default trap (#607 finding B2):** PocketBase `bool` columns have no NULL state, so a row
+created *without* `emailNotifications`/`digestEmails` reads back as `false` for both — the
+opposite of the documented "missing row = opted in" default. `upsertUserPreferences` hardens
+against this by defaulting both to `true` in `createData` before the caller's patch is applied
+(see its doc comment, and `pb_migrations/1783600001_copy_transport_onboarded_to_prefs.js` in the
+backend repo, which already carries the same warning for `emailNotifications`). The `digestEmails`
+migration backfills every *existing* row to `true` for the same reason; there is deliberately no
+backfill for pre-existing `emailNotifications=false` rows, since a real opt-out is indistinguishable
+from the trap — see the frontend `docs/operations/mail-deliverability.md` runbook for the operator
+follow-up.
+
 Frontend access goes through the `getUserPreferences` / `upsertUserPreferences` helpers in
 `$lib/server/userPreferences.ts` (the row is surfaced app-wide as `currentUserPreferences` from the
-root `+layout.server.ts`). `NotificationSettings.svelte` additionally reads/writes
-`emailNotifications` client-side; the helper patches fields individually so the two paths coexist.
-The row is hard-deleted on account anonymization (personal-only data). No `*_public` view exposes
-any of these fields.
+root `+layout.server.ts`). `NotificationSettings.svelte` saves `emailNotifications` and
+`digestEmails` together through the `saveNotificationPrefs` form action (both toggles auto-submit
+on change); the helper patches fields individually so this and the `saveProfile`
+(`preferredTransportMode`) / onboarding (`hasOnboarded`) call sites coexist. The row is
+hard-deleted on account anonymization (personal-only data). **No `*_public` view exposes any of
+these fields** — `user_preferences` is owner-only and never joined into `users_public` or any
+other public view.
 
 ## trusts
 
