@@ -8,6 +8,8 @@ import {
 	removeTrust,
 	getTrustees,
 	getTrusters,
+	getTrustDirections,
+	NO_TRUST_DIRECTIONS,
 } from './trust';
 
 vi.mock('$lib/server/notifications', () => ({
@@ -40,12 +42,22 @@ describe('isTrusting', () => {
 		const getFirstListItem = vi.fn().mockResolvedValue({ id: 't1' });
 		const pb = makePb({ getFirstListItem });
 		expect(await isTrusting(pb, 'a', 'b')).toBe(true);
-		expect(getFirstListItem).toHaveBeenCalledWith("truster = 'a' && trustee = 'b'", { fields: 'id' });
+		expect(getFirstListItem).toHaveBeenCalledWith("truster = 'a' && trustee = 'b'", {
+			fields: 'id',
+			requestKey: 'is-trusting',
+		});
 	});
 
 	it('is false when no edge exists', async () => {
 		const pb = makePb({ getFirstListItem: vi.fn().mockRejectedValue(new Error('none')) });
 		expect(await isTrusting(pb, 'a', 'b')).toBe(false);
+	});
+
+	it('lets a call site override the requestKey (auto-cancellation guard)', async () => {
+		const getFirstListItem = vi.fn().mockResolvedValue({ id: 't1' });
+		const pb = makePb({ getFirstListItem });
+		await isTrusting(pb, 'a', 'b', 'is-trusting-custom');
+		expect(getFirstListItem.mock.calls[0][1]).toMatchObject({ requestKey: 'is-trusting-custom' });
 	});
 });
 
@@ -240,5 +252,91 @@ describe('getTrustees / getTrusters', () => {
 		expect(k1).toBeTruthy();
 		expect(k2).toBeTruthy();
 		expect(k1).not.toBe(k2);
+	});
+});
+
+describe('getTrustDirections', () => {
+	it('resolves both true when both edges exist', async () => {
+		const getList = vi.fn().mockResolvedValue({
+			items: [
+				{ truster: 'viewer', trustee: 'other' },
+				{ truster: 'other', trustee: 'viewer' },
+			],
+		});
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: true,
+			otherTrustsViewer: true,
+		});
+	});
+
+	it('resolves only viewerTrustsOther when just the viewer→other edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [{ truster: 'viewer', trustee: 'other' }] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: true,
+			otherTrustsViewer: false,
+		});
+	});
+
+	it('resolves only otherTrustsViewer when just the other→viewer edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [{ truster: 'other', trustee: 'viewer' }] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: false,
+			otherTrustsViewer: true,
+		});
+	});
+
+	it('resolves both false when neither edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: false,
+			otherTrustsViewer: false,
+		});
+	});
+
+	it('fails closed to both false when the query rejects', async () => {
+		const getList = vi.fn().mockRejectedValue(new Error('network error'));
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: false,
+			otherTrustsViewer: false,
+		});
+	});
+
+	// The shared fallback is module-global and lives for the whole process: a caller
+	// that mutated it would poison every later request's fail-closed result.
+	it('hands back a frozen NO_TRUST_DIRECTIONS a caller cannot mutate', async () => {
+		const getList = vi.fn().mockRejectedValue(new Error('network error'));
+		const pb = makePb({ getList });
+		const result = await getTrustDirections(pb, 'viewer', 'other');
+
+		expect(Object.isFrozen(result)).toBe(true);
+		expect(() => {
+			(result as { viewerTrustsOther: boolean }).viewerTrustsOther = true;
+		}).toThrow();
+		expect(NO_TRUST_DIRECTIONS.viewerTrustsOther).toBe(false);
+	});
+
+	it('issues exactly one request, built via pb.filter covering both directions, with a stable requestKey', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [] });
+		const pb = makePb({ getList });
+		await getTrustDirections(pb, 'viewer', 'other');
+
+		expect(getList).toHaveBeenCalledTimes(1);
+		expect(pb.filter).toHaveBeenCalledWith(
+			'(truster={:viewer} && trustee={:other}) || (truster={:other} && trustee={:viewer})',
+			{ viewer: 'viewer', other: 'other' }
+		);
+		const callArgs = getList.mock.calls[0];
+		expect(callArgs[0]).toBe(1);
+		expect(callArgs[1]).toBe(2);
+		expect(callArgs[2]).toMatchObject({
+			filter: "(truster='viewer' && trustee='other') || (truster='other' && trustee='viewer')",
+			fields: 'truster,trustee',
+			requestKey: 'trust-directions',
+		});
 	});
 });

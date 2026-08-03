@@ -65,6 +65,20 @@ describe('getOwnerRequirements', () => {
 		const [filter] = mockGetFirstListItem.mock.calls[0];
 		expect(filter).toContain("owner = 'owner1'");
 	});
+
+	// A concurrent sibling read on the same `pb` would otherwise auto-cancel this one
+	// (PocketBase keys by method+path) and the catch above turns that into "no
+	// requirements" — i.e. the requirements gate silently disappears.
+	it('sends the default requestKey and forwards a caller-supplied one', async () => {
+		mockGetFirstListItem.mockResolvedValue(stubRequirements);
+		await getOwnerRequirements(pb, 'owner1');
+		expect(mockGetFirstListItem.mock.calls[0][1]).toEqual({ requestKey: 'owner-requirements' });
+
+		await getOwnerRequirements(pb, 'owner1', 'owner-requirements-item');
+		expect(mockGetFirstListItem.mock.calls[1][1]).toEqual({
+			requestKey: 'owner-requirements-item',
+		});
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -136,6 +150,15 @@ describe('evaluateUnmetRequirements', () => {
 		// carries address-specific copy, not the email one
 		expect(unmet[0].actionLabel).not.toBe('');
 		expect(unmet[0].actionHref).toBe('/user/profile#address');
+	});
+
+	// The item-detail load runs this next to the terms gate in one Promise.all — it must
+	// be able to key its own read so a sibling can't auto-cancel it into an empty gate.
+	it('forwards a requestKey to the requirements read', async () => {
+		const get = vi.fn().mockResolvedValue(stubRequirements);
+		const pb = makeMockPb(() => ({ getFirstListItem: get }));
+		await evaluateUnmetRequirements(pb, 'owner1', { verified: true }, 'unmet-requirements-item');
+		expect(get.mock.calls[0][1]).toEqual({ requestKey: 'unmet-requirements-item' });
 	});
 });
 

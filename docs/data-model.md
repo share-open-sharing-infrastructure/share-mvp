@@ -405,7 +405,19 @@ API rules: `listRule`/`viewRule` = `@request.auth.id = truster || @request.auth.
 parties may read an edge — the trustee needs to see who trusts them); `createRule`/`deleteRule` =
 `@request.auth.id = truster` (only the granter adds or revokes); `updateRule` = `null`. A backend
 hook (`trust.pb.js`) rejects a self-trust edge. The frontend reads/writes it exclusively through
-`$lib/server/trust.ts` (`isTrusting`, `addTrust`, `removeTrust`, `getTrustees`, `getTrusters`).
+`$lib/server/trust.ts` (`isTrusting`, `getTrustDirections`, `NO_TRUST_DIRECTIONS`, `addTrust`,
+`removeTrust`, `getTrustees`, `getTrusters`). `getTrustDirections(pb, viewerId, otherId)` resolves
+both directions between two users in one query and returns
+`{ viewerTrustsOther, otherTrustsViewer }` (named from the viewer's perspective, so a swapped
+argument pair can't silently invert the display); its fail-closed fallback `NO_TRUST_DIRECTIONS` is
+`Object.freeze`n, since the same module-global object is handed to every request. Callers that need
+both directions (e.g. item detail, user profile) must not run two concurrent `isTrusting` calls.
+PocketBase keys auto-cancellation by `options.requestKey || (method + path)` — the path form is
+only a fallback, and `getFirstListItem` already defaults to a per-filter key
+(`"one_by_filter_" + path + "_" + filter`), so it's collision-free on its own. The `trusts` helpers
+here collide only because they pass a shared **hardcoded** `requestKey` that overrides that
+default — both directions hit the identical key, and the swallowed `AbortError` reads as "no
+trust". That's exactly why every concurrent call site must supply its own distinct `requestKey`.
 
 Item/search/conversation visibility rules match trust via the back-relation
 `…trusts_via_truster.trustee.id ?= @request.auth.id` (rows where the owner is the truster; see the

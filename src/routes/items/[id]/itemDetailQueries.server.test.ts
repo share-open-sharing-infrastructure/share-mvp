@@ -2,11 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ItemPublic } from '$lib/types/models';
 import { makeMockPb } from '$lib/test-utils/pocketbase';
 
-const { getActiveTerms, hasAcceptedActiveTerms } = vi.hoisted(() => ({
-	getActiveTerms: vi.fn(),
+const { hasAcceptedActiveTerms } = vi.hoisted(() => ({
 	hasAcceptedActiveTerms: vi.fn(),
 }));
-vi.mock('$lib/server/lendingTerms', () => ({ getActiveTerms, hasAcceptedActiveTerms }));
+vi.mock('$lib/server/lendingTerms', () => ({ hasAcceptedActiveTerms }));
 
 import {
 	resolveViewerAccess,
@@ -42,7 +41,7 @@ describe('resolveViewerAccess', () => {
 
 		const result = await resolveViewerAccess(pb, item, VIEWER_ID);
 
-		expect(result).toEqual({ wasMasked: false, viewerHasFullAccess: true });
+		expect(result).toEqual({ wasMasked: false, viewerHasFullAccess: true, unmasked: null });
 		expect(getOne).not.toHaveBeenCalled();
 	});
 
@@ -53,12 +52,12 @@ describe('resolveViewerAccess', () => {
 
 		const result = await resolveViewerAccess(pb, item, null);
 
-		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: false });
+		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: false, unmasked: null });
 		expect(getOne).not.toHaveBeenCalled();
 		expect(item.name).toBeNull();
 	});
 
-	it('unmasks the item in place when items_searchable grants access', async () => {
+	it('returns the un-masked fields — without touching the item — when items_searchable grants access', async () => {
 		const getOne = vi.fn().mockResolvedValue({
 			collectionId: 'col1',
 			name: 'Bohrmaschine',
@@ -72,9 +71,22 @@ describe('resolveViewerAccess', () => {
 
 		const result = await resolveViewerAccess(pb, item, VIEWER_ID);
 
-		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: true });
-		expect(item.name).toBe('Bohrmaschine');
-		expect(item.image).toBe('img.jpg');
+		expect(result).toEqual({
+			wasMasked: true,
+			viewerHasFullAccess: true,
+			unmasked: {
+				collectionId: 'col1',
+				name: 'Bohrmaschine',
+				image: 'img.jpg',
+				externalImgUrl: null,
+				externalUrl: null,
+				description: 'Kraftvoll',
+			},
+		});
+		// The item itself stays untouched: siblings in the same concurrency wave must
+		// never observe a half-un-masked item (the caller merges after the wave).
+		expect(item.name).toBeNull();
+		expect(item.image).toBeNull();
 		expect(getOne).toHaveBeenCalledWith(
 			'item1',
 			expect.objectContaining({ fields: expect.stringContaining('name') })
@@ -88,7 +100,7 @@ describe('resolveViewerAccess', () => {
 
 		const result = await resolveViewerAccess(pb, item, VIEWER_ID);
 
-		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: false });
+		expect(result).toEqual({ wasMasked: true, viewerHasFullAccess: false, unmasked: null });
 		expect(item.name).toBeNull();
 	});
 });
@@ -203,20 +215,10 @@ describe('resolveExistingConversation', () => {
 describe('resolveTermsGate', () => {
 	beforeEach(() => vi.clearAllMocks());
 
-	// `pb` is only forwarded to the mocked lendingTerms helpers, never queried here.
+	// `pb` is only forwarded to the mocked `hasAcceptedActiveTerms`, never queried here.
 	const pb = makeMockPb({});
 
-	it('returns false when the owner has no active terms', async () => {
-		getActiveTerms.mockResolvedValue(null);
-
-		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
-
-		expect(result).toBe(false);
-		expect(hasAcceptedActiveTerms).not.toHaveBeenCalled();
-	});
-
-	it('returns false when active terms exist and the viewer already accepted them', async () => {
-		getActiveTerms.mockResolvedValue({ id: 'terms1' });
+	it('returns false when hasAcceptedActiveTerms reports the terms as satisfied (no active terms, or already accepted)', async () => {
 		hasAcceptedActiveTerms.mockResolvedValue(true);
 
 		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
@@ -224,13 +226,30 @@ describe('resolveTermsGate', () => {
 		expect(result).toBe(false);
 	});
 
-	it('returns true (gate the request) when active terms exist and the viewer has not accepted them', async () => {
-		getActiveTerms.mockResolvedValue({ id: 'terms1' });
+	it('returns true (gate the request) when hasAcceptedActiveTerms reports the terms as not accepted', async () => {
 		hasAcceptedActiveTerms.mockResolvedValue(false);
 
 		const result = await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
 
 		expect(result).toBe(true);
+	});
+
+	// The point of #615's dedupe: resolveTermsGate delegates to `hasAcceptedActiveTerms`
+	// instead of re-implementing its getActiveTerms→getAcceptance composition, so the
+	// "no active terms" / "most recent acceptance" rules live in one place and the round
+	// trip cost (2 reads: active terms + acceptance) can't drift from that helper's.
+	// Both request keys still travel through, distinct, so a sibling task in load()'s W4
+	// wave (e.g. evaluateUnmetRequirements) can't auto-cancel either read.
+	it('delegates to hasAcceptedActiveTerms exactly once, with the item-detail request keys', async () => {
+		hasAcceptedActiveTerms.mockResolvedValue(false);
+
+		await resolveTermsGate(pb, VIEWER_ID, OWNER_ID);
+
+		expect(hasAcceptedActiveTerms).toHaveBeenCalledTimes(1);
+		expect(hasAcceptedActiveTerms).toHaveBeenCalledWith(pb, VIEWER_ID, OWNER_ID, {
+			termsRequestKey: 'terms-gate-item',
+			acceptanceRequestKey: 'terms-acceptance-item',
+		});
 	});
 });
 
@@ -244,10 +263,16 @@ describe('countOwnerItems', () => {
 		const result = await countOwnerItems(pb, OWNER_ID);
 
 		expect(result).toBe(5);
+		// Explicit requestKey (#615 fix 2): getList's default auto-cancellation key is just
+		// `method + path` and ignores the query string, so without this a second concurrent
+		// items_public.getList anywhere in the request would silently cancel this one.
 		expect(getList).toHaveBeenCalledWith(
 			1,
 			1,
-			expect.objectContaining({ filter: expect.stringContaining(`userId = '${OWNER_ID}'`) })
+			expect.objectContaining({
+				filter: expect.stringContaining(`userId = '${OWNER_ID}'`),
+				requestKey: 'owner-item-count-item',
+			})
 		);
 	});
 
