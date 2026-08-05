@@ -81,23 +81,24 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
 	if (!event.data) return;
 
-	const payload = event.data.json() as { title: string; body: string; url?: string };
+	const notificationPayload = event.data.json() as { title: string; body: string; url?: string };
 
 	event.waitUntil(
 		self.clients
 			.matchAll({ type: 'window', includeUncontrolled: true })
 			.then((clientList) => {
 				// Suppress the push if the user already has the target page open
-				if (payload.url) {
-					const alreadyViewing = clientList.some((c) => c.url.endsWith(payload.url!));
+				const targetUrl = notificationPayload.url;
+				if (targetUrl) {
+					const alreadyViewing = clientList.some((client) => client.url.endsWith(targetUrl));
 					if (alreadyViewing) return;
 				}
 
-				return self.registration.showNotification(payload.title, {
-					body: payload.body,
+				return self.registration.showNotification(notificationPayload.title, {
+					body: notificationPayload.body,
 					icon: '/icon-192x192.png',
 					badge: '/icon-192x192.png',
-					data: { url: payload.url ?? '/notifications' },
+					data: { url: targetUrl ?? '/notifications' },
 				});
 			})
 	);
