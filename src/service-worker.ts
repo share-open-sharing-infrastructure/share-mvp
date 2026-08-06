@@ -81,23 +81,37 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
 	if (!event.data) return;
 
-	const payload = event.data.json() as { title: string; body: string; url?: string };
+	const notificationPayload = event.data.json() as { title: string; body: string; url?: string };
+
+	const targetPath = notificationPayload.url ?? '/notifications';
+	// Resolve to an absolute URL once, exactly as notificationclick below does, so
+	// both handlers match open windows by the same rule. A substring check would
+	// miss a client carrying a query string or hash, and could match an unrelated
+	// route that merely ends with this path.
+	const target = new URL(targetPath, self.location.origin).href;
 
 	event.waitUntil(
 		self.clients
 			.matchAll({ type: 'window', includeUncontrolled: true })
 			.then((clientList) => {
-				// Suppress the push if the user already has the target page open
-				if (payload.url) {
-					const alreadyViewing = clientList.some((c) => c.url.endsWith(payload.url!));
-					if (alreadyViewing) return;
-				}
+				// Suppress the push only when the target page is open AND in front of the
+				// user — there the realtime subscription has already updated the UI, so an
+				// OS notification is just noise. matchAll() also returns background and
+				// minimised windows; suppressing on those would silently drop the
+				// notification, and showing nothing at all makes the browser enforce our
+				// userVisibleOnly subscription itself (Chrome substitutes a generic "site
+				// updated in the background" notification; Firefox eventually drops the
+				// subscription).
+				const alreadyViewing = clientList.some(
+					(client) => client.focused && client.url === target
+				);
+				if (alreadyViewing) return;
 
-				return self.registration.showNotification(payload.title, {
-					body: payload.body,
+				return self.registration.showNotification(notificationPayload.title, {
+					body: notificationPayload.body,
 					icon: '/icon-192x192.png',
 					badge: '/icon-192x192.png',
-					data: { url: payload.url ?? '/notifications' },
+					data: { url: targetPath },
 				});
 			})
 	);
