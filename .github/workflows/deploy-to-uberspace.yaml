@@ -40,7 +40,6 @@ jobs:
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          remote_key_pass: ${{ secrets.SSH_PRIVATE_KEY_PASS }}
       - name: Install node modules on server
         uses: appleboy/ssh-action@v1
         # Forwarded to the remote shell via `envs:` and expanded there, rather than
