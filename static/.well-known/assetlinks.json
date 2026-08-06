@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "org.allerleih.app",
+    "sha256_cert_fingerprints": ["PLACEHOLDER_REPLACE_AFTER_PLAY_CONSOLE_UPLOAD"]
+  }
+}]
