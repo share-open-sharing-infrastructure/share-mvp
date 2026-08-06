@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "org.allerleih.app",
-    "sha256_cert_fingerprints": ["PLACEHOLDER_REPLACE_AFTER_PLAY_CONSOLE_UPLOAD"]
+    "sha256_cert_fingerprints": ["86:80:72:82:E0:9B:90:D9:CE:5B:B7:02:78:4F:E5:16:0F:9C:22:34:F0:4F:28:7E:E9:D1:AC:CA:AC:2B:16:3B"]
   }
 }]
