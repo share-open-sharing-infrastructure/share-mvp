@@ -16,6 +16,8 @@ Documentation for [AllerLeih](https://github.com/share-open-sharing-infrastructu
 - [operations/onboarding-institutional-partner.md](operations/onboarding-institutional-partner.md) — step-by-step checklist for onboarding a new institutional partner (library, lending shop), including connecting an automatic integration.
 - [operations/integration-sync.md](operations/integration-sync.md) — operations runbook for the sync/refresh endpoints: env vars, cron, failure modes.
 - [operations/updating-legal-documents.md](operations/updating-legal-documents.md) — how an operator edits the ToS / privacy text and publishes a new version that triggers re-consent (Issue #399).
+- [operations/metrics.md](operations/metrics.md) — the nightly `metrics_daily` snapshot and the `/admin/metrics` / `/misc/stats` pages that read it.
+- [operations/mail-deliverability.md](operations/mail-deliverability.md) — SPF/DKIM/DMARC checklist, the `assetBase`/`siteBase` URL split, one-click digest unsubscribe, and the new mail-deliverability env vars (Issue #607).
 
 **Key source files:**
 - `src/lib/types/models.ts` — canonical TypeScript types for all PocketBase collections

@@ -55,7 +55,14 @@ describe('upsertUserPreferences', () => {
 		expect(create).not.toHaveBeenCalled();
 	});
 
-	it('creates a row when none exists', async () => {
+	it('creates a row when none exists, hardening emailNotifications/digestEmails to true (#607 B2 regression)', async () => {
+		// PocketBase `bool` columns have no NULL state: a row created WITHOUT these two
+		// fields would read back as `false` for both — the opposite of the documented
+		// "missing row = opted in" default. This is exactly the trap the onboarding call
+		// site (`upsertUserPreferences(pb, uid, { hasOnboarded: true })`, reproduced here)
+		// used to fall into, silently opting every onboarded user out of ALL notification
+		// mail. createData must explicitly default both to true, with the caller's patch
+		// spread on top so an explicit patch value still wins.
 		const create = vi.fn().mockResolvedValue({ id: 'p2' });
 		const pb = makePb({
 			getFirstListItem: vi.fn().mockRejectedValue(new Error('404')),
@@ -63,7 +70,27 @@ describe('upsertUserPreferences', () => {
 			update: vi.fn(),
 		});
 		await upsertUserPreferences(pb, 'u1', { hasOnboarded: true });
-		expect(create).toHaveBeenCalledWith({ user: 'u1', hasOnboarded: true });
+		expect(create).toHaveBeenCalledWith({
+			user: 'u1',
+			emailNotifications: true,
+			digestEmails: true,
+			hasOnboarded: true,
+		});
+	});
+
+	it('lets an explicit patch value override the emailNotifications/digestEmails hardening on create', async () => {
+		const create = vi.fn().mockResolvedValue({ id: 'p2' });
+		const pb = makePb({
+			getFirstListItem: vi.fn().mockRejectedValue(new Error('404')),
+			create,
+			update: vi.fn(),
+		});
+		await upsertUserPreferences(pb, 'u1', { emailNotifications: false, digestEmails: false });
+		expect(create).toHaveBeenCalledWith({
+			user: 'u1',
+			emailNotifications: false,
+			digestEmails: false,
+		});
 	});
 
 	it('tolerates a create race: create rejects but a row now exists → update instead', async () => {
