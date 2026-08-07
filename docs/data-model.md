@@ -452,7 +452,8 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
   **cannot** be deleted (`conversations.requestedItem` is a *required* relation) — it is kept
   (set to `unavailable`) so the counterparty's loan history resolves. The `items_public` /
   `items_searchable` views exclude rows whose owner is `deleted`, so a deleted account's
-  listings disappear from search/catalogue while existing conversations still show the item.
+  listings disappear from search/catalogue while existing conversations still show the item —
+  see "Deleted owners" under the views section below for the clause and its consequences.
 - Shared/audit data is **retained**, de-identified to "Gelöschtes Konto": `messages`,
   `conversations` (the counterparty keeps a coherent history; the lending paper trail stays
   intact), and `term_acceptances` (legal-obligation exception, Art. 17(3)).
@@ -528,6 +529,32 @@ reachable). Accepting the current terms clears the lock in the same transaction.
 
 Two read-only PocketBase SQL views expose `items` joined with `users` (and `user_geolocations` for the location flag) as flat, privacy-safe rows. Neither exposes the owner's `trusts` list, and neither includes raw coordinates — they expose only `ownerHasLocation` (0 or 1); travel times are computed in the backend `/api/travel-times` hook, which returns only **bucketed minutes** so coordinates never reach the client.
 
+### Deleted owners
+
+**Both** views end with `WHERE COALESCE(users.deleted, 0) = 0`, so no row of an
+anonymized owner is ever returned. Such rows exist on purpose: account deletion
+hard-deletes the user's items *except* those a conversation still references
+(`conversations.requestedItem` is a required relation) — those are kept as
+`unavailable` so the counterparty's loan history stays coherent (see "Account
+deletion" above). The clause keeps them out of discovery without deleting them.
+`COALESCE` rather than a bare `users.deleted = 0` because both views `LEFT JOIN
+users`: an item with no owner row would otherwise compare against `NULL` and be
+dropped silently.
+
+Consequence: `/items/{id}` reads `items_public` unconditionally, so a deleted
+owner's item detail page **404s for everyone** — including the ex-borrower —
+which matches how `/users/{id}` shows a tombstone. The conversation itself is
+unaffected: it resolves the item from the base `items` collection via `expand`,
+which carries no such filter.
+
+The clause is appended to the view query, not part of any `SELECT`, so **any**
+migration that replaces a `viewQuery` wholesale must carry it over. Four did not
+after `1781900042` introduced it: `1781900045` dropped it from
+`items_searchable`, `1781900049` dropped it from `items_public`, and
+`1782750000` + `1783800001` rewrote the already clause-less `items_public` query
+again — which is issue #624. The guard is
+`allerleih-backend/tests/deleted-owner-items.test.mjs`.
+
 ### `items_public` — public, content-masked
 
 Fully public (`listRule`/`viewRule` are open). For any **restricted** item — i.e.
@@ -585,8 +612,8 @@ conversation access never leaks an item into search/profile/sitemap.
 > first; see that repo's README ("Writing migrations").
 Free-text search (`buildSearchFilter`) matches the owner `username` in addition to item
 `name` and `description`, so an account or institution can be found by name. Deleted-owner
-rows are excluded from the view (see the deleted-owner `WHERE` clause), so this never
-surfaces an anonymized account name.
+rows are excluded from the view (see "Deleted owners" above for the `WHERE` clause), so this
+never surfaces an anonymized account name.
 
 ### Base `items` trust rule
 
