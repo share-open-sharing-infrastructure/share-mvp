@@ -1,25 +1,28 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { Button } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
+	import { SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
 	import { texts } from '$lib/texts';
+	import Button from '$lib/components/ui/Button.svelte';
 	import ItemModal from './ItemModal.svelte';
 	import UserItemRow from './UserItemRow.svelte';
 	import Pagination from './Pagination.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { data, form } = $props();
 
 	let showAddModal = $state(false);
-	let searchValue = $state(data.search);
+	let searchValue = $derived(data.search);
 	let debounceTimer: ReturnType<typeof setTimeout>;
-	let selectedIds = $state(new Set<string>());
-
-	$effect(() => { searchValue = data.search; });
+	const selectedIds = new SvelteSet<string>();
 
 	$effect(() => {
-		// Clear selection when item list changes (navigation, filter)
-		data.items;
-		selectedIds = new Set();
+		// Reading the current item ids registers this effect as a dependency of
+		// data.items, so the bulk selection is cleared on every list change
+		// (navigation, filter, page, delete).
+		data.items.map((item) => item.id);
+		selectedIds.clear();
 	});
 
 	function onSearchInput(e: Event) {
@@ -27,29 +30,29 @@
 		searchValue = value;
 		clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(() => {
-			const params = new URLSearchParams(window.location.search);
+			const params = new SvelteURLSearchParams(window.location.search);
 			params.set('search', value);
 			params.set('page', '1');
-			goto('?' + params.toString(), { keepFocus: true });
+			goto(resolve(`/user/items?${params.toString()}`), { keepFocus: true });
 		}, 300);
 	}
 
 	function onStatusChange(e: Event) {
 		const value = (e.currentTarget as HTMLSelectElement).value;
-		const params = new URLSearchParams(window.location.search);
+		const params = new SvelteURLSearchParams(window.location.search);
 		params.set('status', value);
 		params.set('page', '1');
-		goto('?' + params.toString());
+		goto(resolve(`/user/items?${params.toString()}`));
 	}
 
 	function toggleSelectAll(checked: boolean) {
-		selectedIds = checked ? new Set(data.items.map((i) => i.id)) : new Set();
+		selectedIds.clear();
+		if (checked) for (const item of data.items) selectedIds.add(item.id);
 	}
 
 	function updateSelection(id: string, v: boolean) {
-		const next = new Set(selectedIds);
-		if (v) next.add(id); else next.delete(id);
-		selectedIds = next;
+		if (v) selectedIds.add(id);
+		else selectedIds.delete(id);
 	}
 
 	const allSelected = $derived(
@@ -57,9 +60,7 @@
 	);
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.pages.items.title} robots="noindex, nofollow" />
 
 <!-- HEADER -->
 <div class="px-4 mx-auto max-w-7xl">
@@ -82,17 +83,11 @@
 
 		<!-- Action buttons -->
 		<div class="flex flex-col sm:flex-row gap-4 mb-6">
-			<Button
-				onclick={() => { showAddModal = true; }}
-				class="flex-1 cursor-pointer flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-full shadow-sm border border-primary-200 bg-primary-50 hover:bg-primary-100 text-primary-800 dark:bg-primary-900 dark:text-primary-100 dark:border-primary-700"
-			>
+			<Button size="lg" class="flex-1" onclick={() => { showAddModal = true; }}>
 				<span class="text-xl">📦</span>
 				{texts.pages.items.addSingle}
 			</Button>
-			<Button
-				href="/user/items/bulk-add"
-				class="flex-1 flex items-center justify-center gap-2 py-3 text-base font-semibold rounded-full shadow-sm border border-primary-400 bg-primary-100 hover:bg-primary-200 text-accent-800 dark:bg-accent-900 dark:text-accent-100 dark:border-accent-700"
-			>
+			<Button size="lg" class="flex-1" href={resolve('/user/items/bulk-add')}>
 				<span class="text-xl">✨</span>
 				{texts.pages.items.addBulk}
 			</Button>
@@ -117,6 +112,16 @@
 			</select>
 		</div>
 
+		<!-- Bulk delete error -->
+		{#if form && 'bulkBlocked' in form && form.conversationIds?.length}
+			<div class="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200">
+				<p>{form.message}</p>
+				<a href={resolve('/conversations')} class="mt-1 inline-block font-semibold underline">
+					{texts.pages.items.linkToConversations}
+				</a>
+			</div>
+		{/if}
+
 		<!-- Bulk action bar -->
 		{#if selectedIds.size > 0}
 			<div class="flex flex-wrap items-center gap-3 mb-3 px-4 py-2 rounded-lg bg-primary-50 border border-primary-200 dark:bg-primary-900/30 dark:border-primary-700">
@@ -128,7 +133,7 @@
 					action="?/bulkSetStatus"
 					use:enhance={() => async ({ update }) => update({ reset: false })}
 				>
-					{#each [...selectedIds] as id}
+					{#each [...selectedIds] as id(id)}
 						<input type="hidden" name="itemId" value={id} />
 					{/each}
 					<input type="hidden" name="newStatus" value="available" />
@@ -144,7 +149,7 @@
 					action="?/bulkSetStatus"
 					use:enhance={() => async ({ update }) => update({ reset: false })}
 				>
-					{#each [...selectedIds] as id}
+					{#each [...selectedIds] as id(id)}
 						<input type="hidden" name="itemId" value={id} />
 					{/each}
 					<input type="hidden" name="newStatus" value="unavailable" />
@@ -155,9 +160,34 @@
 						{texts.pages.items.setUnavailable}
 					</button>
 				</form>
+				<form
+					method="POST"
+					action="?/bulkDelete"
+					use:enhance={({ cancel, formData }) => {
+						if (!confirm(texts.pages.items.bulkDeleteConfirm(selectedIds.size))) {
+							cancel();
+							return;
+						}
+						const submitted = new Set(formData.getAll('itemId') as string[]);
+						return async ({ update }) => {
+							await update({ reset: false });
+							for (const id of submitted) selectedIds.delete(id);
+						};
+					}}
+				>
+					{#each [...selectedIds] as id(id)}
+						<input type="hidden" name="itemId" value={id} />
+					{/each}
+					<button
+						type="submit"
+						class="text-xs font-semibold px-3 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 hover:bg-red-200 cursor-pointer transition-colors"
+					>
+						{texts.pages.items.bulkDelete}
+					</button>
+				</form>
 				<button
 					type="button"
-					onclick={() => { selectedIds = new Set(); }}
+					onclick={() => selectedIds.clear()}
 					class="ml-auto text-xs text-tinte-500 hover:text-tinte-700 dark:hover:text-tinte-300 cursor-pointer"
 				>
 					{texts.pages.items.deselectAll}

@@ -4,7 +4,9 @@
 	import { texts } from '$lib/texts';
 	import ItemModal from './ItemModal.svelte';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
+	import { itemOwnFileUrls } from '$lib/utils/utils';
 	import { resolve } from '$app/paths';
+	import Button from '$lib/components/ui/Button.svelte';
 	import type { ActionData } from './$types';
 
 	interface Props {
@@ -28,8 +30,7 @@
 	$effect(() => { optimisticTrusteesOnly = item.trusteesOnly; });
 
 	function getRealImageUrl(i: Item): string | null {
-		if (i.image) return `${PB_URL}api/files/${i.collectionId}/${i.id}/${i.image}`;
-		return i.externalImgUrl ?? null;
+		return itemOwnFileUrls(PB_URL, i)[0] ?? i.externalImgUrl ?? null;
 	}
 
 	// Names of the groups this item is shared with (for the indicator tooltip).
@@ -65,7 +66,7 @@
 
 	<!-- Name + badges -->
 	<div class="flex-1 flex items-center gap-2 min-w-0">
-		<a href={resolve(`/items/${item.id}`)} class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline sm:max-w-[40%] sm:min-w-32">{item.name}</a>
+		<a href={resolve('/items/[id]', { id: item.id })} class="font-semibold text-sm text-tinte-900 dark:text-white truncate hover:underline sm:max-w-[40%] sm:min-w-32">{item.name}</a>
 		{#if item.description}
 			<span class="hidden sm:block text-xs text-tinte-400 dark:text-tinte-500 truncate min-w-0">{item.description}</span>
 		{/if}
@@ -149,22 +150,23 @@
 	</form>
 
 	<!-- Edit button -->
-	<button
-		type="button"
+	<Button
+		variant="ghost"
+		size="icon-sm"
 		onclick={() => (showEditModal = true)}
-		title="Bearbeiten"
-		class="shrink-0 p-1.5 rounded text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200 hover:bg-tinte-100 dark:hover:bg-tinte-700 transition-colors cursor-pointer"
+		aria-label="Bearbeiten"
 	>
 		<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 			<path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
 		</svg>
-	</button>
+	</Button>
 </div>
 
 <ItemModal
 	bind:isVisible={showEditModal}
 	type="edit"
 	editingItem={item}
+	pbUrl={PB_URL}
 	{groups}
 	{form}
 	imgUrl={getRealImageUrl(item) ?? getCategoryPlaceholder(item.categories ?? []) ?? ''}

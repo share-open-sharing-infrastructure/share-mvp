@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Alert, Badge, Button } from 'flowbite-svelte';
-	import { resolve } from '$app/paths';
+	import { Alert, Badge } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { asset, resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { form } = $props();
 
@@ -13,6 +15,16 @@
 	let fileError = $state('');
 	let selectedFile = $state<File | null>(null);
 	let submitting = $state(false);
+
+	/** Shared use:enhance callback for all three forms (refresh/preview/apply):
+	 *  raise the loader flag on submit, clear it once the result is applied. */
+	function withSubmitting() {
+		submitting = true;
+		return async ({ update }: { update: () => Promise<void> }) => {
+			await update();
+			submitting = false;
+		};
+	}
 
 	$effect(() => {
 		if (form?.preview) step = 'preview';
@@ -42,18 +54,10 @@
 		return 'gray';
 	};
 
-	const actionLabel = (action: string) => {
-		if (action === 'create') return 'Neu';
-		if (action === 'update') return 'Update';
-		if (action === 'archive') return 'Archivieren';
-		if (action === 'error') return 'Fehler';
-		return action;
-	};
+	const actionLabel = (action: string) => texts.institutional.importActionLabels[action] ?? action;
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.seo.userImport.title} robots="noindex, nofollow" />
 
 <div class="px-4 mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center mb-6">
@@ -63,33 +67,43 @@
 	</div>
 </div>
 
+<form method="POST" action="?/refresh" 
+	use:enhance={withSubmitting} 
+	class="px-4 mx-auto max-w-7xl justify-center flex">	
+	<Button type="submit">{texts.institutional.importRefreshButton}</Button>
+</form>
+
+{#if form?.refreshed}
+	<div class="px-4 mx-auto max-w-7xl mt-4 flex justify-center">
+		<CustomAlert type="success" message={form.message ?? texts.institutional.importRefreshTriggered} />
+	</div>
+{/if}
+
 <main class="max-w-3xl mx-auto px-4 py-8 space-y-6 relative">
 	{#if submitting}
 		<div class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-sand/80 rounded-lg gap-3">
-			<AllerLoader size={64} variant="rotate" label="Importiere …" />
-			<p class="text-sm text-tinte-600">Bitte warten …</p>
+			<AllerLoader size={64} variant="rotate" label={texts.institutional.importLoaderLabel} />
+			<p class="text-sm text-tinte-600">{texts.institutional.importLoaderHint}</p>
 		</div>
 	{/if}
 	{#if step === 'upload'}
 		<div class="bg-sand border border-tinte-200 rounded-lg shadow-sm p-6 space-y-4">
 			<p class="text-sm text-tinte-600 dark:text-tinte-400">
-				Lade dein Inventar als CSV-Datei hoch. Verwende das Format der Vorlage.
+				{texts.institutional.importIntro}
 			</p>
-			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href="/templates/items-import-template.csv"
+				href={asset('/templates/items-import-template.csv')}
 				download
 				class="inline-flex items-center text-sm font-medium text-primary hover:underline"
 			>
 				{texts.institutional.importTemplateLink} ↓
 			</a>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 
 			{#if form?.error || fileError}
 				<CustomAlert type="error" message={form?.message ?? fileError} />
 			{/if}
 
-			<form method="POST" action="?/preview" enctype="multipart/form-data" use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }}>
+			<form method="POST" action="?/preview" enctype="multipart/form-data" use:enhance={withSubmitting}>
 				<div class="space-y-4">
 					<div>
 						<label for="csv" class="block text-sm font-medium text-tinte-900 mb-1">
@@ -107,7 +121,7 @@
 						<p class="text-xs text-tinte-400 mt-1">{texts.institutional.importUploadHint}</p>
 					</div>
 					<div class="flex justify-end">
-						<Button type="submit" class="min-button bg-primary-200 hover:bg-primary" disabled={!selectedFile}>
+						<Button type="submit" disabled={!selectedFile}>
 							{texts.institutional.importPreviewButton}
 						</Button>
 					</div>
@@ -124,7 +138,7 @@
 
 			{#if form.summary.errors > 0}
 				<Alert color="yellow">
-					{form.summary.errors} Zeile(n) konnten nicht importiert werden. Korrigiere die Fehler in der CSV-Datei und lade sie erneut hoch.
+					{texts.institutional.importRowErrorsAlert(form.summary.errors)}
 				</Alert>
 			{/if}
 
@@ -134,11 +148,11 @@
 					<table class="w-full text-sm text-left">
 						<thead class="text-xs text-tinte-500 uppercase bg-tinte-50">
 							<tr>
-								<th class="px-3 py-2">Zeile</th>
-								<th class="px-3 py-2">ID</th>
-								<th class="px-3 py-2">Name</th>
-								<th class="px-3 py-2">Aktion</th>
-								<th class="px-3 py-2">Hinweise</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.row}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.id}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.name}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.action}</th>
+								<th class="px-3 py-2">{texts.institutional.importTableHeaders.hints}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -159,7 +173,7 @@
 					</table>
 					{#if form.totalRows > 50}
 						<p class="text-xs text-tinte-400 mt-2">
-							Vorschau zeigt die ersten 50 von {form.totalRows} Zeilen.
+							{texts.institutional.importPreviewTruncated(form.totalRows)}
 						</p>
 					{/if}
 				</div>
@@ -169,33 +183,27 @@
 			{#if form.archiveRows && form.archiveRows.length > 0}
 				<div class="space-y-1">
 					<p class="text-sm font-medium text-tinte-700">
-						Folgende Einträge werden archiviert (nicht mehr in der CSV):
+						{texts.institutional.importArchiveListTitle}
 					</p>
 					<ul class="text-sm text-tinte-500 list-disc list-inside space-y-0.5">
 						{#each form.archiveRows.slice(0, 10) as row (row.id)}
 							<li>{row.name} <span class="font-mono text-xs">({row.externalId})</span></li>
 						{/each}
 						{#if form.archiveRows.length > 10}
-							<li class="text-tinte-400">… und {form.archiveRows.length - 10} weitere</li>
+							<li class="text-tinte-400">{texts.institutional.importArchiveMore(form.archiveRows.length - 10)}</li>
 						{/if}
 					</ul>
 				</div>
 			{/if}
 
 			<!-- Apply form -->
-			<form method="POST" action="?/apply" use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }} class="flex gap-3 justify-end">
+			<form method="POST" action="?/apply" use:enhance={withSubmitting} class="flex gap-3 justify-end">
 				<input type="hidden" name="csvText" value={form.csvText} />
-				<Button
-					type="button"
-					color="alternative"
-					class="min-button"
-					onclick={() => { step = 'upload'; }}
-				>
+				<Button variant="secondary" onclick={() => { step = 'upload'; }}>
 					{texts.institutional.importBackButton}
 				</Button>
 				<Button
 					type="submit"
-					class="min-button bg-primary-200 hover:bg-primary"
 					disabled={form.summary.create === 0 && form.summary.update === 0 && form.summary.archive === 0}
 				>
 					{texts.institutional.importApplyButton}
@@ -211,26 +219,22 @@
 			</div>
 			{#if form.summary.errors > 0}
 				<Alert color="yellow">
-					{form.summary.errors} Fehler beim Importieren. Prüfe die CSV-Datei und starte einen neuen Import.
+					{texts.institutional.importApplyErrorsAlert(form.summary.errors)}
 				</Alert>
 				{#if form.rowErrors && form.rowErrors.length > 0}
 					<ul class="text-xs text-accent-700 font-mono space-y-0.5 list-disc list-inside">
-						{#each form.rowErrors as e}
+						{#each form.rowErrors as e, i (i)}
 							<li>{e}</li>
 						{/each}
 					</ul>
 				{/if}
 			{/if}
 			<div class="flex gap-3">
-				<Button
-					type="button"
-					class="min-button bg-primary-200 hover:bg-primary"
-					onclick={() => { step = 'upload'; }}
-				>
+				<Button onclick={() => { step = 'upload'; }}>
 					{texts.institutional.importAnotherButton}
 				</Button>
 				<a href={resolve('/user/items')} class="inline-flex items-center text-sm font-medium text-primary hover:underline">
-					Zu meinen Dingen →
+					{texts.institutional.importGoToItems}
 				</a>
 			</div>
 		</div>

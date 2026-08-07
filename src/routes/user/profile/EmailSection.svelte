@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import VerifiedIcon from '$lib/components/VerifiedIcon.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
 		email: string;
@@ -12,7 +13,7 @@
 	const { email, verified }: Props = $props();
 </script>
 
-<div class="pt-2 mt-2 border-t space-y-2">
+<div class="space-y-2">
 	<!-- Email display + change link -->
 	<p class="text-sm font-medium text-gray-900 dark:text-white">
 		{texts.ui.emailAddress}
@@ -33,12 +34,9 @@
 			{texts.pages.profile.emailNotVerified}
 		</p>
 		<form method="POST" action="?/resendVerification" use:enhance>
-			<button
-				type="submit"
-				class="text-sm font-medium text-primary hover:text-primary-800 hover:underline cursor-pointer dark:text-primary-400 dark:hover:text-primary-300"
-			>
+			<Button variant="link" type="submit">
 				{texts.pages.profile.resendVerification}
-			</button>
+			</Button>
 		</form>
 	{/if}
 </div>

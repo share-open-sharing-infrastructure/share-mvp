@@ -1,5 +1,18 @@
-import { ITEM_CATEGORIES, type ItemCategory } from '$lib/texts';
+import { ITEM_CATEGORIES, type ItemCategory } from '$lib/categories';
 import type { ItemPublic } from '$lib/types/models';
+
+export type SortOption = 'newest' | 'name_asc' | 'name_desc';
+
+export type OwnerType = 'all' | 'institution' | 'private';
+
+/** The full set of filter fields `FilterModal` edits as a local draft before committing them. */
+export interface FilterDraft {
+	sort: SortOption;
+	onlyAvailable: boolean;
+	ownerType: OwnerType;
+	selectedCategories: string[];
+	selectedGroup: string | null;
+}
 
 export type SearchParameters = {
 	query: string;
@@ -7,8 +20,36 @@ export type SearchParameters = {
 	perPage: number;
 	selectedCategories: ItemCategory[];
 	onlyAvailable: boolean;
-	ownerType: 'all' | 'institution' | 'private';
+	ownerType: OwnerType;
+	/**
+	 * Raw, format-plausible group id parsed from the URL (or `null`). This is NOT yet a
+	 * proven-membership id: `parseSearchParameters` stays pure/sync and only shape-checks it.
+	 * The actual authorization — accept the group only if the user is a member — happens in the
+	 * `load` (see `+page.server.ts`), which nulls it out otherwise. Building the filter clause on
+	 * a validated value is therefore the caller's responsibility.
+	 */
+	selectedGroup: string | null;
+	sort: SortOption;
 };
+
+const SORT_OPTIONS: SortOption[] = ['newest', 'name_asc', 'name_desc'];
+
+/**
+ * Maps a validated `SortOption` to the PocketBase `sort` query string for the
+ * `items_searchable` view. `newest` (the default) sorts by creation date, descending, so edits
+ * don't resurface old items.
+ */
+export function sortToPbSort(sort: SortOption): string {
+	switch (sort) {
+		case 'name_asc':
+			return 'name';
+		case 'name_desc':
+			return '-name';
+		case 'newest':
+		default:
+			return '-created';
+	}
+}
 
 /**
  * Returns the field name as a string, validated at compile time against the `items_public` view schema.
@@ -20,7 +61,9 @@ function validateFilterField(field: keyof ItemPublic): string {
 
 /**
  * Converts a free-text search query into a PocketBase filter expression that matches items
- * whose `name` or `description` contains every whitespace-separated token in the query.
+ * whose `name`, `description` or owner `username` contains every whitespace-separated token
+ * in the query. Including `username` lets users find an account's items by typing the account
+ * (or institution) name directly, instead of guessing one of its items first.
  * @param raw the raw search string entered by the user
  * @returns a PocketBase filter string, or `null` for blank input or the wildcard `*`
  */
@@ -31,7 +74,7 @@ export function buildSearchFilter(raw: string): string | null {
 	return tokens
 		.map((token) => {
 			const safe = token.replace(/"/g, '\\"');
-			return `(${validateFilterField('name')} ~ "${safe}" || ${validateFilterField('description')} ~ "${safe}")`;
+			return `(${validateFilterField('name')} ~ "${safe}" || ${validateFilterField('description')} ~ "${safe}" || ${validateFilterField('username')} ~ "${safe}")`;
 		})
 		.join(' && ');
 }
@@ -39,7 +82,8 @@ export function buildSearchFilter(raw: string): string | null {
 /**
  * Parses and validates all search-related URL parameters into a typed `SearchParams` object.
  * Invalid or missing values fall back to safe defaults; unrecognised category values are silently dropped.
- * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `onlyAvailable`, `ownerType`)
+ * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `onlyAvailable`, `ownerType`).
+ *   `onlyAvailable` defaults to `false` (show all items) unless explicitly set to `true`.
  * @returns a fully typed `SearchParams` object with all fields guaranteed to be valid
  */
 export function parseSearchParameters(url: URL): SearchParameters {
@@ -53,13 +97,25 @@ export function parseSearchParameters(url: URL): SearchParameters {
 		.map((s) => s.trim())
 		.filter((s): s is ItemCategory => ITEM_CATEGORIES.includes(s as ItemCategory));
 
-	const onlyAvailable = url.searchParams.get('onlyAvailable') !== 'false';
+	const onlyAvailable = url.searchParams.get('onlyAvailable') === 'true';
 
 	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
-	const ownerType: 'all' | 'institution' | 'private' =
+	const ownerType: OwnerType =
 		ownerTypeParam === 'institution' || ownerTypeParam === 'private' ? ownerTypeParam : 'all';
 
-	return { query, page, perPage, selectedCategories, onlyAvailable, ownerType };
+	// Shape-check only: a PocketBase record id is 15 alphanumerics. Garbage is dropped to `null`
+	// here (keeps injection/nonsense out of the load); the real authorization is the membership
+	// check in the load. Not-a-member ids are also dropped there, mirroring how unknown `cats`
+	// values are silently ignored.
+	const groupParam = url.searchParams.get('group')?.trim() ?? '';
+	const selectedGroup = /^[a-z0-9]{15}$/i.test(groupParam) ? groupParam : null;
+
+	const sortParam = url.searchParams.get('sort') ?? 'newest';
+	const sort: SortOption = SORT_OPTIONS.includes(sortParam as SortOption)
+		? (sortParam as SortOption)
+		: 'newest';
+
+	return { query, page, perPage, selectedCategories, onlyAvailable, ownerType, selectedGroup, sort };
 }
 
 /**
@@ -78,7 +134,7 @@ export function buildItemFilter(params: SearchParameters, userId?: string): stri
 
 	// Escape & as \& so PocketBase's filter parser doesn't misinterpret it as the && operator.
 	const escapeCategoryValue = (c: string) => c.replace(/&/g, '\\&');
-	// Multiple selected categories are combined with OR: an item matches if it is in any of them.
+	// Multiple selected categories combine with OR: an item matches if it has any of them.
 	const categoryFilter =
 		params.selectedCategories.length > 0
 			? `(${params.selectedCategories.map((c) => `${validateFilterField('categories')} ~ '${escapeCategoryValue(c)}'`).join(' || ')})`
@@ -96,8 +152,19 @@ export function buildItemFilter(params: SearchParameters, userId?: string): stri
 				? `${validateFilterField('isInstitution')} != true`
 				: null;
 
+	// `groups` is deliberately NOT part of `ItemPublic` — the column is never returned to
+	// clients (see the `fields` allowlist in +page.server.ts), so `validateFilterField` can't be
+	// used and we reference it as a string literal. Operator `~` matches the shipped group-detail
+	// page (src/routes/user/groups/[id]/+page.server.ts) filtering the same `items_searchable`
+	// view: PocketBase types the view's `groups` column as a relation, and `~` is the any-of
+	// membership match. `params.selectedGroup` is already membership-validated by the load; the
+	// quote-escape is defense-in-depth (the parser already restricts it to a 15-char id).
+	const groupFilter = params.selectedGroup
+		? `groups ~ "${params.selectedGroup.replace(/"/g, '\\"')}"`
+		: null;
+
 	return (
-		[nameFilter, ownerFilter, categoryFilter, availabilityFilter, institutionFilter]
+		[nameFilter, ownerFilter, categoryFilter, availabilityFilter, institutionFilter, groupFilter]
 			.filter(Boolean)
 			.join(' && ') || undefined
 	);

@@ -1,26 +1,29 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { texts } from '$lib/texts';
+	import { instanceUrl } from '$lib/instance';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let { data } = $props();
 
-	const origin = $derived(page.url.origin);
-	const registerUrl = $derived(`/auth/register?invite=${data.slug}`);
+	const registerUrl = $derived(`${resolve('/auth/register')}?invite=${data.slug}`);
 	const ogTitle = 'Du wurdest zu AllerLeih eingeladen!';
 	const ogDescription = texts.pages.inviteLanding.description;
+	const ogImage = instanceUrl('/og-invite.png');
 </script>
 
 <svelte:head>
 	<title>{data.inviterName ? texts.pages.inviteLanding.title(data.inviterName) : ogTitle}</title>
 	<meta property="og:title" content={ogTitle} />
 	<meta property="og:description" content={ogDescription} />
-	<meta property="og:image" content="{origin}/og-invite.png" />
+	<meta property="og:image" content={ogImage} />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="{origin}/invite/{data.slug}" />
+	<meta property="og:url" content={instanceUrl(page.url.pathname)} />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={ogTitle} />
 	<meta name="twitter:description" content={ogDescription} />
-	<meta name="twitter:image" content="{origin}/og-invite.png" />
+	<meta name="twitter:image" content={ogImage} />
 </svelte:head>
 
 <div class="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 dark:bg-gray-900">
@@ -38,11 +41,8 @@
 			{ogDescription}
 		</p>
 
-		<a
-			href={registerUrl}
-			class="block w-full min-button rounded-full bg-primary-200 px-5 py-3 text-center text-base font-medium text-white hover:bg-primary focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-		>
+		<Button href={registerUrl} size="lg" fullWidth>
 			{texts.pages.inviteLanding.cta}
-		</a>
+		</Button>
 	</div>
 </div>

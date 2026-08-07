@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getUserGroups, getAttachableGroups, countMembersForGroups } from './groups';
+import {
+	getUserGroups,
+	getAttachableGroups,
+	countMembersForGroups,
+	requireGroupMembership,
+	isGroupOwner,
+} from './groups';
 
 // Minimal PocketBase stub. `group_members.getFullList` is called twice with
 // different intents — with `expand: 'group'` for the membership list, and with
@@ -105,5 +111,82 @@ describe('getAttachableGroups', () => {
 	it('returns an empty list when the user has no groups', async () => {
 		const pb = makePb({});
 		expect(await getAttachableGroups(pb, 'me')).toEqual([]);
+	});
+});
+
+describe('requireGroupMembership', () => {
+	// Minimal pb stub: groups.getOne resolves the group (or rejects), group_members.getFullList
+	// returns the roster.
+	function pbFor(opts: { group?: unknown; groupErr?: unknown; members?: unknown[] }) {
+		return {
+			filter: (raw: string) => raw,
+			collection: vi.fn((name: string) => {
+				if (name === 'groups') {
+					return {
+						getOne: opts.groupErr
+							? vi.fn().mockRejectedValue(opts.groupErr)
+							: vi.fn().mockResolvedValue(opts.group),
+					};
+				}
+				if (name === 'group_members') {
+					return { getFullList: vi.fn().mockResolvedValue(opts.members ?? []) };
+				}
+				return {};
+			}),
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any;
+	}
+
+	it('throws 404 when the group does not exist', async () => {
+		const pb = pbFor({ groupErr: { status: 404 } });
+		await expect(requireGroupMembership(pb, 'me', 'bad')).rejects.toMatchObject({ status: 404 });
+	});
+
+	it('redirects to the group list when the user is neither owner nor member', async () => {
+		const pb = pbFor({ group: { id: 'g1', owner: 'someone-else' }, members: [{ user: 'other' }] });
+		await expect(requireGroupMembership(pb, 'me', 'g1')).rejects.toMatchObject({
+			status: 303,
+			location: '/user/groups',
+		});
+	});
+
+	it('returns isOwner true for the owner', async () => {
+		const pb = pbFor({ group: { id: 'g1', owner: 'me' }, members: [{ user: 'me', role: 'admin' }] });
+		const res = await requireGroupMembership(pb, 'me', 'g1');
+		expect(res.isOwner).toBe(true);
+		expect(res.group.id).toBe('g1');
+		expect(res.memberRows).toHaveLength(1);
+	});
+
+	it('returns isOwner false for a plain member', async () => {
+		const pb = pbFor({
+			group: { id: 'g1', owner: 'someone-else' },
+			members: [{ user: 'someone-else', role: 'admin' }, { user: 'me', role: 'member' }],
+		});
+		const res = await requireGroupMembership(pb, 'me', 'g1');
+		expect(res.isOwner).toBe(false);
+	});
+});
+
+describe('isGroupOwner', () => {
+	function ownerPb(group?: unknown, err?: unknown) {
+		return {
+			collection: vi.fn(() => ({
+				getOne: err ? vi.fn().mockRejectedValue(err) : vi.fn().mockResolvedValue(group),
+			})),
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any;
+	}
+
+	it('is true when the user owns the group', async () => {
+		expect(await isGroupOwner(ownerPb({ id: 'g1', owner: 'me' }), 'me', 'g1')).toBe(true);
+	});
+
+	it('is false for a non-owner', async () => {
+		expect(await isGroupOwner(ownerPb({ id: 'g1', owner: 'someone-else' }), 'me', 'g1')).toBe(false);
+	});
+
+	it('is false when the group cannot be fetched', async () => {
+		expect(await isGroupOwner(ownerPb(undefined, { status: 404 }), 'me', 'bad')).toBe(false);
 	});
 });

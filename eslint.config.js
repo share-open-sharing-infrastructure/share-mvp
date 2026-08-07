@@ -23,6 +23,20 @@ export default defineConfig(
 			// typescript-eslint strongly recommend that you do not use the no-undef lint rule on TypeScript projects.
 			// see: https://typescript-eslint.io/troubleshooting/faqs/eslint/#i-get-errors-from-the-no-undef-rule-about-global-variables-not-being-defined-even-though-there-are-no-typescript-errors
 			'no-undef': 'off',
+			// Buttons go through the design system, not Flowbite (docs/design-system.md).
+			'no-restricted-imports': [
+				'error',
+				{
+					paths: [
+						{
+							name: 'flowbite-svelte',
+							importNames: ['Button'],
+							message:
+								'Use $lib/components/ui/Button.svelte instead (see docs/design-system.md).',
+						},
+					],
+				},
+			],
 		},
 	},
 	{

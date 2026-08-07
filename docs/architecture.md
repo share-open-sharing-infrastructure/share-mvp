@@ -9,7 +9,7 @@ System-level overview of AllerLeih: tech stack, request flow, authentication, ro
 ```mermaid
 graph TD
     Browser["Browser (SvelteKit SPA + PWA)"]
-    SK["SvelteKit Node server (Uberspace shared hosting)"]
+    SK["SvelteKit Node server"]
     PB["PocketBase (SQLite + Auth + Realtime)"]
     ORS["OpenRouteService API (geocoding + travel times\nGermany only)"]
     Mistral["Mistral AI (pixtral-12b-2409 vision)\nitem photo analysis"]
@@ -34,8 +34,7 @@ Auth runs as a two-handle sequence in `src/hooks.server.ts` on every request:
 
 1. **`authentication`** — creates a per-request PocketBase instance, restores auth state from the httpOnly cookie, calls `authRefresh()` to extend the session, and sets `event.locals.user` (null if not logged in).
 
-2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list:
-   - `/auth/*`, `/search`, `/items`, `/users`, `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`
+2. **`authorization`** — redirects unauthenticated requests to `/auth/login?redirectTo=<path>` for all routes except the unprotected prefix list as defined in `hooks.server.ts`.
 
 For client-side PocketBase WebSocket subscriptions (live chat), the auth token is passed from the server to the client via `page.data.token`, since the httpOnly cookie is not accessible to browser JS.
 
@@ -45,14 +44,18 @@ For client-side PocketBase WebSocket subscriptions (live chat), the auth token i
 
 | Group | Routes | Auth required |
 |---|---|---|
-| Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/logout` | No |
+| Auth | `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/reset/confirm`, `/auth/confirm-verification`, `/auth/confirm-email-change`, `/auth/logout` | No |
 | Core pages | `/search`, `/items/[id]`, `/items/[id]/terms`, `/conversations`, `/conversations/[conversationId]`, `/notifications`, `/social` | Partial (search/items public) |
 | User management | `/user/profile`, `/user/items`, `/user/items/bulk-add`, `/user/import`, `/users/[id]`, `/onboarding`, `/invite/[slug]` | Yes (except `/users/[id]`, `/invite/*`) |
 | API endpoints | `/api/analyze-item`, `/api/geocode`, `/api/travel-times/search`, `/api/travel-times/item`, `/api/push-subscribe`, `/api/redirect`, `/api/diagnostics` | Varies |
-| Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/sitemap.xml` | No |
+| Static / info | `/misc/contact`, `/misc/imprint`, `/misc/privacy`, `/misc/tos`, `/misc/guide`, `/misc/stats`, `/sitemap.xml`, `/robots.txt` | No |
 | Legal consent | `/legal/accept`, `/legal/locked` | Yes (gate-exempt) |
+| Business metrics | `/admin/metrics` (`users.isAdmin` only, 404 otherwise), `/misc/stats` (public headline numbers, also teased on the home page) | `/admin/metrics`: yes + admin flag; `/misc/stats`/`/`: no |
 
 `/misc/tos` and `/misc/privacy` are public but no longer static — they render the active document from the `legal_documents` collection (Issue #399). `/legal/accept` and `/legal/locked` are the re-consent gate (see [domain-model.md](domain-model.md)); they are exempt from the gate itself so a not-yet-consented user can reach them.
+
+`/admin/metrics` and `/misc/stats` read the nightly `metrics_daily` snapshot (computed in the
+`allerleih-backend` repo) plus cheap live counts — see [operations/metrics.md](operations/metrics.md).
 
 All mutations go through SvelteKit **form actions** (`action="?/actionName"`). There is no REST API layer between the frontend and PocketBase — server load functions fetch data, form actions write it.
 
@@ -71,24 +74,15 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 
 ## AI Integration
 
-### Current: Mistral Vision — Item Photo Analysis (`/api/analyze-item`)
+### Mistral Vision — Item Photo Analysis (`/api/analyze-item`)
 
 - **Trigger:** User uploads photos in `/user/items/bulk-add` (bulk import flow for institutions and power users)
 - **Model:** `pixtral-12b-2409` (multimodal vision)
 - **Input:** Base64-encoded image + MIME type
 - **Output:** `{ name: string, description: string, categories: string[] }`
-- **Prompt language:** German; instructs the model to name and describe the item, and select up to 3 categories from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`
+- **Prompt language:** German; instructs the model to name and describe the item, and select up to 3 categories from the fixed `ITEM_CATEGORIES` list in `src/lib/categories.ts`
 - **Rate limiting:** In-memory per-user limit of 300 requests/hour — resets on server restart, not safe for multi-instance deployments
 - **Data residency:** Mistral processes data in France under EU law; this is disclosed in the bulk upload UI
-
-### Potential Extension Points
-
-- AI-enhanced search (e.g. user asks "What do I need to drill build a treehouse?" and AI suggests relevant items)
-- Auto-categorisation during single-item upload (currently bulk-only)
-- CSV import quality checks and enrichment for institutional partners
-- ...
-
----
 
 ## External API Boundaries
 
@@ -98,28 +92,130 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 | OpenRouteService (ORS) | PocketBase hook → ORS | Travel time matrix (`POST /api/travel-times` hook) | Supports foot, bicycle, car; reads coords from owner-only `user_geolocations`, returns only bucketed minutes; SvelteKit `/api/travel-times/{item,search}` relay to it |
 | Mistral AI | Server → Mistral | Item photo analysis (`/api/analyze-item`) | pixtral-12b-2409 vision model; server-side only |
 | Web Push (VAPID) | Server → Push service | Push notifications | Per-device subscriptions stored in `push_subscriptions`; stale subscriptions auto-removed on HTTP 410/404 |
+| partner lending software instances | Backend (PocketBase hooks) → partner software | Sync partner item catalogues into `items` | Polled by the backend `integration_sync` / `integration_refresh` cron jobs; each institution's `sync_config` row is read and items owned by that account are upserted/archived. See [integrations.md](integrations.md) for details |
 
----
 
-## Deployment Pipeline
+## Instance configuration (multi-city)
+
+**`src/lib/instance.ts` is the single source of everything that differs between AllerLeih
+instances** (city, origin, contact addresses, analytics) — routes and components read from it
+instead of hardcoding `allerleih.org` or a city name. `src/lib/texts.ts` imports it and
+interpolates the German copy at module load (e.g. `pages.landing.whoBodyPart1`, the PWA install
+steps); everything else in the app reads URLs/emails straight from `instance`.
+
+| Field | Env var | Default |
+|---|---|---|
+| `origin` | `PUBLIC_SITE_ORIGIN` | `https://allerleih.org` |
+| `city` | `PUBLIC_INSTANCE_CITY` | `Lüneburg` |
+| `appName` | `PUBLIC_APP_NAME` | `AllerLeih` |
+| `contactEmail` | `PUBLIC_CONTACT_EMAIL` | `kontakt@allerleih.org` |
+| `analytics.scriptOrigin` | `PUBLIC_ANALYTICS_ORIGIN` | *(unset ⇒ off)* |
+| `analytics.websiteId` | `PUBLIC_ANALYTICS_WEBSITE_ID` | *(unset ⇒ off)* |
+
+All six are optional; an unset/invalid value falls back to the Lüneburg/allerleih.org default
+(never throws — a bad env var must not 500 the whole app). Operator-owned values that don't vary
+per city (feedback address, social links, GitHub/Notion links, the legal imprint address) are
+hardcoded in the same module rather than env-fed.
+
+**The origin rule** — stated once, applied everywhere: crawler-facing absolute URLs (sitemap,
+robots, `canonical` via `SeoHead`'s opt-in `canonical` flag, `og:url`, `og:image`) always come
+from `instance.origin` / `instanceUrl()`, called with a **literal root-absolute path** (or, for
+canonical/`og:url`, the current page's own `page.url.pathname` from `$app/state` — never a
+passed-in path). User-facing share/invite links keep `url.origin`, because a copied link must
+work on the host the user is actually on (LAN dev, preview, custom domain) — switching those to
+the configured origin would make dev/preview share links point at production.
+
+**Never write `instanceUrl(resolve(...))`.** `svelte.config.js` has no `paths` block, so
+SvelteKit's default `paths.relative: true` applies, and `resolve()` (`$app/paths`) returns a
+**page-relative** path during server-side rendering (e.g. `'./'` for `/`, `'../misc/imprint'`
+for a nested route) — not the root-absolute path `instanceUrl()` expects. Concatenating the two
+produced malformed `canonical`/`og:url` tags in the raw server-rendered HTML
+(`https://allerleih.org../misc/imprint`) that looked correct in a browser only because the
+client recomputes a right-looking value after hydration (issue #473, caught only by an e2e test
+reading the raw SSR response — see `e2e/tests/seo-canonical.spec.ts`). `instanceUrl()` logs a
+DEV-only console error if given a non-root-absolute path, to make a repeat loud instead of silent.
+
+**This is the only place in the frontend that uses `$env/dynamic/public`** — every other env
+access in the repo goes through `$env/static/*` (build-time replaced). The exception is
+deliberate: one build artefact must serve N city instances, and `adapter-node` reads environment
+variables from `process.env` at **server start** (runtime), not at build time — `$env/static/public`
+would bake a single instance's values into the build, requiring one build per city.
+`$lib/instance.ts` (and therefore `$lib/texts.ts`) must never be imported from
+`src/service-worker.ts` — `$env/dynamic/public` is a hard error there (no request context).
+
+**Consequence for every future `PUBLIC_*` var:** `$env/static/public` only ships the `PUBLIC_*`
+constants a module actually references (build-time, tree-shaken), but `$env/dynamic/public`
+serialises the **entire** `PUBLIC_*` env into every rendered page (SvelteKit ships the whole
+dynamic-public object to the client so it can hydrate) — and since `$lib/instance.ts` is
+transitively imported by `$lib/texts.ts`, which reaches the client bundle, that whole-object
+broadcast now applies repo-wide, not just to the six vars above. Harmless today because only
+already-public vars exist, but treat any new `PUBLIC_*` var as fully public from the moment it is
+set in the server env — it is shipped to every visitor whether or not any module reads it.
+
+**Branding is only partially instance-configurable.** `PUBLIC_APP_NAME` overrides `texts.names.app`
+(used in `<title>`s, meta tags, a handful of UI strings), but it does **not** rewrite the ~89
+literal "AllerLeih" occurrences baked into the German copy in `src/lib/texts.ts`, nor the image
+assets (logo, favicon, PWA icons). Per-instance visuals are handled **outside** this config, by two
+separate, unrelated mechanisms:
+- **Colours** re-skin via the `[data-theme]` CSS override described in
+  [design-system.md](design-system.md) → "White-Labeling".
+- **Binary assets** (logo, icons, `static/manifest.webmanifest`) are swapped **statically**, under
+  unchanged filenames, via a per-instance rsync overlay applied on top of `build/client/` at deploy
+  time — `static/manifest.webmanifest` stays a plain static file (not an SSR route) for this
+  reason, since it lives in the same per-instance asset overlay as the icons it references.
+
+**Deploy note:** analytics is opt-in with no fallback instance, so omitting the two vars silently
+stops Umami tracking rather than falling back to a default. Production therefore has to supply
+`PUBLIC_ANALYTICS_ORIGIN=https://analytics.allerleih.org` and
+`PUBLIC_ANALYTICS_WEBSITE_ID=6cfb6acd-259e-4771-baa7-c677387ea292` in its **runtime** environment —
+see "Current Deployment Pipeline" below for where that has to live and which two traps to avoid.
+
+## Current Deployment Pipeline for "AllerLeih" (proof-of-concept instance)
 
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
 - **Deploy trigger:** push to `main` → GitHub Actions (`.github/workflows/deploy-to-uberspace.yaml`) → `npm ci && npm run build` → `rsync` to Uberspace
 - **Process restart:** `supervisorctl restart svelte`
-- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), `LOGIN_SECRET`
+- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`); a tracked `.env.example` lists all required vars. (Integration sync/refresh + the CSV write path run entirely in the backend as of #487 Phase 3 — no frontend sync secret. `PB_SUPERUSER_*` are used only by local seed/e2e tooling, not the app runtime.)
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
+- **Instance config vars** (`PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
+  `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`) are read via
+  `$env/dynamic/public` at **runtime** from `process.env` (adapter-node), not baked into the build
+  like the other `PUBLIC_*` vars above — so one build artefact serves every city instance and only
+  each instance's runtime environment differs. Two traps when adding one: (1) putting it in the
+  workflow's `npm run build` step has **no** effect, that only reaches `$env/static/*`; (2) the
+  deploy's SSH step runs `echo "BODY_SIZE_LIMIT=…" > .env` — with `>`, so anything hand-added to that
+  file on the server is discarded on the next deploy. Add runtime vars to that line in
+  `deploy-to-uberspace.yaml` (these six are public values, so GitHub Actions *variables*, not
+  secrets), or to the `svelte` supervisord service's own environment. See "Instance configuration"
+  above.
 
 **CI on pull requests:** Vitest runs with coverage (json + lcov) on every PR to `main` via `.github/workflows/vitest.yaml`. Coverage is posted as a PR comment via `davelosert/vitest-coverage-report-action`. The build step also catches TypeScript and Svelte compilation errors before merging.
 
----
-
 ## Real-time Architecture
 
-AllerLeih uses PocketBase's built-in WebSocket subscriptions for live chat in the conversations view. The utility function `setupPocketBaseSubscription()` in `src/lib/utils/utils.ts` wraps this pattern:
+AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat in the conversations view. The single entry point `subscribeRealtime()` in `src/lib/client-pb.ts` wraps this pattern:
 
-- Takes a collection name, optional record ID (`'*'` to subscribe to all records), and a callback
+- Takes an options object: collection, optional topic/record ID (`'*'` for all records), a handler, and an optional `onReconnect` callback
+- Adds retry-on-connect-failure and automatic recovery after a network drop or a mobile tab background-freeze (which silently kills the stream) — `onReconnect` fires so callers can refetch state missed while the stream was down (issue #435)
 - Returns an unsubscribe function suitable for `$effect()` cleanup in Svelte 5
-- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the WebSocket connection (the httpOnly cookie is inaccessible to JS)
+- Auth token is synced server-to-client via `page.data.token` so the client-side PocketBase instance can authenticate the connection (the httpOnly cookie is inaccessible to JS)
+
+Domain-specific reconciliation lives next to its route in rune-free helper modules rather than in the components themselves:
+
+- `src/routes/conversations/conversationListRealtime.ts` — keeps the conversation sidebar list in sync: `update` events sync `readByOwner`/`readByRequester`/`lastMessageAt`/`lendingStatus` and re-sort (mirroring the server's `-lastMessageAt,-updated` sort), `create` events insert the fetched record at its sorted position, `delete` events remove the entry.
+- `src/routes/conversations/[conversationId]/conversationRealtime.ts` — keeps a single open conversation in sync (lending status, counterfactual, and the fetch/dedupe of every newly appended message id in a coalesced/batched event, not just the last one). State is read/written through accessor closures so the page keeps ownership of the reactive state.
+
+Pages hold "server-load data that a realtime handler also writes to" in a `realtimeSynced()` box (`src/lib/stores/realtimeSynced.svelte.ts`) — a writable `$derived` that re-syncs from `load()` while staying directly assignable by the handler (issue #469).
+
+### Conversations: server-helper layout
+
+The `/conversations` area's server logic is split by ownership, following the "libs never import from routes" rule:
+
+- `src/lib/server/conversations.ts` — `deleteConversation()`, shared by the route's `?/deleteConversation` action and `$lib/server/items.ts`'s cascade-on-item-delete (an item's conversations are deleted with it).
+- `src/lib/server/items.ts` — `toggleItemStatus()` (flips an item's availability from the conversation header) alongside the existing `setItemStatus`/`deleteItem`/`deleteMultipleItems`.
+- `src/lib/server/notifications.ts` — `notifyAndPush()` bundles the create-notification + send-push pair every call site needs; `sendMessage` (route-local `conversation.server.ts`) and the 6 lending transitions (`[conversationId]/lending.server.ts`) both call it.
+- `[conversationId]/lending.server.ts` — the 6 `?/actionName` transitions are table-driven: `$lib/lending.ts`'s `LENDING_TRANSITIONS` supplies the role/from/to per action, and a local `TRANSITION_EFFECTS` table supplies the per-action item/notification side effects, both consumed by a single `executeLendingTransition()`.
+- `[conversationId]/conversationDetail.ts` — `toConversationDetail()` maps the raw `conversations` wire record (ids + optional `expand`) to the flattened, dangling-item-safe view-model the detail page and its header render from.
 
 Push notifications (for events that happen when the user is not on the site) use the Web Push standard via the `web-push` npm package — these are one-way server → browser messages, not WebSocket connections.

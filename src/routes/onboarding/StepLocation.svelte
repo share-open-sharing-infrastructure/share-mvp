@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
-	import OnboardingButton from './OnboardingButton.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import AddressInput from '$lib/components/AddressInput.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
@@ -47,8 +47,8 @@
 		<AddressInput initialValue={initialCity} initialGeo={initialGeolocation} />
 
 		<div class="flex flex-col gap-2 pt-2">
-			<OnboardingButton type="submit">{texts.onboarding.buttons.next} →</OnboardingButton>
-			<OnboardingButton variant="ghost" onclick={onNext}>{texts.onboarding.buttons.skip}</OnboardingButton>
+			<Button type="submit" size="lg" fullWidth>{texts.onboarding.buttons.next} →</Button>
+			<Button variant="ghost" fullWidth onclick={onNext}>{texts.onboarding.buttons.skip}</Button>
 		</div>
 	</form>
 </div>

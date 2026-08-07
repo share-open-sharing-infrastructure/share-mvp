@@ -18,7 +18,11 @@ const DELETED_USERNAME_RE = /^deleted-[a-z0-9]{15}$/;
 export function displayName(
 	user: { username?: string; deleted?: boolean } | null | undefined
 ): string {
-	if (!user || user.deleted || (user.username && DELETED_USERNAME_RE.test(user.username))) {
+	if (
+		!user ||
+		user.deleted ||
+		(user.username && DELETED_USERNAME_RE.test(user.username))
+	) {
 		return texts.account.deletedAccountName;
 	}
 	return user.username ?? texts.account.deletedAccountName;
@@ -34,15 +38,55 @@ export function displayName(
  * to everyone and trustees-only items only to authorized viewers. Use this for any item
  * loaded from a public view; base-`items` records (their own `collectionId` already resolves)
  * don't need it.
+ *
+ * `thumb` requests a downscaled variant (e.g. '0x300') from PocketBase. The size must be
+ * whitelisted in the `items.image` field's `thumbs` option (backend migration
+ * `1784402877_image_thumbs.js`), otherwise PocketBase silently serves the original. It is
+ * never appended to the `externalImgUrl` fallback — external hosts don't understand it.
  */
 export function itemImageUrl(
 	pbUrl: string,
-	item: { id: string; image?: string | null; externalImgUrl?: string | null }
+	item: { id: string; image?: string | string[] | null; externalImgUrl?: string | null },
+	thumb?: string
 ): string | null {
-	if (item.image) {
-		return `${pbUrl}api/files/items_searchable/${item.id}/${item.image}`;
+	const first = Array.isArray(item.image) ? item.image[0] : item.image;
+	if (first) {
+		const url = `${pbUrl}api/files/items_searchable/${item.id}/${first}`;
+		return thumb ? `${url}?thumb=${thumb}` : url;
 	}
 	return item.externalImgUrl || null;
+}
+
+/**
+ * All display URLs for an item's images (for the detail-page gallery), in order.
+ * Falls back to a single-element list with the external image URL when the item
+ * has no uploaded PocketBase files. Empty when there is nothing to show.
+ * See {@link itemImageUrl} for the file-serving-via-view rationale.
+ */
+export function itemImageUrls(
+	pbUrl: string,
+	item: { id: string; image?: string | string[] | null; externalImgUrl?: string | null }
+): string[] {
+	const files = Array.isArray(item.image) ? item.image : item.image ? [item.image] : [];
+	if (files.length > 0) {
+		return files.map((f) => `${pbUrl}api/files/items_searchable/${item.id}/${f}`);
+	}
+	return item.externalImgUrl ? [item.externalImgUrl] : [];
+}
+
+/**
+ * Display URLs for an item's uploaded image files served from the record's OWN
+ * collection (`collectionId`), in order. Use this for base-`items` records the owner
+ * reads directly (their item list, the edit modal) — unlike {@link itemImageUrls}, which
+ * serves via the `items_searchable` view for records loaded from a public view. Returns
+ * only real uploaded files (no external-image fallback); empty when there are none.
+ */
+export function itemOwnFileUrls(
+	pbUrl: string,
+	item: { id: string; collectionId: string; image?: string | string[] | null }
+): string[] {
+	const files = Array.isArray(item.image) ? item.image : item.image ? [item.image] : [];
+	return files.map((f) => `${pbUrl}api/files/${item.collectionId}/${item.id}/${f}`);
 }
 
 export function formatTimestamp(
@@ -72,38 +116,39 @@ export function formatTimestamp(
 	return returnString;
 }
 
-import PocketBase from 'pocketbase';
-import type { RecordSubscription } from 'pocketbase';
+/**
+ * Build a `mailto:` href for the email-contact CTA (issue #438). The address is
+ * URL-encoded per-part (local @ domain) so a crafted-but-RFC-valid address can't
+ * inject extra mailto headers/params into the sender's outgoing mail; subject and
+ * body are fully encoded. Returns '' for an empty address (caller hides the link).
+ */
+export function buildMailtoHref(email: string, subject: string, body: string): string {
+	if (!email) return '';
+	const at = email.lastIndexOf('@');
+	const address =
+		at === -1
+			? encodeURIComponent(email)
+			: `${encodeURIComponent(email.slice(0, at))}@${encodeURIComponent(email.slice(at + 1))}`;
+	return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
 
 /**
- * Sets up a PocketBase real-time subscription for the respective collection and record, and unsubscribes on cleanup.
- * @param pocketBaseInstance A PocketBase instance to subscribe to
- * @param collectionName The collection name to subscribe to
- * @param recordId The record ID to subscribe to, defaults to '*' (all records in the collection)
- * @param eventHandler A callback function to handle incoming subscription events
- * TODO: Check if this needs to be done client-side, maybe it's better to do server-side? Would that work?
+ * Build an outbound-link href routed through `/api/redirect` (which enforces https +
+ * records the click, tagged with `source` for analytics). Both `target` and `source` are
+ * URL-encoded so neither can inject extra query params into the href; `/api/redirect` is
+ * the authoritative https guard. Used directly for links that aren't scoped to an item
+ * (footer social/contribute links); {@link buildItemRedirectHref} delegates to this for the
+ * item-scoped case so the `/api/redirect?...` format lives in exactly one place.
  */
-export function setupPocketBaseSubscription(
-	pocketBaseInstance: PocketBase,
-	collectionName: string,
-	recordId: string = '*',
-	eventHandler: (event: RecordSubscription<unknown>) => void
-) {
-	// Subscribe to some collection's and record's events
-	pocketBaseInstance
-		?.collection(collectionName)
-		.subscribe(recordId, eventHandler)
-		.catch((error) => {
-			console.error(`Failed to subscribe to ${collectionName}:`, error);
-		});
+export function buildRedirectHref(target: string, source: string): string {
+	return `/api/redirect?to=${encodeURIComponent(target)}&source=${encodeURIComponent(source)}`;
+}
 
-	// Cleanup: unsubscribe when chat partner changes or component unmounts
-	return (): void => {
-		pocketBaseInstance
-			?.collection(collectionName)
-			.unsubscribe(recordId)
-			.catch((error) => {
-				console.error(`Failed to unsubscribe from ${collectionName}:`, error);
-			});
-	};
+/**
+ * Item-scoped variant of {@link buildRedirectHref}: same `/api/redirect` proxy, plus an
+ * `item=<itemId>` query param. Used for external-item deep links, an owner's off-platform
+ * contact link (issue #438), and the conversation header's messenger buttons.
+ */
+export function buildItemRedirectHref(target: string, itemId: string, source: string = 'item-detail'): string {
+	return `${buildRedirectHref(target, source)}&item=${itemId}`;
 }

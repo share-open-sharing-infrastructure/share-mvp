@@ -10,11 +10,52 @@ For running tests, we rely on [vitest](https://vitest.dev/) because it is integr
 
 For now, we aim to build test coverage up as we go to achieve a reasonable balance of flexibility and robustness that provides enough security to prevent bigger problems whilst still allowing us to implement improvements to our code at pace.
 
-Currently, this means that we gradually implement unit tests for server-side functions. Integration and UI tests will follow as soon as reasonable.
+Currently, this means that we gradually implement unit tests for server-side functions. Browser-level end-to-end tests (Playwright) now cover a first set of full flows — see [End-to-end tests](#end-to-end-tests-playwright) below.
+
+Shared PocketBase mock helpers (`mockFilter` + `makeMockPb`, extracted from duplicated per-file
+copies) live in [`src/lib/test-utils/pocketbase.ts`](/src/lib/test-utils/pocketbase.ts) — prefer
+importing them over hand-rolling a new copy when a test needs a mock `PocketBase` client.
+
+## End-to-end tests (Playwright)
+
+The unit tests above mock PocketBase; the end-to-end suite (in [`/e2e`](/e2e)) instead drives
+the real app in a browser against a running PocketBase, covering page rendering, login, and
+access to protected routes.
+
+- **Config:** [`playwright.config.ts`](/playwright.config.ts). Playwright starts the SvelteKit
+  dev server itself (`webServer`) and points it at `PB_URL`; an already-running dev server is
+  reused.
+- **Data:** [`e2e/global-setup.ts`](/e2e/global-setup.ts) health-checks PocketBase and seeds the
+  deterministic `e2e` scenario ([`scripts/seed/scenarios/e2e.js`](/scripts/seed/scenarios/e2e.js)),
+  which the seed runner resets on every run. Credentials live in
+  [`e2e/fixtures/users.ts`](/e2e/fixtures/users.ts).
+- **Auth:** [`e2e/auth.setup.ts`](/e2e/auth.setup.ts) logs in once and saves the storage state;
+  the `authenticated` project reuses it.
+
+Requires a PocketBase with the real backend schema plus superuser credentials for seeding:
+
+```bash
+PB_URL=http://127.0.0.1:8091 \
+PB_SUPERUSER_EMAIL=you@example.com \
+PB_SUPERUSER_PASSWORD=secret \
+npm run test:e2e
+```
+
+Locally, [`scripts/dev-stack.sh`](/scripts/dev-stack.sh) brings up the backend (and optionally
+seeds) in one command. Conventions (role/label locators, web-first assertions, no
+`waitForTimeout`) and the full env reference are documented in [`e2e/README.md`](/e2e/README.md).
+
+The e2e suite also runs in CI via [`.github/workflows/e2e.yaml`](/.github/workflows/e2e.yaml) on
+every PR to `main`, against a real-schema PocketBase it starts itself; note that it tracks the
+backend's `main` rather than pinning it, so a backend merge can turn an unchanged frontend PR red
+(and a frontend PR needing an unmerged backend migration cannot go green) — the operational detail
+lives in [`e2e/README.md`](/e2e/README.md) → "CI". Lint and type-checking **also** run on every PR
+via [`.github/workflows/lint.yaml`](/.github/workflows/lint.yaml) (`npm run lint` +
+`npm run check`), alongside the existing Vitest + build workflow.
 
 ## Practice
 
-Test files currently live next to their target. For example, for testing conversation functionality, the test file lives directly next to [/src/routes/conversations/[conversationId]/+page.server.ts](/src/routes/conversations/[conversationId]/+page.server.ts).
+Test files currently live next to their target. For example, for testing conversation functionality, the test file lives directly next to [/src/routes/conversations/[conversationId]/+page.server.ts](/src/routes/conversations/[conversationId]/+page.server.ts). It should NOT have a leading +, this is reserved for Svelte files only.
 
 To test a page and its functions, use Vitest like so:
 

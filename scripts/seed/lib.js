@@ -6,6 +6,7 @@
  * records. Scenarios should build their data through the exported factories.
  */
 import PocketBase from 'pocketbase';
+import zlib from 'node:zlib';
 
 export const SEED_DOMAIN = '@seed.test';
 export const USER_PASSWORD = 'password123';
@@ -45,29 +46,141 @@ export async function teardown(pb) {
 	const ids = seedUsers.map((u) => u.id);
 	const anyOf = (field) => '(' + ids.map((id) => `${field} = "${id}"`).join(' || ') + ')';
 
+	// Groups owned by seed users: clear their invites + memberships before the groups.
+	const seedGroups = await pb
+		.collection('groups')
+		.getFullList({ filter: anyOf('owner') })
+		.catch(() => []);
+	if (seedGroups.length > 0) {
+		const byGroup =
+			'(' + seedGroups.map((g) => `group = "${g.id}"`).join(' || ') + ')';
+		await deleteWhere(pb, 'group_invites', byGroup);
+		await deleteWhere(pb, 'group_members', byGroup);
+	}
+	// Memberships the seed users hold in any (incl. non-seed) group.
+	await deleteWhere(pb, 'group_members', anyOf('user'));
+	// Invites authored by a seed user that the by-group sweep above missed — e.g. an
+	// orphaned invite whose group was already deleted. `group_invites.createdBy` does not
+	// cascade on user delete, so any leftover would pin the user row and break re-seeding.
+	await deleteWhere(pb, 'group_invites', anyOf('createdBy'));
+
+	// Records keyed to seed users. deleteWhere swallows unknown-collection errors, so
+	// naming a collection that a given schema lacks is harmless.
+	await deleteWhere(pb, 'notifications', `${anyOf('recipient')} || ${anyOf('sender')}`);
+	await deleteWhere(pb, 'trusts', `${anyOf('truster')} || ${anyOf('trustee')}`);
+	await deleteWhere(pb, 'term_acceptances', anyOf('user'));
+	await deleteWhere(pb, 'user_legal_acceptances', anyOf('user'));
+	await deleteWhere(pb, 'lending_requirements', anyOf('owner'));
+	await deleteWhere(pb, 'lending_terms', anyOf('owner'));
 	await deleteWhere(pb, 'messages', `${anyOf('from')} || ${anyOf('to')}`);
 	await deleteWhere(pb, 'conversations', `${anyOf('requester')} || ${anyOf('itemOwner')}`);
+	// push_subscriptions.user and outbound_clicks.item are NOT cascadeDelete (see the
+	// migrations), so a scenario seeding either would leak across re-runs without this.
+	await deleteWhere(pb, 'push_subscriptions', anyOf('user'));
+	const seedItems = await pb.collection('items').getFullList({ filter: anyOf('owner') }).catch(() => []);
+	if (seedItems.length > 0) {
+		const byItem = '(' + seedItems.map((i) => `item = "${i.id}"`).join(' || ') + ')';
+		await deleteWhere(pb, 'outbound_clicks', byItem);
+	}
 	await deleteWhere(pb, 'items', anyOf('owner'));
+	for (const g of seedGroups) await pb.collection('groups').delete(g.id).catch(() => {});
 	for (const u of seedUsers) await pb.collection('users').delete(u.id).catch(() => {});
 	return seedUsers.length;
 }
 
 // --- Factories -------------------------------------------------------------
 
-export function createUser(pb, username, overrides = {}) {
-	return pb.collection('users').create({
+export async function createUser(pb, username, overrides = {}) {
+	// Preference fields live in the user_preferences sidecar (issue #426), not on the
+	// users row. Peel them off `overrides` and write them to the sidecar. `hasOnboarded`
+	// defaults to true so seeded accounts don't get the onboarding prompt when clicking through.
+	const {
+		hasOnboarded = true,
+		preferredTransportMode,
+		// emailNotifications/digestEmails are opt-out: default the created row to true so a
+		// seeded user matches a real "no row" user (opted in), consistent with the copy
+		// migration and the #607 digestEmails backfill — never omit these two, or the seeded
+		// row would fall into the bool-default trap (#607 finding B2) and read as opted out.
+		emailNotifications = true,
+		digestEmails = true,
+		...userOverrides
+	} = overrides;
+
+	const user = await pb.collection('users').create({
 		username,
 		email: `${username}${SEED_DOMAIN}`,
 		password: USER_PASSWORD,
 		passwordConfirm: USER_PASSWORD,
 		verified: true,
-		hasOnboarded: true,
-		...overrides,
+		...userOverrides,
 	});
+
+	const prefs = { user: user.id, hasOnboarded, emailNotifications, digestEmails };
+	if (preferredTransportMode !== undefined) prefs.preferredTransportMode = preferredTransportMode;
+	await pb.collection('user_preferences').create(prefs);
+
+	return user;
+}
+
+// Tiny dependency-free PNG encoder so seeded items carry a real (offline, deterministic)
+// image instead of just the category placeholder. Each item gets a solid card whose colour
+// is derived from its name, so the seeded items look distinct when clicking through.
+const CRC_TABLE = (() => {
+	const t = new Uint32Array(256);
+	for (let n = 0; n < 256; n++) {
+		let c = n;
+		for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+		t[n] = c >>> 0;
+	}
+	return t;
+})();
+function crc32(buf) {
+	let c = 0xffffffff;
+	for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+	return (c ^ 0xffffffff) >>> 0;
+}
+function pngChunk(type, data) {
+	const len = Buffer.alloc(4);
+	len.writeUInt32BE(data.length, 0);
+	const typeBuf = Buffer.from(type, 'ascii');
+	const crc = Buffer.alloc(4);
+	crc.writeUInt32BE(crc32(Buffer.concat([typeBuf, data])), 0);
+	return Buffer.concat([len, typeBuf, data, crc]);
+}
+function solidPng(w, h, [r, g, b]) {
+	const ihdr = Buffer.alloc(13);
+	ihdr.writeUInt32BE(w, 0);
+	ihdr.writeUInt32BE(h, 4);
+	ihdr[8] = 8; // bit depth
+	ihdr[9] = 2; // colour type: truecolour RGB
+	const row = Buffer.alloc(1 + w * 3); // leading filter byte (0) + RGB pixels
+	for (let x = 0; x < w; x++) [row[1 + x * 3], row[1 + x * 3 + 1], row[1 + x * 3 + 2]] = [r, g, b];
+	const raw = Buffer.concat(Array.from({ length: h }, () => row));
+	const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+	return Buffer.concat([sig, pngChunk('IHDR', ihdr), pngChunk('IDAT', zlib.deflateSync(raw)), pngChunk('IEND', Buffer.alloc(0))]);
+}
+function hsvToRgb(h, s, v) {
+	const c = v * s,
+		x = c * (1 - Math.abs(((h / 60) % 2) - 1)),
+		m = v - c;
+	const [r, g, b] =
+		h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+	return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
+/** A deterministic solid-colour PNG (640×420) as an upload, coloured from the name. */
+export function placeholderImage(name) {
+	let hash = 0;
+	for (const ch of name) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+	const png = solidPng(640, 420, hsvToRgb(hash % 360, 0.5, 0.8));
+	const file = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'item'}.png`;
+	return typeof File !== 'undefined'
+		? new File([png], file, { type: 'image/png' })
+		: new Blob([png], { type: 'image/png' });
 }
 
 export function createItem(pb, ownerId, name, categories, opts = {}) {
-	return pb.collection('items').create({
+	const data = {
 		name,
 		description: opts.description ?? `${name} (Testdaten)`,
 		place: opts.place ?? 'Kassel',
@@ -75,7 +188,13 @@ export function createItem(pb, ownerId, name, categories, opts = {}) {
 		status: opts.status ?? 'available',
 		trusteesOnly: opts.trusteesOnly ?? false,
 		categories,
-	});
+	};
+	// Items get a generated placeholder image by default. Opt out with `withImage: false`,
+	// or supply your own File/Blob via `image`. The PocketBase SDK detects the File and
+	// uploads it as multipart.
+	const image = opts.image ?? (opts.withImage === false ? null : placeholderImage(name));
+	if (image) data.image = image;
+	return pb.collection('items').create(data);
 }
 
 export async function createMessage(pb, fromId, toId, content) {
@@ -87,6 +206,16 @@ export function createConversation(pb, data) {
 	return pb.collection('conversations').create(data);
 }
 
-export function setTrust(pb, userId, trustedIds) {
-	return pb.collection('users').update(userId, { trusts: trustedIds });
+// Set userId's trust list to exactly `trustedIds` by replacing their outgoing
+// `trusts` edges (truster = userId). Idempotent: drops existing edges first, then
+// re-creates. Runs as superuser (seed), so the createRule is bypassed.
+export async function setTrust(pb, userId, trustedIds) {
+	const existing = await pb
+		.collection('trusts')
+		.getFullList({ filter: pb.filter('truster = {:u}', { u: userId }) });
+	for (const row of existing) await pb.collection('trusts').delete(row.id);
+	for (const trusteeId of trustedIds) {
+		if (trusteeId === userId) continue;
+		await pb.collection('trusts').create({ truster: userId, trustee: trusteeId });
+	}
 }

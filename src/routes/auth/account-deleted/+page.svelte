@@ -2,12 +2,11 @@
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 	import { HeartOutline } from 'flowbite-svelte-icons';
+	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 </script>
 
-<svelte:head>
-	<title>{texts.account.deleted.title}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.account.deleted.title} robots="noindex, nofollow" />
 
 <main class="flex justify-center bg-secondary-100 dark:bg-tinte-900 px-4 py-16 sm:py-24">
 	<div class="max-w-md w-full text-center bg-sand border border-tinte-200 rounded-2xl shadow-sm dark:bg-tinte-800 dark:border-tinte-700 p-8 sm:p-10 space-y-5">
@@ -23,11 +22,8 @@
 		<p class="text-sm text-tinte-500 dark:text-tinte-400">
 			{texts.account.deleted.secondary}
 		</p>
-		<a
-			href={resolve('/')}
-			class="inline-block mt-2 py-3 px-6 min-button bg-primary-200 hover:bg-primary text-white font-semibold rounded-xl transition-opacity"
-		>
+		<Button href={resolve('/')} size="lg" class="mt-2">
 			{texts.account.deleted.backHome}
-		</a>
+		</Button>
 	</div>
 </main>

@@ -18,21 +18,35 @@ erDiagram
         string city
         bool verified
         bool isInstitution
-        string profileImage
+        string profileImage "thumb whitelist 100x100 (avatar chips)"
         string bio
-        string preferredTransportMode "foot|bicycle|car"
-        bool hasOnboarded
+        string contactMethod "issue #438 — ''|email|link: item CTA becomes a mailto:/external link instead of the in-app flow"
+        string contactEmail "dedicated contact address (contactMethod=email) — raw value never in a *_public view"
+        string contactUrl "external lending-form link (contactMethod=link) — raw value never in a *_public view"
+        bool contactPublic "issue #438 — when true the contact CTA is shown to unauthenticated browsing too"
+        string externalLendingInfo "issue #368 — per-institution 'how borrowing works' text for external items (max 1000); public help text surfaced via items_public.ownerExternalLendingInfo"
         string inviteCode
         string invitedBy FK
-        User[] trusts FK
         string tosAcceptedVersion "legal-consent cache (Issue #399) — server-only"
         string privacyAcceptedVersion "legal-consent cache — server-only"
         bool legalLocked "decline lock — set/cleared only by backend hooks"
+        date lastLoginAt "stamped on auth (throttled 24h) — drives inactive-account retention; hidden field, superuser-only"
+        date retentionNotifiedAt "last open-loan skip-notice (retention job); hidden field, superuser-only"
+        date deletionWarnedAt "last inactivity-deletion warning email (once per inactivity cycle); hidden field, superuser-only"
+        bool isAdmin "grants /admin/metrics access; hidden field, superuser-only — set via the PocketBase admin UI, same as isInstitution"
         date created
         date updated
     }
 
-    USER 1 to zero or more USER: "trusts"
+    TRUSTS{
+        string id PK
+        User truster FK "cascadeDelete — grants the trust"
+        User trustee FK "cascadeDelete — gains visibility of the truster's restricted items"
+        date created
+    }
+
+    USER 1 to zero or more TRUSTS: "trusts (as truster)"
+    USER 1 to zero or more TRUSTS: "trusted by (as trustee)"
 
     USER_LEGAL_ACCEPTANCE{
         string id PK
@@ -77,10 +91,21 @@ erDiagram
 
     USER 1 to zero or one USER_CONTACT: "contact handles (private)"
 
+    USER_PREFERENCES{
+        string id PK
+        User user FK "owner only — unique"
+        bool emailNotifications "issue #233 — master opt-out for ALL notification mail; absent/true = opted in"
+        bool digestEmails "issue #607 — weekly-digest-only opt-out, independent of emailNotifications; absent/true = opted in"
+        string preferredTransportMode "issue #426 — foot|bicycle|car (was on users)"
+        bool hasOnboarded "issue #426 — onboarding-complete flag (was on users)"
+    }
+
+    USER 1 to zero or one USER_PREFERENCES: "settings (private)"
+
     ITEM{
         string id PK
         string name
-        string image "filename in PocketBase Files"
+        string image "filename(s) in PocketBase Files (multi-select, cover first; thumb whitelist 0x300)"
         string externalImgUrl "for imported items"
         string description
         string place
@@ -144,6 +169,11 @@ erDiagram
         bool readByOwner
         string lendingStatus "pending|accepted|rejected|active|return_requested|completed"
         json counterfactual "impact research answer"
+        date lastMessageAt "set on message send — drives list sort"
+        date requesterLastSeenAt "presence heartbeat — server-only"
+        date ownerLastSeenAt "presence heartbeat — server-only"
+        date acceptedAt "first transition into 'accepted' — stamped server-side by lending_timestamps.pb.js hook, never client-writable in practice"
+        date completedAt "first transition into 'completed' — same hook; business-metrics project"
         date created
         date updated
     }
@@ -156,6 +186,7 @@ erDiagram
         string messageContent
         User from FK
         User to FK
+        Conversation conversation FK "back-link for notification hook"
         date created
         date updated
     }
@@ -234,6 +265,15 @@ erDiagram
     USER 1 to zero or more TERM_ACCEPTANCE: accepts
     LENDING_TERMS 1 to zero or more TERM_ACCEPTANCE: recorded in
 
+    LENDING_REQUIREMENTS{
+        string id PK
+        User owner FK "cascadeDelete — unique per owner"
+        bool requireVerifiedEmail
+        bool requireAddress
+    }
+
+    USER 1 to zero or one LENDING_REQUIREMENTS: gates lending with
+
     OUTBOUND_CLICK{
         string id PK
         string destination
@@ -243,8 +283,83 @@ erDiagram
         date updated
     }
 
+    SYNC_CONFIG{
+        string id PK
+        User institution FK "cascadeDelete — the institution this config belongs to"
+        string integration "select: leihbackend | winbiap"
+        string baseUrl "source base URL (leihbackend origin, or WINBIAP WebOPAC base ending /webopac)"
+        string itemUrlTemplate "optional deep-link template, {id}/{iid} placeholders"
+        bool enabled "false → backend cron skips this institution (manual endpoints ignore it until Phase 3)"
+        date created
+        date updated
+    }
+
     ITEM 1 to zero or more OUTBOUND_CLICK: tracked by
+    USER 1 to zero or more SYNC_CONFIG: configures
+
+    METRICS_DAILY{
+        string id PK
+        string date "YYYY-MM-DD, unique — one row per day"
+        json metrics "full aggregate catalog, see docs/operations/metrics.md — superuser-only, no per-user data"
+        date created
+        date updated
+    }
 ```
+
+## Item categories
+
+The item categories are **fixed and shared across all AllerLeih instances** (decision
+recorded in issue #472; no per-instance configuration, no `categories` collection).
+There is exactly one authoritative definition per repo:
+
+- **Frontend:** `ITEM_CATEGORIES` in `src/lib/categories.ts` (array order = UI display
+  order for filter pills and form checkboxes; `ItemCategory` is derived from it).
+- **Backend:** the `items` collection's `categories` select-field values, enforced by
+  `allerleih-backend/tests/categories.test.mjs`, which hardcodes the canonical list once
+  and fails when the live schema (base collection or the `items_public` /
+  `items_searchable` view metadata) drifts from it.
+
+The `items_public` / `items_searchable` view SQL does **not** embed the category values —
+the views pass `items.categories` through and PocketBase re-derives the view field
+metadata from the base column, so view migrations are never needed for a category change.
+
+### Changing the category list
+
+1. **Backend migration** (use the backend `new-migration` skill): update the `items`
+   collection's `categories` select `values` (fetch collection → mutate field → save;
+   mirror in `down`). Never edit historical snapshot migrations
+   (`1781551136_collections_snapshot.js` and the original view-creation migrations —
+   their embedded copies are inert). If a value is removed or renamed, plan a data
+   migration for existing item records.
+2. **Backend test:** update `CANONICAL_CATEGORIES` in `tests/categories.test.mjs`; run
+   `npm test`.
+3. **Frontend:** update `ITEM_CATEGORIES` in `src/lib/categories.ts` (order = UI order).
+4. **Compile-time ripple** surfaces via `npm run check`:
+   `src/lib/utils/categoryPlaceholder.ts` needs a placeholder SVG per category. Separately,
+   `CATEGORY_MAP` in the backend `Allerleih-Backend/pb_hooks/integrations/leihbackend.js` must be
+   reviewed by hand (Goja, not type-checked here — `'Sonstiges'` is its fallback and must always exist).
+5. **Auto-following consumers** need no edits: the AI prompt in
+   `src/routes/api/analyze-item/+server.ts` joins the array, and the WINBIAP CSV import
+   validates against it.
+6. **Docs:** update this section and any doc citing the values or their count.
+7. Run both suites: frontend `npm run check && npm run lint && npx vitest run`; backend
+   `npm test`.
+
+## sync_config
+
+Per-institution integration configuration (#487), the **single source of truth** for integration
+discovery (it replaced the former overloaded `users.leihbackendUrl` field, removed in Phase 3). One
+row per source type per institution (unique index on `(institution, integration)`); `integration`
+is a select of `leihbackend | winbiap`. **Superuser-only** — all five API rules are `null` (not
+`""`), so no authenticated user can read or write it; rows are managed in the PocketBase admin UI
+(see `operations/onboarding-institutional-partner.md`). It is **not** exposed by any `*_public` view.
+
+Everything reads `sync_config`: the **backend cron** (`integration_sync` full pull +
+`integration_refresh` per-item) and the CSV-import on-demand refresh (`POST /api/import/refresh`).
+`enabled=false` pauses the backend cron for that institution. Fields: `institution` (→ users,
+cascadeDelete), `integration`, `baseUrl`, `itemUrlTemplate`, `enabled`. A one-time backfill migration
+(`pb_hooks/services/syncConfig.js` → `backfillSyncConfigs`) seeded rows from the historical
+`users.leihbackendUrl` values (`/webopac` → `winbiap`, else `leihbackend`, `enabled=true`).
 
 ## user_geolocations
 
@@ -252,7 +367,95 @@ Coordinates are **not** stored on `users` — they live in a separate `user_geol
 
 ## user_contacts
 
-Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
+Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visible to trusted only" flags live here, **not** on `users`. All API rules are `@request.auth.id = user` (owner-only). They reach other users only through the `GET /api/contact/{userId}` hook, which returns a handle to a caller only if it's public (flag off), the caller is the owner, or the owner trusts the caller (a `trusts` row `{truster: owner, trustee: caller}`) — so the "trusted only" toggle is enforced at the data layer, not just in the UI.
+
+## user_preferences
+
+Per-user settings sidecar (issue #233 introduced it for `emailNotifications`; issue #426 pulled
+`preferredTransportMode` and `hasOnboarded` off the `users` table into it; issue #607 added
+`digestEmails`), so `users` stays lean. One row per user — a `UNIQUE` index on `user`, relation
+`cascadeDelete: true`. All API rules (`list`/`view`/`create`/`update`/`delete`) are
+`@request.auth.id = user`, so a user only ever reads/writes **their own** row. A **missing row
+means "all defaults"** (`emailNotifications`/`digestEmails` opted in, `preferredTransportMode`
+falls back to `bicycle` in the UI, `hasOnboarded` falsy → the onboarding prompt shows), so every
+reader must tolerate a null row. Fields:
+
+- `emailNotifications` (bool) — **master** notification-email opt-out; absent/`true` = opted in,
+  only an explicit `false` opts out of **all** notification mail (transactional and digest alike).
+  Read server-side by the backend `notification.pb.js` / `jobs/digest.js` hooks (keyed on the
+  `user` relation).
+- `digestEmails` (bool, issue #607) — opts out of the weekly digest **only**, independent of
+  `emailNotifications` above. Exists so the digest's one-click unsubscribe link (backend
+  `services/unsubscribe.js`) can turn off the digest without also silencing transactional mail
+  like "new message"/lending requests. Absent/`true` = opted in; `emailNotifications=false` still
+  wins regardless of this field. Read server-side by `jobs/digest.js` only.
+- `preferredTransportMode` (`foot`|`bicycle`|`car`) — seeds the ORS travel-time UI on search and
+  item-detail.
+- `hasOnboarded` (bool) — drives a soft onboarding prompt (there is **no** redirect gate).
+
+**Bool-default trap (#607 finding B2):** PocketBase `bool` columns have no NULL state, so a row
+created *without* `emailNotifications`/`digestEmails` reads back as `false` for both — the
+opposite of the documented "missing row = opted in" default. `upsertUserPreferences` hardens
+against this by defaulting both to `true` in `createData` before the caller's patch is applied
+(see its doc comment, and `pb_migrations/1783600001_copy_transport_onboarded_to_prefs.js` in the
+backend repo, which already carries the same warning for `emailNotifications`). The `digestEmails`
+migration backfills every *existing* row to `true` for the same reason; there is deliberately no
+backfill for pre-existing `emailNotifications=false` rows, since a real opt-out is indistinguishable
+from the trap — see the frontend `docs/operations/mail-deliverability.md` runbook for the operator
+follow-up.
+
+Frontend access goes through the `getUserPreferences` / `upsertUserPreferences` helpers in
+`$lib/server/userPreferences.ts` (the row is surfaced app-wide as `currentUserPreferences` from the
+root `+layout.server.ts`). `NotificationSettings.svelte` saves `emailNotifications` and
+`digestEmails` together through the `saveNotificationPrefs` form action (both toggles auto-submit
+on change); the helper patches fields individually so this and the `saveProfile`
+(`preferredTransportMode`) / onboarding (`hasOnboarded`) call sites coexist. The row is
+hard-deleted on account anonymization (personal-only data). **No `*_public` view exposes any of
+these fields** — `user_preferences` is owner-only and never joined into `users_public` or any
+other public view.
+
+## trusts
+
+The trust graph is an n:m **join collection** (not the old self-referencing `users.trusts[]`
+array), modeled on `group_members`. A row `{truster, trustee}` means **"truster trusts trustee"**:
+the trustee may see the truster's `trusteesOnly` items and trusted-only contact handles. Trust is
+**directional and 1-hop** — see [domain-model.md](domain-model.md). Both relations are
+`cascadeDelete: true` and a `UNIQUE (truster, trustee)` index prevents duplicates. `created` is an
+autodate.
+
+API rules: `listRule`/`viewRule` = `@request.auth.id = truster || @request.auth.id = trustee` (both
+parties may read an edge — the trustee needs to see who trusts them); `createRule`/`deleteRule` =
+`@request.auth.id = truster` (only the granter adds or revokes); `updateRule` = `null`. A backend
+hook (`trust.pb.js`) rejects a self-trust edge. The frontend reads/writes it exclusively through
+`$lib/server/trust.ts` (`isTrusting`, `getTrustDirections`, `NO_TRUST_DIRECTIONS`, `addTrust`,
+`removeTrust`, `getTrustees`, `getTrusters`). `getTrustDirections(pb, viewerId, otherId)` resolves
+both directions between two users in one query and returns
+`{ viewerTrustsOther, otherTrustsViewer }` (named from the viewer's perspective, so a swapped
+argument pair can't silently invert the display); its fail-closed fallback `NO_TRUST_DIRECTIONS` is
+`Object.freeze`n, since the same module-global object is handed to every request. Callers that need
+both directions (e.g. item detail, user profile) must not run two concurrent `isTrusting` calls.
+PocketBase keys auto-cancellation by `options.requestKey || (method + path)` — the path form is
+only a fallback, and `getFirstListItem` already defaults to a per-filter key
+(`"one_by_filter_" + path + "_" + filter`), so it's collision-free on its own. The `trusts` helpers
+here collide only because they pass a shared **hardcoded** `requestKey` that overrides that
+default — both directions hit the identical key, and the swallowed `AbortError` reads as "no
+trust". That's exactly why every concurrent call site must supply its own distinct `requestKey`.
+
+Item/search/conversation visibility rules match trust via the back-relation
+`…trusts_via_truster.trustee.id ?= @request.auth.id` (rows where the owner is the truster; see the
+view rules below). Because deletion is *anonymize-in-place* (the `users` row is kept), the relation
+cascade does not fire on account deletion — `anonymizeAccount` deletes an account's trust edges
+explicitly in both directions.
+
+## lending_requirements
+
+Lender-defined borrower requirements (issues #423 / #389): a flexible, extensible framework letting any lender set, per account, the conditions a borrower must meet before they may **request** the lender's items. This gates *requestability*, **not** visibility (visibility stays with `trusteesOnly` / groups) — so a borrower can see an item and is given a reason + action to "unlock" requesting it.
+
+One row per `owner` (relation with `cascadeDelete: true` — the row is removed when the owner account is deleted; unique index on `owner`). Each requirement type is one field; currently `requireVerifiedEmail` (bool) and `requireAddress` (bool, issue #389 — borrower must have `users.city` set, re-checked on every request). Drop-in extensions add a field per type (e.g. `requireAcceptedTerms`, `minOwnItems`, `minCompletedTransactions`). API rules: `listRule`/`viewRule` are `@request.auth.id != ""` (any logged-in viewer must read an owner's requirements to learn why a request is blocked — not sensitive); `createRule`/`updateRule`/`deleteRule` are `@request.auth.id = owner`.
+
+Enforcement is **authoritative in the backend hook** `pb_hooks/lending_requirements.pb.js` (`onRecordCreateRequest` on `conversations`). The hook resolves the lender from the **item** (`requestedItem.owner`), never from the client-supplied `itemOwner` field — it overwrites a forged/mismatched `itemOwner` with the real owner before evaluating, aborts the create with `400 lending_requirement_unmet` if an enabled requirement is unmet, and fails **closed** if the borrower record can't be loaded. Two migrations touch the `conversations` createRule: `1781900002_harden_conversations_create.js` (the pre-existing trust/visibility clause, kept unchanged) and `1782260002_conversations_bind_itemowner.js`, which adds `itemOwner = requestedItem.owner` so a forged owner is also rejected at the rule layer (defense in depth — the rule-layer counterpart of the hook check). It therefore cannot be bypassed by a direct API POST.
+
+The frontend mirrors the same registry in `$lib/server/lendingRequirements.ts` purely for UX (the hook is the source of truth). Lenders configure their per-account requirements via registry-driven toggles on the profile page (`LendingRequirementsSection` → the `saveLendingRequirements` action → `upsertOwnerRequirements`, which falls back to an update if a create races the unique index). Borrowers see a blocked request CTA with quick-fix links, derived from `evaluateUnmetRequirements`. To add a requirement type: add the field (migration) + a registry entry in **both** the hook and the helper — the owner settings UI, the load/save path and the borrower CTA are all driven from that registry.
 
 ## Account deletion (`deleted` / `deletedAt`, `deleted_accounts`)
 
@@ -260,9 +463,10 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
 
 **Phase 1 — deactivate** (`DELETE /api/account`, backend hook with superuser access):
 - The live `users` row is kept but anonymized: `username` → `deleted-<id>`, `email` →
-  `deleted-<id>@deleted.invalid`, profile fields/`trusts[]`/`inviteCode` cleared, password
-  randomized, and `deleted = true` + `deletedAt` set. `deleted` is also exposed on the
-  `users_public` view so the public profile can mask the name.
+  `deleted-<id>@deleted.invalid`, profile fields/`trusts[]`/`inviteCode`/`contactEmail`/`contactUrl`
+  (and `contactMethod` reset to `''`, `contactPublic` to false) cleared, password randomized, and `deleted = true` +
+  `deletedAt` set. `deleted` is also exposed on the `users_public` view so the public profile
+  can mask the name.
 - Personal-only data is **hard-deleted**: `user_contacts`, `user_geolocations`,
   `push_subscriptions`, and the user's own `notifications`. The user is removed from every
   other user's `trusts[]`, and `invitedBy` referencing them is nulled.
@@ -270,7 +474,8 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
   **cannot** be deleted (`conversations.requestedItem` is a *required* relation) — it is kept
   (set to `unavailable`) so the counterparty's loan history resolves. The `items_public` /
   `items_searchable` views exclude rows whose owner is `deleted`, so a deleted account's
-  listings disappear from search/catalogue while existing conversations still show the item.
+  listings disappear from search/catalogue while existing conversations still show the item —
+  see "Deleted owners" under the views section below for the clause and its consequences.
 - Shared/audit data is **retained**, de-identified to "Gelöschtes Konto": `messages`,
   `conversations` (the counterparty keeps a coherent history; the lending paper trail stays
   intact), and `term_acceptances` (legal-obligation exception, Art. 17(3)).
@@ -282,9 +487,28 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
 - Deletion is refused while any of the user's conversations is `accepted` / `active` /
   `return_requested` (open loan).
 
-**Phase 2 — purge** (not yet implemented): a scheduled job uses `deletedAt` to finally remove
-`deleted_accounts` rows and the anonymized `users` rows after the retention window; the same
-routine will drive auto-deletion of long-inactive accounts.
+**Phase 2 — purge** (partially implemented, issue #461): purging `deleted_accounts` rows and the
+anonymized `users` rows after their dispute-resolution window is still open. **Automated retention
+is implemented** as five nightly cron jobs in the backend (`pb_hooks/retention.pb.js` +
+`pb_hooks/jobs/retention.js`), enforcing the privacy policy (DSE v2.8):
+
+- **Inactive accounts** (6 months without login, keyed on `users.lastLoginAt`, stamped on auth and
+  throttled to once per 24h; empty `lastLoginAt` falls back to `created`): anonymized through the
+  same `anonymizeAccount` path as self-service deletion. Accounts with an open loan are skipped and
+  the user plus a platform admin (`ADMIN_NOTIFY_EMAIL`) are notified by email (deduped via a cooldown
+  recorded in `users.retentionNotifiedAt`, so the nightly job doesn't re-mail every night).
+- **Conversations** (6 months after last activity = `conversations.updated`): the conversation, its
+  `messages`, and notifications whose `relatedId` points at it are deleted — regardless of
+  `lendingStatus` (product decision in #461).
+- **Notifications** older than 90 days and **feedback** older than 6 months are deleted.
+- **Inactivity warning**: `RETENTION_INACTIVE_WARN_DAYS` (default 30) days before an account
+  reaches the deletion threshold, the user is emailed the concrete deletion date and that logging
+  in prevents it — at most once per inactivity cycle (stamped in `users.deletionWarnedAt`; a login
+  re-arms the warning because the stamp then predates `lastLoginAt`). Accounts with open loans are
+  warned too. The warning runs independently of the deletion job and never delays it.
+
+Windows are configurable per deployment via `RETENTION_*` env vars (0 disables a job); jobs are
+idempotent and log counts only, never personal data.
 
 Login for a `deleted` account is blocked by an `onRecordAuthRequest` hook and, defensively, in
 `hooks.server.ts`. In the app, **never render `user.username` directly** — use `displayName()`
@@ -327,6 +551,32 @@ reachable). Accepting the current terms clears the lock in the same transaction.
 
 Two read-only PocketBase SQL views expose `items` joined with `users` (and `user_geolocations` for the location flag) as flat, privacy-safe rows. Neither exposes the owner's `trusts` list, and neither includes raw coordinates — they expose only `ownerHasLocation` (0 or 1); travel times are computed in the backend `/api/travel-times` hook, which returns only **bucketed minutes** so coordinates never reach the client.
 
+### Deleted owners
+
+**Both** views end with `WHERE COALESCE(users.deleted, 0) = 0`, so no row of an
+anonymized owner is ever returned. Such rows exist on purpose: account deletion
+hard-deletes the user's items *except* those a conversation still references
+(`conversations.requestedItem` is a required relation) — those are kept as
+`unavailable` so the counterparty's loan history stays coherent (see "Account
+deletion" above). The clause keeps them out of discovery without deleting them.
+`COALESCE` rather than a bare `users.deleted = 0` because both views `LEFT JOIN
+users`: an item with no owner row would otherwise compare against `NULL` and be
+dropped silently.
+
+Consequence: `/items/{id}` reads `items_public` unconditionally, so a deleted
+owner's item detail page **404s for everyone** — including the ex-borrower —
+which matches how `/users/{id}` shows a tombstone. The conversation itself is
+unaffected: it resolves the item from the base `items` collection via `expand`,
+which carries no such filter.
+
+The clause is appended to the view query, not part of any `SELECT`, so **any**
+migration that replaces a `viewQuery` wholesale must carry it over. Four did not
+after `1781900042` introduced it: `1781900045` dropped it from
+`items_searchable`, `1781900049` dropped it from `items_public`, and
+`1782750000` + `1783800001` rewrote the already clause-less `items_public` query
+again — which is issue #624. The guard is
+`allerleih-backend/tests/deleted-owner-items.test.mjs`.
+
 ### `items_public` — public, content-masked
 
 Fully public (`listRule`/`viewRule` are open). For any **restricted** item — i.e.
@@ -339,30 +589,58 @@ item has `trusteesOnly = false` yet must not leak publicly.) The profile and
 item-detail pages read from this view and, for viewers who may see the item,
 fetch the unmasked details from the base `items` collection (rule below).
 
+For issue #438 this view also surfaces the owner's **off-platform contact** as three
+derived columns — `ownerContactMethod` (`''`|`email`|`link`), `ownerContactEmail`,
+`ownerContactUrl` — so unauthenticated browsing can show the contact CTA without an
+account. Each is `NULL` unless the owner set `contactPublic = true` **and** the item is
+**not** masked. The raw `contactEmail`/`contactUrl`/`contactMethod` fields are never in any
+`*_public`/`items_searchable` view, so the members-only case (`contactPublic = false`) never
+leaks — logged-in viewers read those from the base `users` record instead.
+
+For issue #368 the view also surfaces the owner's per-institution **lending explanation** as
+`ownerExternalLendingInfo` (from `users.externalLendingInfo`) — the item-detail page shows it in
+a permanent "how borrowing works" box on external/institution items. Unlike the `ownerContact*`
+columns there is **no** `contactPublic` gate (it is a public help text, no PII); it is masked to
+`NULL` with the same condition as the item's own content columns, so a restricted item's help
+text never rides along. `externalLendingInfo` is **not** added to `users_public` or
+`items_searchable`.
+
 ### `items_searchable` — audience-filtered, unmasked
 
 Used by the search page (and the profile and sitemap, to stay leak-free). Its
 row-level rule
-`(trusteesOnly = false && groups:length = 0) || (@request.auth.id != "" && (@request.auth.id = userId || (trusteesOnly = true && userId.trusts.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id))`
+`(trusteesOnly = false && groups:length = 0) || (@request.auth.id != "" && (@request.auth.id = userId || (trusteesOnly = true && userId.trusts_via_truster.trustee.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id))`
 returns public items to everyone, and restricted items only to the owner, the
 owner's trustees (when `trusteesOnly`), and members of an attached group. Content
 is **not** masked here, because rows a viewer may not see are filtered out
 entirely. The `groups` column **is** part of the view's `SELECT` (so the rule can
 traverse the membership back-relation); search/profile/sitemap callers simply
-ignore it, and the owner's `trusts` list is never selected. Note this view
-carries **no** conversation clause (below), so conversation access never leaks an
-item into search/profile/sitemap.
+ignore it. Trust is resolved the same way — the rule traverses the `trusts` join
+via `userId.trusts_via_truster.trustee` — so no trust edges are selected into the
+view either. Note this view carries **no** conversation clause (below), so
+conversation access never leaks an item into search/profile/sitemap.
 
 | Field | Source | Notes |
 |---|---|---|
-| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared) |
-| userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (`trusts` is **not** exposed) |
+| id, name, image, externalImgUrl, externalUrl, description, trusteesOnly, status, categories, updated | items | Direct columns (in `items_public` masked to `NULL` for any restricted item — trustees-only **or** group-shared). `image` is a **multi-select** file field → an array of filenames (cover first); serve each via `api/files/items_searchable/{id}/{filename}`. Thumb whitelist `0x300` (backend `1784402877_image_thumbs.js`) — cards append `?thumb=0x300` for a downscaled variant; `users.profileImage` likewise whitelists `100x100` for avatar chips |
+| userId, username, isInstitution, bio, verified, profileImage, userCreated | users | Joined from owner (no trust data is exposed — trust lives in the separate `trusts` collection) |
 | ownerHasLocation | SQL expression on `user_geolocations` | 1 if the owner has a non-(0,0) location, else 0 |
+| ownerContactMethod, ownerContactEmail, ownerContactUrl | SQL expression on `users` | `items_public` only — the owner's off-platform contact (#438), NULL unless `contactPublic` **and** the item is unmasked; raw contact fields never selected |
+| ownerExternalLendingInfo | SQL expression on `users` | `items_public` only — the owner's per-institution lending explanation (#368), masked to `NULL` for restricted items (no `contactPublic` gate; public help text); not in `users_public`/`items_searchable` |
 
-### Base `items` rule
+> **A view returns only the columns in its `viewQuery` SELECT — nothing else.** The TS
+> `ItemPublic` type extends `PocketBaseEntity`, so it *declares* `id`, `created` and `updated`,
+> but only the columns above are actually populated. When you need a new column, update the `viewQuery` in `allerleih-backend`
+> first; see that repo's README ("Writing migrations").
+Free-text search (`buildSearchFilter`) matches the owner `username` in addition to item
+`name` and `description`, so an account or institution can be found by name. Deleted-owner
+rows are excluded from the view (see "Deleted owners" above for the `WHERE` clause), so this
+never surfaces an anonymized account name.
+
+### Base `items` trust rule
 
 The base `items` collection's `listRule`/`viewRule` are
-`@request.auth.id != "" && (@request.auth.id = owner || (trusteesOnly = false && groups:length = 0) || (trusteesOnly = true && owner.trusts.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id || (@collection.conversations.requestedItem ?= id && @collection.conversations.requester ?= @request.auth.id))`,
+`@request.auth.id != "" && (@request.auth.id = owner || (trusteesOnly = false && groups:length = 0) || (trusteesOnly = true && owner.trusts_via_truster.trustee.id ?= @request.auth.id) || groups.group_members_via_group.user.id ?= @request.auth.id || (@collection.conversations.requestedItem ?= id && @collection.conversations.requester ?= @request.auth.id))`,
 so a restricted item's full record is readable by the owner, the owner's trustees
 (when `trusteesOnly`), members of an attached group, and the requester of a
 conversation about the item. The last clause keeps a borrower's chat working after
@@ -397,3 +675,24 @@ it falls back to **private**, never public. See [groups.md](groups.md).
 ## Impact Research: `counterfactual`
 
 `conversations.counterfactual` is populated at loan completion for a random ~33% of loans. It records the borrower's answer to a survey asking what they would have done without the platform (e.g., bought it new, borrowed elsewhere, gone without). This data is used to measure the platform's environmental and social impact.
+
+## metrics_daily
+
+Backend of the business-metrics project (admin dashboard `/admin/metrics` + public transparency
+page `/misc/stats`). One row per calendar day (`date`, text `YYYY-MM-DD`, **unique index**),
+upserted nightly by the `pb_hooks/jobs/metrics.js` cron job (registered in `metrics.pb.js`, runs at
+03:00 — after the retention jobs). `metrics` is a single flexible JSON blob rather than typed
+columns: the full catalog (core / funnel & engagement / impact / integrations & outbound /
+community & growth groups) can grow without a migration, since only the computing job and the
+frontend's `DailyMetrics` type (`src/lib/types/models.ts`) need to agree on the shape.
+
+All five API rules are `null` — **superuser-only**, read exclusively via
+`$lib/server/metrics.ts` (`getSuperuserClient`). Every value is a count or aggregate; nothing here
+is per-user data, but exposure to the admin dashboard vs. the public stats page is still an
+explicit app-code whitelist, not a PocketBase rule. See `docs/operations/metrics.md` for the full
+metric catalog, how to re-run the job, and how to add a new metric.
+
+Time-based figures (30-day/7-day windows, everything derived from `conversations.acceptedAt` /
+`completedAt`) only accumulate from when those fields started being stamped — there is no
+backfill, so early snapshots read as zero/null for those metrics (documented limitation, not a
+bug).

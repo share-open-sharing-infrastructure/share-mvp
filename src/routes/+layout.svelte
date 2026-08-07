@@ -1,30 +1,31 @@
 <script lang="ts">
 	import '../app.css';
-	import NavBarComponent from '$lib/components/NavBarComponent.svelte';
-	import FooterComponent from '$lib/components/FooterComponent.svelte';
-	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
-	import PwaPrompts from '$lib/components/PwaPrompts.svelte';
-	import OnboardingPrompt from '$lib/components/OnboardingPrompt.svelte';
+	import { texts } from '$lib/texts';
+	import NavBarComponent from './components/NavBarComponent.svelte';
+	import FooterComponent from './components/FooterComponent.svelte';
+	import FeedbackButton from './components/FeedbackButton.svelte';
+	import PwaPrompts from './components/PwaPrompts.svelte';
+	import OnboardingPrompt from './components/OnboardingPrompt.svelte';
+	import ToastHost from './components/ToastHost.svelte';
 	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
+	import { subscribeRealtime } from '$lib/realtime';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { setupPushSubscription, nextPushRegistration } from '$lib/utils/pushSubscription';
+	import { navigationLoader } from '$lib/stores/navigationLoader.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { beforeNavigate, afterNavigate, invalidate } from '$app/navigation';
 	import { dev } from '$app/environment';
 	import { fade } from 'svelte/transition';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
-	interface BeforeInstallPromptEvent extends Event {
-		prompt(): Promise<void>;
-		userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-	}
+	import { pwaInstall, type BeforeInstallPromptEvent } from '$lib/stores/pwaInstall.svelte';
 
 	let { children, data } = $props();
 
-	let isNavigating = $state(false);
-	beforeNavigate(() => { isNavigating = true; });
+	// Loading overlay: cleared when the navigation settles (incl. cancel/abort), which
+	// afterNavigate misses. See $lib/stores/navigationLoader (#482 / #346).
+	beforeNavigate((navigation) => navigationLoader.track(navigation));
 	afterNavigate(() => {
-		isNavigating = false;
 		// Resync the badge after every navigation (issue #376): a destination load can
 		// mark notifications read server-side, and realtime may miss it. afterNavigate
 		// runs after that destination load has committed, so the re-fetch reflects it.
@@ -36,7 +37,6 @@
 
 	// svelte-ignore state_referenced_locally
 	let unreadCount = $state(data.unreadNotificationCount ?? 0);
-	let installPromptEvent = $state<BeforeInstallPromptEvent | null>(null);
 
 	// Sync from server when the layout load genuinely re-runs (navigation).
 	// Using a plain variable prevents spurious resets when only the page load
@@ -76,11 +76,14 @@
 	});
 
 	onMount(() => {
-		// Capture Chrome/Edge's install prompt before it shows the mini-infobar
+		// Capture Chrome/Edge's install prompt before it shows the mini-infobar, and stash it
+		// in the shared store so both the PwaPrompts banner and the /misc/app page can use it.
 		window.addEventListener('beforeinstallprompt', (e) => {
 			e.preventDefault();
-			installPromptEvent = e as BeforeInstallPromptEvent;
+			pwaInstall.capture(e as BeforeInstallPromptEvent);
 		});
+		// Reflect a completed install (from any surface, incl. the browser's own UI).
+		window.addEventListener('appinstalled', () => pwaInstall.markInstalled());
 
 		// The realtime notification subscription below is set up once at mount, not in
 		// an $effect: an $effect's cleanup/re-run cycle would tear it down and recreate
@@ -93,39 +96,47 @@
 		// Auth is already synced by the $effect above (effects run before onMount).
 		const pb = getClientPB();
 
-		pb.collection('notifications').subscribe('*', async (e) => {
-			if (e.record.recipient !== userId) return;
+		// subscribeRealtime (not a bare pb.subscribe) so a transient
+		// "Invalid realtime client" failure retries instead of becoming an
+		// uncaught rejection + a silently dead badge, and so the subscription
+		// re-establishes after a mobile background-freeze / network drop. See #435.
+		return subscribeRealtime({
+			collection: 'notifications',
+			topic: '*',
+			handler: async (e) => {
+				if (e.record.recipient !== userId) return;
 
-			// Auto-mark as read when a notification arrives for the currently-open conversation
-			if (
-				e.action === 'create' &&
-				!e.record.read &&
-				e.record.relatedId &&
-				e.record.relatedId === page.params.conversationId
-			) {
-				await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
-			}
+				// Auto-mark as read when a notification arrives for the currently-open conversation
+				if (
+					e.action === 'create' &&
+					!e.record.read &&
+					e.record.relatedId &&
+					e.record.relatedId === page.params.conversationId
+				) {
+					await pb.collection('notifications').update(e.record.id, { read: true }).catch(() => {});
+				}
 
-			try {
-				const result = await pb.collection('notifications').getList(1, 1, {
-					filter: pb.filter('recipient = {:userId} && read = false', { userId }),
-				});
-				unreadCount = result.totalItems;
-			} catch (err) {
-				// status 0 = auto-cancelled by PocketBase (a concurrent request superseded this one).
-				// The superseding request will update the badge, so this is safe to ignore.
-				if ((err as { status?: number }).status !== 0) throw err;
-			}
+				try {
+					const result = await pb.collection('notifications').getList(1, 1, {
+						filter: pb.filter('recipient = {:userId} && read = false', { userId }),
+					});
+					unreadCount = result.totalItems;
+				} catch (err) {
+					// status 0 = auto-cancelled by PocketBase (a concurrent request superseded this one).
+					// The superseding request will update the badge, so this is safe to ignore.
+					if ((err as { status?: number }).status !== 0) throw err;
+				}
+			},
+			// Events fired while the stream was down are lost — re-derive the badge.
+			onReconnect: () => invalidate(NOTIFICATIONS_DEP),
 		});
-
-		return () => pb.collection('notifications').unsubscribe('*');
 	});
 
 
 </script>
 
 <svelte:head>
-	<meta property="og:site_name" content="AllerLeih" />
+	<meta property="og:site_name" content={texts.names.app} />
 	<meta property="og:locale" content="de_DE" />
 </svelte:head>
 
@@ -134,6 +145,7 @@
 		<NavBarComponent
 			loggedIn={!!data.currentUser}
 			currentUser={data.currentUser}
+			isAdminUser={data.isAdminUser}
 			{unreadCount}
 		/>
 	{:else}
@@ -163,7 +175,7 @@
 		{/if}
 	</main>
 
-	{#if isNavigating}
+	{#if navigationLoader.active}
 		<div
 			in:fade={{ delay: 200, duration: 150 }}
 			out:fade={{ duration: 80 }}
@@ -175,14 +187,12 @@
 		</div>
 	{/if}
 
-	<PwaPrompts
-		loggedIn={!!data.currentUser}
-		onNotificationGranted={setupPushSubscription}
-		{installPromptEvent}
-	/>
-	<OnboardingPrompt show={!!data.currentUser && !data.currentUser.hasOnboarded} />
+	<PwaPrompts loggedIn={!!data.currentUser} onNotificationGranted={setupPushSubscription} />
+	<OnboardingPrompt show={!!data.currentUser && !data.currentUserPreferences?.hasOnboarded} />
 
 	{#if page.url.pathname !== '/onboarding'}
 		<FooterComponent />
 	{/if}
+
+	<ToastHost />
 </div>

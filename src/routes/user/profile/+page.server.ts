@@ -3,6 +3,20 @@ import { texts } from '$lib/texts';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { upsertUserGeolocation } from '$lib/server/geolocation';
 import { upsertOwnContact, getOwnContact } from '$lib/server/contacts';
+import {
+	parseUsernameField,
+	parseMessengerContact,
+	parseOffPlatformContact,
+	parseGeolocationFields,
+	parseTransportMode,
+} from '$lib/server/profileForm';
+import {
+	getOwnerRequirements,
+	getRequirementSettings,
+	requirementFields,
+	upsertOwnerRequirements
+} from '$lib/server/lendingRequirements';
+import { getUserPreferences, upsertUserPreferences } from '$lib/server/userPreferences';
 
 export async function load({ locals, url }) {
 	// Fetch directly so the profile page always has fresh data regardless of
@@ -18,25 +32,27 @@ export async function load({ locals, url }) {
 
 	const inviteUrl = `${url.origin}/invite/${inviteCode}`;
 	const contact = await getOwnContact(locals.pb, locals.user.id);
+	const lendingRequirements = await getOwnerRequirements(locals.pb, locals.user.id);
+	// Fetch preferences fresh too (same freshness reason as currentUser above); returned
+	// under the same key the layout uses so the page value wins for this route (#426).
+	// Distinct requestKey from the layout's fetch to avoid PB SSR auto-cancellation.
+	const currentUserPreferences = await getUserPreferences(
+		locals.pb,
+		locals.user.id,
+		'user-preferences-profile'
+	);
 
 	return {
 		PB_URL: PUBLIC_PB_URL,
 		inviteUrl,
 		currentUser,
+		currentUserPreferences,
 		contact,
+		requirementSettings: getRequirementSettings(lendingRequirements),
 	};
 }
 
 export const actions = {
-	deleteProfileImage: async ({ locals }) => {
-		try {
-			await locals.pb.collection('users').update(locals.user.id, { profileImage: null });
-			return { success: true, message: texts.success.dataUpdated };
-		} catch {
-			return { error: true, message: texts.errors.somethingWentWrong };
-		}
-	},
-
 	resendVerification: async ({ locals }) => {
 		try {
 			await locals.pb.collection('users').requestVerification(locals.user.email);
@@ -55,77 +71,32 @@ export const actions = {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const updateData: Record<string, any> = {};
 
-		// Get username separately to check for spaces
-		const username = formData?.get('username')?.toString();
-		if (username) {
-			const trimmedUsername = username.trim();
-			if (trimmedUsername.includes(' ')) {
-				return {
-					error: true,
-					message: texts.errors.usernameNoSpaces,
-				};
-			} else if (trimmedUsername !== '') {
-				updateData['username'] = trimmedUsername;
-			}
-		}
+		// Each field group is parsed/validated by its own $lib/server/profileForm helper;
+		// this action only sequences them and persists the results.
+		const username = parseUsernameField(formData);
+		if (!username.ok) return { error: true, message: username.message };
+		if (username.value !== undefined) updateData['username'] = username.value;
 
-		// Handle other fields
 		const city = formData?.get('city')?.toString();
 		if(city || city === '') {
 			updateData['city'] = city.trim();
 		}
 
-		// Handle contact fields → owner-only user_contacts collection (not users)
-		const contact = {
-			telegramUsername: '',
-			signalLink: '',
-			telegramVisibleToTrustedOnly: formData?.get('telegramVisibleToTrustedOnly') === 'on',
-			signalVisibleToTrustedOnly: formData?.get('signalVisibleToTrustedOnly') === 'on',
-		};
+		// Messenger handles → owner-only user_contacts collection (not users)
+		const messengerContact = parseMessengerContact(formData);
+		if (!messengerContact.ok) return { error: true, message: messengerContact.message };
+		const contact = messengerContact.value;
 
-		const telegramUsername = formData?.get('telegramUsername')?.toString();
-		if (telegramUsername && telegramUsername.trim() !== '') {
-			const cleanedTelegram = telegramUsername.trim().startsWith('@')
-				? telegramUsername.trim().slice(1)
-				: telegramUsername.trim();
-			// Validate Telegram username (alphanumeric and underscore only, 5-32 chars)
-			if (!/^[a-zA-Z0-9_]{5,32}$/.test(cleanedTelegram)) {
-				return { error: true, message: texts.errors.invalidTelegramUsername };
-			}
-			contact.telegramUsername = cleanedTelegram;
-		}
+		// Off-platform-contact opt-in (#438) → stored on the `users` record.
+		const offPlatform = parseOffPlatformContact(formData);
+		if (!offPlatform.ok) return { error: true, message: offPlatform.message };
+		Object.assign(updateData, offPlatform.value);
 
-		const signalLink = formData?.get('signalLink')?.toString();
-		if (signalLink && signalLink.trim() !== '') {
-			const trimmedSignal = signalLink.trim();
-			// Validate Signal link format (should contain signal.me or similar)
-			if (!trimmedSignal.includes('signal.me')) {
-				return { error: true, message: texts.errors.invalidSignalLink };
-			}
-			contact.signalLink = trimmedSignal;
-		}
+		// Geolocation → owner-only user_geolocations collection.
+		const geo = parseGeolocationFields(formData, city);
 
-		// Handle geolocation → owner-only user_geolocations collection
-		// (undefined = leave unchanged; only set when a geocode suggestion was picked).
-		let geo: { lon: number; lat: number } | null | undefined;
-		const geoLon = formData?.get('geolocation_lon')?.toString();
-		const geoLat = formData?.get('geolocation_lat')?.toString();
-		if (geoLon && geoLat) {
-			const lon = parseFloat(geoLon);
-			const lat = parseFloat(geoLat);
-			if (!isNaN(lon) && !isNaN(lat)) {
-				geo = { lon, lat };
-			}
-		} else if (city === ''){
-			// If city is cleared, also clear geolocation
-			geo = null;
-		}
-
-		// Handle preferred transport mode
-		const preferredTransportMode = formData?.get('preferredTransportMode')?.toString();
-		if (preferredTransportMode === 'foot' || preferredTransportMode === 'bicycle' || preferredTransportMode === 'car') {
-			updateData['preferredTransportMode'] = preferredTransportMode;
-		}
+		// Preferred transport mode → user_preferences sidecar (issue #426), not users.
+		const preferredTransportMode = parseTransportMode(formData);
 
 		// Handle bio
 		const bio = formData?.get('bio')?.toString();
@@ -133,49 +104,94 @@ export const actions = {
 			updateData['bio'] = bio.trim();
 		}
 
+		// External-item lending explanation (#368) → institutions only. Always written for
+		// an institution (so clearing the override works and falls back to the default text);
+		// capped at 1000 to mirror the DB field. Non-institutions never see the editor and
+		// their save must not touch the field.
+		if (locals.user?.isInstitution) {
+			const externalLendingInfo = (formData?.get('externalLendingInfo')?.toString() ?? '')
+				.trim()
+				.slice(0, 1000);
+			updateData['externalLendingInfo'] = externalLendingInfo;
+		}
+
 		// Handle profileImage file upload
 		const profileImageFile = formData?.get('profileImage');
 		const hasProfileImage = profileImageFile instanceof File && profileImageFile.size > 0;
 
+		// Deferred profile-image removal (ProfileImageField sets this): clear the image on
+		// save unless a new one was also picked (a new upload wins).
+		if (formData?.get('removeProfileImage') === 'true' && !hasProfileImage) {
+			updateData['profileImage'] = null;
+		}
+
+		// Handle lender-defined borrower requirements (#443). The toggles live in the
+		// same settings form, so the single save bar persists them too. Built from the
+		// registry so a new requirement type needs no change here.
+		const requirementData = Object.fromEntries(
+			requirementFields.map((field) => [field, formData.get(field) === 'on'])
+		);
+
 		try {
 			const hasUserUpdate = Object.keys(updateData).length > 0 || hasProfileImage;
-			await upsertOwnContact(locals.pb, locals.user.id, contact);
-			if (hasUserUpdate || geo !== undefined) {
-				if (hasUserUpdate) {
-					// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields
-					for (const [key, value] of Object.entries(updateData)) {
-						if (value === null) {
-							pbFormData.append(key, '');
-						} else if (typeof value === 'object') {
-							pbFormData.append(key, JSON.stringify(value));
-						} else {
-							pbFormData.append(key, String(value));
-						}
+			// Primary profile fields first, so a failure in the always-written side data
+			// (contact/requirements) below can't silently skip the user's main edits.
+			if (hasUserUpdate) {
+				// Build a FormData for PocketBase so file uploads work correctly alongside scalar fields
+				for (const [key, value] of Object.entries(updateData)) {
+					if (value === null) {
+						pbFormData.append(key, '');
+					} else if (typeof value === 'object') {
+						pbFormData.append(key, JSON.stringify(value));
+					} else {
+						pbFormData.append(key, String(value));
 					}
-					if (hasProfileImage) {
-						pbFormData.append('profileImage', profileImageFile as File);
-					}
-					await locals.pb.collection('users').update(locals.user.id, pbFormData);
 				}
-				if (geo !== undefined) {
-					await upsertUserGeolocation(locals.pb, locals.user.id, geo);
+				if (hasProfileImage) {
+					pbFormData.append('profileImage', profileImageFile as File);
 				}
-				return {
-					success: true,
-					message: texts.success.dataUpdated,
-				};
-			} else {
-				return {
-					error: true,
-					message: texts.pages.profile.cannotUpdate,
-				};
+				await locals.pb.collection('users').update(locals.user.id, pbFormData);
 			}
+			if (geo !== undefined) {
+				await upsertUserGeolocation(locals.pb, locals.user.id, geo);
+			}
+			// Contact + requirements are always written, so clicking "Speichern" never
+			// returns a spurious "nothing to update".
+			await upsertOwnContact(locals.pb, locals.user.id, contact);
+			await upsertOwnerRequirements(locals.pb, locals.user.id, requirementData);
+			if (preferredTransportMode) {
+				await upsertUserPreferences(locals.pb, locals.user.id, { preferredTransportMode });
+			}
+			return {
+				success: true,
+				message: texts.success.dataUpdated,
+			};
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: Error | any) {
+			console.error('saveProfile failed', err);
 			return {
 				error: true,
 				message: texts.pages.profile.cannotUpdate + (err ? ` Fehler: ${err.message}` : ''),
 			};
+		}
+	},
+
+	// #607: replaces EmailNotificationForm.svelte's (under NotificationSettings.svelte) old
+	// client-side PocketBase-SDK reads/writes with a real form action (both toggles auto-submit
+	// this one action together). Checkbox
+	// semantics: present + "on" = true, absent = false — matches the master-switch /
+	// digest-only-opt-out fields upsertUserPreferences hardens against a blank create (#607 B2).
+	saveNotificationPrefs: async ({ locals, request }) => {
+		const formData = await request.formData();
+		try {
+			await upsertUserPreferences(locals.pb, locals.user.id, {
+				emailNotifications: formData.get('emailNotifications') === 'on',
+				digestEmails: formData.get('digestEmails') === 'on',
+			});
+			return { success: true, message: texts.success.dataUpdated };
+		} catch (err) {
+			console.error('saveNotificationPrefs failed', err);
+			return { error: true, message: texts.errors.somethingWentWrong };
 		}
 	},
 };

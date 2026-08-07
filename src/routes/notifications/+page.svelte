@@ -5,8 +5,9 @@
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { enhance } from '$app/forms';
-	import { BellOutline, EnvelopeOutline, UserAddOutline } from 'flowbite-svelte-icons';
+	import { BellOutline, EnvelopeOutline, UserAddOutline, UsersGroupOutline } from 'flowbite-svelte-icons';
 	import type { Notification } from '$lib/types/models';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 	let { data } = $props();
 
 	const conversationNotificationTypes = new Set([
@@ -17,23 +18,33 @@
 		'handover_confirmed',
 		'return_requested',
 		'return_confirmed',
+		'request_aborted',
+	]);
+
+	const groupNotificationTypes = new Set([
+		'group_member_added',
+		'group_member_joined',
+		'group_member_removed',
 	]);
 
 	function notificationHref(n: Notification): string {
 		if (conversationNotificationTypes.has(n.type)) {
-			return resolve(`/conversations/${n.relatedId}`);
+			return resolve('/conversations/[conversationId]', { conversationId: n.relatedId });
 		}
 		if (n.type === 'trust_added' || n.type === 'invite_accepted') {
-			return resolve(`/users/${n.relatedId}`);
+			return resolve('/users/[id]', { id: n.relatedId });
+		}
+		if (groupNotificationTypes.has(n.type)) {
+			return resolve('/user/groups/[id]', { id: n.relatedId });
 		}
 		return resolve('/notifications');
 	}
 </script>
 
-<svelte:head>
-	<title>{texts.notifications.title} – {texts.names.app}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead
+	title={`${texts.notifications.title} – ${texts.names.app}`}
+	robots="noindex, nofollow"
+/>
 
 <div class="max-w-2xl mx-auto px-4 py-8">
 	<h1 class="text-2xl font-semibold mb-6">{texts.notifications.title}</h1>
@@ -48,6 +59,7 @@
 			{#each data.notifications as notification (notification.id)}
 				<li class="flex items-center gap-2 py-4 px-2 rounded-lg hover:bg-papier transition-colors">
 					
+					<!-- eslint-disable svelte/no-navigation-without-resolve -- notificationHref() returns an already-resolved URL; the rule cannot see through the call -->
 					<a
 						href={notificationHref(notification)}
 						class="flex items-start gap-4 flex-1 min-w-0"
@@ -72,6 +84,8 @@
 								<EnvelopeOutline class="h-5 w-5" />
 							{:else if notification.type === 'trust_added' || notification.type === 'invite_accepted'}
 								<UserAddOutline class="h-5 w-5" />
+							{:else if groupNotificationTypes.has(notification.type)}
+								<UsersGroupOutline class="h-5 w-5" />
 							{/if}
 						</div>
 						<div class="flex-1 min-w-0">
@@ -81,6 +95,7 @@
 							<p class="text-xs text-tinte-400 mt-0.5">{formatTimestamp(notification.created)}</p>
 						</div>
 					</a>
+					<!-- eslint-enable svelte/no-navigation-without-resolve -->
 					<form
 						method="POST"
 						action="?/toggleRead"

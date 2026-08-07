@@ -1,25 +1,23 @@
 import { fail } from '@sveltejs/kit';
-import type { ClientResponseError } from 'pocketbase';
 import { PUBLIC_PB_URL } from '../../../hooks.server';
-import { ITEM_CATEGORIES, texts, type ItemCategory } from '$lib/texts';
+import { texts } from '$lib/texts';
+import { failFromPbError } from '$lib/server/pbErrors';
 import type { Item } from '$lib/types/models';
-import { deleteConversation } from '../../conversations/[conversationId]/conversation.server';
 import { getAttachableGroups } from '$lib/server/groups';
-
-/**
- * Keep only the submitted group ids the user is actually allowed to attach
- * (groups they own or are a member of), so a tampered form can't share an item
- * with arbitrary groups.
- */
-async function sanitizeGroups(
-	pb: App.Locals['pb'],
-	userId: string,
-	submitted: string[]
-): Promise<string[]> {
-	if (submitted.length === 0) return [];
-	const allowed = new Set((await getAttachableGroups(pb, userId)).map((g) => g.id));
-	return submitted.filter((id) => allowed.has(id));
-}
+import {
+	deleteItem,
+	deleteMultipleItems,
+	getOwnedItem,
+	setItemStatus,
+	toggleItemStatus,
+} from '$lib/server/items';
+import {
+	extractItemForm,
+	sanitizeCategories,
+	sanitizeGroups,
+	validateItemFields,
+	type ItemWritePayload,
+} from '$lib/server/itemForm';
 
 export async function load({ locals, url }) {
 	const page = Math.max(1, parseInt(url.searchParams.get('page') ?? '1'));
@@ -56,129 +54,87 @@ export async function load({ locals, url }) {
 	};
 }
 
-function validateItemData(data: FormData, isImageRequired: boolean = true) {
-	const name = data.get('itemName');
-	const description = data.get('itemDescription');
-	const image = data.get('itemImage');
-
-	// Check if image is a valid image file
-	const validImageTypes = [
-		'image/jpeg',
-		'image/jpg',
-		'image/png',
-		'image/gif',
-		'image/webp',
-		'image/svg+xml',
-	];
-	const isValidImage =
-		image instanceof File &&
-		image.size > 0 &&
-		validImageTypes.includes(image.type);
-
-	const errors = {
-		nameIsMissing: !name,
-		descriptionIsMissing: !description,
-		imageIsMissing: isImageRequired
-			? !image || !(image instanceof File) || image.size === 0
-			: false,
-		imageInvalidType:
-			image instanceof File && image.size > 0 ? !isValidImage : false,
-	};
-
-	return { isValid: Object.values(errors).every((e) => !e), errors };
-}
-
 export const actions = {
 	create: async ({ locals, request }) => {
 		const formData = await request.formData();
-		const validationResult = validateItemData(formData, true);
+		const { name, description, place, images, rawCategories, rawGroups, trusteesOnly } =
+			extractItemForm(formData);
+		const validation = validateItemFields({ name, description, images }, { requireImage: true });
 
-		if (!validationResult.isValid) {
+		if (!validation.isValid) {
 			return fail(400, {
 				fail: true,
-				missingFields: validationResult.errors,
-				message:
-					'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
+				missingFields: validation.errors,
+				message: texts.pages.items.validationFailed,
 			});
 		}
 
-		const createCategories = (formData.getAll('categories') as string[]).filter((c) =>
-			ITEM_CATEGORIES.includes(c as ItemCategory)
-		);
-		const trusteesOnly = formData.get('trusteesOnly') === 'on';
 		// Trustees and groups are independent audiences — save groups regardless.
-		const createGroups = await sanitizeGroups(
-			locals.pb,
-			locals.user.id,
-			formData.getAll('groups') as string[]
-		);
+		const createGroups = await sanitizeGroups(locals.pb, locals.user.id, rawGroups);
+
+		const payload: ItemWritePayload = {
+			name,
+			description,
+			place,
+			image: images,
+			owner: locals.user.id,
+			trusteesOnly,
+			groups: createGroups,
+			status: 'available',
+			categories: sanitizeCategories(rawCategories),
+		};
 
 		try {
-			await locals.pb.collection('items').create({
-				name: formData.get('itemName'),
-				description: formData.get('itemDescription'),
-				place: formData.get('itemPlace'),
-				image: formData.get('itemImage'),
-				owner: locals.user.id,
-				trusteesOnly,
-				groups: createGroups,
-				status: 'available',
-				categories: createCategories,
-			});
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (error: Error | any) {
-			console.error(error ? error.message : error);
+			await locals.pb.collection('items').create(payload);
+		} catch (error) {
+			// Surface the failure instead of swallowing it — otherwise the modal treats a
+			// rejected create (e.g. too many images / size limit) as success and closes.
+			console.error(error instanceof Error ? error.message : error);
+			return fail(500, { fail: true, message: texts.pages.items.saveFailed });
 		}
 	},
 
 	update: async ({ locals, request }) => {
 		const formData = await request.formData();
-		const validationResult = validateItemData(formData, false);
+		const { name, description, place, images, rawCategories, rawGroups, trusteesOnly } =
+			extractItemForm(formData);
+		const validation = validateItemFields({ name, description, images }, { requireImage: false });
 
-		if (!validationResult.isValid) {
+		if (!validation.isValid) {
 			return fail(400, {
 				fail: true,
-				missingFields: validationResult.errors,
-				message:
-					'Es fehlen erforderliche Felder oder es wurden ungültige Bilddateien hochgeladen.',
+				missingFields: validation.errors,
+				message: texts.pages.items.validationFailed,
 			});
 		}
 
-		const updateCategories = (formData.getAll('categories') as string[]).filter((c) =>
-			ITEM_CATEGORIES.includes(c as ItemCategory)
-		);
-		const trusteesOnly = formData.get('trusteesOnly') === 'on';
 		// Trustees and groups are independent audiences — save groups regardless.
-		const updateGroups = await sanitizeGroups(
-			locals.pb,
-			locals.user.id,
-			formData.getAll('groups') as string[]
-		);
+		const updateGroups = await sanitizeGroups(locals.pb, locals.user.id, rawGroups);
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const updateData: Record<string, any> = {
-			name: formData.get('itemName'),
-			description: formData.get('itemDescription'),
-			place: formData.get('itemPlace'),
+		const payload: ItemWritePayload = {
+			name,
+			description,
+			place,
 			trusteesOnly,
 			groups: updateGroups,
 			status: formData.get('isAvailable') === 'on' ? 'available' : 'unavailable',
-			categories: updateCategories,
+			categories: sanitizeCategories(rawCategories),
 		};
 
-		// Check if a new image was uploaded
-		const image = formData.get('itemImage');
-		if (image && image instanceof File && image.size > 0) {
-			updateData.image = image;
+		// Only touch the image field when new files were uploaded; a submit without
+		// new files keeps the existing images. New files replace the whole set.
+		if (images.length > 0) {
+			payload.image = images;
 		}
 
 		const itemId = formData?.get('itemId')?.toString();
 		if (itemId) {
 			try {
-				await locals.pb.collection('items').update(itemId, updateData);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (err: Error | any) {
-				console.error(err ? err.message : err);
+				await locals.pb.collection('items').update(itemId, payload);
+			} catch (err) {
+				// Surface the failure instead of swallowing it (see create above).
+				console.error(err instanceof Error ? err.message : err);
+				return fail(500, { fail: true, message: texts.pages.items.saveFailed });
 			}
 		}
 	},
@@ -187,22 +143,16 @@ export const actions = {
 		const itemId = (await request.formData()).get('itemId')?.toString();
 		if (itemId) {
 			try {
-				const conversations = await locals.pb
-					.collection('conversations')
-					.getFullList({ filter: locals.pb.filter('requestedItem = {:itemId}', { itemId }) });
-
-				// Use deleteConversation (not a bare conversations.delete) so the
-				// notifications referencing each conversation are cleaned up too —
-				// otherwise the other party is left with dead-link notifications
-				// pointing at a now-missing conversation.
-				for (const conversation of conversations) {
-					await deleteConversation(locals.pb, conversation.id);
+				const result = await deleteItem(locals.pb, itemId, locals.user.id);
+				if (result.status === 'has_open_conversations') {
+					return fail(409, {
+						fail: true,
+						message: texts.pages.items.deleteBlockedByConversation,
+						conversationIds: result.conversationIds,
+					});
 				}
-
-				await locals.pb.collection('items').delete(itemId);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (err: Error | any) {
-				console.error(err ? err.message : err);
+			} catch (err: unknown) {
+				console.error(err instanceof Error ? err.message : err);
 			}
 		}
 	},
@@ -218,13 +168,24 @@ export const actions = {
 
 		for (const itemId of itemIds) {
 			try {
-				const item = await locals.pb.collection('items').getOne(itemId);
-				if (item.owner !== locals.user.id) continue;
-				await locals.pb.collection('items').update(itemId, { status: newStatus });
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} catch (err: Error | any) {
-				console.error(err?.message ?? err);
+				await setItemStatus(locals.pb, itemId, locals.user.id, newStatus);
+			} catch (err: unknown) {
+				console.error(err instanceof Error ? err.message : err);
 			}
+		}
+	},
+
+	bulkDelete: async ({ locals, request }) => {
+		const itemIds = (await request.formData()).getAll('itemId').map(String);
+		if (!itemIds.length) return fail(400, { fail: true, message: 'Ungültige Anfrage.' });
+		const { deleted, blocked } = await deleteMultipleItems(locals.pb, itemIds, locals.user.id);
+		if (blocked.length > 0) {
+			return fail(409, {
+				fail: true,
+				bulkBlocked: true,
+				message: texts.pages.items.bulkDeletePartialBlock(deleted, blocked.length),
+				conversationIds: blocked.flatMap((b) => b.conversationIds),
+			});
 		}
 	},
 
@@ -233,21 +194,15 @@ export const actions = {
 		const itemId = formData.get('itemId')?.toString();
 		if (!itemId) return fail(400, { fail: true, message: texts.errors.missingId });
 
-		let item: Item;
-		try {
-			item = await locals.pb.collection('items').getOne<Item>(itemId);
-		} catch {
-			return fail(404, { fail: true, message: texts.errors.itemNotFound });
-		}
-
-		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: texts.errors.noPermission });
+		const owned = await getOwnedItem(locals.pb, itemId, locals.user.id);
+		if (owned.status === 'not_found') return fail(404, { fail: true, message: texts.errors.itemNotFound });
+		if (owned.status === 'not_owner') return fail(403, { fail: true, message: texts.errors.noPermission });
 
 		try {
 			// Trustees and groups are independent — only flip the trustees flag here.
-			await locals.pb.collection('items').update(itemId, { trusteesOnly: !item.trusteesOnly });
+			await locals.pb.collection('items').update(itemId, { trusteesOnly: !owned.item.trusteesOnly });
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 	},
 
@@ -256,21 +211,12 @@ export const actions = {
 		const itemId = formData.get('itemId')?.toString();
 		if (!itemId) return fail(400, { fail: true, message: texts.errors.missingId });
 
-		let item: Item;
 		try {
-			item = await locals.pb.collection('items').getOne<Item>(itemId);
-		} catch {
-			return fail(404, { fail: true, message: texts.errors.itemNotFound });
-		}
-
-		if (item.owner !== locals.user.id) return fail(403, { fail: true, message: texts.errors.noPermission });
-
-		const newStatus = item.status === 'available' ? 'unavailable' : 'available';
-		try {
-			await locals.pb.collection('items').update(itemId, { status: newStatus });
+			const result = await toggleItemStatus(locals.pb, itemId, locals.user.id);
+			if (result.status === 'not_found') return fail(404, { fail: true, message: texts.errors.itemNotFound });
+			if (result.status === 'not_owner') return fail(403, { fail: true, message: texts.errors.noPermission });
 		} catch (err) {
-			const e = err as Partial<ClientResponseError>;
-			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+			return failFromPbError(err);
 		}
 	},
 };

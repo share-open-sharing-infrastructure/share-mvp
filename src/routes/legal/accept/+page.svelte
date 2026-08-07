@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { Alert, Button, Checkbox } from 'flowbite-svelte';
+	import { Alert, Checkbox } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import LegalDocModal from '$lib/components/LegalDocModal.svelte';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
 
@@ -22,10 +24,7 @@
 	const canSubmit = $derived(data.docs.every((d) => confirmed[d.docType] === true));
 </script>
 
-<svelte:head>
-	<title>{texts.legal.accept.pageTitle}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.legal.accept.pageTitle} robots="noindex, nofollow" />
 
 <div class="mx-auto max-w-2xl px-4 py-8 space-y-6">
 	<h1 class="text-3xl font-bold tracking-tight text-tinte-900 dark:text-white">
@@ -53,25 +52,16 @@
 						Version {doc.version} · {doc.effectiveDate}
 					</span>
 				</div>
-				<button
-					type="button"
-					onclick={() => (openDoc[doc.docType] = true)}
-					class="inline-block cursor-pointer text-sm text-primary hover:underline"
-				>
+				<Button variant="link" onclick={() => (openDoc[doc.docType] = true)}>
 					{texts.legal.accept.reviewLinkLabel} →
-				</button>
+				</Button>
 				<Checkbox bind:checked={confirmed[doc.docType]} name={`confirm_${doc.docType}`}>
 					{texts.legal.accept.checkboxLabel(doc.name, doc.version)}
 				</Checkbox>
 			</div>
 		{/each}
 
-		<Button
-			type="submit"
-			pill
-			disabled={!canSubmit}
-			class="cursor-pointer bg-primary font-semibold text-white hover:bg-primary-600 disabled:cursor-not-allowed disabled:bg-tinte-200 disabled:text-tinte-400 dark:disabled:bg-tinte-700 dark:disabled:text-tinte-500"
-		>
+		<Button type="submit" disabled={!canSubmit}>
 			{texts.legal.accept.acceptButton}
 		</Button>
 	</form>
@@ -81,12 +71,7 @@
 	<div class="border-t border-tinte-200 dark:border-tinte-700 pt-4 space-y-2">
 		<p class="text-sm text-tinte-500 dark:text-tinte-400">{texts.legal.accept.declineHint}</p>
 		<form method="POST" action="?/decline" use:enhance>
-			<Button
-				type="submit"
-				color="light"
-				size="sm"
-				class="cursor-pointer text-tinte-600 dark:text-tinte-300"
-			>
+			<Button type="submit" variant="secondary" size="sm">
 				{texts.legal.accept.declineButton}
 			</Button>
 		</form>

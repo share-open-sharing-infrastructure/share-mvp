@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { setFlash } from '$lib/server/flash';
 
 export async function load({ url }) {
 	return { token: url.searchParams.get('token') };
@@ -39,18 +40,7 @@ export const actions = {
 			return fail(400, { fail: true, message: texts.errors.invalidOrExpiredResetToken });
 		}
 
-		// universal flash pattern:
-		cookies.set(
-			'flash',
-			JSON.stringify({
-				type: 'success',
-				message: texts.success.passwordResetConfirmed,
-			}),
-			{
-				path: '/',
-				maxAge: 60, // seconds
-			}
-		);
+		setFlash(cookies, texts.success.passwordResetConfirmed);
 		redirect(303, '/auth/login');
 	},
 };

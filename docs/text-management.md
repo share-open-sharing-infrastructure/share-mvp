@@ -8,24 +8,11 @@ AllerLeih uses a centralized text management system to keep all German UI string
 
 ### Central Text Repository
 
-`src/lib/texts.ts` exports two things: the `ITEM_CATEGORIES` constant and the `texts` object. The top-level keys of `texts` map to functional areas of the app:
+`src/lib/texts.ts` exports the `texts` object. (The item categories are domain data, not UI copy — they live in `src/lib/categories.ts`; see `docs/data-model.md` → "Item categories".) The top-level keys of `texts` map to functional areas of the app:
 
 ```typescript
-export const ITEM_CATEGORIES = [
-    'Freizeit und Sport',
-    'Werkzeug und Garten',
-    'Reisen und Outdoor',
-    'Bücher',
-    'Spiele',
-    'Küche',
-    'Ton und Licht',
-    'Elektronik',
-    'Für Kinder',
-    'Sonstiges',
-] as const;
-
 export const texts = {
-    names: { ... },           // App display name, contact email
+    names: { ... },           // App display name, city, contact email
     auth: { ... },            // Login, registration, password reset
     nav: { ... },             // Navigation menu items
     footer: { ... },          // Social media links
@@ -90,8 +77,7 @@ return fail(400, {
 
 | Key | Contents |
 |---|---|
-| `ITEM_CATEGORIES` | Exported const array: the 10 fixed item categories used for filtering and AI prompts |
-| `names` | App display name, contact email |
+| `names` | App display name, city, contact email — `app`/`city`/`mainContactMail` are interpolated from `$lib/instance.ts` at module load, not hardcoded |
 | `auth` | Login/register/reset form labels and placeholders |
 | `nav` | Navigation menu items |
 | `footer` | Social media link labels |
@@ -108,7 +94,7 @@ return fail(400, {
 | `onboarding` | 10-step post-registration onboarding wizard texts |
 | `notifications` | Notification inbox text; also contains the push notification title |
 | `lending` | Lending workflow status labels, action buttons, and role-specific descriptions (owner vs. borrower) |
-| `seo` | `<title>` and `<meta description>` values for each page |
+| `seo` | `<title>` and `<meta description>` values for each page. The entries with local search intent (`home`, `search`, `about`, `guide`, `contact`, `itemDetail*`) interpolate the city from `CITY` (`$lib/instance.ts`) and must never hardcode it — one build serves several city instances, and a test enforces it. `APP_NAME` is only partially adopted; the block comment above `seo` in `texts.ts` explains why and lists the pages deliberately left without a city. Title ≤ 60 / description ≤ 155 chars is the guideline; it is enforced only for the local-intent entries (`LOCAL_PAGES` in `src/lib/texts.test.ts`) — some older strings exceed it |
 | `onboardingPrompt` | Nudge banner shown to users who skipped or have not completed onboarding |
 | `pwa` | PWA install prompt and browser notification permission banner |
 | `alerts` | Flash message prefix strings |

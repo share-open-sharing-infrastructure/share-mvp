@@ -176,6 +176,32 @@ Three new collections plus one new field on `items` (see
 | Self-join | Allowed only for public groups, only for yourself, and only as `member` (never `admin`); idempotent. |
 | Invite expired / used up | Preview and join both return `410` with a clear message. |
 
+### Membership-event notifications
+
+Three membership events each produce an in-app notification **and** a web push (no email — a
+deliberate choice, as with the lending events):
+
+| Event | Recipient | Type | Click target |
+|---|---|---|---|
+| Owner adds someone via the members page (`addMember`) | the added person | `group_member_added` | `/user/groups/{id}` |
+| Join via invite link (`join`) | group owner | `group_member_joined` | `/user/groups/{id}` |
+| Owner removes someone from the group (`removeMember`) | the removed person | `group_member_removed` | `/user/groups/{id}` |
+
+- All three are triggered **in the frontend** (the triggering session creates the notification for
+  the other party) — the join case additionally loads the owner id via `getOne`, because the join
+  response doesn't include it.
+- **Only real changes** notify: the idempotent already-member path (adding twice, clicking the link
+  again, the owner clicking their own link) and a no-op remove trigger nothing; a removal also has
+  no self-notification (sender ≠ recipient).
+- `relatedId` is the group id; whoever clicks the notification lands on the group page
+  (`requireGroupMembership` lets owners and members in). For `group_member_removed` the removed
+  person no longer has access — clicking `/user/groups/{id}` then ends on a
+  **404 "Group not found"** (an accepted edge case): `requireGroupMembership` reads the group first
+  via `getOne`, which the `groups` view rule denies for non-members → `error(404)`, before the
+  membership redirect could ever kick in. The same pre-existing behaviour hits any unauthorised
+  person who opens a private group URL. The consistency rule relatedId → url → href stays intact
+  (all three group types → `/user/groups/{id}`).
+
 ---
 
 ## How to test it
@@ -252,7 +278,7 @@ A detailed click-through checklist is kept out of the repo (personal QA notes).
   `…/items/UserItemRow.svelte`, `…/items/bulk-add/**` — item sharing controls + AI
   upload group picker
 - `src/lib/components/ShareButton.svelte` — reused for sharing group invites
-- `src/lib/components/NavBarComponent.svelte` — "Mein Netzwerk" dropdown
+- `src/routes/components/NavBarComponent.svelte` — "Mein Netzwerk" dropdown
 - `src/lib/types/models.ts` — `Group` (+`isPublic`), `GroupMember` (+`role`),
   `GroupInvite`, `Item.groups`
 - `src/lib/texts.ts` — `texts.groups.*` strings

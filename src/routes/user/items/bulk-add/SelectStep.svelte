@@ -1,5 +1,7 @@
 <script lang="ts">
-	import { Accordion, AccordionItem, Button } from 'flowbite-svelte';
+	import { Accordion, AccordionItem } from 'flowbite-svelte';
+	import { resolve } from '$app/paths';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { texts } from '$lib/texts';
 
 	type DraftStatus = 'pending' | 'analyzing' | 'done' | 'error';
@@ -61,7 +63,7 @@
 <div
 	role="region"
 	aria-label="Foto-Upload-Bereich"
-	class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-tinte-300 bg-papier p-10 dark:border-tinte-600 dark:bg-tinte-800"
+	class="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-tinte-300 bg-transparent p-10 dark:border-tinte-600"
 	ondragover={(e) => e.preventDefault()}
 	ondrop={(e) => {
 		e.preventDefault();
@@ -123,16 +125,17 @@
 						alt="Vorschau"
 						class="h-16 w-16 rounded-md object-cover ring-1 ring-tinte-200"
 					/>
-					<button
-						type="button"
+					<Button
+						variant="danger"
+						size="icon-sm"
 						onclick={() => removeDraft(i)}
 						aria-label={texts.bulkUpload.removeItem}
-						class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow hover:bg-red-600"
+						class="absolute -right-2 -top-2"
 					>
 						<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
 						</svg>
-					</button>
+					</Button>
 				</div>
 			{/each}
 		</div>
@@ -153,8 +156,8 @@
 </Accordion>
 
 <div class="mt-6 flex justify-end gap-3">
-	<Button href="/user/items" color="alternative" class="rounded-full">Zurück</Button>
-	<Button onclick={onContinue} class="bg-primary-400 rounded-full hover:bg-primary hover:cursor-pointer" disabled={drafts.length === 0}>
+	<Button variant="secondary" href={resolve('/user/items')}>Zurück</Button>
+	<Button onclick={onContinue} disabled={drafts.length === 0}>
 		{texts.bulkUpload.continue}
 	</Button>
 </div>

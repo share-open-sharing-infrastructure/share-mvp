@@ -1,21 +1,21 @@
 <script>
 	import { texts } from '$lib/texts';
+	import SeoHead from '$lib/components/SeoHead.svelte';
+
+	const { address } = texts.pages.imprint;
 </script>
 
-<svelte:head>
-	<title>{texts.seo.imprint.title}</title>
-	<meta name="description" content={texts.seo.imprint.description} />
-	<meta property="og:title" content={texts.seo.imprint.title} />
-	<meta property="og:description" content={texts.seo.imprint.description} />
-	<meta property="og:type" content="website" />
-	<link rel="canonical" href="https://allerleih.org/misc/imprint" />
-</svelte:head>
+<SeoHead
+	title={texts.seo.imprint.title}
+	description={texts.seo.imprint.description}
+	canonical
+/>
 
 <h1 class="mb-4 text-2xl font-bold">{texts.pages.imprint.title}</h1>
 <ul class="max-w-md list-inside space-y-2">
-	<li>Matteo Ramin</li>
-	<li>Lüner Weg 17</li>
-	<li>21337 Lüneburg, Deutschland</li>
+	<li>{address.name}</li>
+	<li>{address.street}</li>
+	<li>{address.postalCode} {address.city}, {address.country}</li>
 	<li>{texts.names.mainContactMail}</li>
 	<!-- Weitere Informationen unten nur falls zutreffend in Zukunft:  https://www.anwalt.de/rechtstipps/impressumspflicht-in-deutschland-was-muss-ins-impressum-und-welche-konsequenzen-drohen-241288.html -->
 	<li hidden>

@@ -2,16 +2,26 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 	import { PaperPlaneSolid } from 'flowbite-svelte-icons';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { onMount } from 'svelte';
 
-	let {
-		chatPartner,
-		isSubmitting = $bindable(),
-		messageText = $bindable(),
-	}: {
-		chatPartner: { id: string };
-		isSubmitting: boolean;
-		messageText: string;
-	} = $props();
+	// The recipient is derived server-side from the conversation's actual participants
+	// (see ?/sendMessage in +page.server.ts) — this form no longer needs (or sends) a
+	// chatPartnerId, so it also no longer needs a `chatPartner` prop.
+	let messageText = $state('');
+	let isSubmitting = $state(false);
+
+	let inputEl: HTMLInputElement | undefined = $state();
+
+	// Focus the input on mount WITHOUT scrolling it into view. The HTML `autofocus`
+	// attribute always scrolls the focused element into the viewport; on a mobile cold
+	// load (deep link / reload) the document is taller than the visual viewport
+	// (min-h-screen root shell + footer), so that scroll drags the whole page down —
+	// and the conversation layout's scroll-lock then freezes it there, revealing the
+	// footer and trapping the view (#529). `preventScroll` keeps focus without scrolling.
+	onMount(() => {
+		inputEl?.focus({ preventScroll: true });
+	});
 </script>
 
 <form
@@ -21,33 +31,33 @@
 	use:enhance={() => {
 		isSubmitting = true;
 		return async ({ update }) => {
-			await update({reset: false}); // Have to disable reset, otherwise Svelte clears the form data and the target user is not found
+			await update();
 			isSubmitting = false;
 			messageText = '';
 		};
 	}}
 >
-	<input name="chatPartnerId" value={chatPartner.id} hidden />
-	<!-- svelte-ignore a11y_autofocus -->
 	<input
+		bind:this={inputEl}
 		name="messageContent"
 		type="text"
 		placeholder={texts.forms.messagePlaceholder}
 		class="flex-1 rounded-full border border-tinte-200 dark:border-tinte-700 bg-papier dark:bg-tinte-800 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary-300 dark:focus:ring-primary-700 transition"
 		required
 		autocomplete="off"
-		autofocus={true}
 		bind:value={messageText}
 	/>
 	<!-- preventDefault on mousedown keeps focus in the input so tapping send doesn't blur
 	     it and close/reopen the mobile keyboard — making a tap behave just like Enter.
 	     The click still fires and submits the form. -->
-	<button
+	<Button
 		type="submit"
+		size="icon"
 		disabled={isSubmitting}
 		onmousedown={(e) => e.preventDefault()}
-		class="flex items-center justify-center w-9 h-9 rounded-full bg-primary-400 text-white hover:bg-primary hover:cursor-pointer disabled:opacity-50 transition-colors shrink-0"
+		aria-label={texts.ui.sendMessage}
+		class="shrink-0"
 	>
 		<PaperPlaneSolid class="w-4 h-4" />
-	</button>
+	</Button>
 </form>

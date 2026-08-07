@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Button } from 'flowbite-svelte';
 	import { ArrowUpOutline } from 'flowbite-svelte-icons';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
 </script>
@@ -16,12 +16,9 @@
 	<p>{texts.pages.search.welcome}</p>
 	<!-- to set bg color assign class="bg-primary-500"-->
 
-	<Button
-		class="me-2 mb-2 w-full min-button bg-primary"
-		href={resolve('/user/items')}
-	>
+	<Button href={resolve('/user/items')} fullWidth>
 		{texts.buttons.offerSomething}
-		<ArrowUpOutline class="me-2 h-6 w-6" />
+		<ArrowUpOutline class="h-6 w-6" />
 	</Button>
 	<p>{texts.pages.about.description}</p>
 </div>

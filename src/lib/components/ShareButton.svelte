@@ -2,8 +2,9 @@
 	import type { Component } from 'svelte';
 	import { browser } from '$app/environment';
 	import { texts } from '$lib/texts';
-	import { Button, Tooltip } from 'flowbite-svelte';
+	import { Tooltip } from 'flowbite-svelte';
 	import { ShareNodesOutline, CheckOutline } from 'flowbite-svelte-icons';
+	import Button from '$lib/components/ui/Button.svelte';
 
 	let {
 		url,
@@ -94,13 +95,8 @@
 		{copied ? copiedLabel : label}
 	</Button>
 {:else}
-	<button
-		type="button"
-		onclick={share}
-		aria-label={texts.share.button}
-		class="text-tinte-500 hover:text-primary dark:text-tinte-400 dark:hover:text-primary transition-colors cursor-pointer"
-	>
+	<Button variant="ghost" size="icon" onclick={share} aria-label={texts.share.button} class={className}>
 		<CurrentIcon class="shrink-0 h-7 w-7" />
-	</button>
+	</Button>
 	<Tooltip type="light" placement="top">{copied ? copiedLabel : texts.share.button}</Tooltip>
 {/if}

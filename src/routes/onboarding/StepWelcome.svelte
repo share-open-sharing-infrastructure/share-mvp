@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
-
+	import Button from '$lib/components/ui/Button.svelte';
 
 	interface Props {
 		onNext: () => void;
@@ -22,17 +22,10 @@
 </div>
 
 <div class="mt-5 flex flex-col gap-3">
-	<button
-		type="button"
-		onclick={onNext}
-		class="w-full py-3 px-6 rounded-4xl font-semibold border-2 border-primary text-primary hover:bg-primary hover:cursor-pointer hover:text-white transition-colors"
-	>
+	<Button size="lg" fullWidth onclick={onNext}>
 		{texts.onboarding.buttons.configure}
-	</button>
-	<a
-		href={resolve('/search')}
-		class="w-full py-3 px-6 rounded-4xl font-semibold text-center border-2 border-tinte-300 dark:border-tinte-600 text-tinte-700 dark:text-tinte-300 hover:border-tinte-500 dark:hover:border-tinte-400 transition-colors"
-	>
+	</Button>
+	<Button href={resolve('/search')} variant="secondary" size="lg" fullWidth>
 		{texts.onboarding.buttons.exploreFirst}
-	</a>
+	</Button>
 </div>

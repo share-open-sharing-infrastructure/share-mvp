@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { Alert, Button, Checkbox } from 'flowbite-svelte';
+	import { Alert, Checkbox } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
+	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
 
@@ -17,14 +19,14 @@
 	);
 </script>
 
-<svelte:head>
-	<title>{texts.lendingTerms.pageTitle} – {data.item.name}</title>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead
+	title={`${texts.lendingTerms.pageTitle} – ${data.item.name}`}
+	robots="noindex, nofollow"
+/>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<a
-		href={resolve(`/items/${data.item.id}`)}
+		href={resolve('/items/[id]', { id: data.item.id })}
 		class="inline-block text-sm text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200"
 	>
 		← {data.item.name}
@@ -67,6 +69,7 @@
 	<article
 		class="terms-body rounded-2xl border border-tinte-200 dark:border-tinte-700 bg-sand dark:bg-tinte-800 p-6 leading-relaxed text-tinte-800 dark:text-tinte-200"
 	>
+		<!-- eslint-disable-next-line svelte/no-at-html-tags -- admin-only source, server-side normalized via lendingTerms.cleanTermsHtml (see comment above) -->
 		{@html data.terms.body}
 	</article>
 
@@ -95,16 +98,11 @@
 		</Checkbox>
 
 		<div class="flex flex-wrap gap-3 items-center pt-2">
-			<Button
-				type="submit"
-				pill
-				disabled={!canSubmit}
-				class="cursor-pointer bg-primary-200 hover:bg-primary disabled:opacity-50"
-			>
+			<Button type="submit" disabled={!canSubmit}>
 				{texts.lendingTerms.acceptAndRequestButton}
 			</Button>
 			<a
-				href={resolve(`/items/${data.item.id}`)}
+				href={resolve('/items/[id]', { id: data.item.id })}
 				class="text-sm text-tinte-500 dark:text-tinte-400 hover:text-tinte-700 dark:hover:text-tinte-200"
 			>
 				{texts.lendingTerms.cancel}

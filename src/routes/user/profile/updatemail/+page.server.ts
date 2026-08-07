@@ -1,5 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
+import { normalizeEmail } from '$lib/server/email';
 
 export const actions = {
 	updatemail: async ({ locals, request }) => {
@@ -10,12 +11,16 @@ export const actions = {
 			return fail(400, { emailRequired: email === null });
 		}
 
+		// Normalize before it reaches PocketBase so the stored email stays lowercase
+		// and a later login/reset lookup matches (#557).
+		const normalizedEmail = normalizeEmail(email.toString());
+
 		try {
-			await locals.pb.collection('users').requestEmailChange(email.toString());
+			await locals.pb.collection('users').requestEmailChange(normalizedEmail);
 
 			return {
 				success: true,
-				message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${email} gesendet. Bitte überprüfe deinen Posteingang.`,
+				message: `Eine Bestätigungs-E-Mail wurde an deine neue Adresse ${normalizedEmail} gesendet. Bitte überprüfe deinen Posteingang.`,
 			};
 		} catch (error) {
 			console.error(error);

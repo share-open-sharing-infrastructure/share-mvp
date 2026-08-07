@@ -9,6 +9,7 @@ declare global {
 		// interface Error {}
 		interface PageData {
 			currentUser: import('pocketbase').Record | null;
+			currentUserPreferences?: import('$lib/types/models').UserPreferences | null;
 			unreadNotificationCount?: number;
 			pbAuthToken?: string | null;
 		}

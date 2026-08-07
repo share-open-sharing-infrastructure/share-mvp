@@ -1,6 +1,10 @@
 import PocketBase from 'pocketbase';
 import { PUBLIC_PB_URL } from '$env/static/public';
 
+// The resilient realtime layer (subscribeRealtime + retry/watchdog machinery,
+// issue #435) lives in $lib/realtime.ts — this module is only the shared client
+// instance and its auth sync.
+
 let instance: PocketBase | null = null;
 
 /**

@@ -1,3 +1,5 @@
+import type { LendingStatus } from '$lib/lending';
+
 // --- Geo types ---
 
 export type OwnerLocation = { id: string; lon: number; lat: number };
@@ -8,6 +10,7 @@ export type UserId = string;
 export type ItemId = string;
 export type MessageId = string;
 export type GroupId = string;
+export type TrustId = string;
 
 // --- Base entity shared by all records ---
 
@@ -45,11 +48,6 @@ export interface User extends PocketBaseEntity {
 	city?: string;
 
 	/**
-	 * List of trusted user ids (friends, family, ...) to whom the user is willing to lend certain items
-	 */
-	trusts: UserId[];
-
-	/**
 	 * Telegram username (without @ prefix)
 	 */
 	telegramUsername?: string;
@@ -70,15 +68,54 @@ export interface User extends PocketBaseEntity {
 	signalVisibleToTrustedOnly?: boolean;
 
 	/**
+	 * Issue #438: off-platform contact channel. When set, the user's items skip the
+	 * in-app request flow and offer an alternative contact CTA instead:
+	 *   ''      — off (default, normal in-app request flow)
+	 *   'email' — a `mailto:` CTA to `contactEmail`
+	 *   'link'  — a link to `contactUrl` (e.g. an external lending form)
+	 */
+	contactMethod?: '' | 'email' | 'link';
+
+	/**
+	 * Dedicated public contact address for the `mailto:` CTA (`contactMethod = 'email'`)
+	 * — kept separate from the private login `email`, so the login address is never
+	 * exposed. Readable by any authenticated viewer (base `users` viewRule) and
+	 * deliberately absent from `users_public` / `items_searchable`; it reaches
+	 * unauthenticated browsing only via `items_public.ownerContactEmail` when the owner
+	 * set `contactPublic`.
+	 */
+	contactEmail?: string;
+
+	/**
+	 * Destination (https) the contact CTA links to when `contactMethod = 'link'` — e.g.
+	 * an institution's external lending form. Routed through `/api/redirect`. Same
+	 * visibility rules as `contactEmail`.
+	 */
+	contactUrl?: string;
+
+	/**
+	 * Issue #438: when true the off-platform contact CTA is shown to UNauthenticated
+	 * browsers too (institutions that want zero-account access). When false (default)
+	 * it's visible only to logged-in viewers. Drives whether `items_public` surfaces
+	 * the `ownerContact*` columns.
+	 */
+	contactPublic?: boolean;
+
+	/**
+	 * Issue #368: per-institution free-text explanation of how to borrow this owner's
+	 * external/integrated items (owner has `isInstitution = true`, item carries an
+	 * `externalUrl`). Belongs to the institution (one process explanation, not per item),
+	 * self-maintained via the profile form. Public help text (no PII); reaches
+	 * unauthenticated browsing via `items_public.ownerExternalLendingInfo` (masked like the
+	 * item's content columns). Empty → the UI shows a shared default text. Max 1000 chars.
+	 */
+	externalLendingInfo?: string;
+
+	/**
 	 * Geographic coordinates. PocketBase GeoPoint: {"lon": 12.34, "lat": 56.78}.
 	 * Zero value {"lon":0,"lat":0} means no location set (Null Island).
 	 */
 	geolocation?: { lon: number; lat: number };
-
-	/**
-	 * Preferred transport mode for distance-based search
-	 */
-	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
 
 	/**
 	 * Unique invite code for this user's invite link.
@@ -90,11 +127,6 @@ export interface User extends PocketBaseEntity {
 	 * Foreign key: the user who invited this user (set at registration via invite link).
 	 */
 	invitedBy?: UserId;
-
-	/**
-	 * Whether the user has completed the onboarding flow.
-	 */
-	hasOnboarded?: boolean;
 
 	/**
 	 * Whether the user has verified their email address.
@@ -129,6 +161,23 @@ export interface User extends PocketBaseEntity {
 	deletedAt?: string;
 
 	/**
+	 * ISO datetime of the last authentication, stamped (throttled to 24h) by the
+	 * backend auth hook. Drives the inactive-account retention job (#461).
+	 * `hidden: true` on the collection — only readable via the superuser context, so
+	 * it never reaches a client (kept here to document the schema).
+	 */
+	lastLoginAt?: string;
+
+	/**
+	 * ISO datetime the "your account will be deleted on <date>" inactivity warning
+	 * email was last sent (backend retention job; once per inactivity cycle — a stamp
+	 * older than `lastLoginAt` is stale). `hidden: true` on the collection — only
+	 * readable via the superuser context, so it never reaches a client (kept here to
+	 * document the schema).
+	 */
+	deletionWarnedAt?: string;
+
+	/**
 	 * Cache of the latest platform ToS version this user has accepted (Issue #399).
 	 * Authoritative record lives in `user_legal_acceptances`; this mirror lets the
 	 * consent gate decide from the already-loaded auth record without a DB query.
@@ -147,6 +196,16 @@ export interface User extends PocketBaseEntity {
 	 * so it cannot be self-cleared — an admin clears it after the matter is resolved.
 	 */
 	legalLocked?: boolean;
+
+	/**
+	 * Grants access to the /admin/metrics dashboard. `hidden: true` on the collection
+	 * (the base `users` viewRule lets any authenticated user view any other user's
+	 * full row, so this must never reach a client) — set via the PocketBase admin UI,
+	 * same as `isInstitution`. Never present on `locals.user`; only readable via
+	 * `$lib/server/metrics.ts`'s `isAdmin()` superuser lookup (kept here to document
+	 * the schema).
+	 */
+	isAdmin?: boolean;
 }
 
 export interface UserPublic extends PocketBaseEntity {
@@ -161,17 +220,61 @@ export interface UserPublic extends PocketBaseEntity {
 	deleted?: boolean;
 }
 
+/**
+ * Join-table row for the trust graph (replaces the old self-referencing
+ * users.trusts[] multi-relation). A row means "truster trusts trustee": the
+ * trustee may see the truster's trusteesOnly items and trusted-only contact
+ * handles. Unique per (truster, trustee); both relations cascadeDelete. Only the
+ * truster may create/revoke an edge. Queried via `$lib/server/trust`.
+ */
+export interface Trust extends PocketBaseEntity {
+	/** Foreign key: the user who grants the trust. */
+	truster: UserId;
+
+	/** Foreign key: the user being trusted (gains visibility of the truster's restricted items). */
+	trustee: UserId;
+}
+
+/**
+ * Per-user preferences sidecar (issue #426), one row per user (unique index on
+ * `user`, owner-only rules, cascadeDelete). Holds settings pulled off the `users`
+ * table so it stays lean. A missing row means "all defaults". Queried via
+ * `$lib/server/userPreferences`.
+ */
+export interface UserPreferences extends PocketBaseEntity {
+	/** Foreign key: the user these preferences belong to. */
+	user: UserId;
+
+	/** Email notifications opt-in. Absent/true = opted in; only an explicit false opts out.
+	 *  Master switch: false silences ALL notification mail, including the weekly digest below. */
+	emailNotifications?: boolean;
+
+	/** Weekly-digest opt-in (issue #607) — independent of `emailNotifications` above, so the
+	 *  digest's one-click unsubscribe link can turn this off without silencing transactional
+	 *  mail (new message, lending requests). Absent/true = opted in; only an explicit false
+	 *  opts out. `emailNotifications=false` still wins (no mail at all) regardless of this
+	 *  field's value. */
+	digestEmails?: boolean;
+
+	/** Preferred transport mode for distance-based search / travel-time UI. */
+	preferredTransportMode?: 'foot' | 'bicycle' | 'car';
+
+	/** Whether the user has completed the onboarding flow (drives a soft prompt, no gate). */
+	hasOnboarded?: boolean;
+}
+
 // --- ITEM ---
 
 export interface Item extends PocketBaseEntity {
 	name: string;
 
 	/**
-	 * Image file name or URL.
-	 * If you use a PocketBase file field, this will usually be the filename
-	 * which you then turn into a URL with pb.getFileUrl(...)
+	 * Image file names. The PocketBase `image` file field is multi-select, so this
+	 * is an array of filenames (the first is the cover). Turn a filename into a URL
+	 * with `itemImageUrl` / `itemImageUrls` ($lib/utils/utils). Empty/`null` when the
+	 * item has no uploaded image (it may still have an `externalImgUrl`).
 	 */
-	image: string | null;
+	image: string[] | null;
 
 	/** Free-text description (you can enforce length via validation, not TS) */
 	description: string;
@@ -230,7 +333,7 @@ export interface Item extends PocketBaseEntity {
 export interface ItemPublic extends PocketBaseEntity {
 	id: string;
 	name: string;
-	image: string | null;
+	image: string[] | null;
 	externalImgUrl: string | null;
 	externalUrl: string | null;
 	description: string;
@@ -249,6 +352,24 @@ export interface ItemPublic extends PocketBaseEntity {
 	userCreated: string;
 	/** 1 if the owner has a non-zero geolocation set, 0 otherwise. Evaluated in the view SQL — never exposes coordinates. */
 	ownerHasLocation: 0 | 1;
+	/**
+	 * Issue #438 — the owner's off-platform contact, surfaced to UNauthenticated browsing
+	 * ONLY when the owner opted into public exposure (`contactPublic`) AND the item is
+	 * fully public (not masked). NULL otherwise. Evaluated in the view SQL so the
+	 * members-only case never leaks. Logged-in viewers get the contact from the base
+	 * `users` record instead (covers members-only too).
+	 */
+	ownerContactMethod?: '' | 'email' | 'link' | null;
+	ownerContactEmail?: string | null;
+	ownerContactUrl?: string | null;
+	/**
+	 * Issue #368 — the owner's per-institution "how the lending works" explanation
+	 * (`users.externalLendingInfo`), surfaced to UNauthenticated browsing. Bound to the
+	 * view SELECT: masked to NULL for restricted (trustees-only/group-shared) items, like
+	 * the item's own content columns. No `contactPublic` gate (public help text, no PII).
+	 * NULL when the owner set no text.
+	 */
+	ownerExternalLendingInfo?: string | null;
 }
 
 // --- GROUPS ---
@@ -331,6 +452,9 @@ export interface Message extends PocketBaseEntity {
 
 	/** Foreign key: recipient user id */
 	to: UserId;
+
+	/** Foreign key: the conversation this message belongs to */
+	conversation?: string;
 }
 
 export type CounterfactualAnswer =
@@ -342,15 +466,79 @@ export type CounterfactualAnswer =
 	| 'unsure'
 	| 'skipped';
 
+/**
+ * The valid non-'pending' answers a participant can actually submit for
+ * `submitCounterfactual` — 'pending' is the server-assigned initial sentinel, never a
+ * submittable answer. Single source of truth for that action's validation; the UI-only
+ * 'other' sentinel (replaced by free text before it reaches the server) is intentionally
+ * NOT included here — see `CounterfactualAnswer`'s `(string & {})` widening below.
+ */
+export const COUNTERFACTUAL_ANSWERS = [
+	'would_buy',
+	'not_important',
+	'too_expensive',
+	'borrow_elsewhere',
+	'unsure',
+	'skipped',
+] as const satisfies readonly Exclude<CounterfactualAnswer, 'pending'>[];
+
+/**
+ * Safe subset of `User` fields for a conversation's `requester`/`itemOwner` expand —
+ * deliberately excludes `email` and other PII (`User.email` is documented as "should not
+ * be visible publicly"). The conversations `load()`s restrict the expand to exactly this
+ * shape via PocketBase's `fields` param (see `$lib/conversationPartnerFields.ts`'s
+ * `conversationFieldsWithSafePartners()`) — keep both in sync with what `ConversationHeader.svelte`
+ * and `ConversationListItem.svelte` actually read from the expanded user.
+ */
+export interface ConversationPartner {
+	id: string;
+	username: string;
+	/** True if this account has been deleted/anonymized — used by `displayName()`. */
+	deleted?: boolean;
+	profileImage?: string;
+	verified?: boolean;
+	created: string;
+}
+
+/**
+ * Honest wire/record shape of the `conversations` collection: relations are plain ids,
+ * matching what PocketBase actually returns. Expanded relations (when requested via
+ * `expand: '...'`) are available under `expand`, each individually optional since an
+ * expand can be omitted or fail to resolve (e.g. a dangling/deleted `requestedItem`).
+ * For a flattened, dangling-item-safe view-model, see `toConversationDetail()` in
+ * `src/routes/conversations/[conversationId]/conversationDetail.ts`.
+ */
 export interface Conversation extends PocketBaseEntity {
-	requester: User;
-	itemOwner: User;
-	requestedItem: Item;
-	messages: Message[];
+	requester: UserId;
+	itemOwner: UserId;
+	requestedItem: ItemId;
+	messages: MessageId[];
 	readByRequester: boolean;
 	readByOwner: boolean;
-	lendingStatus?: 'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed';
-	counterfactual?: CounterfactualAnswer;
+	lendingStatus?: LendingStatus;
+	/** Free text is allowed for the 'other' answer — see `COUNTERFACTUAL_ANSWERS`. */
+	counterfactual?: CounterfactualAnswer | (string & {});
+	lastMessageAt?: string;
+	requesterLastSeenAt?: string;
+	ownerLastSeenAt?: string;
+
+	/**
+	 * ISO datetime the FIRST transition into lendingStatus 'accepted' happened.
+	 * Server-stamped by the backend `lending_timestamps.pb.js` hook — never trust a
+	 * client-supplied value for this. Empty for conversations created before the
+	 * business-metrics project shipped (no backfill).
+	 */
+	acceptedAt?: string;
+
+	/** Same as `acceptedAt`, for the first transition into 'completed'. */
+	completedAt?: string;
+
+	expand?: {
+		requester?: ConversationPartner;
+		itemOwner?: ConversationPartner;
+		requestedItem?: Item;
+		messages?: Message[];
+	};
 }
 
 // --- NOTIFICATION ---
@@ -364,7 +552,11 @@ export type NotificationType =
 	| 'request_rejected'
 	| 'handover_confirmed'
 	| 'return_requested'
-	| 'return_confirmed';
+	| 'return_confirmed'
+	| 'request_aborted'
+	| 'group_member_added'
+	| 'group_member_joined'
+	| 'group_member_removed';
 
 export interface Notification extends PocketBaseEntity {
 	/** Foreign key: recipient user id */
@@ -456,6 +648,59 @@ export interface TermAcceptance extends PocketBaseEntity {
 }
 
 /**
+ * Lender-defined borrower requirements (issues #423 / #389). One row per owner;
+ * a flexible, extensible framework that gates *who may request* an owner's items
+ * (not visibility — that stays with trusteesOnly/groups). Each boolean/number
+ * field is one requirement type; new types are added as new fields. Enforced
+ * authoritatively by the backend hook on conversation create
+ * (allerleih-backend/pb_hooks/lending_requirements.pb.js); the frontend mirrors
+ * the checks for UX in $lib/server/lendingRequirements.ts.
+ */
+export interface LendingRequirements extends PocketBaseEntity {
+	/** Foreign key: the lender these requirements belong to */
+	owner: UserId;
+
+	/** Require the borrower to have a verified email address (users.verified). */
+	requireVerifiedEmail: boolean;
+
+	/** Require the borrower to have an address on file (users.city). Issue #389. */
+	requireAddress: boolean;
+}
+
+/**
+ * A single lending requirement the borrower has not yet met, in a form ready to
+ * render (label + hint + action link). Produced by
+ * `$lib/server/lendingRequirements` and passed to the item-detail CTA. Lives
+ * here (not in the server module) so client components can import the type
+ * without pulling in a server-only module.
+ */
+export interface UnmetRequirement {
+	key: string;
+	/** Label for the quick-fix button that lets the borrower satisfy it. */
+	actionLabel: string;
+	/** Internal route the borrower goes to in order to satisfy the requirement. */
+	actionHref: string;
+}
+
+/**
+ * One requirement toggle for the owner's settings UI, derived from the requirement
+ * registry (see $lib/server/lendingRequirements). Lives here (not in the server
+ * module) so the profile component can import the type without a server-only import.
+ */
+export interface RequirementSetting {
+	/** Registry key, e.g. "verifiedEmail". */
+	key: string;
+	/** Backing column on `lending_requirements`, e.g. "requireVerifiedEmail" — the form field name. */
+	field: string;
+	/** Owner-facing toggle label. */
+	settingsLabel: string;
+	/** Owner-facing help text under the toggle. */
+	settingsHelp: string;
+	/** Whether this requirement is currently switched on for the owner. */
+	enabled: boolean;
+}
+
+/**
  * Audit-trail record of one user's consent decision on one version of a platform
  * legal document — the Terms of Service or the privacy statement (Issue #399).
  *
@@ -488,4 +733,122 @@ export interface UserLegalAcceptance extends PocketBaseEntity {
 
 	/** User-Agent string at decision */
 	userAgent?: string;
+}
+
+// --- METRICS ---
+
+/** One {userId, username, count} row of a top-N-by-owner breakdown. */
+export interface MetricsOwnerCount {
+	userId: UserId;
+	username: string;
+	count: number;
+}
+
+/**
+ * Shape of the `metrics` JSON blob on one `metrics_daily` row, computed nightly by the
+ * backend `jobs/metrics.js` cron job. Superuser-only collection — read via
+ * `$lib/server/metrics.ts` (`getSuperuserClient`), never directly from the client.
+ * Every value is a count/aggregate; nothing here is per-user data. Time-based figures
+ * (the `*30d`/`*7d` fields, everything under `activeUsers`/`funnel`) only accumulate
+ * from when `conversations.acceptedAt`/`completedAt` started being stamped — no
+ * backfill, so they read as zero/null on old snapshots.
+ */
+export interface DailyMetrics {
+	users: {
+		total: number;
+		institutions: number;
+		verified: number;
+	};
+	items: {
+		available: number;
+		byPrivateUsers: number;
+		byInstitutionsNative: number;
+		external: number;
+		externalByInstitution: MetricsOwnerCount[];
+	};
+	loans: {
+		byStatus: Record<
+			'pending' | 'accepted' | 'rejected' | 'active' | 'return_requested' | 'completed' | 'aborted',
+			number
+		>;
+		completedTotal: number;
+		accepted30d: number;
+		completed30d: number;
+	};
+	activeUsers: {
+		loans30d_1plus: number;
+		loans30d_2plus: number;
+		login7d: number;
+		login30d: number;
+	};
+	funnel: {
+		requests30d: number;
+		/** null when no request created in the window has been decided yet (accepted or rejected). */
+		acceptanceRate30d: number | null;
+		stalePending: number;
+	};
+	messages: {
+		total: number;
+		last30d: number;
+	};
+	impact: {
+		counterfactual: Record<CounterfactualAnswer, number>;
+	};
+	integrations: {
+		lastSyncByInstitution: Array<{
+			userId: UserId;
+			username: string;
+			itemCount: number;
+			newestUpdated: string | null;
+		}>;
+	};
+	outboundClicks: {
+		total: number;
+		last30d: number;
+		byItemOwner30d: MetricsOwnerCount[];
+		/** Destination hostname (e.g. "uber.space"), not the strict DNS top-level domain. */
+		byDomain30d: Array<{ domain: string; count: number }>;
+	};
+	community: {
+		groups: { total: number; public: number; memberships: number };
+		trusts: { edges: number };
+		invites: { usersInvited: number };
+		push: { subscriptions: number; usersSubscribed: number };
+	};
+}
+
+/** One row of the `metrics_daily` collection (superuser-only; see `DailyMetrics`). */
+export interface MetricsDaily extends PocketBaseEntity {
+	/** "YYYY-MM-DD", unique per row. */
+	date: string;
+	metrics: DailyMetrics;
+}
+
+/**
+ * Per-institution integration configuration (backend `sync_config` collection, #487).
+ * **Superuser-only**: no client CRUD — rows are managed in the PocketBase admin UI (see the
+ * onboarding runbook). Not exposed through any `*_public` view.
+ *
+ * The single source of truth for integration discovery: the backend cron (full sync + per-item
+ * refresh) and the CSV-import refresh (`/api/import/refresh`) all read it. (The former interim
+ * `users.leihbackendUrl` field was removed in #487 Phase 3.)
+ */
+export interface SyncConfig extends PocketBaseEntity {
+	/** Foreign key: the institution `users` record this config belongs to (cascadeDelete). */
+	institution: UserId;
+
+	/** Which integration serves this institution's source. */
+	integration: 'leihbackend' | 'winbiap';
+
+	/** Source base URL — leihbackend origin, or a WINBIAP WebOPAC base ending in `/webopac`. */
+	baseUrl: string;
+
+	/** Optional human-facing deep-link template with `{id}`/`{iid}` placeholders. */
+	itemUrlTemplate?: string;
+
+	/**
+	 * When false the backend cron skips this institution. In Phase 2 this only affects the cron;
+	 * the manual frontend endpoints ignore it until Phase 3.
+	 */
+	enabled?: boolean;
 }

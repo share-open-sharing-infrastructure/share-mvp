@@ -1,295 +1,206 @@
 import { error, fail } from '@sveltejs/kit';
+import type { ClientResponseError } from 'pocketbase';
+import { texts } from '$lib/texts';
 import {
-	parseCsv,
-	parseAndValidateRow,
+	parseAndMapCsv,
 	validateFileLimits,
-	buildPreviewRows,
-	type ParsedRow,
 	type RowResult,
-	type ArchiveRow,
-	type PreviewSummary,
-} from './importUtils';
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pbErrorMessage(err: any): string {
-	const fieldErrors: Record<string, { message?: string }> =
-		err?.response?.data ?? err?.data?.data ?? {};
-	const fields = Object.entries(fieldErrors)
-		.map(([k, v]) => `${k}: ${v?.message ?? JSON.stringify(v)}`)
-		.join(', ');
-	if (fields) return fields;
-	return err?.data?.message ?? err?.message ?? String(err);
-}
+	type MappedItem
+} from '$lib/server/integrations/winbiap/csv';
 
 export async function load({ locals }) {
 	if (!locals.user?.isInstitution) {
-		error(403, 'Nur für institutionelle Accounts zugänglich.');
+		error(403, texts.institutional.importForbidden);
 	}
 	return {};
 }
 
+/** Returns the institution's owner id, or `null` if the caller is not an institutional account. */
+function institutionOwnerId(locals: App.Locals): string | null {
+	return locals.user?.isInstitution ? locals.user.id : null;
+}
+
+/**
+ * A `SyncSummary` as returned by the backend `/api/import/apply` + `/api/import/refresh` endpoints.
+ * `errors` is the list of write-error messages (frontend maps its length into the count summary).
+ */
+interface ImportSummary {
+	institution: string;
+	fetched: number;
+	created: number;
+	updated: number;
+	archived: number;
+	skipped: number;
+	errors: string[];
+	durationMs: number;
+	/** `/api/import/refresh` only: false when the institution has no `sync_config` row at all. */
+	configured?: boolean;
+}
+
+/**
+ * True when the backend refused a write because another integration run (cron sync/refresh or
+ * another import) holds the shared lock — a "try again shortly", not a failure.
+ */
+function isBusy(err: unknown): boolean {
+	return (err as Partial<ClientResponseError>)?.status === 409;
+}
+
+/** Diff forecast returned by the backend `/api/import/preview` dryRun endpoint (no write). */
+interface ImportPreview {
+	summary: { create: number; update: number; archive: number; skip: number };
+	rowActions: Array<{ externalId: string; action: 'create' | 'update' | 'skip' }>;
+	archiveRows: Array<{ id: string; externalId: string; name: string }>;
+}
+
+/** Strips the (server-stamped) `owner` before sending mapped rows to the backend. */
+function toRow(item: MappedItem): Omit<MappedItem, 'owner'> {
+	const { externalId, name, description, status, categories, externalUrl, externalImgUrl, place, trusteesOnly } =
+		item;
+	return { externalId, name, description, status, categories, externalUrl, externalImgUrl, place, trusteesOnly };
+}
+
 export const actions = {
 	preview: async ({ locals, request }) => {
-		if (!locals.user?.isInstitution) {
-			return fail(403, { error: true, message: 'Keine Berechtigung.' });
+		const ownerId = institutionOwnerId(locals);
+		if (!ownerId) {
+			return fail(403, { error: true, message: texts.institutional.importNoPermission });
 		}
 
 		const formData = await request.formData();
 		const file = formData.get('csv') as File | null;
 
 		if (!file || !(file instanceof File) || file.size === 0) {
-			return fail(400, { error: true, message: 'Keine Datei hochgeladen.' });
+			return fail(400, { error: true, message: texts.institutional.importNoFile });
 		}
-
 		if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
-			return fail(400, { error: true, message: 'Bitte als CSV speichern und erneut hochladen.' });
+			return fail(400, { error: true, message: texts.institutional.importXlsxError });
 		}
 
 		const csvText = await file.text();
-
-		// Validate size/row limits before parsing
-		const { rows: rawRows, error: parseError } = parseCsv(csvText);
+		const { mappedRows, rowErrors, totalRows, parseError } = parseAndMapCsv(csvText, ownerId);
 		if (parseError) {
 			return fail(400, { error: true, message: parseError });
 		}
-
-		const limitError = validateFileLimits(csvText, rawRows.length);
+		const limitError = validateFileLimits(csvText, totalRows);
 		if (limitError) {
 			return fail(400, { error: true, message: limitError });
 		}
 
-		// Parse and validate each row
-		const validRows: ParsedRow[] = [];
-		const rowResults: RowResult[] = [];
-		const seenExternalIds = new Set<string>();
-		const duplicates = new Set<string>();
-
-		for (let i = 0; i < rawRows.length; i++) {
-			const { parsed, errors } = parseAndValidateRow(rawRows[i]);
-			if (errors.length > 0 || !parsed) {
-				rowResults.push({
-					rowIndex: i + 2,
-					externalId: rawRows[i]['externalId'] ?? '',
-					name: rawRows[i]['name'] ?? '',
-					action: 'error',
-					errors,
-				});
-				continue;
-			}
-			if (seenExternalIds.has(parsed.externalId)) {
-				duplicates.add(parsed.externalId);
-			}
-			seenExternalIds.add(parsed.externalId);
-			validRows.push(parsed);
-		}
-
-		// Look up which externalIds already exist for this owner
-		const ownerId = locals.user.id;
-		let existingItems: Array<{ id: string; externalId: string; name: string }> = [];
+		// Backend computes the diff (dryRun) — the FE no longer reads the DB or diffs itself.
+		let preview: ImportPreview;
 		try {
-			existingItems = await locals.pb.collection('items').getFullList({
-				filter: locals.pb.filter('owner = {:ownerId} && externalId != ""', { ownerId }),
-				fields: 'id,externalId,name',
+			preview = await locals.pb.send('/api/import/preview', {
+				method: 'POST',
+				body: { rows: mappedRows.map(({ item }) => toRow(item)) }
 			});
-		} catch {
-			// proceed without existing data — everything will be treated as create
+		} catch (err) {
+			console.error('import preview failed:', (err as Partial<ClientResponseError>)?.message ?? err);
+			return fail(503, { error: true, message: texts.institutional.importLoadExistingFailed });
 		}
 
-		const existingByExternalId = new Map(existingItems.map((i) => [i.externalId, i]));
-		const existingExternalIdSet = new Set(existingByExternalId.keys());
-
-		// Build preview rows for valid rows
-		const previewRows = buildPreviewRows(validRows, existingExternalIdSet, duplicates);
-		for (const r of previewRows) {
-			rowResults.push(r);
-		}
-		rowResults.sort((a, b) => a.rowIndex - b.rowIndex);
-
-		// Compute archive candidates: items in DB not in the imported set
-		const importedExternalIds = new Set(validRows.map((r) => r.externalId));
-		const archiveRows: ArchiveRow[] = existingItems
-			.filter((i) => !importedExternalIds.has(i.externalId))
-			.map((i) => ({ id: i.id, externalId: i.externalId, name: i.name, action: 'archive' as const }));
-
-		const summary: PreviewSummary = {
-			create: previewRows.filter((r) => r.action === 'create').length,
-			update: previewRows.filter((r) => r.action === 'update').length,
-			archive: archiveRows.length,
-			skip: 0,
-			errors: rowResults.filter((r) => r.action === 'error').length,
-		};
+		// Merge the backend's per-externalId action onto the locally-parsed rows (for row number +
+		// name + CSV warnings), then interleave the parser's row errors.
+		const actionByExternalId = new Map(preview.rowActions.map((r) => [r.externalId, r.action]));
+		const previewRows: RowResult[] = mappedRows.map(({ rowIndex, item, warnings }) => ({
+			rowIndex,
+			externalId: item.externalId,
+			name: item.name,
+			action: actionByExternalId.get(item.externalId) ?? 'skip',
+			errors: warnings
+		}));
+		const rowResults = [...previewRows, ...rowErrors].sort((a, b) => a.rowIndex - b.rowIndex);
 
 		return {
 			success: true,
 			preview: true,
 			csvText,
 			rowResults: rowResults.slice(0, 50),
-			archiveRows,
-			summary,
-			totalRows: rawRows.length,
+			archiveRows: preview.archiveRows.map((r) => ({ ...r, action: 'archive' as const })),
+			summary: {
+				create: preview.summary.create,
+				update: preview.summary.update,
+				archive: preview.summary.archive,
+				skip: preview.summary.skip,
+				errors: rowErrors.length
+			},
+			totalRows
 		};
 	},
 
 	apply: async ({ locals, request }) => {
-		if (!locals.user?.isInstitution) {
-			return fail(403, { error: true, message: 'Keine Berechtigung.' });
+		const ownerId = institutionOwnerId(locals);
+		if (!ownerId) {
+			return fail(403, { error: true, message: texts.institutional.importNoPermission });
 		}
 
 		const formData = await request.formData();
 		const csvText = formData.get('csvText')?.toString() ?? '';
-
 		if (!csvText) {
-			return fail(400, { error: true, message: 'Keine CSV-Daten vorhanden.' });
+			return fail(400, { error: true, message: texts.institutional.importNoCsvData });
 		}
 
-		const { rows: rawRows, error: parseError } = parseCsv(csvText);
+		const { mappedRows, rowErrors, totalRows, parseError } = parseAndMapCsv(csvText, ownerId);
 		if (parseError) {
 			return fail(400, { error: true, message: parseError });
 		}
-
-		const ownerId = locals.user.id;
-
-		// Re-validate all rows
-		const validRows: ParsedRow[] = [];
-		let errorCount = 0;
-		for (let i = 0; i < rawRows.length; i++) {
-			const { parsed } = parseAndValidateRow(rawRows[i]);
-			if (parsed) validRows.push(parsed);
-			else errorCount++;
+		const limitError = validateFileLimits(csvText, totalRows);
+		if (limitError) {
+			return fail(400, { error: true, message: limitError });
 		}
 
-		// Look up existing items
-		let existingItems: Array<{ id: string; externalId: string; description: string }> = [];
+		// One user-session request; the backend stamps owner = caller and writes in a transaction.
+		let summary: ImportSummary;
 		try {
-			existingItems = await locals.pb.collection('items').getFullList({
-				filter: locals.pb.filter('owner = {:ownerId} && externalId != ""', { ownerId }),
-				fields: 'id,externalId,description',
+			summary = await locals.pb.send('/api/import/apply', {
+				method: 'POST',
+				body: { rows: mappedRows.map(({ item }) => toRow(item)) }
 			});
-		} catch {
-			// proceed
-		}
-		const existingByExternalId = new Map(existingItems.map((i) => [i.externalId, i]));
-
-		let created = 0;
-		let updated = 0;
-		const rowErrors: string[] = [];
-
-		const importedExternalIds = new Set<string>();
-		for (const row of validRows) {
-			importedExternalIds.add(row.externalId);
-		}
-
-		// Separate creates and updates — the *:create rate limit (20/5s by default) only affects creates.
-		// Fix: in PocketBase Dashboard → Settings → Rate limits, set *:create audience to "guest"
-		// so authenticated imports are not throttled. This code also batches conservatively as a fallback.
-		//
-		// Updates use batches of 50 (no strict update rate limit).
-		// Creates use batches of 15 with a 5.5s pause between chunks (stays under 20/5s).
-		const UPDATE_BATCH = 50;
-		const CREATE_BATCH = 15;
-		const CREATE_PAUSE_MS = 5500;
-
-		const toCreate: typeof validRows = [];
-		const toUpdate: Array<{ row: (typeof validRows)[0]; existingId: string }> = [];
-
-		for (const row of validRows) {
-			const existing = existingByExternalId.get(row.externalId);
-			if (existing) toUpdate.push({ row, existingId: existing.id });
-			else toCreate.push(row);
-		}
-
-		// Build the PocketBase fields object for a row. description is made optional in PocketBase
-		// (uncheck Required on the field) — but we also send '' so the API never gets undefined.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const rowFields = (row: (typeof validRows)[0]): Record<string, any> => ({
-			name: row.name,
-			description: row.description ?? '',
-			place: row.place,
-			categories: row.categories,
-			externalUrl: row.externalUrl,
-			externalImgUrl: row.image,
-			status: row.status,
-			trusteesOnly: row.trusteesOnly,
-		});
-
-		// --- Updates ---
-		for (let i = 0; i < toUpdate.length; i += UPDATE_BATCH) {
-			const chunk = toUpdate.slice(i, i + UPDATE_BATCH);
-			const batch = locals.pb.createBatch();
-			for (const { row, existingId } of chunk) {
-				batch.collection('items').update(existingId, rowFields(row));
+		} catch (err) {
+			if (isBusy(err)) {
+				return fail(409, { error: true, message: texts.institutional.importBusy });
 			}
-			try {
-				await batch.send();
-				updated += chunk.length;
-			} catch (err) {
-				const msg = pbErrorMessage(err);
-				console.error(`[import] update batch failed:`, msg);
-				for (const { row } of chunk) rowErrors.push(`${row.externalId}: ${msg}`);
-			}
-			if (i + UPDATE_BATCH < toUpdate.length) await delay(300);
-		}
-
-		// --- Creates ---
-		for (let i = 0; i < toCreate.length; i += CREATE_BATCH) {
-			const chunk = toCreate.slice(i, i + CREATE_BATCH);
-			const batch = locals.pb.createBatch();
-			for (const row of chunk) {
-				batch.collection('items').create({ owner: ownerId, externalId: row.externalId, ...rowFields(row) });
-			}
-			try {
-				await batch.send();
-				created += chunk.length;
-			} catch (err) {
-				const msg = pbErrorMessage(err);
-				console.error(`[import] create batch failed:`, msg);
-				for (const row of chunk) rowErrors.push(`${row.externalId}: ${msg}`);
-			}
-			if (i + CREATE_BATCH < toCreate.length) await delay(CREATE_PAUSE_MS);
-		}
-
-		// Archive items not in the imported set (also batched)
-		let archived = 0;
-		const toArchive = existingItems.filter((i) => !importedExternalIds.has(i.externalId));
-
-		for (let i = 0; i < toArchive.length; i += UPDATE_BATCH) {
-			const chunk = toArchive.slice(i, i + UPDATE_BATCH);
-			const batch = locals.pb.createBatch();
-			const chunkIds: string[] = [];
-
-			for (const item of chunk) {
-				const descriptionPrefix = '[Nicht mehr im Bestand] ';
-				const newDescription = item.description?.startsWith(descriptionPrefix)
-					? item.description
-					: `${descriptionPrefix}${item.description ?? ''}`;
-				batch.collection('items').update(item.id, { status: 'unavailable', description: newDescription });
-				chunkIds.push(item.id);
-			}
-
-			try {
-				await batch.send();
-				archived += chunkIds.length;
-			} catch (err) {
-				const msg = pbErrorMessage(err);
-				console.error(`[import] archive batch failed:`, msg);
-				for (const id of chunkIds) rowErrors.push(`archive ${id}: ${msg}`);
-			}
-
-			if (i + UPDATE_BATCH < toArchive.length) await delay(300);
+			console.error('import apply failed:', (err as Partial<ClientResponseError>)?.message ?? err);
+			return fail(503, { error: true, message: texts.institutional.importApplyFailed });
 		}
 
 		return {
 			success: true,
 			done: true,
 			summary: {
-				created,
-				updated,
-				archived,
-				errors: rowErrors.length + errorCount,
+				created: summary.created,
+				updated: summary.updated,
+				archived: summary.archived,
+				skipped: summary.skipped,
+				errors: summary.errors.length + rowErrors.length
 			},
-			rowErrors,
+			rowErrors: summary.errors
 		};
 	},
+
+	refresh: async ({ locals }) => {
+		const ownerId = institutionOwnerId(locals);
+		if (!ownerId) {
+			return fail(403, { error: true, message: texts.institutional.importNoPermission });
+		}
+
+		// Refreshes only the caller's own items (user session — no SYNC_SECRET, no ?institution=).
+		let summary: ImportSummary;
+		try {
+			summary = await locals.pb.send('/api/import/refresh', { method: 'POST' });
+		} catch (err) {
+			if (isBusy(err)) {
+				return fail(409, { error: true, message: texts.institutional.importBusy });
+			}
+			console.error('import refresh failed:', (err as Partial<ClientResponseError>)?.message ?? err);
+			return fail(503, { error: true, message: texts.institutional.importRefreshFailed });
+		}
+
+		// A refresh without any configured source is a guaranteed no-op — say so instead of
+		// reporting success for work that never happened.
+		if (summary.configured === false) {
+			return fail(400, { error: true, message: texts.institutional.importRefreshNoIntegration });
+		}
+
+		return { success: true, refreshed: true, message: texts.institutional.importRefreshTriggered };
+	}
 };

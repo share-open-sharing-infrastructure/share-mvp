@@ -16,9 +16,13 @@ classDiagram
         +string email
         +string city
         +bool isInstitution
-        +UserId[] trusts
     }
-    User --> User : trusts
+    class Trust{
+        +User truster
+        +User trustee
+    }
+    User "1" <-- "n" Trust : truster
+    User "1" <-- "n" Trust : trustee
 
     class Item{
         +string name
@@ -74,8 +78,8 @@ classDiagram
 
 ## User entity
 
-- A user can "trust" 0 to n other users. Building on this, they can select some of their items to only be visible to their "trustees".
-- **Trust is explicit and 1-hop only.** If A trusts B and B trusts C, A does **not** automatically gain visibility of C's trustees-only items. The trust check is based on the item owner's `trusts` list — there is no transitive or graph-based trust resolution.
+- A user can "trust" 0 to n other users. Building on this, they can select some of their items to only be visible to their "trustees". Trust is stored as an n:m **`trusts` join collection** (`truster` → `trustee`), replacing the earlier `users.trusts[]` array; a row means "truster trusts trustee". See [data-model.md](data-model.md#trusts).
+- **Trust is explicit, directional and 1-hop only.** A trusting B lets **B** see A's trustees-only items, not the reverse; and if A trusts B and B trusts C, A does **not** automatically gain visibility of C's trustees-only items. The check matches a single `trusts` edge (owner = truster, viewer = trustee) — there is no transitive or graph-based trust resolution.
 
 ## Item
 
@@ -92,7 +96,7 @@ classDiagram
   to the owner, the owner's trustees (when `trusteesOnly`), and members of an
   attached group. See [data-model.md](data-model.md).
 - `status` reflects current availability: `available`, `unavailable` (actively on loan), or `unknown`.
-- `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/texts.ts`.
+- `categories` is an array of up to 3 values drawn from the fixed `ITEM_CATEGORIES` list in `src/lib/categories.ts`.
 
 ## Groups
 
@@ -135,18 +139,24 @@ stateDiagram-v2
     active --> return_requested : Borrower signals return
     active --> completed : Owner confirms return directly
     return_requested --> completed : Owner confirms return
+    pending --> aborted : Either party aborts
+    accepted --> aborted : Either party aborts
     rejected --> [*]
     completed --> [*]
+    aborted --> [*]
 ```
 
 | Transition | Triggered by | Side effects |
 |---|---|---|
-| → pending | Requester | Creates `Conversation` record. A request is only allowed for an item the requester may actually see — public, their own, an item whose owner trusts them, or an item shared with a group they belong to — enforced by the `conversations` create rule (data layer), not just the UI. |
+| → pending | Requester | Creates `Conversation` record. A request is only allowed for an item the requester may actually see — public, their own, an item whose owner trusts them, or an item shared with a group they belong to — enforced by the `conversations` create rule (data layer), not just the UI. The owner may **additionally** gate requesting via their `lending_requirements` (e.g. verified e-mail / address), enforced authoritatively by the `conversations` `onRecordCreateRequest` hook (see [data-model.md](data-model.md#lending_requirements)). |
 | pending → accepted | Owner | Sets item `status = unavailable`; auto-rejects all other `pending` conversations for the same item; sends `request_accepted` notification |
 | pending → rejected | Owner | Sends `request_rejected` notification |
 | accepted → active | Owner | Sends `handover_confirmed` notification |
 | active → return_requested | Borrower | Sends `return_requested` notification |
 | active or return_requested → completed | Owner | Sets item `status = available`; sends `return_confirmed` notification; ~33% chance triggers counterfactual impact survey |
+| pending or accepted → aborted | Either party | Terminal cancellation. Item is reset to `status = available` when aborting from `accepted` (the reset runs server-side in the `conversations` `onRecordUpdateRequest` hook so the non-owner requester can free it too). Sends a neutral `request_aborted` notification to the counterparty (does not name who aborted). Enforced authoritatively by the hook (`allerleih-backend/pb_hooks/lending.pb.js`), which restricts the transition to participants and to the `pending`/`accepted` source states. |
+
+**Abort vs. Delete affordance:** while a request is abortable (`pending`/`accepted`) the conversation UI hides the "Anfrage löschen" (delete) control and shows "Anfrage abbrechen" instead (in `pending` only to the requester — the owner keeps "Ablehnen"; in `accepted` to both parties). Delete stays available in the terminal states (`rejected`/`completed`/`aborted`) to clear history.
 
 ---
 
@@ -171,8 +181,11 @@ Institutions (public libraries, lending shops, tool libraries) are regular `User
 **Account deletion & anonymization**
 - A user can delete their own account (GDPR Art. 17) from `/user/account`; deletion is refused while a loan is still open (`accepted`/`active`/`return_requested`)
 - Deletion is *anonymize-in-place*: the `User` record is kept but its PII is scrubbed and `deleted` is set, so shared `Conversation`/`Message` history and `TermAcceptance` audit records stay referentially intact and render as "Gelöschtes Konto" to the counterparty
-- Personal-only data (contacts, geolocation, push subscriptions, owned `Item`s, own notifications) is hard-deleted; the user is removed from every other user's `trusts[]`
+- Personal-only data (contacts, geolocation, push subscriptions, owned `Item`s, own notifications) is hard-deleted; every `trusts` edge involving the account is deleted (both directions — cascade doesn't fire on anonymize-in-place)
 - The original email + username are retained in a restricted `deleted_accounts` record for the dispute-resolution window, then purged by a future scheduled job (see [data-model.md](data-model.md))
+
+**Automated data retention (issue #461)**
+- Nightly backend cron jobs enforce the privacy policy's retention limits: accounts inactive for 6 months are anonymized through the same deletion path (skipped with user + admin email notice while a loan is open), conversations incl. messages are deleted 6 months after last activity, in-app notifications after 90 days, feedback after 6 months (see [data-model.md](data-model.md))
 
 # Platform Legal Consent (ToS & Privacy)
 

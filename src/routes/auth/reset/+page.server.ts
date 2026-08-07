@@ -1,6 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
+import { setFlash } from '$lib/server/flash';
+import { normalizeEmail } from '$lib/server/email';
 
 export async function load({ locals }) {
 	if (locals.user) {
@@ -22,7 +24,7 @@ export const actions = {
 		try {
 			await locals.pb
 				.collection('users')
-				.requestPasswordReset(email.toString());
+				.requestPasswordReset(normalizeEmail(email.toString()));
 		} catch (error) {
 			const errorObj = error as ClientResponseError;
 			return fail(500, {
@@ -31,18 +33,7 @@ export const actions = {
 			});
 		}
 
-		// universal flash pattern:
-		cookies.set(
-			'flash',
-			JSON.stringify({
-				type: 'success',
-				message: texts.success.passwordResetSent,
-			}),
-			{
-				path: '/',
-				maxAge: 60, // seconds
-			}
-		);
+		setFlash(cookies, texts.success.passwordResetSent);
 		redirect(303, '/auth/login');
 	},
 };

@@ -1,3 +1,4 @@
+import { error, redirect } from '@sveltejs/kit';
 import type PocketBase from 'pocketbase';
 import type { Group, GroupMember, UserId } from '$lib/types/models';
 
@@ -109,4 +110,51 @@ export async function countMembersForGroups(
 
 	for (const r of rows) counts.set(r.group, (counts.get(r.group) ?? 0) + 1);
 	return counts;
+}
+
+/**
+ * Fetch a group and enforce that the user may view it (owner or member). Throws 404 if the
+ * group does not exist and redirects to the group list if the user is neither the owner nor
+ * a member. Shared by the group overview and its sub-pages (`/members`, `/settings`)
+ * so the guard lives in one place.
+ *
+ * Returns the group, whether the user owns it, and the (expanded) membership rows — the
+ * members sub-page reuses `memberRows`; the others just need the guard + `isOwner`.
+ */
+export async function requireGroupMembership(pb: PocketBase, userId: UserId, groupId: string) {
+	let group: Group;
+	try {
+		group = await pb.collection('groups').getOne<Group>(groupId);
+	} catch {
+		error(404, 'Group not found');
+	}
+
+	const isOwner = group.owner === userId;
+
+	const memberRows = await pb.collection('group_members').getFullList<GroupMember>({
+		filter: pb.filter('group = {:gid}', { gid: groupId }),
+		expand: 'user',
+		sort: 'created',
+	});
+
+	if (!isOwner && !memberRows.some((m) => m.user === userId)) {
+		redirect(303, '/user/groups');
+	}
+
+	return { group, isOwner, memberRows };
+}
+
+/**
+ * Lightweight ownership check for form actions (defense-in-depth). The backend collection
+ * rules already reject a non-owner mutation, but asserting ownership in the action lets us
+ * return a clean 403 with a friendly message instead of a generic backend failure. Returns
+ * false if the group is missing or the user is not its owner.
+ */
+export async function isGroupOwner(pb: PocketBase, userId: UserId, groupId: string): Promise<boolean> {
+	try {
+		const group = await pb.collection('groups').getOne<Group>(groupId, { fields: 'id,owner' });
+		return group.owner === userId;
+	} catch {
+		return false;
+	}
 }

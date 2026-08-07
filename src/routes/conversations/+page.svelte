@@ -1,26 +1,22 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { MessageDotsOutline } from 'flowbite-svelte-icons';
+	import { texts } from '$lib/texts';
+	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 </script>
 
-<svelte:head>
-	<meta name="robots" content="noindex, nofollow" />
-</svelte:head>
+<SeoHead title={texts.seo.conversations.title} robots="noindex, nofollow" />
 
 <div class="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
 	<div class="w-14 h-14 rounded-2xl bg-tinte-100 dark:bg-tinte-800 flex items-center justify-center">
 		<MessageDotsOutline class="w-7 h-7 text-tinte-400 dark:text-tinte-500" />
 	</div>
 	<div class="flex flex-col gap-1">
-		<p class="text-sm font-semibold text-tinte-700 dark:text-tinte-200">Kein Gespräch ausgewählt</p>
+		<p class="text-sm font-semibold text-tinte-700 dark:text-tinte-200">{texts.pages.conversations.noConversationSelectedTitle}</p>
 		<p class="text-xs text-tinte-400 dark:text-tinte-500 max-w-48">
-			Wähle eine Unterhaltung aus der Liste oder starte eine neue über die Suche.
+			{texts.pages.conversations.noConversationSelectedBody}
 		</p>
 	</div>
-	<a
-		href={resolve('/search')}
-		class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium bg-primary-200 hover:bg-primary min-button transition-colors"
-	>
-		Zur Suche
-	</a>
+	<Button href={resolve('/search')}>{texts.pages.conversations.goToSearch}</Button>
 </div>

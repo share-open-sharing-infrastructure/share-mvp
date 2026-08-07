@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { Button, Checkbox, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
-	import { texts, ITEM_CATEGORIES } from '$lib/texts';
+	import { Checkbox, Input, Label, Spinner, Toggle } from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import { texts } from '$lib/texts';
+	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { compressImage } from '$lib/utils/imageUtils';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 
@@ -95,8 +97,22 @@
 		submitting = true;
 		uploadError = null;
 		for (let i = 0; i < drafts.length; i++) {
-			const compressed = await compressImage(drafts[i].file);
-			formData.set(`image_${i}`, compressed, drafts[i].file.name);
+			const file = drafts[i].file;
+			// SVGs can't be drawn to a canvas reliably; upload them as-is. Everything else
+			// is compressed — surface a clear error if the browser can't decode it (e.g.
+			// iPhone HEIC) instead of failing silently.
+			let image: Blob = file;
+			if (file.type !== 'image/svg+xml') {
+				try {
+					image = await compressImage(file);
+				} catch {
+					uploadError = texts.bulkUpload.imageFormatUnsupported;
+					submitting = false;
+					cancel();
+					return;
+				}
+			}
+			formData.set(`image_${i}`, image, file.name);
 			formData.set(`name_${i}`, drafts[i].name);
 			formData.set(`description_${i}`, drafts[i].description);
 			formData.set(`categories_${i}`, JSON.stringify(drafts[i].categories));
@@ -153,6 +169,7 @@
 							<textarea
 								use:autoresize={draft.description}
 								rows={1}
+								maxlength={4000}
 								placeholder={texts.forms.itemDescription}
 								bind:value={draft.description}
 								class="block w-full resize-none overflow-hidden rounded-lg border border-tinte-300 bg-papier p-2.5 text-sm text-tinte-900 focus:border-primary-500 focus:ring-primary-500 dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
@@ -229,18 +246,13 @@
 	{/if}
 
 	<div class="mt-6 flex justify-end gap-3">
-		<Button type="button" color="alternative" class="rounded-full hover:cursor-pointer" onclick={onBack}>Zurück</Button>
+		<Button variant="secondary" onclick={onBack}>Zurück</Button>
 		<Button
 			type="submit"
-			class="bg-primary-400 rounded-full hover:bg-primary hover:cursor-pointer"
-			disabled={submitting || drafts.length === 0 || !allAnalyzed}
+			loading={submitting}
+			disabled={drafts.length === 0 || !allAnalyzed}
 		>
-			{#if submitting}
-				<Spinner size="4" class="mr-2" />
-				{texts.bulkUpload.creating}
-			{:else}
-				{texts.bulkUpload.createAll(drafts.length)}
-			{/if}
+			{submitting ? texts.bulkUpload.creating : texts.bulkUpload.createAll(drafts.length)}
 		</Button>
 	</div>
 </form>

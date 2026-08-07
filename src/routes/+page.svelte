@@ -1,74 +1,91 @@
 <script lang="ts">
-	import { Button } from 'flowbite-svelte';
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
+	import { instance, instanceUrl } from '$lib/instance';
+	import { buildRedirectHref } from '$lib/utils/utils';
+	import SeoHead from '$lib/components/SeoHead.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import PublicStatsSection from '$lib/components/PublicStatsSection.svelte';
+
+	let { data } = $props();
 
 	const landingTexts = texts.pages.landing;
-	const siteUrl = 'https://allerleih.org';
+	const statsTexts = texts.metrics.public;
 
 	const jsonLd = JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
 		name: texts.names.app,
-		url: siteUrl,
-		logo: `${siteUrl}/android-chrome-512x512.png`,
+		url: instance.origin,
+		logo: instanceUrl('/icon-512x512.png'),
 		description: texts.seo.home.description,
 		contactPoint: {
 			'@type': 'ContactPoint',
 			email: texts.names.mainContactMail,
 		},
 	});
-	// Assembled from two parts because a literal closing tag would end this script block.
+	// Assembled from parts because literal script tags inside this string confuse
+	// the Svelte script-block parsing (svelte2tsx) or would end the block early.
 	const jsonLdScriptTag =
-		`<script type="application/ld+json">${jsonLd}<` + `/script>`;
+		'<' + 'script type="application/ld+json">' + jsonLd + '<' + '/script>';
 
-	// Hero call-to-action buttons, rendered in order.
+	// Hero call-to-action buttons, rendered in order. Same shape (variant="primary"),
+	// distinguished only by hue.
 	const ctaButtons = [
 		{
 			href: resolve('/search'),
 			label: landingTexts.ctaButtonSearch,
-			color: 'bg-primary-300 hover:bg-primary',
+			color: 'primary' as const,
 		},
 		{
 			href: resolve('/user/items'),
 			label: landingTexts.ctaButtonUpload,
-			color: 'bg-accent-300 hover:bg-accent',
+			color: 'accent' as const,
 		},
 	];
 
 	// Info cards, rendered in order. Each body reads: before + link + after.
 	// `after` is rendered flush against the link, so include a leading space
-	// or punctuation where needed.
-	const infoCards = [
+	// or punctuation where needed. Split into two groups so the ESLint
+	// `no-navigation-without-resolve` suppression stays scoped to the one anchor that actually
+	// needs it: the three internal-route cards call `resolve()` directly at the href in the
+	// markup below (a literal call site, so the rule is satisfied with no suppression), while
+	// the contribute card's link goes through `buildRedirectHref()` (external redirect-proxy),
+	// which the rule cannot see through — its single anchor below carries the disable comment.
+	const internalInfoCards = [
 		{
 			title: landingTexts.how,
 			before: '',
-			link: { path: '/misc/guide', text: landingTexts.howLinkText },
+			route: '/misc/guide',
+			linkText: landingTexts.howLinkText,
 			after: ` ${landingTexts.howBodyPart1} ${texts.names.app}${landingTexts.howBodyPart2}`,
 		},
 		{
 			title: landingTexts.who,
 			before: landingTexts.whoBodyPart1,
-			link: { path: '/misc/about', text: landingTexts.whoLinkText },
+			route: '/misc/about',
+			linkText: landingTexts.whoLinkText,
 			after: landingTexts.whoBodyPart2,
 		},
 		{
 			title: landingTexts.support,
 			before: landingTexts.supportBodyPart1,
-			link: { path: '/misc/contact', text: landingTexts.supportLinkText },
+			route: '/misc/contact',
+			linkText: landingTexts.supportLinkText,
 			after: '.',
-		},
-		{
-			title: landingTexts.contribute,
-			before: landingTexts.contributeBodyPart1,
-			link: { path: '/api/redirect?to=https%3A%2F%2Fallerleih.notion.site%2F36de086dc6ab80f69529e6cf68afe7c4%3Fv%3D36de086dc6ab80869c89000c98bbac63&source=footer', text: landingTexts.contributeLinkText },
-			after: landingTexts.contributeBodyPart2,
 		},
 	] as const;
 
+	const contributeInfoCard = {
+		title: landingTexts.contribute,
+		before: landingTexts.contributeBodyPart1,
+		href: buildRedirectHref(instance.links.contributeBoard, 'footer'),
+		linkText: landingTexts.contributeLinkText,
+		after: landingTexts.contributeBodyPart2,
+	};
+
 	// Shared styling — adjust the look here without touching the markup below.
 	const styles = {
-		ctaButton: 'cta-button w-full sm:w-auto',
 		card: 'bg-white rounded-2xl shadow-sm border border-primary-200 p-6 flex flex-col gap-3',
 		cardTitle: 'text-xl font-bold text-tinte-900 ',
 		cardBody: 'text-base text-tinte-500',
@@ -76,18 +93,15 @@
 	};
 </script>
 
+<SeoHead
+	title={texts.seo.home.title}
+	description={texts.seo.home.description}
+	canonical
+	image={instanceUrl('/og-invite.png')}
+/>
+
 <svelte:head>
-	<title>{texts.seo.home.title}</title>
-	<meta name="description" content={texts.seo.home.description} />
-	<meta property="og:title" content={texts.seo.home.title} />
-	<meta property="og:description" content={texts.seo.home.description} />
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="{siteUrl}/" />
-	<meta property="og:image" content="{siteUrl}/og-invite.png" />
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content={texts.seo.home.title} />
-	<meta name="twitter:description" content={texts.seo.home.description} />
-	<link rel="canonical" href="{siteUrl}/" />
+	<meta property="og:url" content={instanceUrl('/')} />
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static, self-constructed JSON-LD -->
 	{@html jsonLdScriptTag}
 </svelte:head>
@@ -100,30 +114,36 @@
 		>
 			<div class="text-center lg:text-left">
 				<img src="/AllerLeih.png" alt={texts.names.app} class="h-32 mx-auto" />
-				<p
+				<!--
+					The tagline is the homepage's <h1> — it contains both the activity and the
+					location, making it the only text here that qualifies as a page heading (the
+					logo is an image). It used to be a <p>, and the page had NO h1 at all, starting
+					instead with the info cards' headings (axe: `page-has-heading-one`, WCAG 1.3.1).
+					Tailwind Preflight strips heading styling (font-size/-weight/margin: inherit or
+					0), and the classes carried over unchanged — the swap is pixel-identical.
+				-->
+				<h1
 					class="text-center text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8"
 				>
-					{landingTexts.tagline} <span class="font-bold text-tinte-700">{landingTexts.city}</span>
-				</p>
+					{landingTexts.tagline} <span class="font-bold text-tinte-700">{texts.names.city}</span>
+				</h1>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
-						<Button href={cta.href} class="{styles.ctaButton} {cta.color}">
-							<span class="relative flex w-full items-center justify-center">
-								{cta.label}
-							</span>
+						<Button href={cta.href} color={cta.color} size="xl" class="w-full sm:w-auto">
+							{cta.label}
 						</Button>
 					{/each}
 				</div>
 			</div>
+			
 			<div class="aspect-video w-full overflow-hidden rounded-2xl">
 				<iframe
 					class="h-full w-full"
-					src="https://www.youtube-nocookie.com/embed/IMPZfuff3eI"
+					src="https://fair.tube/videos/embed/je8G5fGCLmsM6mspzPN1tm"
 					title={landingTexts.howVideoTitle}
 					frameborder="0"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-					referrerpolicy="strict-origin-when-cross-origin"
-					allowfullscreen
+					allow="fullscreen; accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+					sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
 				></iframe>
 			</div>
 		</div>
@@ -134,17 +154,43 @@
 		<div
 			class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center"
 		>
-			{#each infoCards as card (card.title)}
+			{#each internalInfoCards as card (card.title)}
 				<div class={styles.card}>
-					<h3 class={styles.cardTitle}>{card.title}</h3>
+					<!-- h2, not h3: under the new h1, h3 would be a skipped level (axe
+					     `heading-order`). Classes unchanged ⇒ visually identical. -->
+					<h2 class={styles.cardTitle}>{card.title}</h2>
 					<p class={styles.cardBody}>
 						{card.before}
-						<a href={resolve(card.link.path)} class={styles.cardLink}
-							>{card.link.text}</a
+						<a href={resolve(card.route)} class={styles.cardLink}
+							>{card.linkText}</a
 						>{card.after}
 					</p>
 				</div>
 			{/each}
+			<div class={styles.card}>
+				<h2 class={styles.cardTitle}>{contributeInfoCard.title}</h2>
+				<p class={styles.cardBody}>
+					{contributeInfoCard.before}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- buildRedirectHref() returns an already-resolved /api/redirect proxy URL; the rule cannot see through the call -->
+					<a href={contributeInfoCard.href} class={styles.cardLink}
+						>{contributeInfoCard.linkText}</a
+					>{contributeInfoCard.after}
+				</p>
+			</div>
 		</div>
 	</section>
+
+	<!-- Public transparency numbers: same data as /misc/stats, teased here for visitors -->
+	{#if data.stats}
+		<section>
+			<div class="max-w-6xl mx-auto text-center">
+				<h2 class="text-2xl font-bold text-tinte-900 dark:text-tinte-100">{statsTexts.title}</h2>
+				<p class="mt-2 text-tinte-500 dark:text-tinte-400">{statsTexts.intro}</p>
+				<div class="mt-6">
+					<PublicStatsSection stats={data.stats} />
+				</div>
+				<a href={resolve('/misc/stats')} class="{styles.cardLink} mt-4 inline-block">{statsTexts.linkToFullPage} →</a>
+			</div>
+		</section>
+	{/if}
 </div>

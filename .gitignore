@@ -7,6 +7,13 @@ dist
 .env.*
 !.env.example
 .vscode
-.claude/settings.json
 .claude/worktrees
-.claude/CLAUDE.md
+CLAUDE.local.md
+
+# Playwright e2e
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/.auth/
+.playwright-mcp/

@@ -1,36 +1,33 @@
 <script lang="ts">
 	import {
 		Modal,
-		Button,
 		Input,
 		Label,
-		Helper,
 		Toggle,
-		Img,
 		Textarea,
 		Checkbox,
 	} from 'flowbite-svelte';
+	import Button from '$lib/components/ui/Button.svelte';
 	import { enhance } from '$app/forms';
-	import placeholderimg from '$lib/images/placeholder_img.png';
 	import type { Item } from '$lib/types/models';
-	import {
-		ChevronRightOutline,
-		QuestionCircleSolid,
-	} from 'flowbite-svelte-icons';
-	import { onDestroy } from 'svelte';
+	import { QuestionCircleSolid } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
-	import { texts, ITEM_CATEGORIES } from '$lib/texts';
+	import { texts } from '$lib/texts';
+	import { ITEM_CATEGORIES } from '$lib/categories';
 	import { compressImage } from '$lib/utils/imageUtils';
-	import CustomAlert from '$lib/components/CustomAlert.svelte';
+	import { itemOwnFileUrls } from '$lib/utils/utils';
+	import ItemImagePicker from './ItemImagePicker.svelte';
+	import ItemVisibilityFields from './ItemVisibilityFields.svelte';
 	import type { ActionData } from './$types';
 
 	interface Props {
 		isVisible: boolean;
 		type: 'add' | 'edit';
 		editingItem?: Item | null;
+		/** Existing cover image URL, shown in edit mode until new files are chosen. */
 		imgUrl?: string;
-		previewUrl?: string;
-		lastUrl?: string;
+		/** PocketBase base URL — needed to build file URLs for an item's existing images. */
+		pbUrl?: string;
 		groups?: { id: string; name: string; isPublic?: boolean }[];
 		form?: ActionData;
 	}
@@ -40,286 +37,245 @@
 		type,
 		editingItem,
 		imgUrl,
-		previewUrl,
-		lastUrl,
+		pbUrl,
 		groups = [],
 		form
 	}: Props = $props();
 
-	let isAvailable = $derived(editingItem?.status === 'available' ? true : false);
+	let isAvailable = $state(true);
 
 	let selectedCategories = $state<string[]>([]);
 	let selectedGroups = $state<string[]>([]);
 	let trusteesOn = $state(true);
-	let showTrustInfo = $state(false);
 	let showAvailabilityInfo = $state(false);
+	// Track edits so an accidental modal dismiss (backdrop / ESC / X) can warn before
+	// discarding the user's input.
+	let isDirty = $state(false);
+	// Submit-time failure message, shown inline right above the submit button. A bottom
+	// toast can't be used here: the Flowbite modal is a native <dialog> in the browser's
+	// top layer, which paints above any z-indexed toast overlay (#522). Local (not the
+	// shared page-level `form` prop) so it's scoped to THIS modal's own submit.
+	let submitError = $state<string | null>(null);
+	// In-flight guard against double-submit (slow connection + repeated taps firing
+	// duplicate ?/create requests, #445). Mirrors the bulk-add ReviewStep pattern.
+	let submitting = $state(false);
+	// Newly chosen images, owned by ItemImagePicker; bound here for submit-time compression.
+	let selectedFiles = $state<File[]>([]);
+	// Images already saved on the item (edit mode), passed to the picker's display-only gallery.
+	let existingImageUrls = $state<string[]>([]);
 
 	$effect(() => {
 		if (isVisible) {
 			selectedCategories = [...(editingItem?.categories ?? [])];
 			selectedGroups = [...(editingItem?.groups ?? [])];
 			trusteesOn = editingItem?.trusteesOnly ?? true;
-		} else {
-			selectedCategories = [];
-			selectedGroups = [];
+			isAvailable = editingItem?.status === 'available';
+			isDirty = false;
+			// Seed the existing-image gallery so editing an item with several photos shows
+			// them all. Needs pbUrl to build the file URLs; empty for add / external-only items.
+			existingImageUrls =
+				pbUrl && editingItem?.image?.length ? itemOwnFileUrls(pbUrl, editingItem) : [];
 		}
-	});
-
-	function toggleGroup(id: string, checked: boolean) {
-		selectedGroups = checked
-			? [...selectedGroups, id]
-			: selectedGroups.filter((g) => g !== id);
-	}
-
-	// Trustees and groups are independent audiences; an item is public only when
-	// neither is set.
-	let isPublic = $derived(!trusteesOn && selectedGroups.length === 0);
-
-	// A selected PUBLIC group means anyone can self-join and thus see this item —
-	// warn the owner so sharing into a public group is a conscious choice.
-	let anyPublicGroupSelected = $derived(
-		groups.some((g) => g.isPublic && selectedGroups.includes(g.id))
-	);
-
-	function handleCategoryChange(e: Event) {
-		const cb = e.target as HTMLInputElement;
-		if (cb.checked) {
-			if (selectedCategories.length >= 3) {
-				cb.checked = false;
-				return;
-			}
-			selectedCategories = [...selectedCategories, cb.value];
-		} else {
-			selectedCategories = selectedCategories.filter((c) => c !== cb.value);
-		}
-	}
-
-	function handleFileChange(event: Event) {
-		const input = event.target as HTMLInputElement;
-		const file = input.files?.[0];
-
-		if (file) {
-			if (lastUrl) URL.revokeObjectURL(lastUrl);
-			lastUrl = URL.createObjectURL(file);
-			previewUrl = lastUrl;
-		}
-	}
-
-
-	$effect(() => {
-		if (isVisible) {
-			if (!previewUrl && !imgUrl) {
-				previewUrl = placeholderimg;
-			}
-		}
-	});
-
-	onDestroy(() => {
-		if (lastUrl) URL.revokeObjectURL(lastUrl);
 	});
 
 	$effect(() => {
 		if (!isVisible) {
-			previewUrl = undefined;
 			form = null;
-			if (lastUrl) {
-				URL.revokeObjectURL(lastUrl);
-				lastUrl = undefined;
-			}
+			submitError = null;
+			submitting = false;
 		}
 	});
 </script>
 
-<Modal bind:open={isVisible} size="xs">
-	{#if form?.fail}
-		<div class="variant-soft-error rounded-token mb-2 px-4 py-2">
-			<CustomAlert type="error" message={form?.message} />
-		</div>
-	{/if}
+<Modal
+	title={type === 'edit' ? texts.pages.items.editTitle : texts.pages.items.addTitle}
+	bind:open={isVisible}
+	size="md"
+	oncancel={(e: Event) => {
+		if (isDirty && !confirm(texts.pages.items.unsavedLeaveConfirm)) {
+			e.preventDefault();
+		}
+	}}
+>
 	<form
-		class="items-right flex flex-col space-y-6"
+		class="flex flex-col gap-6 md:flex-row"
 		action="?/{type === 'edit' ? 'update' : 'create'}"
 		method="POST"
 		enctype="multipart/form-data"
-		use:enhance={async ({ formData }) => {
-			const file = formData.get('itemImage');
-			if (file instanceof File && file.size > 0 && file.type !== 'image/svg+xml') {
-				const compressed = await compressImage(file);
-				formData.set('itemImage', compressed, file.name);
+		oninput={() => (isDirty = true)}
+		onchange={() => (isDirty = true)}
+		use:enhance={async ({ formData, cancel }) => {
+			if (submitting) { cancel(); return; }
+			submitting = true;
+			submitError = null;
+			// Multi-file field: compress each chosen image and re-append under the same
+			// `itemImage` key. SVGs skip compression (canvas can't draw them reliably);
+			// anything the browser can't decode (e.g. iPhone HEIC) surfaces a clear error.
+			formData.delete('itemImage');
+			for (const file of selectedFiles) {
+				if (file.type === 'image/svg+xml') {
+					formData.append('itemImage', file, file.name);
+					continue;
+				}
+				try {
+					const compressed = await compressImage(file);
+					formData.append('itemImage', compressed, file.name);
+				} catch {
+					submitError = texts.bulkUpload.imageFormatUnsupported;
+					submitting = false;
+					cancel();
+					return;
+				}
 			}
 			return async ({ result, update }) => {
+				submitting = false;
 				if (result.type === 'success') {
+					isDirty = false;
 					isVisible = false;
+				} else if (result.type === 'failure') {
+					// Show the failure inline right above the submit button (#522). Sourced
+					// from this form's own result — not the shared page-level `form` prop,
+					// which is fanned out to every row's modal and written by unrelated
+					// inline/bulk actions — so it stays tied to *this* submit. A too-long
+					// description gets its own message instead of the generic one (the client
+					// maxlength normally prevents it; this covers a tampered/pasted submit).
+					const data = result.data as
+						| { message?: string; missingFields?: { descriptionTooLong?: boolean } }
+						| undefined;
+					submitError = data?.missingFields?.descriptionTooLong
+						? texts.pages.items.descriptionTooLong
+						: (data?.message ?? null);
 				}
 				await update();
 			};
 		}}
 	>
-		<Input type="text" name="itemId" value={editingItem?.id} hidden />
-
-		<!-- IMAGE PREVIEW -->
-		<Img
-			src={previewUrl ?? imgUrl ?? placeholderimg}
-			class="mx-auto h-50 w-50 rounded-md object-cover p-5"
+		<!-- LEFT COLUMN: image preview(s) + upload (drag & drop / click) -->
+		<ItemImagePicker
+			bind:selectedFiles
+			{existingImageUrls}
+			{imgUrl}
+			mode={type}
+			itemName={editingItem?.name ?? ''}
+			visible={isVisible}
+			onDirty={() => (isDirty = true)}
 		/>
-		<Label class="space-y-2 mx-auto text-center">
 
-			<input
-				type="file"
-				id="with_helper"
-				name="itemImage"
-				class="mb-2 min-button bg-primary-200"
-				accept="image/*"
-				onchange={handleFileChange}
-			/>
-			<Helper>Alle gängigen Bildformate</Helper>
-		</Label>
+		<!-- RIGHT COLUMN: item details -->
+		<div class="flex flex-1 flex-col space-y-6">
+			<Input type="text" name="itemId" value={editingItem?.id} hidden />
 
-		<!-- ITEM DETAILS -->
-		<Label class="space-y-2">
-			<span>Name:</span>
-			<Input
-				type="text"
-				name="itemName"
-				placeholder={texts.forms.itemName}
-				value={editingItem?.name ? editingItem.name : ''}
-				autocomplete="off"
-				required
-			/>
-		</Label>
+			<Label class="space-y-2">
+				<span>{texts.forms.nameLabel}</span>
+				<Input
+					type="text"
+					name="itemName"
+					placeholder={texts.forms.itemName}
+					value={editingItem?.name ? editingItem.name : ''}
+					autocomplete="off"
+					required
+				/>
+			</Label>
 
-		<Label class="space-y-2">
-			<span>{texts.forms.description}</span>
-			<Textarea
-				name="itemDescription"
-				class="w-full h-30"
-				placeholder={texts.forms.itemDescription}
-				value={editingItem?.description ? editingItem.description : ''}
-				autocomplete="off"
-				required
-			/>
-		</Label>
+			<Label class="space-y-2">
+				<span>{texts.forms.description}</span>
+				<Textarea
+					name="itemDescription"
+					class="h-30 w-full"
+					placeholder={texts.forms.itemDescription}
+					value={editingItem?.description ? editingItem.description : ''}
+					autocomplete="off"
+					maxlength={4000}
+					required
+				/>
+			</Label>
 
-		<!-- CATEGORIES -->
-		<div class="space-y-2">
-			<span class="text-sm font-medium">{texts.forms.itemCategories}</span>
-			<div class="flex flex-wrap gap-x-4 gap-y-2">
-				{#each ITEM_CATEGORIES as cat(cat)}
-					<Label class="flex items-center gap-1.5 cursor-pointer font-normal">
-						<Checkbox
-							name="categories"
-							value={cat}
-							checked={selectedCategories.includes(cat)}
-							disabled={selectedCategories.length >= 3 && !selectedCategories.includes(cat)}
-							onchange={handleCategoryChange}
-						/>
-						{cat}
-					</Label>
-				{/each}
-			</div>
-		</div>
-
-		<!-- VISIBILITY: trustees and groups are independent audiences -->
-		<Label class="flex">
-			<Toggle
-				name="trusteesOnly"
-				classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
-				bind:checked={trusteesOn}
-				>{texts.groups.itemTrusteesLabel}</Toggle
-			>
-			<!-- Click-toggled inline panel instead of a hover Popover — hover doesn't work on mobile. -->
-			<div class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400">
-				<button type="button" onclick={() => showTrustInfo = !showTrustInfo}>
-					<QuestionCircleSolid class="ml-1 h-full" />
-					<span class="sr-only">{texts.ui.explainThis}</span>
-				</button>
-			</div>
-		</Label>
-		{#if showTrustInfo}
-			<div class="rounded-lg border border-tinte-200 bg-sand p-3 text-sm text-tinte-500 space-y-1">
-				<p class="font-semibold text-tinte-900">{texts.groups.trustInfoTitle}</p>
-				<p>{texts.groups.trustInfoBody}</p>
-				<a href={resolve('/social')} class="text-accent hover:underline flex items-center font-medium">
-					{texts.groups.trustInfoAddLink}<ChevronRightOutline class="text-accent ms-1.5 h-4 w-4" />
-				</a>
-			</div>
-		{/if}
-
-		<!-- GROUP SHARING (independent of the trustees toggle) -->
-		<div class="space-y-2 rounded-lg border border-tinte-200 bg-sand p-3">
-			<span class="text-sm font-medium text-tinte-900">{texts.groups.itemShareTitle}</span>
-			{#if groups.length === 0}
-				<p class="text-sm text-tinte-500">{texts.groups.noGroupsForItem}</p>
-				<a href={resolve('/user/groups')} class="text-accent hover:underline flex items-center font-medium text-sm">
-					{texts.groups.goToGroups}<ChevronRightOutline class="text-accent ms-1.5 h-4 w-4" />
-				</a>
-			{:else}
-				<p class="text-xs text-tinte-500">{texts.groups.itemShareHint}</p>
-				<div class="flex flex-col gap-1.5">
-					{#each groups as g (g.id)}
-						<Label class="flex items-center gap-2 font-normal cursor-pointer">
+			<!-- CATEGORIES -->
+			<div class="space-y-2">
+				<span class="text-sm font-medium">{texts.forms.itemCategories}</span>
+				<div class="flex flex-wrap gap-x-4 gap-y-2">
+					{#each ITEM_CATEGORIES as cat(cat)}
+						<Label class="flex cursor-pointer items-center gap-1.5 font-normal">
 							<Checkbox
-								name="groups"
-								value={g.id}
-								checked={selectedGroups.includes(g.id)}
-								onchange={(e) => toggleGroup(g.id, (e.target as HTMLInputElement).checked)}
+								name="categories"
+								value={cat}
+								bind:group={selectedCategories}
+								disabled={selectedCategories.length >= 3 && !selectedCategories.includes(cat)}
 							/>
-							{g.name}
-							{#if g.isPublic}
-								<span class="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs text-primary-800 dark:bg-primary-900 dark:text-primary-200">{texts.groups.publicBadge}</span>
-							{/if}
+							{cat}
 						</Label>
 					{/each}
 				</div>
-				{#if anyPublicGroupSelected}
-					<p class="text-xs font-medium text-danger">{texts.groups.itemPublicGroupWarning}</p>
-				{/if}
-			{/if}
-		</div>
+			</div>
 
-		{#if isPublic}
-			<p class="text-xs text-tinte-500">{texts.groups.itemPublicHint}</p>
-		{/if}
+			<ItemVisibilityFields {groups} bind:trusteesOn bind:selectedGroups />
 
-		{#if type === 'edit'}
-			<Label class="flex">
-				<Toggle
-					classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
-					name="isAvailable"
-					bind:checked={isAvailable}
-					>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle
-				>
-				<!-- Same click-toggle pattern as trust info above. -->
-				<div class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400">
-					<button type="button" onclick={() => showAvailabilityInfo = !showAvailabilityInfo}>
+			{#if type === 'edit'}
+				<div class="flex items-center">
+					<Label class="flex">
+						<Toggle
+							classes={{ span: 'bg-primary-300 peer-checked:bg-safety' }}
+							name="isAvailable"
+							bind:checked={isAvailable}
+							>{isAvailable ? texts.itemStatus.available : texts.itemStatus.unavailable}</Toggle
+						>
+					</Label>
+					<!-- Same pattern: info button sits outside the <Label> so it can't flip the toggle. -->
+					<button
+						type="button"
+						class="flex items-center text-sm font-light text-tinte-500 dark:text-tinte-400"
+						onclick={() => (showAvailabilityInfo = !showAvailabilityInfo)}
+					>
 						<QuestionCircleSolid class="ml-1 h-full" />
 						<span class="sr-only">{texts.ui.explainThis}</span>
 					</button>
 				</div>
-			</Label>
-			{#if showAvailabilityInfo}
-				<div class="rounded-lg border border-tinte-200 bg-sand p-3 text-sm text-tinte-500 space-y-1">
-					<p class="font-semibold text-tinte-900">{texts.ui.availabilityTitle}</p>
-					<p>{texts.ui.availabilityExplain}</p>
-				</div>
+				{#if showAvailabilityInfo}
+					<div class="space-y-1 rounded-lg border border-tinte-200 bg-sand p-3 text-sm text-tinte-500">
+						<p class="font-semibold text-tinte-900">{texts.ui.availabilityTitle}</p>
+						<p>{texts.ui.availabilityExplain}</p>
+					</div>
+				{/if}
 			{/if}
-		{/if}
 
-		<!-- SUBMIT BUTTON -->
-		<Button class="min-button bg-primary-200 hover:bg-primary" type="submit">
-			{type === 'edit' ? texts.buttons.save : texts.buttons.add}
-		</Button>
+			<!-- Submit failure shown right where the user is looking (next to the button),
+				 so it's never scrolled out of view like the old top-of-modal alert (#522). -->
+			{#if submitError}
+				<p
+					class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200"
+					role="alert"
+				>
+					{submitError}
+				</p>
+			{/if}
+
+			<!-- SUBMIT BUTTON -->
+			<Button type="submit" loading={submitting}>
+				{type === 'edit' ? texts.buttons.save : texts.buttons.add}
+			</Button>
+		</div>
 	</form>
 
 	<!-- DELETE BUTTON -->
 	{#if type === 'edit'}
-		
+		<!-- Delete-blocked alert sits by the delete button (not the modal top) so it's in
+			 view right after the click, and carries the actionable conversation link. -->
+		{#if form?.fail && form?.conversationIds?.length}
+			<div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200" role="alert">
+				<p>{form.message}</p>
+				<a
+					href={resolve('/conversations/[conversationId]', { conversationId: form.conversationIds[0] })}
+					class="mt-1 inline-block font-semibold underline"
+				>{texts.pages.items.linkToConversation}</a>
+			</div>
+		{/if}
 		<form
 			method="POST"
 			action="?/delete"
 			use:enhance={() => {
 				return async ({ result, update }) => {
 					if (result.type === 'success') {
+						isDirty = false;
 						isVisible = false;
 					}
 					await update();
@@ -328,9 +284,7 @@
 			class="mt-4 flex w-full justify-end"
 		>
 			<Input type="text" name="itemId" value={editingItem?.id} hidden />
-			<Button class="min-button bg-accent-200 hover:bg-danger" type="submit"
-				>{texts.buttons.delete}</Button
-			>
+			<Button variant="danger" type="submit">{texts.buttons.delete}</Button>
 		</form>
 	{/if}
 </Modal>
