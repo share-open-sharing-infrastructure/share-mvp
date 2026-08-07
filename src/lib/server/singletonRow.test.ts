@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { makeMockPb } from '$lib/test-utils/pocketbase';
-import { upsertSingletonRow } from './singletonRow';
+import { deleteSingletonRow, upsertSingletonRow } from './singletonRow';
 
 const COLLECTION = 'user_things';
 
@@ -54,5 +54,61 @@ describe('upsertSingletonRow', () => {
 		const { promise, update } = run({ find, create });
 		await expect(promise).rejects.toThrow('boom');
 		expect(update).not.toHaveBeenCalled();
+	});
+});
+
+/** A PocketBase-shaped rejection: what matters to the guard is the `status` field. */
+function pbError(status: number, message = `status ${status}`) {
+	return Object.assign(new Error(message), { status });
+}
+
+function runDelete(opts: { find: ReturnType<typeof vi.fn>; del?: ReturnType<typeof vi.fn> }) {
+	const del = opts.del ?? vi.fn().mockResolvedValue(true);
+	const pb = makeMockPb({ [COLLECTION]: { delete: del } });
+	const promise = deleteSingletonRow({
+		pb,
+		collection: COLLECTION,
+		find: opts.find as () => Promise<{ id: string } | null>,
+	});
+	return { promise, del };
+}
+
+describe('deleteSingletonRow', () => {
+	it('deletes the existing row', async () => {
+		const find = vi.fn().mockResolvedValue({ id: 'row1' });
+		const { promise, del } = runDelete({ find });
+		await promise;
+		expect(del).toHaveBeenCalledWith('row1');
+	});
+
+	it('no-ops when there is no row to delete', async () => {
+		const find = vi.fn().mockResolvedValue(null);
+		const { promise, del } = runDelete({ find });
+		await expect(promise).resolves.toBeUndefined();
+		expect(del).not.toHaveBeenCalled();
+	});
+
+	it('swallows a 404 from a lost delete race once the row is confirmed gone', async () => {
+		// find: the row up front, then nothing — the concurrent writer already removed it.
+		const find = vi.fn().mockResolvedValueOnce({ id: 'row1' }).mockResolvedValueOnce(null);
+		const del = vi.fn().mockRejectedValue(pbError(404, 'Not Found'));
+		const { promise } = runDelete({ find, del });
+		await expect(promise).resolves.toBeUndefined();
+		expect(find).toHaveBeenCalledTimes(2);
+	});
+
+	it('rethrows a 404 when the row survived (a rule or hook refused the delete)', async () => {
+		const find = vi.fn().mockResolvedValue({ id: 'row1' });
+		const del = vi.fn().mockRejectedValue(pbError(404, 'Not Found'));
+		const { promise } = runDelete({ find, del });
+		await expect(promise).rejects.toThrow('Not Found');
+	});
+
+	it('rethrows a non-404 delete error so a real failure stays visible', async () => {
+		const find = vi.fn().mockResolvedValue({ id: 'row1' });
+		const del = vi.fn().mockRejectedValue(pbError(403, 'Forbidden'));
+		const { promise } = runDelete({ find, del });
+		await expect(promise).rejects.toThrow('Forbidden');
+		expect(find).toHaveBeenCalledTimes(1); // no pointless re-read on a non-race error
 	});
 });
