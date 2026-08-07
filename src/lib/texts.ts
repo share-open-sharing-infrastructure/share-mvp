@@ -1021,6 +1021,9 @@ export const texts = {
 				'AllerLeih kann deinen aktuellen GPS-Standort nutzen, um dir Dinge in deiner unmittelbaren Nähe anzuzeigen. Dein Standort wird dabei nicht gespeichert.',
 			allow: 'Standort freigeben',
 			denied: 'Standort konnte nicht abgerufen werden. Bitte stelle sicher dass du die Standortfreigabe in deinem Browser oder Betriebssytem aktiviert hast, um diese Funktion zu nutzen.',
+			blocked:
+				'Standortzugriff ist blockiert. Aktiviere ihn in den Einstellungen deines Browsers (iPhone: Einstellungen → Safari → Standort) und lade die Seite neu.',
+			reload: 'Seite neu laden',
 		},
 		pushNotifications: {
 			title: 'Benachrichtigungen aktivieren?',
