@@ -1,6 +1,7 @@
 import type PocketBase from 'pocketbase';
 import type { LendingRequirements, UnmetRequirement, RequirementSetting } from '$lib/types/models';
 import { texts } from '$lib/texts';
+import { upsertSingletonRow } from '$lib/server/singletonRow';
 
 /**
  * Lender-defined borrower requirements (issues #423 / #389).
@@ -93,15 +94,25 @@ export function getRequirementSettings(req: LendingRequirements | null): Require
 	}));
 }
 
-/** Returns the owner's configured requirements, or null if none are set. */
+/**
+ * Returns the owner's configured requirements, or null if none are set.
+ *
+ * `requestKey` MUST be distinct per concurrent call site on the same `pb` (mirrors
+ * `getUserPreferences`): PocketBase's auto-cancellation keys by method+path, so a
+ * second identical GET aborts the first — and the `catch` below turns that
+ * `AbortError` into `null`, which reads as "no requirements" and opens the gate.
+ */
 export async function getOwnerRequirements(
 	pb: PocketBase,
-	ownerId: string
+	ownerId: string,
+	requestKey = 'owner-requirements'
 ): Promise<LendingRequirements | null> {
 	try {
 		return await pb
 			.collection('lending_requirements')
-			.getFirstListItem<LendingRequirements>(pb.filter('owner = {:ownerId}', { ownerId }));
+			.getFirstListItem<LendingRequirements>(pb.filter('owner = {:ownerId}', { ownerId }), {
+				requestKey,
+			});
 	} catch {
 		// PocketBase throws 404 when no record matches — translate to null.
 		return null;
@@ -110,42 +121,40 @@ export async function getOwnerRequirements(
 
 /**
  * Upserts the owner's own requirements row. Creates it on first save, updates it
- * thereafter (one row per owner, enforced by a unique index on `owner`). If two
- * saves race and both try to create, the loser's unique-index error is caught and
- * retried as an update, so the user never sees a spurious failure.
+ * thereafter (one row per owner, enforced by a unique index on `owner`); a lost
+ * create race is retried as an update by the shared helper.
  */
 export async function upsertOwnerRequirements(
 	pb: PocketBase,
 	ownerId: string,
 	data: Partial<Record<RequirementField, boolean>>
 ): Promise<void> {
-	const existing = await getOwnerRequirements(pb, ownerId);
-	if (existing) {
-		await pb.collection('lending_requirements').update(existing.id, data);
-		return;
-	}
-	try {
-		await pb.collection('lending_requirements').create({ owner: ownerId, ...data });
-	} catch (err) {
-		// Lost a create race (unique index on owner) — fall back to updating the row
-		// that the other writer just created.
-		const row = await getOwnerRequirements(pb, ownerId);
-		if (row) await pb.collection('lending_requirements').update(row.id, data);
-		else throw err;
-	}
+	await upsertSingletonRow({
+		pb,
+		collection: 'lending_requirements',
+		find: () => getOwnerRequirements(pb, ownerId),
+		createData: { owner: ownerId, ...data },
+		patch: data,
+	});
 }
 
 /**
  * Evaluates the owner's enabled requirements against a borrower and returns the
  * ones that are NOT met (empty array = borrower may request). Used for UX only;
  * the backend hook performs the binding check.
+ *
+ * `requestKey` is forwarded to `getOwnerRequirements` and MUST be distinct per
+ * concurrent call site on the same `pb` — see that function's doc comment. Note
+ * that a `RequirementDef.evaluate` issuing its own reads is subject to the same
+ * trap and must key them itself.
  */
 export async function evaluateUnmetRequirements(
 	pb: PocketBase,
 	ownerId: string,
-	borrower: Borrower
+	borrower: Borrower,
+	requestKey?: string
 ): Promise<UnmetRequirement[]> {
-	const req = await getOwnerRequirements(pb, ownerId);
+	const req = await getOwnerRequirements(pb, ownerId, requestKey);
 	if (!req) return [];
 
 	const unmet: UnmetRequirement[] = [];

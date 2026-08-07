@@ -1,12 +1,24 @@
 import { USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH } from '$lib/utils/username';
+import { instance } from '$lib/instance';
 
 /** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
-const APP_NAME = 'AllerLeih';
+const APP_NAME = instance.appName;
+// Instance config feeds the interpolated strings below (object literals can't self-reference
+// via `this`). Any email address RENDERED AS VISIBLE TEXT goes through a `texts.names.*`
+// constant here (mainContactMail, feedbackMail) so the "user-facing strings live in texts.ts"
+// rule holds even though the value originates in `$lib/instance.ts`; a `mailto:` href (not
+// itself visible text) may still read straight from `instance` at the call site, like URLs do.
+const CITY = instance.city;
+const CONTACT_MAIL = instance.contactEmail;
+const FEEDBACK_MAIL = instance.feedbackEmail;
+const ORIGIN_HOST = instance.originHost; // 'allerleih.org' by default
 
 export const texts = {
 	names: {
 		app: APP_NAME,
-		mainContactMail: 'kontakt@allerleih.org',
+		mainContactMail: CONTACT_MAIL,
+		feedbackMail: FEEDBACK_MAIL,
+		city: CITY,
 	},
 
 	// Share / "Teilen" buttons (items, profiles)
@@ -63,6 +75,15 @@ export const texts = {
 		privacy: 'Datenschutz',
 		tos: 'AGB',
 		app: 'App',
+		// Beta badge + popover in NavBarComponent.svelte (split like landing.whoBodyPart1/
+		// whoLinkText/whoBodyPart2 so the inline contact link survives the interpolation).
+		beta: {
+			badge: 'Beta',
+			popoverTitle: 'Beta-Zugang',
+			popoverBodyPart1: `Wir testen ${APP_NAME} gerade in ${CITY}! Die Plattform kann noch Fehler haben und wird beständig verbessert. Wenn du uns dabei unterstützen magst, `,
+			popoverLinkText: 'frag uns gerne nach einem Zugang',
+			popoverBodyPart2: ', nutze die Plattform und teile uns dein Feedback über den Feedback-Button mit!',
+		},
 	},
 
 	// Footer
@@ -235,7 +256,7 @@ export const texts = {
 		offerSomething: 'Biete selbst etwas an!',
 		newsletter: 'Für Newsletter registrieren',
 		search: 'Suchen',
-		showAll: 'Alles anzeigen',
+		clearSearch: 'Suche zurücksetzen',
 	},
 
 	// Groups feature
@@ -413,7 +434,6 @@ export const texts = {
 			tagline: 'Leihe und teile kostenlos Dinge in',
 			ctaButtonSearch: 'Dinge Finden',
 			ctaButtonUpload: 'Dinge Verleihen',
-			city: 'Lüneburg',
 			lendButton: 'Gegenstände verleihen',
 			or: 'oder',
 			registerCta: 'um Gegenstände anzubieten.',
@@ -424,7 +444,7 @@ export const texts = {
 			howBodyPart2: '. Oder schau dich einfach um!',
 			howVideoTitle: 'Erklärvideo: Wie funktioniert AllerLeih?',
 			who: 'Wer seid ihr?',
-			whoBodyPart1: 'Wir sind eine gemeinwohl-orientierte Initiative aus Lüneburg. Unter',
+			whoBodyPart1: `Wir sind eine gemeinwohl-orientierte Initiative aus ${CITY}. Unter`,
 			whoLinkText: 'Über Uns',
 			whoBodyPart2: ' erfährst du mehr!',
 			support: 'Was passiert gerade?',
@@ -438,12 +458,24 @@ export const texts = {
 		about: {
 			title: 'Über AllerLeih',
 			description: 'von und für Freunde, Familie und die lokale Gemeinschaft',
+			joinMailSubject: `Interesse an Mitmachen Bei ${APP_NAME}`,
 		},
 		contact: {
 			title: 'Kontakt',
 		},
 		imprint: {
 			title: 'Impressum',
+			// Betreiber-Postadresse (§5 TMG) — instanzabhängig, daher aus $lib/instance gespeist
+			// statt hier hart hinterlegt (siehe Guardrail: URLs/Adressdaten kommen aus `instance`).
+			// Heißt bewusst `address`, nicht `operator`: `instance.imprint.operator` ist der
+			// Betreiber-NAME (string), dieses Objekt ist die ganze Postadresse (Name+Straße+…).
+			address: {
+				name: instance.imprint.operator,
+				street: instance.imprint.street,
+				postalCode: instance.imprint.postalCode,
+				city: instance.imprint.city,
+				country: instance.imprint.country,
+			},
 		},
 		faq: {
 			title: 'Häufige Fragen (FAQ)',
@@ -506,6 +538,9 @@ export const texts = {
 			faqItems: [
 				{
 					q: 'Wer seid ihr?',
+					// Gründer-Biografie: Betreiber-Inhalt, bewusst NICHT instanzabhängig — die beiden
+					// Gründer haben tatsächlich in Lüneburg studiert; das bliebe wahr für jede Instanz,
+					// eine Interpolation von CITY würde den Satz für eine andere Stadt verfälschen.
 					a: 'Derzeit sind wir ein Duo: Timo und Matteo! Wir haben beide in Lüneburg studiert und wollen mit AllerLeih einen Beitrag zum Gemeinwohl leisten. Wir sind der Auffassung, dass das Teilen und Leihen in vielerlei Hinsicht eine bessere Alternative zum Kaufen ist. Und wir wollen, dass die Infrastruktur dafür nicht nur einfach und zugänglich ist, sondern auch nachhaltig für alle funktioniert. Deswegen entwickeln wir AllerLeih als gemeinnützige Organisation und Open-Source-Software. So verhindern wir die Kommerzialisierung und manipulative Algorithmen.',
 				},
 				{
@@ -572,7 +607,7 @@ export const texts = {
 						id: 'ios',
 						label: 'iPhone / iPad (Safari)',
 						steps: [
-							'Öffne allerleih.org in Safari.',
+							`Öffne ${ORIGIN_HOST} in Safari.`,
 							'Tippe unten auf das Teilen-Symbol (Quadrat mit Pfeil nach oben).',
 							'Wähle „Zum Home-Bildschirm".',
 							'Tippe oben rechts auf „Hinzufügen".',
@@ -582,7 +617,7 @@ export const texts = {
 						id: 'android-chrome',
 						label: 'Android (Chrome, Edge, Brave)',
 						steps: [
-							'Öffne allerleih.org im Browser.',
+							`Öffne ${ORIGIN_HOST} im Browser.`,
 							'Tippe oben rechts auf das Menü (⋮).',
 							'Wähle „App installieren" oder „Zum Startbildschirm hinzufügen".',
 							'Bestätige mit „Installieren".',
@@ -592,7 +627,7 @@ export const texts = {
 						id: 'android-firefox',
 						label: 'Android (Firefox)',
 						steps: [
-							'Öffne allerleih.org in Firefox.',
+							`Öffne ${ORIGIN_HOST} in Firefox.`,
 							'Tippe oben rechts auf das Menü (⋮).',
 							'Wähle „Zum Startbildschirm hinzufügen". Möglicherweise musst du zuerst auf „Mehr" tippen, bevor dieser Menüpunkt erscheint.',
 							'Bestätige mit „Hinzufügen".',
@@ -602,7 +637,7 @@ export const texts = {
 						id: 'desktop-chromium',
 						label: 'Computer (Chrome, Edge)',
 						steps: [
-							'Öffne allerleih.org im Browser.',
+							`Öffne ${ORIGIN_HOST} im Browser.`,
 							'Klicke rechts in der Adressleiste auf das Installations-Symbol (Bildschirm mit Pfeil nach unten).',
 							'Alternativ: Menü (⋮) → „AllerLeih installieren".',
 							'Bestätige mit „Installieren".',
@@ -620,7 +655,7 @@ export const texts = {
 						id: 'other',
 						label: 'Anderer Browser',
 						steps: [
-							'Öffne allerleih.org im Browser.',
+							`Öffne ${ORIGIN_HOST} im Browser.`,
 							'Öffne das Browser-Menü.',
 							'Suche nach „App installieren" oder „Zum Startbildschirm hinzufügen".',
 						],
@@ -637,7 +672,10 @@ export const texts = {
 			},
 		},
 		search: {
-			title: 'Suche',
+			// Sichtbare <h1> von `/search` (nicht der Navigationslabel — das ist `nav.search`).
+			// Trägt den Ort, weil `/search` eine indexierbare Landingpage ist und ein blankes
+			// "Suche" als h1 kein lokales Signal liefert.
+			title: `Gegenstände leihen in ${CITY}`,
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
 				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
@@ -663,6 +701,7 @@ export const texts = {
 				maxMinutes: (n: number) => `<${n} min`,
 				paginationHidden:
 					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf >30 min", um alle Seiten zu sehen.',
+				sliderLabel: 'Maximale Reisezeit in Minuten',
 			},
 			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
@@ -676,6 +715,24 @@ export const texts = {
 			ownerTypePrivate: 'Personen',
 			groupFilterLabel: 'Gruppe',
 			groupFilterAll: 'Alle Gruppen',
+			// Filter trigger button + modal (issue #505: consolidated filter modal)
+			filterButton: 'Filter',
+			filterButtonActive: (count: number) => `Filter (${count})`,
+			sortLabel: 'Sortierung',
+			sortOptions: {
+				newest: 'Neueste zuerst',
+				name_asc: 'Name A–Z',
+				name_desc: 'Name Z–A',
+			} as Record<string, string>,
+			filterModalTitle: 'Filter',
+			filterSectionAvailability: 'Verfügbarkeit',
+			filterAvailabilitySubtext: 'Zeigt nur Dinge, die aktuell verliehen werden können.',
+			filterSectionOwnerType: 'Anbieter',
+			filterSectionDistance: 'Entfernung',
+			filterSectionCategories: 'Kategorien',
+			filterSectionGroup: 'Gruppen',
+			filterReset: 'Zurücksetzen',
+			filterApply: 'Filter anwenden',
 		},
 		logout: {
 			message: 'Ausloggen...',
@@ -731,6 +788,10 @@ export const texts = {
 			noActiveConversations: 'Keine aktiven Unterhaltungen.',
 			noLendingConversations: 'Keine Anfragen für deine Sachen.',
 			noBorrowingConversations: 'Du hast noch nichts angefragt.',
+			backToConversations: '← Zurück zu deinen Anfragen',
+			noConversationSelectedTitle: 'Kein Gespräch ausgewählt',
+			noConversationSelectedBody: 'Wähle eine Unterhaltung aus der Liste oder starte eine neue über die Suche.',
+			goToSearch: 'Zur Suche',
 		},
 		items: {
 			title: 'Meine Dinge',
@@ -811,6 +872,10 @@ export const texts = {
 			denied: 'Benachrichtigungen sind in deinem Browser blockiert. Du kannst sie in deinen Browser-Einstellungen wieder aktivieren.',
 			emailToggleLabel: 'E-Mail-Benachrichtigungen',
 			emailToggleDescription: 'Erhalte eine E-Mail, wenn du neue Nachrichten oder Anfragen bekommst.',
+			digestToggleLabel: 'Wochen-Rückblick per E-Mail',
+			digestToggleDescription:
+				'Jeden Sonntag eine Zusammenfassung der neuen Dinge aus deinem Umfeld.',
+			emailMasterNote: 'Ist die E-Mail-Benachrichtigung aus, verschicken wir gar keine E-Mails an dich – auch keinen Wochen-Rückblick.',
 		},
 		},
 		invite: {
@@ -1086,11 +1151,17 @@ export const texts = {
 			confirmReturn: 'Rückgabe bestätigen',
 			abort: 'Anfrage abbrechen',
 		},
-		// Confirmation modal shown before aborting (mirrors the delete modal).
+		// Confirmation modal shown before aborting (mirrors confirmDelete below).
 		confirmAbort: {
 			title: 'Anfrage abbrechen',
 			body: 'Willst du diese Anfrage wirklich abbrechen? Die andere Person wird benachrichtigt und der Gegenstand wird wieder freigegeben.',
 			confirm: 'Anfrage abbrechen',
+		},
+		// Confirmation modal shown before deleting a conversation (mirrors confirmAbort above).
+		confirmDelete: {
+			title: 'Anfrage löschen',
+			body: 'Willst du diese Anfrage wirklich löschen? Alle Nachrichten dieser Unterhaltung gehen dabei verloren.',
+			confirm: 'Anfrage löschen',
 		},
 		statusDescription: {
 			pending: {
@@ -1150,22 +1221,44 @@ export const texts = {
 		},
 	},
 
-	// SEO meta titles and descriptions
+	// SEO meta titles and descriptions.
+	//
+	// Lokale Auffindbarkeit: die indexierbaren Seiten tragen den Ortsnamen (`CITY`) in Title
+	// und/oder Description. Ohne ihn rankte die Instanz nur auf den Markennamen — lokale
+	// Anfragen wie "leihen <Stadt>" oder "bohrmaschine leihen <Stadt>" fanden keinerlei
+	// Übereinstimmung. Der Ort kommt IMMER aus `CITY` (= `instance.city`), nie als Literal:
+	// ein Build-Artefakt bedient mehrere Stadt-Instanzen (siehe `$lib/instance.ts`).
+	// `src/lib/texts.test.ts` pinnt beides — Ortsbezug und Interpolierbarkeit.
+	//
+	// Bewusst OHNE Ort — Stand dieser Änderung vollständig, damit niemand einen der Fälle für ein
+	// Versehen hält (spätere Ergänzungen bitte hier nachpflegen):
+	//   · noindex-Seiten, die kein Crawler sieht: adminMetrics, conversations, social,
+	//     onboarding, userImport, register, resetConfirm, confirmVerification,
+	//     confirmEmailChange
+	//   · indexierbar, aber ohne lokale Suchintention: login, reset, app, publicStats,
+	//     newsletter
+	//   · userProfile/userProfileDescription: die Query ist der Username, nicht der Ort
+	//   · imprint: trägt die Postadresse ohnehin
+	//
+	// Gemischtes Bild `${APP_NAME}` vs. Literal "AllerLeih" ist ebenfalls Absicht: Fortsetzung
+	// der partiellen #473-Entscheidung (siehe `$lib/instance.ts` → `appName`). Umgestellt sind
+	// nur die ohnehin angefassten Strings; die übrigen ~89 Vorkommen in der deutschen Copy
+	// bleiben Literale. Neue oder überarbeitete Strings nutzen `${APP_NAME}`.
+	//
+	// Längenbudget der angefassten Strings: Title ≤ 60, Description ≤ 155 Zeichen (ab da
+	// kürzen Suchmaschinen). Im Test als `it.each` hinterlegt.
 	seo: {
 		home: {
-			title: 'AllerLeih',
-			description:
-				'Kostenlos Gegenstände leihen und teilen mit Menschen in deiner Umgebung. Spare Geld, Platz und Ressourcen und stärke deine Gemeinschaft.',
+			title: `Dinge leihen und verleihen in ${CITY} – ${APP_NAME}`,
+			description: `Kostenlos Dinge leihen und verleihen in ${CITY} und Umgebung: Werkzeug, Garten, Küche, Sport und mehr. Spare Geld, Platz und Ressourcen.`,
 		},
 		search: {
-			title: 'Gegenstände suchen – AllerLeih',
-			description:
-				'Durchsuche Gegenstände in deiner Nähe. Filtere nach Kategorie und Entfernung und finde, was du brauchst.',
+			title: `Gegenstände ausleihen in ${CITY} – ${APP_NAME}`,
+			description: `Durchsuche Gegenstände zum Ausleihen in ${CITY} und Umgebung. Filtere nach Kategorie und Entfernung und finde kostenlos, was du gerade brauchst.`,
 		},
 		about: {
-			title: 'Über uns – AllerLeih',
-			description:
-				'AllerLeih ist eine gemeinnützige Plattform für lokales Leihen und Teilen. Lerne das Team dahinter kennen.',
+			title: `Über uns – ${APP_NAME} ${CITY}`,
+			description: `${APP_NAME} ist eine gemeinnützige Initiative aus ${CITY} für lokales Leihen und Teilen. Lerne das Team dahinter kennen.`,
 		},
 		adminMetrics: {
 			title: 'Kennzahlen – Admin – AllerLeih',
@@ -1176,9 +1269,9 @@ export const texts = {
 				'Offene Kennzahlen der AllerLeih-Plattform: registrierte Nutzer:innen, verfügbare Gegenstände und abgeschlossene Ausleihen.',
 		},
 		guide: {
+			// Title bleibt ohne Ort: "Wie funktioniert AllerLeih?" ist eine Brand-Query.
 			title: 'Wie funktioniert AllerLeih? – Anleitung',
-			description:
-				'Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen auf AllerLeih. Tipps, FAQs und erste Schritte.',
+			description: `Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen in ${CITY}. Tipps, FAQs und erste Schritte mit ${APP_NAME}.`,
 		},
 		app: {
 			title: 'AllerLeih als App installieren',
@@ -1186,8 +1279,8 @@ export const texts = {
 				'Lege AllerLeih als App auf deinen Startbildschirm – ohne App-Store. So installierst du die Progressive Web App Schritt für Schritt auf iPhone, Android und Computer.',
 		},
 		contact: {
-			title: 'Kontakt – AllerLeih',
-			description: 'Schreib uns! Fragen, Feedback oder Kooperationsanfragen sind herzlich willkommen.',
+			title: `Kontakt – ${APP_NAME} ${CITY}`,
+			description: `Schreib uns! Fragen, Feedback oder Kooperationsanfragen rund um ${APP_NAME} in ${CITY} sind herzlich willkommen.`,
 		},
 		imprint: {
 			title: 'Impressum – AllerLeih',
@@ -1224,9 +1317,15 @@ export const texts = {
 			title: 'Neue E-Mail-Adresse bestätigen – AllerLeih',
 			description: 'Bestätige die Änderung deiner E-Mail-Adresse für dein AllerLeih-Konto.',
 		},
-		itemDetail: (name: string, owner: string) => `${name} leihen bei ${owner} – AllerLeih`,
+		// Der Owner steht bewusst NICHT mehr im Title: er bringt kein Ranking und verdrängt
+		// bei langen Item-Namen den Ortsnamen aus dem angezeigten Snippet. Sein Platz ist die
+		// Description. Der Fixteil muss einem Item-Namen von ~29 Zeichen Platz im 60-Zeichen-
+		// Budget lassen (im Test gepinnt); bei längeren Namen kürzt Google nach Pixelbreite,
+		// der Ort steht direkt hinter dem Namen und überlebt das in aller Regel. Bewusst
+		// keine Kürzungslogik hier.
+		itemDetail: (name: string) => `${name} leihen in ${CITY} – ${APP_NAME}`,
 		itemDetailDescription: (name: string, owner: string) =>
-			`Leihe ${name} von ${owner} über AllerLeih – die kostenlose Plattform zum Teilen in deiner Umgebung.`,
+			`Leihe ${name} von ${owner} in ${CITY} – kostenlos und nachbarschaftlich über ${APP_NAME}.`,
 		userProfile: (username: string) => `@${username} – AllerLeih`,
 		userProfileDescription: (username: string) =>
 			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
@@ -1302,11 +1401,18 @@ export const texts = {
 		importNoCsvData: 'Keine CSV-Daten vorhanden.',
 		importLoadExistingFailed:
 			'Bestehende Artikel konnten nicht geladen werden. Bitte später erneut versuchen.',
+		importApplyFailed: 'Import fehlgeschlagen. Bitte später erneut versuchen.',
+		/** Backend answered 409: a sync/refresh/import is already running (shared lock). */
+		importBusy:
+			'Es läuft gerade eine Synchronisierung. Bitte in ein paar Minuten noch einmal versuchen.',
 		importLoaderLabel: 'Importiere …',
 		importLoaderHint: 'Bitte warten …',
 		importRefreshButton: 'Alle Gegenstände synchronisieren',
 		importRefreshTriggered: 'Synchronisierung abgeschlossen.',
 		importRefreshFailed: 'Synchronisierung fehlgeschlagen. Bitte später erneut versuchen.',
+		/** No `sync_config` row for this institution — the button has nothing to synchronise. */
+		importRefreshNoIntegration:
+			'Für diesen Account ist keine automatische Quelle eingerichtet — es gibt nichts zu synchronisieren. Bitte an die AllerLeih-Administration wenden.',
 		importActionLabels: {
 			create: 'Neu',
 			update: 'Update',
@@ -1429,7 +1535,7 @@ export const texts = {
 				'Du kannst es dir jederzeit anders überlegen und den Bedingungen nachträglich zustimmen, um dein Konto sofort wieder freizuschalten:',
 			acceptInstead: 'Bedingungen jetzt akzeptieren',
 			contactPrompt: 'Du hast Fragen oder möchtest den Sachverhalt klären? Wende dich an:',
-			contactEmail: 'kontakt@allerleih.org',
+			contactEmail: CONTACT_MAIL,
 			logout: 'Abmelden',
 		},
 	},

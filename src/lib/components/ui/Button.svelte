@@ -107,7 +107,7 @@
 </script>
 
 {#if href}
-	<!-- eslint-disable svelte/no-navigation-without-resolve -- href is provided by callers, who resolve() their paths; the rule can't see through the prop -->
+	<!-- eslint-disable svelte/no-navigation-without-resolve -- href comes from a caller prop that the caller resolve()s; the rule cannot see through the prop -->
 	<a
 		{href}
 		class="{classes}{isDisabled ? ' pointer-events-none opacity-60' : ''}"

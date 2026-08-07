@@ -4,7 +4,9 @@
 	import { enhance } from '$app/forms';
 	import { texts } from '$lib/texts';
 
-	let { open, conversationId }: { open: boolean; conversationId: string } = $props();
+	// submitCounterfactual reads the conversation id from the route's `params.conversationId`
+	// (not a hidden form field), so this component doesn't need to know it either.
+	let { open }: { open: boolean } = $props();
 
 	let selectedAnswer = $state('');
 
@@ -26,12 +28,10 @@
 
 	<!-- Separate skip form so its submit button never competes with the radio value -->
 	<form id="cf-skip" method="POST" action="?/submitCounterfactual" use:enhance>
-		<input type="hidden" name="conversationId" value={conversationId} />
 		<input type="hidden" name="answer" value="skipped" />
 	</form>
 
 	<form method="POST" action="?/submitCounterfactual" use:enhance>
-		<input type="hidden" name="conversationId" value={conversationId} />
 		<div class="flex flex-col gap-3 mb-6">
 			{#each orderedOptions as [value, label] (value)}
 				<label class="flex items-center gap-2 cursor-pointer">

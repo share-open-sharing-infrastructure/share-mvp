@@ -1,16 +1,14 @@
 <script lang="ts">
-	import Button from '$lib/components/ui/Button.svelte';
 	import { SearchOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { goto, beforeNavigate } from '$app/navigation';
 	import { texts } from '$lib/texts';
+	import type { Snippet } from 'svelte';
 
 	const SEARCH_DELAY_MS = 1200;
 	const MINIMAL_SEARCHSTRING_LENGTH = 3;
 
-	let { q = '' }: { q: string } = $props();
-
-	const browseAllUrl = resolve('/search') + '?q=*';
+	let { q = '', filterSlot }: { q: string; filterSlot?: Snippet } = $props();
 
 	let inputValue = $state(q);
 	let inputEl = $state<HTMLInputElement | null>(null);
@@ -59,8 +57,7 @@
 		isDebouncing = true;
 		debounceTimer = setTimeout(async () => {
 			isDebouncing = false;
-			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			await goto(`/search?q=${encodeURIComponent(value)}`, {
+			await goto(resolve(`/search?q=${encodeURIComponent(value)}`), {
 				keepFocus: true,
 				noScroll: true,
 				replaceState: true
@@ -76,8 +73,7 @@
 		}
 		isDebouncing = false;
 		const value = inputValue.trim();
-		// eslint-disable-next-line svelte/no-navigation-without-resolve
-		await goto(value ? `/search?q=${encodeURIComponent(value)}` : browseAllUrl, {
+		await goto(resolve(value ? `/search?q=${encodeURIComponent(value)}` : '/search'), {
 			keepFocus: true,
 			noScroll: true
 		});
@@ -96,23 +92,6 @@
 
 <form method="GET" action="/search" class="flex gap-2" onsubmit={handleSubmit}>
 	<div class="relative flex-1">
-		<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-			<svg
-				class="h-4 w-4 text-tinte-500 dark:text-tinte-400"
-				aria-hidden="true"
-				xmlns="http://www.w3.org/2000/svg"
-				fill="none"
-				viewBox="0 0 20 20"
-			>
-				<path
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-				/>
-			</svg>
-		</div>
 		<input
 			bind:this={inputEl}
 			bind:value={inputValue}
@@ -121,30 +100,39 @@
 			autocomplete="off"
 			name="q"
 			placeholder={texts.forms.searchPlaceholder}
-			class="search-bar pulse-shadow block w-full rounded-lg border border-tinte-300 bg-papier p-2.5 pl-10 pr-8 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400 [&::-webkit-search-cancel-button]:hidden"
+			class="search-bar pulse-shadow block w-full rounded-lg border border-tinte-300 bg-papier p-2.5 pl-6.5 pr-14 text-sm text-tinte-900 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white dark:placeholder-tinte-400 [&::-webkit-search-cancel-button]:hidden"
 		/>
-		{#if inputValue && isDebouncing}
-			<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-tinte-400">
-				<svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-					<circle class="opacity-75" cx="12" cy="12" r="10" stroke="green" stroke-width="4"></circle>
-				<path class="opacity-100" fill="green" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-				</svg>
-			</div>
-		{:else if inputValue}
+		<div class="absolute inset-y-0 left-2 flex items-center gap-1 pr-2">
+			{#if inputValue}
+				<button
+					type="button"
+					onclick={clearSearch}
+					aria-label={texts.buttons.clearSearch}
+					class="flex items-center p-1 text-tinte-500 hover:text-tinte-600 dark:text-tinte-400 dark:hover:text-tinte-200"
+				>
+					<svg class="h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+						<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
+					</svg>
+				</button>
+			{/if}
+		</div>
+		<div class="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+			{#if inputValue && isDebouncing}
+				<div class="pointer-events-none flex items-center text-tinte-400">
+					<svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+						<circle class="opacity-75" cx="12" cy="12" r="10" stroke="green" stroke-width="4"></circle>
+					<path class="opacity-100" fill="green" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+					</svg>
+				</div>
+			{/if}
 			<button
-				type="button"
-				onclick={clearSearch}
-				aria-label="Suche zurücksetzen"
-				class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-tinte-400 hover:text-tinte-600 dark:hover:text-tinte-200"
+				type="submit"
+				aria-label={texts.buttons.search}
+				class="flex items-center mr-1 hover:cursor-pointer text-tinte-500 hover:text-primary dark:text-tinte-400 dark:hover:text-primary"
 			>
-				<svg class="h-4 w-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-					<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 18 6M6 6l12 12" />
-				</svg>
+				<SearchOutline class="h-6 w-6" />
 			</button>
-		{/if}
+		</div>
 	</div>
-	<Button type="submit" aria-label={inputValue.trim() ? texts.buttons.search : texts.buttons.showAll} class="shrink-0">
-		<SearchOutline class="h-5 w-5" /><span>{inputValue.trim() ? texts.buttons.search : texts.buttons.showAll}</span>
-	</Button>
-
+	{@render filterSlot?.()}
 </form>

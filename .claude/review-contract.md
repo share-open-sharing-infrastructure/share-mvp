@@ -15,7 +15,7 @@ case, report it with a `[cross]` prefix.
 | `sveltekit-pb-reviewer` | Security & data protection: PB filter injection, trust/group leakage, auth, masking, realtime auth |
 | `code-quality-reviewer` | Structure & readability: length, complexity, duplication, abstraction altitude, anti-patterns |
 | `a11y-reviewer` | Semantics, focus, ARIA, keyboard, contrast, screen readers |
-| `conventions-reviewer` | Project idioms: `texts.ts`, runes rules, test conventions, `displayName()`, `subscribeRealtime()` |
+| `conventions-reviewer` | Project idioms: `texts.ts`, runes rules, test conventions, `displayName()`, `subscribeRealtime()`, `resolve()` route-ID form |
 
 ## Scope
 

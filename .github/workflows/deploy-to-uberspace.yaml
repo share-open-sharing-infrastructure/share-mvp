@@ -20,15 +20,17 @@ jobs:
         run: npm run build
         env:
           PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
-          LOGIN_SECRET: ${{ secrets.LOGIN_SECRET }}
           ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
           PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          # PB_SUPERUSER_*: still required at build time — `$lib/server/superuser.ts` reads them
+          # via `$env/static/private` for the superuser-only `metrics_daily` reads in
+          # `$lib/server/metrics.ts`. No SYNC_SECRET: #487 Phase 3 moved the integrations into
+          # the backend, so the frontend shares no sync secret anymore.
           PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
           PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
-          SYNC_SECRET: ${{ secrets.SYNC_SECRET }}
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:
@@ -38,15 +40,35 @@ jobs:
           remote_host: ${{ vars.SSH_HOST }}
           remote_user: ${{ vars.SSH_USERNAME }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          remote_key_pass: ${{ secrets.SSH_PRIVATE_KEY_PASS }}
       - name: Install node modules on server
         uses: appleboy/ssh-action@v1
+        # Forwarded to the remote shell via `envs:` and expanded there, rather than
+        # interpolated into `script:` as `${{ … }}`. Textual interpolation would break on a
+        # value containing a quote or `;` and is a shell-injection shape even when the input
+        # is repo-admin-controlled.
+        env:
+          ANALYTICS_ORIGIN: ${{ vars.PUBLIC_ANALYTICS_ORIGIN }}
+          ANALYTICS_WEBSITE_ID: ${{ vars.PUBLIC_ANALYTICS_WEBSITE_ID }}
         with:
           host: ${{ vars.SSH_HOST }}
           username: ${{ vars.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: ANALYTICS_ORIGIN,ANALYTICS_WEBSITE_ID
           script: |
             cd share-mvp
             npm ci
-            echo "BODY_SIZE_LIMIT=10485760" > .env
+            # Runtime environment for the `svelte` service. `~/etc/services.d/share-mvp.ini`
+            # starts it as `node -r dotenv/config build`, so this file — and only this file —
+            # is what reaches `process.env`. The service has no `environment=` line, and the
+            # `>` truncates, so every runtime var must be listed here: anything added to
+            # `.env` by hand on the server is discarded on the next deploy.
+            #
+            # Build-time vars (`$env/static/*`) belong in the build step above instead; they
+            # are baked into the artefact. These are the `$env/dynamic/public` ones read by
+            # `src/lib/instance.ts` at server start, so the build step cannot supply them.
+            {
+              echo "BODY_SIZE_LIMIT=10485760"
+              echo "PUBLIC_ANALYTICS_ORIGIN=${ANALYTICS_ORIGIN}"
+              echo "PUBLIC_ANALYTICS_WEBSITE_ID=${ANALYTICS_WEBSITE_ID}"
+            } > .env
             supervisorctl restart svelte

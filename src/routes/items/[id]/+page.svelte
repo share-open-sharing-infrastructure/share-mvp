@@ -4,8 +4,9 @@
 	import { page } from '$app/state';
 	import { HeartSolid, InfoCircleOutline } from 'flowbite-svelte-icons';
 	import { texts } from '$lib/texts';
+	import { instanceUrl } from '$lib/instance';
 	import { getCategoryPlaceholder } from '$lib/utils/categoryPlaceholder';
-	import { itemImageUrl, itemImageUrls } from '$lib/utils/utils';
+	import { itemImageUrl, itemImageUrls, displayName } from '$lib/utils/utils';
 	import type { ItemPublic, UserPublic } from '$lib/types/models';
 	import ItemImage from './ItemImage.svelte';
 	import ItemTravelTime from './ItemTravelTime.svelte';
@@ -13,7 +14,7 @@
 	import OwnerCard from './OwnerCard.svelte';
 	import ShareButton from '$lib/components/ShareButton.svelte';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
-	import LinkifiedText from '$lib/components/LinkifiedText.svelte';
+	import LinkifiedText from './LinkifiedText.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	const { data, form } = $props();
@@ -50,21 +51,21 @@
 			: null
 	);
 
-	const seoTitle = $derived(texts.seo.itemDetail(item.name, item.username ?? ''));
+	const seoTitle = $derived(texts.seo.itemDetail(item.name));
 	const seoDesc = $derived(
 		item.description
 			? item.description.replace(/\s+/g, ' ').trim().slice(0, 155)
-			: texts.seo.itemDetailDescription(
-					item.name,
-					item.username ?? ''
-				)
+			: texts.seo.itemDetailDescription(item.name, displayName(owner))
 	);
-	const seoImage = $derived(
-		itemImageUrl(data.PB_IMG_URL, item) ?? 'https://allerleih.org/og-invite.png'
-	);
+	const seoImage = $derived(itemImageUrl(data.PB_IMG_URL, item) ?? instanceUrl('/og-invite.png'));
 </script>
 
-<SeoHead title={seoTitle} description={seoDesc} image={seoImage} canonical={shareUrl} />
+<SeoHead
+	title={seoTitle}
+	description={seoDesc}
+	image={seoImage}
+	canonical
+/>
 
 <div class="mx-auto max-w-3xl px-4 py-6 space-y-6">
 	<!-- Archived banner -->

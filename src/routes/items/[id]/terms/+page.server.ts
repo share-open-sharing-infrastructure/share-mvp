@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Item, LendingTerms } from '$lib/types/models';
 import type { ClientResponseError } from 'pocketbase';
@@ -8,8 +7,10 @@ import {
 	getAcceptance,
 	cleanTermsHtml,
 } from '$lib/server/lendingTerms';
-import { createNotification, sendPushToUser } from '$lib/server/notifications';
-import { OPEN_LENDING_STATES, lendingStatusFilter } from '$lib/lending';
+import {
+	findResumableConversation,
+	startConversationAndNotify,
+} from '$lib/server/conversations';
 
 export async function load({ params, locals, url }) {
 	// Auth is required to accept terms. Bounce through login if needed.
@@ -126,78 +127,23 @@ export const actions = {
 			}
 		}
 
-		// After acceptance, kick off the actual lending request flow.
-		await startConversationForItem(locals, itemRecord);
+		// After acceptance, transparently kick off the actual lending request flow —
+		// resume an open conversation if one exists, otherwise create + notify.
+		// Shared with /items/[id]'s ?/startConversation via $lib/server/conversations.
+		const resumableId = await findResumableConversation(locals.pb, locals.user.id, itemRecord.id);
+		if (resumableId) {
+			redirect(303, `/conversations/${resumableId}`);
+		}
 
-		// If we got here, startConversation didn't redirect — fall back.
-		redirect(303, `/items/${params.id}`);
+		const result = await startConversationAndNotify(locals.pb, locals.user, {
+			id: itemRecord.id,
+			ownerId: itemRecord.owner,
+			name: itemRecord.name,
+		});
+		if (result.status === 'error') {
+			return fail(result.httpStatus, { error: true, message: result.message });
+		}
+
+		redirect(303, `/conversations/${result.conversationId}`);
 	},
 };
-
-/**
- * Mirrors the startConversation logic in /items/[id]/+page.server.ts so that
- * accepting the terms transparently kicks off the request. Centralising this
- * is out of scope for the first cut; if the request flow grows further we
- * should extract a shared helper.
- */
-async function startConversationForItem(
-	locals: any,
-	itemRecord: Item
-): Promise<never> {
-	const requesterId = locals.user.id;
-	const itemOwnerId = itemRecord.owner;
-
-	let targetConversationId = '';
-	let existingConversations;
-	try {
-		existingConversations = await locals.pb.collection('conversations').getFullList({
-			filter: locals.pb.filter(
-				'requester = {:requesterId} && requestedItem = {:itemId} && ' +
-					lendingStatusFilter(OPEN_LENDING_STATES),
-				{ requesterId, itemId: itemRecord.id }
-			),
-			sort: '-created',
-		});
-	} catch {
-		existingConversations = [];
-	}
-
-	if (existingConversations.length > 0) {
-		targetConversationId = existingConversations[0].id;
-	} else {
-		const conversation = await locals.pb.collection('conversations').create({
-			requester: requesterId,
-			itemOwner: itemOwnerId,
-			requestedItem: itemRecord.id,
-			lendingStatus: 'pending',
-			readByRequester: true,
-			readByOwner: false,
-			lastMessageAt: new Date().toISOString(),
-		});
-		targetConversationId = conversation.id;
-
-		const requesterName =
-			locals.user.username ?? locals.user.name ?? texts.pages.itemDetail.unknownRequester;
-		const itemName = itemRecord.name ?? texts.pages.itemDetail.unknownItem;
-		const notificationBody = texts.notifications.newRequest(requesterName, itemName);
-		const conversationUrl = `/conversations/${targetConversationId}`;
-
-		await createNotification(
-			locals.pb,
-			itemOwnerId,
-			locals.user.id,
-			'new_request',
-			targetConversationId,
-			notificationBody
-		);
-		await sendPushToUser(
-			locals.pb,
-			itemOwnerId,
-			texts.notifications.pushTitle,
-			notificationBody,
-			conversationUrl
-		);
-	}
-
-	redirect(303, `/conversations/${targetConversationId}`);
-}

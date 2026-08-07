@@ -1,6 +1,23 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type PocketBase from 'pocketbase';
-import { isTrusting, addTrust, removeTrust, getTrustees, getTrusters } from './trust';
+import { texts } from '$lib/texts';
+import {
+	isTrusting,
+	addTrust,
+	addTrustAndNotify,
+	removeTrust,
+	getTrustees,
+	getTrusters,
+	getTrustDirections,
+	NO_TRUST_DIRECTIONS,
+} from './trust';
+
+vi.mock('$lib/server/notifications', () => ({
+	createNotification: vi.fn().mockResolvedValue(undefined),
+	sendPushToUser: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { createNotification, sendPushToUser } from '$lib/server/notifications';
 
 function mockFilter(raw: string, params?: Record<string, unknown>): string {
 	if (!params) return raw;
@@ -25,12 +42,22 @@ describe('isTrusting', () => {
 		const getFirstListItem = vi.fn().mockResolvedValue({ id: 't1' });
 		const pb = makePb({ getFirstListItem });
 		expect(await isTrusting(pb, 'a', 'b')).toBe(true);
-		expect(getFirstListItem).toHaveBeenCalledWith("truster = 'a' && trustee = 'b'", { fields: 'id' });
+		expect(getFirstListItem).toHaveBeenCalledWith("truster = 'a' && trustee = 'b'", {
+			fields: 'id',
+			requestKey: 'is-trusting',
+		});
 	});
 
 	it('is false when no edge exists', async () => {
 		const pb = makePb({ getFirstListItem: vi.fn().mockRejectedValue(new Error('none')) });
 		expect(await isTrusting(pb, 'a', 'b')).toBe(false);
+	});
+
+	it('lets a call site override the requestKey (auto-cancellation guard)', async () => {
+		const getFirstListItem = vi.fn().mockResolvedValue({ id: 't1' });
+		const pb = makePb({ getFirstListItem });
+		await isTrusting(pb, 'a', 'b', 'is-trusting-custom');
+		expect(getFirstListItem.mock.calls[0][1]).toMatchObject({ requestKey: 'is-trusting-custom' });
 	});
 });
 
@@ -78,6 +105,101 @@ describe('addTrust', () => {
 		const create = vi.fn().mockRejectedValue(new Error('boom'));
 		const pb = makePb({ getFirstListItem, create });
 		await expect(addTrust(pb, 'a', 'b')).rejects.toThrow('boom');
+	});
+});
+
+describe('addTrustAndNotify', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	const truster = { id: 'a', username: 'Anna' };
+
+	/** pb with a users_public target lookup plus trusts-collection mocks. */
+	function makeTrustNotifyPb(
+		target: { deleted?: boolean } | null,
+		trusts: Record<string, ReturnType<typeof vi.fn>>
+	): PocketBase {
+		const usersPublic = {
+			getOne:
+				target === null
+					? vi.fn().mockRejectedValue(new Error('not found'))
+					: vi.fn().mockResolvedValue({ id: 'b', ...target }),
+		};
+		return {
+			collection: vi.fn((name: string) =>
+				name === 'trusts' ? trusts : name === 'users_public' ? usersPublic : {}
+			),
+			filter: vi.fn(mockFilter),
+		} as unknown as PocketBase;
+	}
+
+	it('creates the edge and notifies the trustee (in-app + push)', async () => {
+		const create = vi.fn().mockResolvedValue({ id: 't1' });
+		const pb = makeTrustNotifyPb({}, {
+			getFirstListItem: vi.fn().mockRejectedValue(new Error('none')),
+			create,
+		});
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: true });
+		expect(create).toHaveBeenCalledWith({ truster: 'a', trustee: 'b' });
+		expect(createNotification).toHaveBeenCalledWith(
+			pb,
+			'b',
+			'a',
+			'trust_added',
+			'a',
+			expect.stringContaining('Anna')
+		);
+		expect(sendPushToUser).toHaveBeenCalledWith(
+			pb,
+			'b',
+			texts.notifications.pushTitle,
+			expect.stringContaining('Anna'),
+			'/users/a'
+		);
+	});
+
+	it('refuses a deleted (anonymized) target with a 400 and does not touch the edge', async () => {
+		const create = vi.fn();
+		const pb = makeTrustNotifyPb({ deleted: true }, { create });
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: false, status: 400, message: texts.account.cannotTrustDeleted });
+		expect(create).not.toHaveBeenCalled();
+		expect(createNotification).not.toHaveBeenCalled();
+	});
+
+	it('returns a 404 when the target cannot be resolved', async () => {
+		const pb = makeTrustNotifyPb(null, {});
+		const result = await addTrustAndNotify(pb, truster, 'b');
+		expect(result).toEqual({ ok: false, status: 404, message: texts.errors.somethingWentWrong });
+	});
+
+	it('surfaces an edge-creation failure as a 500 instead of pretending success (regression)', async () => {
+		// Pre-check and post-failure re-check both say "no edge" → addTrust rethrows.
+		const pb = makeTrustNotifyPb({}, {
+			getFirstListItem: vi.fn().mockRejectedValue(new Error('none')),
+			create: vi.fn().mockRejectedValue(new Error('boom')),
+		});
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: false, status: 500, message: texts.errors.somethingWentWrong });
+		expect(createNotification).not.toHaveBeenCalled();
+	});
+
+	it('treats a notification failure as non-fatal — the edge exists, so the flow succeeded', async () => {
+		vi.mocked(createNotification).mockRejectedValueOnce(new Error('push down'));
+		const pb = makeTrustNotifyPb({}, {
+			getFirstListItem: vi.fn().mockRejectedValue(new Error('none')),
+			create: vi.fn().mockResolvedValue({ id: 't1' }),
+		});
+
+		const result = await addTrustAndNotify(pb, truster, 'b');
+
+		expect(result).toEqual({ ok: true });
 	});
 });
 
@@ -130,5 +252,91 @@ describe('getTrustees / getTrusters', () => {
 		expect(k1).toBeTruthy();
 		expect(k2).toBeTruthy();
 		expect(k1).not.toBe(k2);
+	});
+});
+
+describe('getTrustDirections', () => {
+	it('resolves both true when both edges exist', async () => {
+		const getList = vi.fn().mockResolvedValue({
+			items: [
+				{ truster: 'viewer', trustee: 'other' },
+				{ truster: 'other', trustee: 'viewer' },
+			],
+		});
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: true,
+			otherTrustsViewer: true,
+		});
+	});
+
+	it('resolves only viewerTrustsOther when just the viewer→other edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [{ truster: 'viewer', trustee: 'other' }] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: true,
+			otherTrustsViewer: false,
+		});
+	});
+
+	it('resolves only otherTrustsViewer when just the other→viewer edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [{ truster: 'other', trustee: 'viewer' }] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: false,
+			otherTrustsViewer: true,
+		});
+	});
+
+	it('resolves both false when neither edge exists', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [] });
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: false,
+			otherTrustsViewer: false,
+		});
+	});
+
+	it('fails closed to both false when the query rejects', async () => {
+		const getList = vi.fn().mockRejectedValue(new Error('network error'));
+		const pb = makePb({ getList });
+		expect(await getTrustDirections(pb, 'viewer', 'other')).toEqual({
+			viewerTrustsOther: false,
+			otherTrustsViewer: false,
+		});
+	});
+
+	// The shared fallback is module-global and lives for the whole process: a caller
+	// that mutated it would poison every later request's fail-closed result.
+	it('hands back a frozen NO_TRUST_DIRECTIONS a caller cannot mutate', async () => {
+		const getList = vi.fn().mockRejectedValue(new Error('network error'));
+		const pb = makePb({ getList });
+		const result = await getTrustDirections(pb, 'viewer', 'other');
+
+		expect(Object.isFrozen(result)).toBe(true);
+		expect(() => {
+			(result as { viewerTrustsOther: boolean }).viewerTrustsOther = true;
+		}).toThrow();
+		expect(NO_TRUST_DIRECTIONS.viewerTrustsOther).toBe(false);
+	});
+
+	it('issues exactly one request, built via pb.filter covering both directions, with a stable requestKey', async () => {
+		const getList = vi.fn().mockResolvedValue({ items: [] });
+		const pb = makePb({ getList });
+		await getTrustDirections(pb, 'viewer', 'other');
+
+		expect(getList).toHaveBeenCalledTimes(1);
+		expect(pb.filter).toHaveBeenCalledWith(
+			'(truster={:viewer} && trustee={:other}) || (truster={:other} && trustee={:viewer})',
+			{ viewer: 'viewer', other: 'other' }
+		);
+		const callArgs = getList.mock.calls[0];
+		expect(callArgs[0]).toBe(1);
+		expect(callArgs[1]).toBe(2);
+		expect(callArgs[2]).toMatchObject({
+			filter: "(truster='viewer' && trustee='other') || (truster='other' && trustee='viewer')",
+			fields: 'truster,trustee',
+			requestKey: 'trust-directions',
+		});
 	});
 });

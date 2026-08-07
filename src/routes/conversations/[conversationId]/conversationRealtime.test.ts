@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { RecordSubscription } from 'pocketbase';
 import type { Conversation, Message } from '$lib/types/models';
+import { makeMockPb } from '$lib/test-utils/pocketbase';
 
 // Capture the options passed to subscribeRealtime so tests can fire synthetic
 // events at the registered handler. The real client-pb pulls in $env/static/public
@@ -10,7 +11,7 @@ const { subscribeRealtime, unsubscribe } = vi.hoisted(() => ({
 	unsubscribe: vi.fn(),
 }));
 
-vi.mock('$lib/client-pb', () => ({ subscribeRealtime }));
+vi.mock('$lib/realtime', () => ({ subscribeRealtime }));
 
 import { subscribeConversation } from './conversationRealtime';
 
@@ -57,12 +58,7 @@ function makeState(initialMessages: Message[] = []) {
 
 /** A fake PocketBase whose `messages` collection getOne is scriptable. */
 function makePb(getOne: ReturnType<typeof vi.fn>) {
-	return {
-		collection: vi.fn((name: string) => {
-			if (name === 'messages') return { getOne };
-			return {};
-		}),
-	} as never;
+	return makeMockPb({ messages: { getOne } });
 }
 
 beforeEach(() => {
@@ -94,6 +90,21 @@ describe('subscribeConversation', () => {
 		expect(getOne).toHaveBeenCalledWith('m2');
 		expect(state.setMessages).toHaveBeenCalledTimes(1);
 		expect(state.messages).toEqual([msg('m1'), msg('m2')]);
+	});
+
+	it('fetches and appends ALL new ids from a coalesced/batched event, not just the last one', async () => {
+		const state = makeState([msg('m1')]);
+		const getOne = vi.fn().mockImplementation(async (id: string) => msg(id));
+		subscribeConversation(makePb(getOne), 'conv1', state.accessors);
+
+		await registeredHandler()(updateEvent({ messages: ['m1', 'm2', 'm3'] }));
+
+		expect(getOne).toHaveBeenCalledWith('m2');
+		expect(getOne).toHaveBeenCalledWith('m3');
+		expect(getOne).toHaveBeenCalledTimes(2);
+		expect(state.setMessages).toHaveBeenCalledTimes(1);
+		// Order preserved: earlier message in the batch is not dropped or reordered.
+		expect(state.messages).toEqual([msg('m1'), msg('m2'), msg('m3')]);
 	});
 
 	it('skips the fetch when the last message id is already present (case 2)', async () => {

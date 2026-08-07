@@ -106,3 +106,40 @@ describe('search load — group filter', () => {
 		expect(JSON.stringify(payload)).not.toContain(MEMBER_GROUP);
 	});
 });
+
+describe('search load — sort', () => {
+	it.each([
+		['newest', '-created'],
+		['name_asc', 'name'],
+		['name_desc', '-name'],
+	])('maps sort=%s to getList sort "%s"', async (sortParam, pbSort) => {
+		getAttachableGroupsMock.mockResolvedValue([]);
+		const { locals, getList } = makeLocals(null);
+
+		const res = await run(locals, `?sort=${sortParam}`);
+
+		const opts = getList.mock.calls[0][2];
+		expect(opts.sort).toBe(pbSort);
+		expect(res.sort).toBe(sortParam);
+	});
+
+	it('defaults to -created when sort is absent', async () => {
+		getAttachableGroupsMock.mockResolvedValue([]);
+		const { locals, getList } = makeLocals(null);
+
+		await run(locals, '');
+
+		const opts = getList.mock.calls[0][2];
+		expect(opts.sort).toBe('-created');
+	});
+
+	it('defaults to -created when sort is invalid', async () => {
+		getAttachableGroupsMock.mockResolvedValue([]);
+		const { locals, getList } = makeLocals(null);
+
+		await run(locals, '?sort=bogus');
+
+		const opts = getList.mock.calls[0][2];
+		expect(opts.sort).toBe('-created');
+	});
+});

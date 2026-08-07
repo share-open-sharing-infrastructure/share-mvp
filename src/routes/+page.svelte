@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { resolve } from '$app/paths';
+	import { instance, instanceUrl } from '$lib/instance';
+	import { buildRedirectHref } from '$lib/utils/utils';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import PublicStatsSection from '$lib/components/PublicStatsSection.svelte';
@@ -9,14 +11,13 @@
 
 	const landingTexts = texts.pages.landing;
 	const statsTexts = texts.metrics.public;
-	const siteUrl = 'https://allerleih.org';
 
 	const jsonLd = JSON.stringify({
 		'@context': 'https://schema.org',
 		'@type': 'Organization',
 		name: texts.names.app,
-		url: siteUrl,
-		logo: `${siteUrl}/android-chrome-512x512.png`,
+		url: instance.origin,
+		logo: instanceUrl('/icon-512x512.png'),
 		description: texts.seo.home.description,
 		contactPoint: {
 			'@type': 'ContactPoint',
@@ -45,33 +46,43 @@
 
 	// Info cards, rendered in order. Each body reads: before + link + after.
 	// `after` is rendered flush against the link, so include a leading space
-	// or punctuation where needed.
-	const infoCards = [
+	// or punctuation where needed. Split into two groups so the ESLint
+	// `no-navigation-without-resolve` suppression stays scoped to the one anchor that actually
+	// needs it: the three internal-route cards call `resolve()` directly at the href in the
+	// markup below (a literal call site, so the rule is satisfied with no suppression), while
+	// the contribute card's link goes through `buildRedirectHref()` (external redirect-proxy),
+	// which the rule cannot see through — its single anchor below carries the disable comment.
+	const internalInfoCards = [
 		{
 			title: landingTexts.how,
 			before: '',
-			link: { path: '/misc/guide', text: landingTexts.howLinkText },
+			route: '/misc/guide',
+			linkText: landingTexts.howLinkText,
 			after: ` ${landingTexts.howBodyPart1} ${texts.names.app}${landingTexts.howBodyPart2}`,
 		},
 		{
 			title: landingTexts.who,
 			before: landingTexts.whoBodyPart1,
-			link: { path: '/misc/about', text: landingTexts.whoLinkText },
+			route: '/misc/about',
+			linkText: landingTexts.whoLinkText,
 			after: landingTexts.whoBodyPart2,
 		},
 		{
 			title: landingTexts.support,
 			before: landingTexts.supportBodyPart1,
-			link: { path: '/misc/contact', text: landingTexts.supportLinkText },
+			route: '/misc/contact',
+			linkText: landingTexts.supportLinkText,
 			after: '.',
 		},
-		{
-			title: landingTexts.contribute,
-			before: landingTexts.contributeBodyPart1,
-			link: { path: '/api/redirect?to=https%3A%2F%2Fallerleih.notion.site%2F36de086dc6ab80f69529e6cf68afe7c4%3Fv%3D36de086dc6ab80869c89000c98bbac63&source=footer', text: landingTexts.contributeLinkText },
-			after: landingTexts.contributeBodyPart2,
-		},
 	] as const;
+
+	const contributeInfoCard = {
+		title: landingTexts.contribute,
+		before: landingTexts.contributeBodyPart1,
+		href: buildRedirectHref(instance.links.contributeBoard, 'footer'),
+		linkText: landingTexts.contributeLinkText,
+		after: landingTexts.contributeBodyPart2,
+	};
 
 	// Shared styling — adjust the look here without touching the markup below.
 	const styles = {
@@ -85,12 +96,12 @@
 <SeoHead
 	title={texts.seo.home.title}
 	description={texts.seo.home.description}
-	canonical="{siteUrl}/"
-	image="{siteUrl}/og-invite.png"
+	canonical
+	image={instanceUrl('/og-invite.png')}
 />
 
 <svelte:head>
-	<meta property="og:url" content="{siteUrl}/" />
+	<meta property="og:url" content={instanceUrl('/')} />
 	<!-- eslint-disable-next-line svelte/no-at-html-tags -- static, self-constructed JSON-LD -->
 	{@html jsonLdScriptTag}
 </svelte:head>
@@ -103,11 +114,19 @@
 		>
 			<div class="text-center lg:text-left">
 				<img src="/AllerLeih.png" alt={texts.names.app} class="h-32 mx-auto" />
-				<p
+				<!--
+					The tagline is the homepage's <h1> — it contains both the activity and the
+					location, making it the only text here that qualifies as a page heading (the
+					logo is an image). It used to be a <p>, and the page had NO h1 at all, starting
+					instead with the info cards' headings (axe: `page-has-heading-one`, WCAG 1.3.1).
+					Tailwind Preflight strips heading styling (font-size/-weight/margin: inherit or
+					0), and the classes carried over unchanged — the swap is pixel-identical.
+				-->
+				<h1
 					class="text-center text-tinte-500 lg:text-xl dark:text-tinte-400 mb-8"
 				>
-					{landingTexts.tagline} <span class="font-bold text-tinte-700">{landingTexts.city}</span>
-				</p>
+					{landingTexts.tagline} <span class="font-bold text-tinte-700">{texts.names.city}</span>
+				</h1>
 				<div class="flex flex-col sm:flex-row justify-center gap-3">
 					{#each ctaButtons as cta (cta.href)}
 						<Button href={cta.href} color={cta.color} size="xl" class="w-full sm:w-auto">
@@ -135,17 +154,29 @@
 		<div
 			class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center"
 		>
-			{#each infoCards as card (card.title)}
+			{#each internalInfoCards as card (card.title)}
 				<div class={styles.card}>
-					<h3 class={styles.cardTitle}>{card.title}</h3>
+					<!-- h2, not h3: under the new h1, h3 would be a skipped level (axe
+					     `heading-order`). Classes unchanged ⇒ visually identical. -->
+					<h2 class={styles.cardTitle}>{card.title}</h2>
 					<p class={styles.cardBody}>
 						{card.before}
-						<a href={resolve(card.link.path)} class={styles.cardLink}
-							>{card.link.text}</a
+						<a href={resolve(card.route)} class={styles.cardLink}
+							>{card.linkText}</a
 						>{card.after}
 					</p>
 				</div>
 			{/each}
+			<div class={styles.card}>
+				<h2 class={styles.cardTitle}>{contributeInfoCard.title}</h2>
+				<p class={styles.cardBody}>
+					{contributeInfoCard.before}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- buildRedirectHref() returns an already-resolved /api/redirect proxy URL; the rule cannot see through the call -->
+					<a href={contributeInfoCard.href} class={styles.cardLink}
+						>{contributeInfoCard.linkText}</a
+					>{contributeInfoCard.after}
+				</p>
+			</div>
 		</div>
 	</section>
 

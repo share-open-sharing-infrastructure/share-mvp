@@ -19,6 +19,12 @@ src/routes/<path>/
 There is **no REST layer for app data** — every read goes through `load()`, every mutation through a
 **form action**. Read `docs/best-practices.md` for the canonical CRUD-form pattern before starting.
 
+**Component placement:** a component used by only this route → co-locate it flat in the route folder
+(e.g. `src/routes/items/[id]/LinkifiedText.svelte`). A cluster of components local to this route or a
+subtree of it → a `components/` subfolder under that route (e.g. `src/routes/components/` for the
+root layout's cluster, `src/routes/auth/components/` for auth-only pieces). A component used across
+unrelated route subtrees → `src/lib/components` (design-system primitives go in `ui/`).
+
 ## 1. `load()` — reading data
 
 ```ts
@@ -132,7 +138,7 @@ showing whatever the previous page's title was.
 <SeoHead
   title={texts.seo.myRoute.title}
   description={texts.seo.myRoute.description}
-  canonical="https://allerleih.org/my-route"
+  canonical
 />
 ```
 
@@ -149,6 +155,12 @@ showing whatever the previous page's title was.
   natural preview image (adds the Twitter card + `og:image` automatically).
 - Private/auth-gated routes still need `title`; pass `robots="noindex, nofollow"` (or `"noindex"`
   pre-login, matching `auth/register`) instead of `canonical`/`description`.
+- `canonical` is a boolean flag, not a path — `SeoHead` derives the canonical URL from the
+  current page's own `page.url.pathname` (`$app/state`). Never build the URL yourself and pass
+  it in (e.g. `instanceUrl(resolve(...))`): `resolve()` returns a *page-relative* path during
+  SSR (no `paths` block in `svelte.config.js` ⇒ default `paths.relative: true`), which produces
+  a malformed absolute URL in the server-rendered HTML that only looks right after client
+  hydration recomputes it (issue #473).
 - `src/routes/+layout.svelte` already sets site-wide `og:site_name`/`og:locale` — don't repeat
   those. `SeoHead` doesn't need to know about the route's structured data either: a one-off like
   the homepage's JSON-LD `Organization` script stays in that page's own separate `<svelte:head>`

@@ -12,6 +12,10 @@ For now, we aim to build test coverage up as we go to achieve a reasonable balan
 
 Currently, this means that we gradually implement unit tests for server-side functions. Browser-level end-to-end tests (Playwright) now cover a first set of full flows — see [End-to-end tests](#end-to-end-tests-playwright) below.
 
+Shared PocketBase mock helpers (`mockFilter` + `makeMockPb`, extracted from duplicated per-file
+copies) live in [`src/lib/test-utils/pocketbase.ts`](/src/lib/test-utils/pocketbase.ts) — prefer
+importing them over hand-rolling a new copy when a test needs a mock `PocketBase` client.
+
 ## End-to-end tests (Playwright)
 
 The unit tests above mock PocketBase; the end-to-end suite (in [`/e2e`](/e2e)) instead drives
@@ -41,10 +45,13 @@ Locally, [`scripts/dev-stack.sh`](/scripts/dev-stack.sh) brings up the backend (
 seeds) in one command. Conventions (role/label locators, web-first assertions, no
 `waitForTimeout`) and the full env reference are documented in [`e2e/README.md`](/e2e/README.md).
 
-The e2e suite runs **locally only** — it is deliberately not wired into CI, because running it
-there would couple every frontend PR to the backend repo's current state. Lint and type-checking,
-however, **do** run on every PR via [`.github/workflows/lint.yaml`](/.github/workflows/lint.yaml)
-(`npm run lint` + `npm run check`), alongside the existing Vitest + build workflow.
+The e2e suite also runs in CI via [`.github/workflows/e2e.yaml`](/.github/workflows/e2e.yaml) on
+every PR to `main`, against a real-schema PocketBase it starts itself; note that it tracks the
+backend's `main` rather than pinning it, so a backend merge can turn an unchanged frontend PR red
+(and a frontend PR needing an unmerged backend migration cannot go green) — the operational detail
+lives in [`e2e/README.md`](/e2e/README.md) → "CI". Lint and type-checking **also** run on every PR
+via [`.github/workflows/lint.yaml`](/.github/workflows/lint.yaml) (`npm run lint` +
+`npm run check`), alongside the existing Vitest + build workflow.
 
 ## Practice
 

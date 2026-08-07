@@ -1,4 +1,4 @@
-import { getSuperuserClient } from './integrations/core/pocketbase';
+import { getSuperuserClient } from './superuser';
 import type { DailyMetrics, MetricsDaily } from '$lib/types/models';
 
 // Business-metrics project: superuser-only reads of `metrics_daily` (nightly snapshots,

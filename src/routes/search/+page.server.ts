@@ -1,6 +1,6 @@
 import { PUBLIC_PB_URL } from '../../hooks.server';
 import type { ItemPublic } from '$lib/types/models';
-import { parseSearchParameters, buildItemFilter, type SearchParameters } from './searchFilter';
+import { parseSearchParameters, buildItemFilter, sortToPbSort, type SearchParameters } from './searchFilter';
 import type { ListResult } from 'pocketbase';
 import { upsertUserPreferences } from '$lib/server/userPreferences';
 import { getAttachableGroups } from '$lib/server/groups';
@@ -28,12 +28,12 @@ export async function load({ locals, url }) {
 	// 3. Build PocketBase filter (group clause only present for a membership-validated id above)
 	const filter = buildItemFilter(searchParameters, locals.user?.id);
 
-	// 4. Fetch paginated items, newest listings first (by creation date, so edits don't
-	//    resurface old items). Empty-query browsing shows the same newest-first catalogue.
+	// 4. Fetch paginated items, sorted per `searchParameters.sort` (defaults to newest-first by
+	//    creation date, so edits don't resurface old items).
 	let result: ListResult<ItemPublic> = { page: 1, perPage: searchParameters.perPage, totalItems: 0, totalPages: 0, items: [] };
 	try {
 		result = await locals.pb.collection('items_searchable').getList<ItemPublic>(searchParameters.page, searchParameters.perPage, {
-			sort: '-created',
+			sort: sortToPbSort(searchParameters.sort),
 			filter,
 			// Explicit allowlist: the view carries an `items.groups` column purely so
 			// its row-level rule can traverse group membership; it must NOT be returned
@@ -66,6 +66,7 @@ export async function load({ locals, url }) {
 		onlyAvailable: searchParameters.onlyAvailable,
 		ownerType: searchParameters.ownerType,
 		selectedGroup: searchParameters.selectedGroup,
+		sort: searchParameters.sort,
 		// Only id + name reach the client — never the `groups` column of items.
 		attachableGroups: attachableGroups.map(({ id, name }) => ({ id, name })),
 		currentUser: locals.user ?? null,

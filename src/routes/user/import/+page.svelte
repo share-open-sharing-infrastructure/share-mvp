@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { Alert, Badge } from 'flowbite-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
-	import { resolve } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
@@ -15,6 +15,16 @@
 	let fileError = $state('');
 	let selectedFile = $state<File | null>(null);
 	let submitting = $state(false);
+
+	/** Shared use:enhance callback for all three forms (refresh/preview/apply):
+	 *  raise the loader flag on submit, clear it once the result is applied. */
+	function withSubmitting() {
+		submitting = true;
+		return async ({ update }: { update: () => Promise<void> }) => {
+			await update();
+			submitting = false;
+		};
+	}
 
 	$effect(() => {
 		if (form?.preview) step = 'preview';
@@ -58,7 +68,7 @@
 </div>
 
 <form method="POST" action="?/refresh" 
-	use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }} 
+	use:enhance={withSubmitting} 
 	class="px-4 mx-auto max-w-7xl justify-center flex">	
 	<Button type="submit">{texts.institutional.importRefreshButton}</Button>
 </form>
@@ -81,21 +91,19 @@
 			<p class="text-sm text-tinte-600 dark:text-tinte-400">
 				{texts.institutional.importIntro}
 			</p>
-			<!-- eslint-disable svelte/no-navigation-without-resolve -->
 			<a
-				href="/templates/items-import-template.csv"
+				href={asset('/templates/items-import-template.csv')}
 				download
 				class="inline-flex items-center text-sm font-medium text-primary hover:underline"
 			>
 				{texts.institutional.importTemplateLink} ↓
 			</a>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
 
 			{#if form?.error || fileError}
 				<CustomAlert type="error" message={form?.message ?? fileError} />
 			{/if}
 
-			<form method="POST" action="?/preview" enctype="multipart/form-data" use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }}>
+			<form method="POST" action="?/preview" enctype="multipart/form-data" use:enhance={withSubmitting}>
 				<div class="space-y-4">
 					<div>
 						<label for="csv" class="block text-sm font-medium text-tinte-900 mb-1">
@@ -189,7 +197,7 @@
 			{/if}
 
 			<!-- Apply form -->
-			<form method="POST" action="?/apply" use:enhance={() => { submitting = true; return async ({ update }) => { await update(); submitting = false; }; }} class="flex gap-3 justify-end">
+			<form method="POST" action="?/apply" use:enhance={withSubmitting} class="flex gap-3 justify-end">
 				<input type="hidden" name="csvText" value={form.csvText} />
 				<Button variant="secondary" onclick={() => { step = 'upload'; }}>
 					{texts.institutional.importBackButton}

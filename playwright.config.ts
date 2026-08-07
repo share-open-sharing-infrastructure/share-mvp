@@ -1,5 +1,6 @@
 import { defineConfig } from '@playwright/test';
 import { STORAGE_STATE } from './e2e/fixtures/users';
+import { CITY, ORIGIN } from './e2e/fixtures/instance';
 
 /**
  * End-to-end tests (see e2e/README.md).
@@ -47,6 +48,8 @@ export default defineConfig({
 				'tests/misc.spec.ts',
 				'tests/search-focus.spec.ts',
 				'tests/search-focus.mobile.spec.ts',
+				'tests/seo-canonical.spec.ts',
+				'tests/seo-local.spec.ts',
 			],
 		},
 		{
@@ -91,6 +94,8 @@ export default defineConfig({
 		env: {
 			PUBLIC_PB_URL: pbUrl,
 			DEV_DISABLE_MKCERT: 'true',
+			PUBLIC_INSTANCE_CITY: CITY,
+			PUBLIC_SITE_ORIGIN: ORIGIN,
 		},
 	},
 });
