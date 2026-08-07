@@ -48,7 +48,6 @@
 			onlyAvailable: draft.onlyAvailable,
 			ownerType: draft.ownerType,
 			cats: draft.selectedCategories,
-			op: draft.op,
 			group: draft.selectedGroup ?? undefined,
 		});
 		// eslint-disable-next-line svelte/no-navigation-without-resolve -- buildSearchUrl() returns an already-resolved URL; the rule cannot see through the call
@@ -112,7 +111,6 @@
 			perPage={data.perPage}
 			q={data.q}
 			selectedCategories={data.selectedCategories}
-			op={data.op}
 			onlyAvailable={data.onlyAvailable}
 			ownerType={data.ownerType}
 			group={data.selectedGroup}
@@ -154,7 +152,6 @@
 		onlyAvailable={data.onlyAvailable}
 		ownerType={data.ownerType as OwnerType}
 		selectedCategories={data.selectedCategories}
-		op={data.op}
 		selectedGroup={data.selectedGroup}
 		groups={data.attachableGroups}
 		onApply={handleApply}

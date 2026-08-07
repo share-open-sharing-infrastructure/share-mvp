@@ -14,7 +14,6 @@
 		onlyAvailable: boolean;
 		ownerType: OwnerType;
 		selectedCategories: string[];
-		op: 'or' | 'and';
 		selectedGroup: string | null;
 		groups: { id: string; name: string }[];
 		// Committed once, in a single call, when "Filter anwenden" is clicked.
@@ -27,7 +26,6 @@
 		onlyAvailable,
 		ownerType,
 		selectedCategories,
-		op,
 		selectedGroup,
 		groups,
 		onApply,
@@ -40,7 +38,6 @@
 		onlyAvailable: false,
 		ownerType: 'all',
 		selectedCategories: [],
-		op: 'or',
 		selectedGroup: null,
 	};
 
@@ -52,7 +49,6 @@
 			onlyAvailable,
 			ownerType,
 			selectedCategories: [...selectedCategories],
-			op,
 			selectedGroup,
 		};
 	}
@@ -131,7 +127,7 @@
 				{texts.pages.search.filterSectionCategories}
 			</h4>
 			<div role="group" aria-labelledby="filter-categories-heading">
-				<CategoryFilter bind:selectedCategories={draft.selectedCategories} bind:op={draft.op} />
+				<CategoryFilter bind:selectedCategories={draft.selectedCategories} />
 			</div>
 		</section>
 

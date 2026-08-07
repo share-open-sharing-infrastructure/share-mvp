@@ -25,13 +25,12 @@ describe('buildSearchUrl', () => {
 		expect(url).toBe('/search?q=bohrer&onlyAvailable=true');
 	});
 
-	it('encodes cats, op and page alongside each other', () => {
+	it('encodes cats and page alongside each other', () => {
 		const url = buildSearchUrl({
 			cats: ['Werkzeug', 'Garten'],
-			op: 'and',
 			page: 3,
 		});
-		expect(url).toBe('/search?page=3&cats=Werkzeug%2CGarten&op=and');
+		expect(url).toBe('/search?page=3&cats=Werkzeug%2CGarten');
 	});
 
 	it('returns the bare search path when no params are set', () => {
@@ -68,7 +67,6 @@ describe('buildSearchUrl ↔ parseSearchParameters roundtrip', () => {
 		const parsed = roundtrip({
 			q: 'bohrer',
 			cats: ['Werkzeug und Garten', 'Elektronik'],
-			op: 'and',
 			ownerType: 'institution',
 			page: 3,
 			perPage: 50,
@@ -78,7 +76,6 @@ describe('buildSearchUrl ↔ parseSearchParameters roundtrip', () => {
 			'Werkzeug und Garten',
 			'Elektronik',
 		]);
-		expect(parsed.op).toBe('and');
 		expect(parsed.ownerType).toBe('institution');
 		expect(parsed.page).toBe(3);
 		expect(parsed.perPage).toBe(50);
