@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { invalidate } from '$app/navigation';
-	import { NOTIFICATIONS_DEP } from '$lib/constants';
 	import { texts } from '$lib/texts';
 	import { formatTimestamp } from '$lib/utils/utils';
 	import { enhance } from '$app/forms';
@@ -66,16 +64,22 @@
 						onclick={() => {
 							// Fire-and-forget: navigation proceeds immediately while the server
 							// marks the notification as read in the background. SvelteKit's
-							// client-side routing does not cancel in-flight fetches on navigate.
-							// Once it resolves, resync the badge — the destination load may not
-							// mark it read itself (e.g. trust_added/invite_accepted -> /users/[id]),
-							// so afterNavigate's invalidate could otherwise race this write (#376).
+							// client-side routing does not cancel in-flight fetches on navigate,
+							// so the write still completes even though we navigate away.
+							//
+							// Do NOT invalidate() here: this handler runs while the click's
+							// client-side navigation to the destination is in flight, and an
+							// invalidate() of the current (notifications) page supersedes that
+							// navigation — the browser never leaves /notifications, so the
+							// conversation page never mounts and its mount-gated markRead never
+							// runs (the thread stays unread; see #412). The root layout's
+							// afterNavigate already invalidate(NOTIFICATIONS_DEP)s the badge once
+							// navigation settles, and this fetch — fired before navigation starts —
+							// has committed by then, so the badge stays correct (#376).
 							if (!notification.read) {
 								const fd = new FormData();
 								fd.append('id', notification.id);
-								fetch('?/markRead', { method: 'POST', body: fd })
-									.then(() => invalidate(NOTIFICATIONS_DEP))
-									.catch(() => {});
+								fetch('?/markRead', { method: 'POST', body: fd }).catch(() => {});
 							}
 						}}
 					>

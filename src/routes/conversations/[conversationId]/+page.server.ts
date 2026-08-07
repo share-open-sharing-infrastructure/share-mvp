@@ -7,7 +7,7 @@ import { displayName } from '$lib/utils/utils';
 import { deleteConversation, conversationFieldsWithSafePartners } from '$lib/server/conversations.js';
 import { toggleItemStatus } from '$lib/server/items.js';
 import * as lending from './lending.server.js';
-import { sendMessage } from './conversation.server.js';
+import { sendMessage, markConversationRead, type ConversationReadState } from './conversation.server.js';
 import { toConversationDetail } from './conversationDetail.js';
 import { fetchPartnerContact } from '$lib/server/contacts';
 
@@ -44,40 +44,11 @@ export async function load({ params, locals }) {
 
 	const conversation = toConversationDetail(conversationRecord);
 
-	// Mark the conversation as read for the current viewer
-	if (locals.user) {
-		const isRequester = conversationRecord.requester === locals.user.id;
-		const isOwner = conversationRecord.itemOwner === locals.user.id;
-		const needsUpdate =
-			(isRequester && !conversationRecord.readByRequester) ||
-			(isOwner && !conversationRecord.readByOwner);
-
-		if (needsUpdate) {
-			await locals.pb.collection('conversations').update(conversationId, {
-				...(isRequester && { readByRequester: true }),
-				...(isOwner && { readByOwner: true }),
-			});
-		}
-
-		// Conversation read state (readByRequester/readByOwner) and notification read
-		// state are tracked in separate collections, so viewing the conversation does
-		// not automatically clear the notification badge. We sync them here.
-		const unreadNotifs = await locals.pb.collection('notifications').getFullList({
-			filter: locals.pb.filter('recipient={:userId} && relatedId={:conversationId} && read=false', {
-				userId: locals.user.id,
-				conversationId,
-			}),
-			fields: 'id',
-		});
-		if (unreadNotifs.length > 0) {
-			await Promise.all(
-				unreadNotifs.map((n) =>
-					locals.pb.collection('notifications').update(n.id, { read: true }).catch(() => {})
-				)
-			);
-		}
-	}
-
+	// NB: read-state is deliberately NOT mutated here. `app.html` sets
+	// data-sveltekit-preload-data="hover", so SvelteKit runs this load() when the user merely
+	// hovers a link to the conversation — marking read in load() therefore flipped threads to
+	// read on hover, without them ever being opened (issue #412). Read-marking now happens only
+	// via the `markRead` action below, fired by the page once it is actually mounted.
 	const partnerId =
 		conversationRecord.requester === locals.user?.id
 			? conversationRecord.itemOwner
@@ -88,6 +59,39 @@ export async function load({ params, locals }) {
 }
 
 export const actions = {
+	// Explicitly triggered by the page once it is actually opened (see +page.svelte), so
+	// read-state is no longer flipped by a hover-preload of load() (issue #412). The page also
+	// re-fires it when a realtime update says the viewer went unread while the thread is open.
+	// Participation is authorised server-side here — the client is not trusted.
+	markRead: async ({ locals, params }) => {
+		if (!locals.user) return fail(401, { fail: true, message: texts.errors.noPermission });
+		const userId = locals.user.id;
+
+		// Single getOne that both authorises participation and provides the read flags, so
+		// markConversationRead does not have to re-fetch the record.
+		let conversation: ConversationReadState;
+		try {
+			conversation = await locals.pb
+				.collection('conversations')
+				.getOne<ConversationReadState>(params.conversationId, {
+					fields: 'id,requester,itemOwner,readByRequester,readByOwner',
+				});
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, { fail: true, message: texts.lending.errors.notFound });
+		}
+		if (conversation.requester !== userId && conversation.itemOwner !== userId) {
+			return fail(403, { fail: true, message: texts.errors.noPermission });
+		}
+
+		try {
+			await markConversationRead(locals.pb, conversation, userId);
+		} catch (err) {
+			const e = err as Partial<ClientResponseError>;
+			return fail(e.status ?? 500, { fail: true, message: texts.errors.somethingWentWrong });
+		}
+	},
+
 	sendMessage: async ({ locals, request, params }) => {
 		const data = await request.formData();
 		const content = data.get('messageContent')?.toString().trim();

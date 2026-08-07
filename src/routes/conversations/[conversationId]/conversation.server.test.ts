@@ -9,7 +9,7 @@ vi.mock('$lib/server/notifications.js', () => ({
 	notifyAndPush: vi.fn(),
 }));
 
-import { sendMessage } from './conversation.server';
+import { sendMessage, markConversationRead } from './conversation.server';
 import { notifyAndPush } from '$lib/server/notifications.js';
 
 describe('sendMessage', () => {
@@ -120,5 +120,110 @@ describe('sendMessage', () => {
 		await sendMessage(pb, 'conv1', 'Hi', { fromUserId: 'userA', toUserId: 'userB', senderName: 'Requester', recipientIsRequester: false });
 
 		expect(notifyAndPush).not.toHaveBeenCalled();
+	});
+});
+
+describe('markConversationRead', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	// The caller (the `markRead` action) fetches the conversation and hands the record in —
+	// markConversationRead never re-fetches, so no conversations.getOne is stubbed here.
+	function convRecord(extra: Record<string, unknown> = {}) {
+		return {
+			id: 'conv1',
+			requester: 'userA',
+			itemOwner: 'userB',
+			readByRequester: false,
+			readByOwner: true,
+			...extra,
+		};
+	}
+
+	it('sets readByRequester:true when the caller is the (unread) requester', async () => {
+		const convUpdate = vi.fn().mockResolvedValue(true);
+		const pb = makeMockPb({
+			conversations: { update: convUpdate },
+			notifications: { getFullList: vi.fn().mockResolvedValue([]), update: vi.fn() },
+		});
+
+		await markConversationRead(pb, convRecord({ readByRequester: false, readByOwner: true }), 'userA');
+
+		expect(convUpdate).toHaveBeenCalledTimes(1);
+		expect(convUpdate).toHaveBeenCalledWith('conv1', { readByRequester: true });
+	});
+
+	it('sets readByOwner:true when the caller is the (unread) owner', async () => {
+		const convUpdate = vi.fn().mockResolvedValue(true);
+		const pb = makeMockPb({
+			conversations: { update: convUpdate },
+			notifications: { getFullList: vi.fn().mockResolvedValue([]), update: vi.fn() },
+		});
+
+		await markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: false }), 'userB');
+
+		expect(convUpdate).toHaveBeenCalledTimes(1);
+		expect(convUpdate).toHaveBeenCalledWith('conv1', { readByOwner: true });
+	});
+
+	it('does NOT update the conversation when it is already read for the caller', async () => {
+		const convUpdate = vi.fn();
+		const pb = makeMockPb({
+			conversations: { update: convUpdate },
+			notifications: { getFullList: vi.fn().mockResolvedValue([]), update: vi.fn() },
+		});
+
+		// Requester's side is already read → no write (idempotent; the page re-fires markRead
+		// on every realtime unread signal, so this must stay a no-op).
+		await markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: false }), 'userA');
+
+		expect(convUpdate).not.toHaveBeenCalled();
+	});
+
+	it('marks matching unread notifications read (and passes caller/conversation as pb.filter params)', async () => {
+		const notifUpdate = vi.fn().mockResolvedValue(true);
+		const pb = makeMockPb({
+			conversations: { update: vi.fn() },
+			notifications: {
+				getFullList: vi.fn().mockResolvedValue([{ id: 'n1' }, { id: 'n2' }]),
+				update: notifUpdate,
+			},
+		});
+
+		await markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: true }), 'userA');
+
+		// Bound params, never interpolation (filter-injection guardrail).
+		expect(pb.filter).toHaveBeenCalledWith(
+			'recipient={:userId} && relatedId={:conversationId} && read=false',
+			{ userId: 'userA', conversationId: 'conv1' }
+		);
+		expect(notifUpdate).toHaveBeenCalledTimes(2);
+		expect(notifUpdate).toHaveBeenCalledWith('n1', { read: true });
+		expect(notifUpdate).toHaveBeenCalledWith('n2', { read: true });
+	});
+
+	it('does not update any notification when none are unread', async () => {
+		const notifUpdate = vi.fn();
+		const pb = makeMockPb({
+			conversations: { update: vi.fn() },
+			notifications: { getFullList: vi.fn().mockResolvedValue([]), update: notifUpdate },
+		});
+
+		await markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: true }), 'userA');
+
+		expect(notifUpdate).not.toHaveBeenCalled();
+	});
+
+	it('swallows a per-notification update failure (does not reject)', async () => {
+		const pb = makeMockPb({
+			conversations: { update: vi.fn() },
+			notifications: {
+				getFullList: vi.fn().mockResolvedValue([{ id: 'n1' }]),
+				update: vi.fn().mockRejectedValue(new Error('boom')),
+			},
+		});
+
+		await expect(
+			markConversationRead(pb, convRecord({ readByRequester: true, readByOwner: true }), 'userA')
+		).resolves.toBeUndefined();
 	});
 });

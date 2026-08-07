@@ -65,7 +65,12 @@ export async function run(pb) {
 	// Extra public items across categories for search render / filter / pagination.
 	await createItem(pb, owner.id, 'E2E Campingzelt', ['Reisen und Outdoor']);
 	await createItem(pb, owner.id, 'E2E Kochbuch', ['Bücher']);
+	// "E2E Beamer" and "E2E Leinwand" are reserved for conversation-read-on-open.spec, one per
+	// test so the two can run in parallel without sharing a conversation: the viewer requests
+	// the item to open an unread-for-owner thread, then the spec checks hover vs. click
+	// (Beamer) resp. a message arriving while the thread is open (Leinwand).
 	await createItem(pb, owner.id, 'E2E Beamer', ['Ton und Licht']);
+	await createItem(pb, owner.id, 'E2E Leinwand', ['Ton und Licht']);
 	// Trustees-only: visible to the owner's trustees (viewer), masked for third / strangers.
 	const geheim = await createItem(pb, owner.id, 'E2E Geheimwerkzeug', ['Werkzeug und Garten'], {
 		trusteesOnly: true,
@@ -104,7 +109,8 @@ export async function run(pb) {
 
   Items (owner):
     E2E Bohrmaschine (public)          → /items/${bohrmaschine.id}   [reserved for lending.spec]
-    E2E Campingzelt / Kochbuch / Beamer (public, various categories)
+    E2E Campingzelt / Kochbuch / Beamer / Leinwand (public, various categories)
+      [Beamer + Leinwand reserved for conversation-read-on-open.spec, Kochbuch for messages.spec]
     E2E Geheimwerkzeug (trustees-only) → /items/${geheim.id}   [viewer sees it, third does not]
 
   Groups (owner):
