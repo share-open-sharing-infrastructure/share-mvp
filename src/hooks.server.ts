@@ -5,6 +5,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 import { getOutstandingLegalDocs, isLegalLocked, type LegalUser } from '$lib/server/legal';
 import { getActiveLegalVersions } from '$lib/server/legalDocs';
+import { analyticsHeadSnippet } from '$lib/instance';
 
 export { PUBLIC_PB_URL };
 
@@ -21,6 +22,7 @@ const unprotectedPrefix = [
 	'/misc',
 	'/invite',
 	'/sitemap.xml',
+	'/robots.txt',
 	'/api/redirect',
 	'/api/diagnostics',
 ];
@@ -104,7 +106,19 @@ export const authorization: Handle = async ({ event, resolve }) => {
 	return result;
 };
 
-export const handle = sequence(authentication, authorization);
+// Injects the Umami analytics snippet (or nothing, if unconfigured) in place of the
+// %allerleih.analytics% placeholder in src/app.html — see $lib/instance's `analyticsHeadSnippet`
+// doc comment for the opt-in/injection-guard rules. The replacement MUST be a function: a
+// string replacement argument to `String.replace` honours `$&`/`` $` ``/`$'`/`$$` substitution
+// patterns, so a snippet containing one of those sequences would splice in surrounding page
+// content instead of being inserted verbatim. A function replacer bypasses that entirely.
+export const instanceHead: Handle = ({ event, resolve }) =>
+	resolve(event, {
+		transformPageChunk: ({ html }) =>
+			html.replace('%allerleih.analytics%', () => analyticsHeadSnippet()),
+	});
+
+export const handle = sequence(authentication, authorization, instanceHead);
 
 // Standard SvelteKit hook: the framework calls this for every unhandled error
 // during request processing — the log line below is our only server-side trace.

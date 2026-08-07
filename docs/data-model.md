@@ -94,7 +94,8 @@ erDiagram
     USER_PREFERENCES{
         string id PK
         User user FK "owner only — unique"
-        bool emailNotifications "issue #233 — opt-out; absent/true = opted in"
+        bool emailNotifications "issue #233 — master opt-out for ALL notification mail; absent/true = opted in"
+        bool digestEmails "issue #607 — weekly-digest-only opt-out, independent of emailNotifications; absent/true = opted in"
         string preferredTransportMode "issue #426 — foot|bicycle|car (was on users)"
         bool hasOnboarded "issue #426 — onboarding-complete flag (was on users)"
     }
@@ -371,26 +372,47 @@ Messenger handles (`telegramUsername`, `signalLink`) and their per-handle "visib
 ## user_preferences
 
 Per-user settings sidecar (issue #233 introduced it for `emailNotifications`; issue #426 pulled
-`preferredTransportMode` and `hasOnboarded` off the `users` table into it, so `users` stays lean).
-One row per user — a `UNIQUE` index on `user`, relation `cascadeDelete: true`. All API rules
-(`list`/`view`/`create`/`update`/`delete`) are `@request.auth.id = user`, so a user only ever
-reads/writes **their own** row. A **missing row means "all defaults"** (`emailNotifications` opted
-in, `preferredTransportMode` falls back to `bicycle` in the UI, `hasOnboarded` falsy → the
-onboarding prompt shows), so every reader must tolerate a null row. Fields:
+`preferredTransportMode` and `hasOnboarded` off the `users` table into it; issue #607 added
+`digestEmails`), so `users` stays lean. One row per user — a `UNIQUE` index on `user`, relation
+`cascadeDelete: true`. All API rules (`list`/`view`/`create`/`update`/`delete`) are
+`@request.auth.id = user`, so a user only ever reads/writes **their own** row. A **missing row
+means "all defaults"** (`emailNotifications`/`digestEmails` opted in, `preferredTransportMode`
+falls back to `bicycle` in the UI, `hasOnboarded` falsy → the onboarding prompt shows), so every
+reader must tolerate a null row. Fields:
 
-- `emailNotifications` (bool) — notification-email opt-out; absent/`true` = opted in, only an
-  explicit `false` opts out. Read server-side by the backend `notification.pb.js` / `digest.pb.js`
-  hooks (keyed on the `user` relation).
+- `emailNotifications` (bool) — **master** notification-email opt-out; absent/`true` = opted in,
+  only an explicit `false` opts out of **all** notification mail (transactional and digest alike).
+  Read server-side by the backend `notification.pb.js` / `jobs/digest.js` hooks (keyed on the
+  `user` relation).
+- `digestEmails` (bool, issue #607) — opts out of the weekly digest **only**, independent of
+  `emailNotifications` above. Exists so the digest's one-click unsubscribe link (backend
+  `services/unsubscribe.js`) can turn off the digest without also silencing transactional mail
+  like "new message"/lending requests. Absent/`true` = opted in; `emailNotifications=false` still
+  wins regardless of this field. Read server-side by `jobs/digest.js` only.
 - `preferredTransportMode` (`foot`|`bicycle`|`car`) — seeds the ORS travel-time UI on search and
   item-detail.
 - `hasOnboarded` (bool) — drives a soft onboarding prompt (there is **no** redirect gate).
 
+**Bool-default trap (#607 finding B2):** PocketBase `bool` columns have no NULL state, so a row
+created *without* `emailNotifications`/`digestEmails` reads back as `false` for both — the
+opposite of the documented "missing row = opted in" default. `upsertUserPreferences` hardens
+against this by defaulting both to `true` in `createData` before the caller's patch is applied
+(see its doc comment, and `pb_migrations/1783600001_copy_transport_onboarded_to_prefs.js` in the
+backend repo, which already carries the same warning for `emailNotifications`). The `digestEmails`
+migration backfills every *existing* row to `true` for the same reason; there is deliberately no
+backfill for pre-existing `emailNotifications=false` rows, since a real opt-out is indistinguishable
+from the trap — see the frontend `docs/operations/mail-deliverability.md` runbook for the operator
+follow-up.
+
 Frontend access goes through the `getUserPreferences` / `upsertUserPreferences` helpers in
 `$lib/server/userPreferences.ts` (the row is surfaced app-wide as `currentUserPreferences` from the
-root `+layout.server.ts`). `NotificationSettings.svelte` additionally reads/writes
-`emailNotifications` client-side; the helper patches fields individually so the two paths coexist.
-The row is hard-deleted on account anonymization (personal-only data). No `*_public` view exposes
-any of these fields.
+root `+layout.server.ts`). `NotificationSettings.svelte` saves `emailNotifications` and
+`digestEmails` together through the `saveNotificationPrefs` form action (both toggles auto-submit
+on change); the helper patches fields individually so this and the `saveProfile`
+(`preferredTransportMode`) / onboarding (`hasOnboarded`) call sites coexist. The row is
+hard-deleted on account anonymization (personal-only data). **No `*_public` view exposes any of
+these fields** — `user_preferences` is owner-only and never joined into `users_public` or any
+other public view.
 
 ## trusts
 
@@ -405,7 +427,19 @@ API rules: `listRule`/`viewRule` = `@request.auth.id = truster || @request.auth.
 parties may read an edge — the trustee needs to see who trusts them); `createRule`/`deleteRule` =
 `@request.auth.id = truster` (only the granter adds or revokes); `updateRule` = `null`. A backend
 hook (`trust.pb.js`) rejects a self-trust edge. The frontend reads/writes it exclusively through
-`$lib/server/trust.ts` (`isTrusting`, `addTrust`, `removeTrust`, `getTrustees`, `getTrusters`).
+`$lib/server/trust.ts` (`isTrusting`, `getTrustDirections`, `NO_TRUST_DIRECTIONS`, `addTrust`,
+`removeTrust`, `getTrustees`, `getTrusters`). `getTrustDirections(pb, viewerId, otherId)` resolves
+both directions between two users in one query and returns
+`{ viewerTrustsOther, otherTrustsViewer }` (named from the viewer's perspective, so a swapped
+argument pair can't silently invert the display); its fail-closed fallback `NO_TRUST_DIRECTIONS` is
+`Object.freeze`n, since the same module-global object is handed to every request. Callers that need
+both directions (e.g. item detail, user profile) must not run two concurrent `isTrusting` calls.
+PocketBase keys auto-cancellation by `options.requestKey || (method + path)` — the path form is
+only a fallback, and `getFirstListItem` already defaults to a per-filter key
+(`"one_by_filter_" + path + "_" + filter`), so it's collision-free on its own. The `trusts` helpers
+here collide only because they pass a shared **hardcoded** `requestKey` that overrides that
+default — both directions hit the identical key, and the swallowed `AbortError` reads as "no
+trust". That's exactly why every concurrent call site must supply its own distinct `requestKey`.
 
 Item/search/conversation visibility rules match trust via the back-relation
 `…trusts_via_truster.trustee.id ?= @request.auth.id` (rows where the owner is the truster; see the
@@ -440,7 +474,8 @@ Self-service account deletion (GDPR Art. 17) is **two-phase, anonymize-in-place*
   **cannot** be deleted (`conversations.requestedItem` is a *required* relation) — it is kept
   (set to `unavailable`) so the counterparty's loan history resolves. The `items_public` /
   `items_searchable` views exclude rows whose owner is `deleted`, so a deleted account's
-  listings disappear from search/catalogue while existing conversations still show the item.
+  listings disappear from search/catalogue while existing conversations still show the item —
+  see "Deleted owners" under the views section below for the clause and its consequences.
 - Shared/audit data is **retained**, de-identified to "Gelöschtes Konto": `messages`,
   `conversations` (the counterparty keeps a coherent history; the lending paper trail stays
   intact), and `term_acceptances` (legal-obligation exception, Art. 17(3)).
@@ -516,6 +551,32 @@ reachable). Accepting the current terms clears the lock in the same transaction.
 
 Two read-only PocketBase SQL views expose `items` joined with `users` (and `user_geolocations` for the location flag) as flat, privacy-safe rows. Neither exposes the owner's `trusts` list, and neither includes raw coordinates — they expose only `ownerHasLocation` (0 or 1); travel times are computed in the backend `/api/travel-times` hook, which returns only **bucketed minutes** so coordinates never reach the client.
 
+### Deleted owners
+
+**Both** views end with `WHERE COALESCE(users.deleted, 0) = 0`, so no row of an
+anonymized owner is ever returned. Such rows exist on purpose: account deletion
+hard-deletes the user's items *except* those a conversation still references
+(`conversations.requestedItem` is a required relation) — those are kept as
+`unavailable` so the counterparty's loan history stays coherent (see "Account
+deletion" above). The clause keeps them out of discovery without deleting them.
+`COALESCE` rather than a bare `users.deleted = 0` because both views `LEFT JOIN
+users`: an item with no owner row would otherwise compare against `NULL` and be
+dropped silently.
+
+Consequence: `/items/{id}` reads `items_public` unconditionally, so a deleted
+owner's item detail page **404s for everyone** — including the ex-borrower —
+which matches how `/users/{id}` shows a tombstone. The conversation itself is
+unaffected: it resolves the item from the base `items` collection via `expand`,
+which carries no such filter.
+
+The clause is appended to the view query, not part of any `SELECT`, so **any**
+migration that replaces a `viewQuery` wholesale must carry it over. Four did not
+after `1781900042` introduced it: `1781900045` dropped it from
+`items_searchable`, `1781900049` dropped it from `items_public`, and
+`1782750000` + `1783800001` rewrote the already clause-less `items_public` query
+again — which is issue #624. The guard is
+`allerleih-backend/tests/deleted-owner-items.test.mjs`.
+
 ### `items_public` — public, content-masked
 
 Fully public (`listRule`/`viewRule` are open). For any **restricted** item — i.e.
@@ -573,8 +634,8 @@ conversation access never leaks an item into search/profile/sitemap.
 > first; see that repo's README ("Writing migrations").
 Free-text search (`buildSearchFilter`) matches the owner `username` in addition to item
 `name` and `description`, so an account or institution can be found by name. Deleted-owner
-rows are excluded from the view (see the deleted-owner `WHERE` clause), so this never
-surfaces an anonymized account name.
+rows are excluded from the view (see "Deleted owners" above for the `WHERE` clause), so this
+never surfaces an anonymized account name.
 
 ### Base `items` trust rule
 

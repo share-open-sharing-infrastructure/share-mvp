@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { texts } from '$lib/texts';
 	import NavBarComponent from './components/NavBarComponent.svelte';
 	import FooterComponent from './components/FooterComponent.svelte';
 	import FeedbackButton from './components/FeedbackButton.svelte';
@@ -135,7 +136,7 @@
 </script>
 
 <svelte:head>
-	<meta property="og:site_name" content="AllerLeih" />
+	<meta property="og:site_name" content={texts.names.app} />
 	<meta property="og:locale" content="de_DE" />
 </svelte:head>
 

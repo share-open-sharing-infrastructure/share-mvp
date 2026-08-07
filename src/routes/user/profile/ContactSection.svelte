@@ -3,8 +3,9 @@
 	import { Toggle } from 'flowbite-svelte';
 
 	// Issue #438: opt into an off-platform contact channel. Fields submit with the
-	// surrounding ?/saveProfile form. Both inputs are always rendered so their values are
-	// preserved across saves even while another method is selected.
+	// surrounding ?/saveProfile form. Both contactEmail/contactUrl are always rendered — one
+	// visible, one hidden — so the field name is always present in the FormData; see the
+	// seed-once comment below for what actually happens to that value on save.
 	let {
 		contactMethod = '',
 		contactEmail = '',
@@ -17,8 +18,27 @@
 		contactPublic?: boolean;
 	} = $props();
 
+	// Pre-existing (not #558): svelte-check reports state_referenced_locally here too, since
+	// `method`/`isPublic` are also seeded once from a prop and never re-synced. Ignored for
+	// the same reason as the #558 seeds below.
+	// svelte-ignore state_referenced_locally
 	let method = $state<'' | 'email' | 'link'>(contactMethod);
+	// svelte-ignore state_referenced_locally
 	let isPublic = $state(contactPublic);
+
+	// Issue #558: seed once from the loaded value and bind: from then on — never a one-way
+	// value={…}, which hydration would clobber (see docs/best-practices.md → "Editable
+	// fields: seed-once + bind:, never one-way value="). The hidden fallback inputs below
+	// (still one-way — they're never user-edited) now read these local values instead of the
+	// original props. This is a client-side-only improvement: switching the contact method
+	// away and back re-mounts the visible input from the edited local state instead of
+	// reverting to the originally-loaded prop value. It does NOT change what gets persisted —
+	// parseOffPlatformContact ($lib/server/profileForm.ts) unconditionally zeroes whichever
+	// method isn't the active one, regardless of what either input carries.
+	// svelte-ignore state_referenced_locally
+	let contactEmailValue = $state(contactEmail);
+	// svelte-ignore state_referenced_locally
+	let contactUrlValue = $state(contactUrl);
 </script>
 
 <div class="border-t pt-6 space-y-4">
@@ -64,7 +84,7 @@
 					type="email"
 					name="contactEmail"
 					id="contactEmail"
-					value={contactEmail}
+					bind:value={contactEmailValue}
 					required
 					placeholder={texts.contactOptions.emailPlaceholder}
 					class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -75,8 +95,12 @@
 			</div>
 		</div>
 	{:else}
-		<!-- Always submit the email so an existing address is preserved while 'link' is selected. -->
-		<input type="hidden" name="contactEmail" value={contactEmail} />
+		<!-- Client-side only (see the seed-once comment above): keeps the edited value ready
+		     in case the user switches back to 'email' within this page view. This does NOT
+		     preserve an existing address in the database — parseOffPlatformContact discards
+		     this field's submitted value whenever contactMethod isn't 'email', regardless of
+		     what it carries. -->
+		<input type="hidden" name="contactEmail" value={contactEmailValue} />
 	{/if}
 
 	{#if method === 'link'}
@@ -92,7 +116,7 @@
 					type="url"
 					name="contactUrl"
 					id="contactUrl"
-					value={contactUrl}
+					bind:value={contactUrlValue}
 					required
 					placeholder={texts.contactOptions.urlPlaceholder}
 					class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -103,7 +127,10 @@
 			</div>
 		</div>
 	{:else}
-		<input type="hidden" name="contactUrl" value={contactUrl} />
+		<!-- Client-side only, same reasoning as the contactEmail fallback above: the server
+		     discards this field's submitted value whenever contactMethod isn't 'link',
+		     regardless of what it carries. -->
+		<input type="hidden" name="contactUrl" value={contactUrlValue} />
 	{/if}
 
 	{#if method !== ''}

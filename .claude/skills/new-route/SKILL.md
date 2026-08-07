@@ -138,7 +138,7 @@ showing whatever the previous page's title was.
 <SeoHead
   title={texts.seo.myRoute.title}
   description={texts.seo.myRoute.description}
-  canonical="https://allerleih.org/my-route"
+  canonical
 />
 ```
 
@@ -155,6 +155,12 @@ showing whatever the previous page's title was.
   natural preview image (adds the Twitter card + `og:image` automatically).
 - Private/auth-gated routes still need `title`; pass `robots="noindex, nofollow"` (or `"noindex"`
   pre-login, matching `auth/register`) instead of `canonical`/`description`.
+- `canonical` is a boolean flag, not a path — `SeoHead` derives the canonical URL from the
+  current page's own `page.url.pathname` (`$app/state`). Never build the URL yourself and pass
+  it in (e.g. `instanceUrl(resolve(...))`): `resolve()` returns a *page-relative* path during
+  SSR (no `paths` block in `svelte.config.js` ⇒ default `paths.relative: true`), which produces
+  a malformed absolute URL in the server-rendered HTML that only looks right after client
+  hydration recomputes it (issue #473).
 - `src/routes/+layout.svelte` already sets site-wide `og:site_name`/`og:locale` — don't repeat
   those. `SeoHead` doesn't need to know about the route's structured data either: a one-off like
   the homepage's JSON-LD `Organization` script stays in that page's own separate `<svelte:head>`

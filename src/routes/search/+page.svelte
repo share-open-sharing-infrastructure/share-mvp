@@ -124,9 +124,12 @@
 <!-- HEADER -->
 <div class="mx-auto max-w-7xl">
 	<div class="mx-auto max-w-screen-sm text-center">
-		<h2 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
+		<!-- h1, not h2: /search is in the sitemap, reachable without auth, and carries no
+		     noindex — an indexable landing page without an h1. Classes unchanged (Tailwind
+		     Preflight strips heading styling), the swap has no visual effect. -->
+		<h1 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.pages.search.title}
-		</h2>
+		</h1>
 	</div>
 </div>
 
@@ -157,11 +160,29 @@
 		onApply={handleApply}
 	/>
 
-	<div class="w-full items-center justify-center text-center mt-2" aria-live="polite">
+	<!--
+		Status line, NOT a heading. This used to be two <h5>s — the right fix for the resulting
+		`heading-order` jump under the new h1 isn't a higher heading, it's no heading at all:
+		"12 items found" is a status message, not a section heading. As a heading, /search's
+		document outline would be unstable (the text changes on every filter) and screen readers
+		would announce the role on every result update ("heading level 2, 12 items found").
+		WCAG 1.3.1.
+		`role="status"` already implies `aria-live="polite"` and `aria-atomic="true"`; both are
+		still listed explicitly as a defensive measure, because some older screen reader/browser
+		combinations don't reliably apply the implicit values. No `aria-busy` — the line has no
+		loading state of its own, result updates go through SvelteKit navigation, and the global
+		loader in `+layout.svelte` already covers that.
+	-->
+	<div
+		class="w-full items-center justify-center text-center mt-2"
+		role="status"
+		aria-live="polite"
+		aria-atomic="true"
+	>
 		{#if data.q || data.selectedCategories.length > 0 || data.selectedGroup}
-			<h5>{texts.ui.resultsFound(filterActive ? filteredItems.length : (data.totalItems ?? 0))}</h5>
+			<p>{texts.ui.resultsFound(filterActive ? filteredItems.length : (data.totalItems ?? 0))}</p>
 		{:else}
-			<h5>{texts.pages.search.newestItemsHeading}</h5>
+			<p>{texts.pages.search.newestItemsHeading}</p>
 		{/if}
 	</div>
 

@@ -62,6 +62,14 @@ the superuser-only `metrics_daily` reads in `$lib/server/metrics.ts`; local tool
 Playwright e2e) reads the same two vars via `process.env`. `SYNC_SECRET` is **gone** as of #487
 Phase 3 — the integrations run entirely in the backend, so the frontend holds no sync secret and
 no `/api/sync`/`/api/refresh` endpoints.
+Instance configuration (multi-city, all optional — see `docs/architecture.md` → "Instance
+configuration"): `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
+`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`. These are the
+only vars read via `$lib/instance.ts` (the sole `$env/dynamic/public` user in the repo — every
+other env access is `$env/static/*`). Unlike `$env/static/public`, `$env/dynamic/public`
+serialises the **whole** `PUBLIC_*` env into every rendered page, not just the vars a module
+references — treat any new `PUBLIC_*` var as fully public the moment it's set, whether or not
+`$lib/instance.ts` reads it (see `docs/architecture.md` → "Instance configuration").
 For personal local overrides (local ports, sandbox creds) that shouldn't be shared with the team,
 use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this file.
 
@@ -70,7 +78,9 @@ use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this 
 These prevent the most common bugs/security issues here — follow them without being asked.
 
 - **Never destructure the `data` prop.** Access `data.x` directly in markup; assigning
-  `let x = data.x` detaches `use:enhance` reactivity. → `docs/best-practices.md`
+  `let x = data.x` detaches `use:enhance` reactivity — and a *user-editable* field seeded from
+  `data.x`/a prop needs a seed-once `$state` + `bind:value`, never one-way `value=`, or hydration
+  clobbers it (issue #558). → `docs/best-practices.md`
 - **Always build PocketBase filters with `pb.filter(raw, {params})`** — never template-literal
   interpolation. Applies to *every* value, including IDs from `locals.user.id` / route params
   (filter injection). Use `locals.pb.filter(...)` in routes, `pb.filter(...)` in `$lib/server/*`.
@@ -80,8 +90,9 @@ These prevent the most common bugs/security issues here — follow them without 
 - **Trust visibility is enforced at the data layer**, not in app code: the `items` /
   `items_searchable` rules only return a trustees-only item to the owner's trustees (via the
   `trusts` join back-relation `owner.trusts_via_truster.trustee.id ?= @request.auth.id`). Read
-  trust through `$lib/server/trust.ts` (`isTrusting` / `getTrustees` / `getTrusters`; `addTrust` /
-  `removeTrust` for mutations); never re-implement trust filtering client-side. Unauthenticated
+  trust through `$lib/server/trust.ts` (`isTrusting` / `getTrustDirections` / `getTrustees` /
+  `getTrusters`; `addTrust` / `removeTrust` for mutations); never re-implement trust filtering
+  client-side. Unauthenticated
   browsing uses the `*_public` views — never leak email, raw coordinates, trusted items, or
   trust-graph data through them.
 - **Lending status values & groupings come only from `$lib/lending.ts`** (`LendingStatus`,
@@ -93,6 +104,17 @@ These prevent the most common bugs/security issues here — follow them without 
   `$lib/lending.ts` + `texts.lending.statusLabel` **and** that backend mirror in the same effort.
 - **All user-facing strings go in `src/lib/texts.ts`**, never inline. Item categories live
   in `src/lib/categories.ts` (fixed across instances; change via `docs/data-model.md` → "Item categories").
+- **Instance-specific values (city, origin, contact/feedback email, social links, analytics)
+  come only from `$lib/instance.ts`** — never hardcode `allerleih.org` or a city name.
+  Crawler-facing absolute URLs (sitemap, robots, canonical, `og:url`/`og:image`) use
+  `instanceUrl()` with a **literal root-absolute path** (or `SeoHead`'s opt-in `canonical` flag,
+  which derives the current page's own URL from `page.url.pathname`); user-facing share/invite
+  links keep `url.origin` instead (a copied link must work on the host the user is actually on).
+  **Never compose `instanceUrl(resolve(...))`** — `svelte.config.js` has no `paths` block, so
+  SvelteKit's default `paths.relative: true` applies and `resolve()` returns a *page-relative*
+  path under SSR, producing a malformed absolute URL that only looks right after client
+  hydration recomputes it (issue #473). `texts.ts` interpolates the config into German copy and
+  stays the single home for strings.
 - **Never hand-style a button or import Flowbite `Button`** — use
   `$lib/components/ui/Button.svelte` (variants `primary|secondary|ghost|accent|danger|link`,
   sizes `sm|md|lg|xl|icon|icon-sm`, `loading`, `href`). Pass only layout classes (width/margin/
@@ -107,14 +129,17 @@ These prevent the most common bugs/security issues here — follow them without 
 - **Resolve internal navigation with `resolve()` from `$app/paths` at the call site**, in route-ID
   form (`resolve('/users/[id]', { id })`) — never template-string interpolation, never a wrapper.
   Query/hash go inside the `resolve()` arg; static `static/` files use `asset()`. Only builders
-  (`buildSearchUrl`/`notificationHref`) and external/user URLs are exempt. → `docs/best-practices.md`
+  (`buildSearchUrl`/`notificationHref`, plus the `/api/redirect`-proxy builders `buildRedirectHref`/
+  `buildItemRedirectHref`) and external/user URLs are exempt — these builders construct URLs for
+  purposes `resolve()` doesn't cover (search params, notification targets, the redirect-proxy for
+  external links). → `docs/best-practices.md`
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
   `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
   Authentication loads PocketBase auth from cookies and refreshes the token. Authorization
   redirects unauthenticated users to `/auth/login` (preserving `redirectTo`). Unprotected
   prefixes: `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/confirm-verification`,
   `/auth/confirm-email-change`, `/search`, `/items`, `/users`,
-  `/misc`, `/invite`, `/sitemap.xml`, `/api/redirect`, `/api/diagnostics`,
+  `/misc`, `/invite`, `/sitemap.xml`, `/robots.txt`, `/api/redirect`, `/api/diagnostics`,
   `/auth/account-deleted`. Everything else — including `/` (home) — requires authentication.
 
 ## Where to look (load on demand)
@@ -136,6 +161,8 @@ These prevent the most common bugs/security issues here — follow them without 
 | Account deletion & GDPR (Art. 17/15/20) | See "Account deletion" section below; backend: `allerleih-backend/pb_hooks/account.pb.js` |
 | Push notifications (VAPID helpers, subscription CRUD, service worker) | `docs/architecture.md` → "Real-time Architecture"; helpers in `$lib/server/notifications.ts`, `$lib/server/pushSubscriptions.ts` |
 | Business metrics (`/admin/metrics`, `/misc/stats`, the nightly `metrics_daily` snapshot) | `docs/operations/metrics.md`; helper in `$lib/server/metrics.ts` |
+| Mail deliverability (SPF/DKIM/DMARC, digest one-click unsubscribe, `assetBase`/`siteBase` URL split, `digestEmails` opt-out) | `docs/operations/mail-deliverability.md`; backend hooks in `allerleih-backend/pb_hooks/services/{mail,unsubscribe}.js`, `utils/urls.js`; frontend: `$lib/server/userPreferences.ts`, `src/routes/user/profile/{NotificationSettings,PushNotificationSection,EmailNotificationForm}.svelte`, the `saveNotificationPrefs` action in `src/routes/user/profile/+page.server.ts` |
+| Running a second (city) instance: origin/city/contact/analytics config, the origin rule, branding limits | `docs/architecture.md` → "Instance configuration (multi-city)"; config in `src/lib/instance.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
 | A backend-only issue (no frontend changes) | Still drive it through `/issue-to-pr` + `/create-pr` **here** — the plan gate and review dispatch (`sveltekit-pb-reviewer` covers `pb_hooks`/`pb_migrations`) live in this repo. The backend also has its own `allerleih-backend/.claude/skills/create-pr` for standalone use when working in that repo alone. |
 

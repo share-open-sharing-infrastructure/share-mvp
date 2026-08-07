@@ -4,6 +4,7 @@ import {
 	itemImageUrls,
 	itemOwnFileUrls,
 	buildMailtoHref,
+	buildRedirectHref,
 	buildItemRedirectHref,
 } from './utils';
 import { texts } from '$lib/texts';
@@ -172,6 +173,20 @@ describe('buildMailtoHref (#438)', () => {
 		expect(href).toContain('&body=');
 		// The masked-item fallback (item.name ?? unknownItem) must also be encodable.
 		expect(buildMailtoHref('o@x.test', texts.pages.itemDetail.mailtoSubject(texts.pages.itemDetail.unknownItem), '')).toContain('subject=');
+	});
+});
+
+describe('buildRedirectHref (shared /api/redirect builder, issue #473)', () => {
+	it('encodes both the destination and the source', () => {
+		const href = buildRedirectHref('https://x.test/a?b=1&c=2#frag', 'foo bar');
+		expect(href).toBe(
+			'/api/redirect?to=https%3A%2F%2Fx.test%2Fa%3Fb%3D1%26c%3D2%23frag&source=foo%20bar'
+		);
+	});
+
+	it('is the format buildItemRedirectHref delegates to, minus the item id', () => {
+		const href = buildRedirectHref('https://verleih.example/form', 'item-detail');
+		expect(href).toBe('/api/redirect?to=https%3A%2F%2Fverleih.example%2Fform&source=item-detail');
 	});
 });
 

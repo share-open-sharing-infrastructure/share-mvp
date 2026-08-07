@@ -8,7 +8,7 @@
 <SeoHead
 	title={texts.seo.newsletter.title}
 	description={texts.seo.newsletter.description}
-	canonical="https://allerleih.org/misc/newsletter"
+	canonical
 />
 
 <div class="mx-auto max-w-md">

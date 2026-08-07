@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
+	import { instance } from '$lib/instance';
 	import { GithubSolid, LinkedinSolid, EnvelopeOutline } from 'flowbite-svelte-icons';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -31,7 +32,7 @@
 <SeoHead
 	title={texts.seo.about.title}
 	description={texts.seo.about.description}
-	canonical="https://allerleih.org/misc/about"
+	canonical
 />
 
 <!-- Mission -->
@@ -98,7 +99,7 @@
 				</div>
 				<p class="text-sm italic text-tinte-400">„Mach mit!"</p>
 				<a
-					href="mailto:kontakt@allerleih.org?subject=Interesse%20an%20Mitmachen%20Bei%20AllerLeih"
+					href={`mailto:${texts.names.mainContactMail}?subject=${encodeURIComponent(texts.pages.about.joinMailSubject)}`}
 					rel="external"
 					class="mt-1 text-tinte-400 hover:text-accent"
 					aria-label="Kontakt aufnehmen"
@@ -121,7 +122,7 @@
 				GitHub. Wir freuen uns über Beiträge, Feedback und Unterstützung!
 			</p>
 			<Button
-				href="https://github.com/share-open-sharing-infrastructure/share-mvp"
+				href={instance.links.github}
 				target="_blank"
 				rel="noopener noreferrer"
 			>

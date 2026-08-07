@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts';
+	import { instance } from '$lib/instance';
+	import { buildRedirectHref } from '$lib/utils/utils';
 	import {
 		Footer,
 		FooterBrand,
@@ -24,13 +26,12 @@
 			<div class="mb-6 mr-4 md:mb-0">
 				<FooterBrand
 					href={resolve('/')}
-					alt="AllerLeih Logo"
 					name=""
 					aClass="flex items-center"
 				>
 					<div class="flex flex-col items-center mr-3">
 						<img src="/AllerLeih.png" class="h-12" alt={texts.names.app} />
-						<span class="text-sm text-gray-400 tracking-wide mt-0.5">Lüneburg</span>
+						<span class="text-sm text-gray-400 tracking-wide mt-0.5">{texts.names.city}</span>
 					</div>
 					<p class="max-w-xs text-sm text-light">
 						Ein gemeinnütziger Verleih-Marktplatz.<br/>
@@ -55,8 +56,8 @@
 						<FooterLink {...footerLinkProps} href={resolve('/misc/newsletter')}
 							>{texts.nav.newsletter}</FooterLink
 						>
-						<FooterLink {...footerLinkProps} 
-							href="/api/redirect?to=https%3A%2F%2Fallerleih.notion.site%2F36de086dc6ab80f69529e6cf68afe7c4%3Fv%3D36de086dc6ab80869c89000c98bbac63&source=footer"
+						<FooterLink {...footerLinkProps}
+							href={buildRedirectHref(instance.links.contributeBoard, 'footer')}
 							target="_blank"
 							>{texts.nav.contribute}</FooterLink
 						>
@@ -75,7 +76,7 @@
 						<FooterLink {...footerLinkProps} href={resolve('/misc/contact')}
 							>{texts.nav.contact}</FooterLink
 						>
-						<FooterLink {...footerLinkProps} href="https://github.com/share-open-sharing-infrastructure/share-mvp" target="_blank" rel="noopener noreferrer">
+						<FooterLink {...footerLinkProps} href={instance.links.github} target="_blank" rel="noopener noreferrer">
 							<span class="flex items-center gap-1">
 								<GithubSolid class="h-4 w-4" />
 								GitHub
@@ -92,7 +93,7 @@
 					<FooterLinkGroup>
 						<FooterLink
 							{...footerLinkProps}
-							href="/api/redirect?to=https%3A%2F%2Fpixelfed.de%2FAllerLeih&source=footer"
+							href={buildRedirectHref(instance.social.pixelfed, 'footer')}
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={texts.footer.pixelfed}
@@ -114,7 +115,7 @@
 						</FooterLink>
 						<FooterLink
 							{...footerLinkProps}
-							href="/api/redirect?to=https%3A%2F%2Fnorden.social%2F%40AllerLeih&source=footer"
+							href={buildRedirectHref(instance.social.mastodon, 'footer')}
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={texts.footer.mastodon}
@@ -136,7 +137,7 @@
 						</FooterLink>
 						<FooterLink
 							{...footerLinkProps}
-							href="/api/redirect?to=https%3A%2F%2Fwww.instagram.com%2Faller.leih%2F&source=footer"
+							href={buildRedirectHref(instance.social.instagram, 'footer')}
 							target="_blank"
 							rel="noopener noreferrer"
 							aria-label={texts.footer.instagram}

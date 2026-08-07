@@ -11,7 +11,7 @@
 <SeoHead
 	title={texts.seo.publicStats.title}
 	description={texts.seo.publicStats.description}
-	canonical="https://allerleih.org/misc/stats"
+	canonical
 />
 
 <div class="mx-auto max-w-2xl space-y-6 p-4">

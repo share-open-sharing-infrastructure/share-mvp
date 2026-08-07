@@ -189,7 +189,7 @@
 								fieldName="telegramUsername"
 								label={texts.messenger.telegramUsername}
 								placeholder={texts.messenger.telegramUsernamePlaceholder}
-								value={data.contact.telegramUsername ?? ''}
+								initialValue={data.contact.telegramUsername ?? ''}
 								visibilityToggleName="telegramVisibleToTrustedOnly"
 								visibilityToggleChecked={data.contact
 									.telegramVisibleToTrustedOnly ?? true}
@@ -201,7 +201,7 @@
 								fieldName="signalLink"
 								label={texts.messenger.signalLink}
 								placeholder={texts.messenger.signalLinkPlaceholder}
-								value={data.contact.signalLink ?? ''}
+								initialValue={data.contact.signalLink ?? ''}
 								visibilityToggleName="signalVisibleToTrustedOnly"
 								visibilityToggleChecked={data.contact
 									.signalVisibleToTrustedOnly ?? true}
@@ -238,7 +238,7 @@
 
 				<!-- BENACHRICHTIGUNGEN: auto-saving toggles (push + email) -->
 				<section id="benachrichtigungen" class="scroll-mt-28">
-					<NotificationSettings userId={data.currentUser.id} />
+					<NotificationSettings prefs={data.currentUserPreferences} />
 				</section>
 
 				<!-- E-MAIL: address, change link, verification. #email is a deep-link target. -->

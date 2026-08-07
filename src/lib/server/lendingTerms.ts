@@ -50,10 +50,16 @@ export function cleanTermsHtml(raw: string | undefined | null): string {
  *
  * Active = `active == true`. We additionally require `effectiveFrom <= now` so that
  * future-dated versions can be staged without going live.
+ *
+ * `requestKey` MUST be distinct per concurrent call site on the same `pb` (mirrors
+ * `getUserPreferences`): PocketBase's auto-cancellation keys by method+path, so a
+ * second identical GET aborts the first — and this helper's `catch` turns that
+ * `AbortError` into a silent `null`, i.e. "no terms" and an open gate.
  */
 export async function getActiveTerms(
 	pb: PocketBase,
-	ownerId: string
+	ownerId: string,
+	requestKey = 'active-terms'
 ): Promise<LendingTerms | null> {
 	try {
 		const nowIso = new Date().toISOString().replace('T', ' ').replace('Z', '');
@@ -62,7 +68,7 @@ export async function getActiveTerms(
 				ownerId,
 				nowIso,
 			}),
-			{ sort: '-effectiveFrom' }
+			{ sort: '-effectiveFrom', requestKey }
 		);
 	} catch {
 		// PocketBase throws 404 if no record matches — translate to null.
@@ -73,16 +79,21 @@ export async function getActiveTerms(
 /**
  * Returns the most recent acceptance by `userId` of the given `termsId`, or `null`
  * if the user has not yet accepted that exact version.
+ *
+ * `requestKey` MUST be distinct per concurrent call site on the same `pb` — same
+ * auto-cancellation trap as `getActiveTerms` above (a cancelled read reads as
+ * "not accepted" here, which fails closed, but still lies about the state).
  */
 export async function getAcceptance(
 	pb: PocketBase,
 	userId: string,
-	termsId: string
+	termsId: string,
+	requestKey = 'terms-acceptance'
 ): Promise<TermAcceptance | null> {
 	try {
 		return await pb.collection('term_acceptances').getFirstListItem<TermAcceptance>(
 			pb.filter('user = {:userId} && terms = {:termsId}', { userId, termsId }),
-			{ sort: '-acceptedAt' }
+			{ sort: '-acceptedAt', requestKey }
 		);
 	} catch {
 		return null;
@@ -92,14 +103,22 @@ export async function getAcceptance(
 /**
  * Convenience: true if the user has already accepted the currently active terms
  * of the given owner. Returns false if there are no active terms (no gating needed).
+ *
+ * Resolves the active terms itself. A caller running this concurrently with other
+ * `lending_terms`/`term_acceptances` reads on the same `pb` (e.g. the item detail
+ * load's requirements-evaluation wave) should pass distinct `termsRequestKey` /
+ * `acceptanceRequestKey` via `opts` so PocketBase's auto-cancellation can't collide
+ * either read with a sibling task — no need to compose `getActiveTerms` +
+ * `getAcceptance` by hand just to get distinct keys.
  */
 export async function hasAcceptedActiveTerms(
 	pb: PocketBase,
 	userId: string,
-	ownerId: string
+	ownerId: string,
+	opts: { termsRequestKey?: string; acceptanceRequestKey?: string } = {}
 ): Promise<boolean> {
-	const active = await getActiveTerms(pb, ownerId);
+	const active = await getActiveTerms(pb, ownerId, opts.termsRequestKey);
 	if (!active) return true; // no terms → nothing to accept → consider satisfied
-	const acceptance = await getAcceptance(pb, userId, active.id);
+	const acceptance = await getAcceptance(pb, userId, active.id, opts.acceptanceRequestKey);
 	return acceptance !== null;
 }

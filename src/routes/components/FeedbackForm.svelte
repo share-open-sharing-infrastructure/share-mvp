@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import { texts } from '$lib/texts';
+	import { instance } from '$lib/instance';
 	import { detectBrowser } from '$lib/utils/browserInfo';
 	import SparkleButton from './SparkleButton.svelte';
 
@@ -141,9 +142,9 @@
 	<p class="text-sm text-tinte-500">
 		{texts.feedback.voiceMemoHint}
 		<a
-			href="https://t.me/allerleih_org"
+			href={instance.social.telegram}
 			target="_blank"
-			rel="noopener noreferrer"
+			rel="external noopener noreferrer"
 			class="text-primary-500 hover:underline"
 		>
 			{texts.feedback.voiceMemoLink}
@@ -163,7 +164,7 @@
 		</ul>
 		<p class="mt-1">
 			Keine personenbezogenen Daten — du gibst anonymes Feedback. Für direkten Kontakt:
-			<a href="mailto:feedback@allerleih.org" class="hover:underline">feedback@allerleih.org</a>
+			<a href="mailto:{texts.names.feedbackMail}" class="hover:underline">{texts.names.feedbackMail}</a>
 		</p>
 	</details>
 

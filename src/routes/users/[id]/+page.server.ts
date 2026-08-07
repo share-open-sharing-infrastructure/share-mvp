@@ -3,7 +3,12 @@ import { PUBLIC_PB_URL } from '$env/static/public';
 import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
-import { addTrustAndNotify, removeTrust as removeTrustEdge, isTrusting } from '$lib/server/trust';
+import {
+	addTrustAndNotify,
+	removeTrust as removeTrustEdge,
+	getTrustDirections,
+	NO_TRUST_DIRECTIONS,
+} from '$lib/server/trust';
 
 export async function load({ params, locals }) {
 
@@ -48,13 +53,18 @@ export async function load({ params, locals }) {
 	const currentUser = locals.user;
 	const isOwnProfile = currentUser?.id === profileUser.id;
 	// Directional trust, both resolved server-side against the `trusts` join so no
-	// trust list ever leaves the server.
-	const viewerTrustsProfile = currentUser
-		? await isTrusting(locals.pb, currentUser.id, profileUser.id)
-		: false;
-	const profileTrustsViewer = currentUser
-		? await isTrusting(locals.pb, profileUser.id, currentUser.id)
-		: false;
+	// trust list ever leaves the server. Both directions in ONE query (see
+	// getTrustDirections in trust.ts) rather than two separate lookups against the
+	// same `trusts` path.
+	const { viewerTrustsOther: viewerTrustsProfile, otherTrustsViewer: profileTrustsViewer } =
+		currentUser
+			? await getTrustDirections(
+					locals.pb,
+					currentUser.id,
+					profileUser.id,
+					'trust-directions-profile'
+				)
+			: NO_TRUST_DIRECTIONS;
 
 	// items_public masks RESTRICTED items (trustees-only OR group-shared): their
 	// name comes back NULL. Unmasked rows are public.
