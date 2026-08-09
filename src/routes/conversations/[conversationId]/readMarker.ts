@@ -22,8 +22,8 @@
  * next heartbeat echo (up to 15 s of showing an unread thread the user is reading). The
  * redundant request is idempotent and cheap; the delay is user-visible. Robustness wins.
  *
- * @param post Issues the actual mark-read request (and any follow-up such as resyncing the nav
- *   badge). Rejections are absorbed; a queued follow-up still runs.
+ * @param post Issues the actual mark-read request (and any queued follow-up). Rejections are
+ *   absorbed; a queued follow-up still runs.
  */
 export function createReadMarker(post: (id: string) => Promise<unknown>) {
 	let inFlight = false;

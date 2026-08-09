@@ -2,8 +2,7 @@
 	// Imports for pocketbase real-time subcription
 	import type PocketBase from 'pocketbase';
 	import { onMount } from 'svelte';
-	import { invalidate, invalidateAll } from '$app/navigation';
-	import { NOTIFICATIONS_DEP } from '$lib/constants';
+	import { invalidateAll } from '$app/navigation';
 	import { getClientPB } from '$lib/client-pb';
 	import { realtimeSynced } from '$lib/stores/realtimeSynced.svelte';
 	import { subscribeConversation } from './conversationRealtime';
@@ -71,21 +70,33 @@
 	});
 
 	// Marks this conversation read server-side (the viewer's read flag + this thread's unread
-	// notifications) and resyncs the nav badge. Fire-and-forget: a failed mark-read must never
-	// block the page. The POST targets the CURRENT conversation by explicit path so a mid-flight
-	// client-side navigation can't retarget the wrong thread. Deliberately NOT invalidateAll():
-	// that re-runs every load (incl. this page's own), which tears down and recreates the
-	// realtime subscription and makes PocketBase auto-cancel its getList; the conversation
-	// list's unread dot already updates from the realtime `conversations` event echoed by
-	// markRead.
+	// notifications). Fire-and-forget: a failed mark-read must never block the page. The POST
+	// targets the CURRENT conversation by explicit path so a mid-flight client-side navigation
+	// can't retarget the wrong thread.
+	//
+	// Deliberately NOT followed by invalidate(NOTIFICATIONS_DEP) or invalidateAll():
+	// - The nav badge doesn't need it. The root layout's realtime `notifications` handler
+	//   (src/routes/+layout.svelte, onMount subscription) refetches the unread count on every
+	//   notification event — including the read=true updates markRead itself causes — and
+	//   afterNavigate resyncs it on every navigation regardless.
+	// - Invalidating actively broke this page (proven by the tester with network+DOM evidence):
+	//   invalidate(NOTIFICATIONS_DEP) re-runs only the root layout's load(), but SvelteKit still
+	//   produces a new merged `data` prop for every page, this one included. This page's
+	//   `realtimeSynced` stores ($derived over `[...data.conversation.messages]`, see
+	//   $lib/stores/realtimeSynced.svelte.ts) re-sync on that identity change and reset
+	//   `messages` back to the mount-time load() snapshot — wiping every realtime-appended
+	//   message until the next `conversations` SSE event (the markRead echo or the 15 s
+	//   heartbeat) re-delivers the ids. Observed: all messages vanished together, reappearing
+	//   after ~5 s. Do not re-add this invalidate.
 	//
 	// WHEN to send is decided by the co-located readMarker: it serialises requests and drops the
 	// stale echo of its own write, which would otherwise cost a second request on every open of
 	// an unread thread. See readMarker.ts for the sequencing contract.
 	const readMarker = createReadMarker((id: string) =>
-		fetch(`/conversations/${id}?/markRead`, { method: 'POST', body: new FormData() }).then(() =>
-			invalidate(NOTIFICATIONS_DEP)
-		)
+		fetch(`/conversations/${id}?/markRead`, {
+			method: 'POST',
+			body: new FormData(),
+		})
 	);
 
 	// Set up real-time subscription. The merge/refetch/dedupe logic lives in the

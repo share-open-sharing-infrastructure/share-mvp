@@ -10,7 +10,10 @@ function deferredPost() {
 	const post = vi.fn((id: string) => {
 		calls.push(id);
 		return new Promise<void>((resolve, reject) => {
-			settlers.push({ resolve: () => resolve(), reject: () => reject(new Error('boom')) });
+			settlers.push({
+				resolve: () => resolve(),
+				reject: () => reject(new Error('boom')),
+			});
 		});
 	});
 	return {
@@ -21,6 +24,9 @@ function deferredPost() {
 			const next = settlers.shift();
 			if (!next) throw new Error('no in-flight request to settle');
 			next[mode]();
+			// Three microtask ticks drain fire()'s chain after post()'s promise settles above:
+			// (1) the settled post() promise itself, (2) its .catch() handler, (3) its
+			// .finally() handler — which is where inFlight flips and a queued follow-up re-fires.
 			await Promise.resolve();
 			await Promise.resolve();
 			await Promise.resolve();
