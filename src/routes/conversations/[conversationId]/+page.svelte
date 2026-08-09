@@ -3,7 +3,7 @@
 	import type PocketBase from 'pocketbase';
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { getClientPB } from '$lib/client-pb';
+	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
 	import { realtimeSynced } from '$lib/stores/realtimeSynced.svelte';
 	import { subscribeConversation } from './conversationRealtime';
 	import { createReadMarker } from './readMarker';
@@ -66,6 +66,15 @@
 	// Must be $state so the subscription $effect re-runs when pb is set.
 	let pb: PocketBase | undefined = $state();
 	onMount(() => {
+		// Fresh full-page load: the root layout's auth-sync $effect is not guaranteed to have
+		// run before this page's mount. Subscribing while the shared client is still
+		// unauthenticated yields no events for this participant-restricted record, and the
+		// layout's later sync then fires client-pb's user-change reset (realtime.unsubscribe()),
+		// which tears the young subscription down without a resubmit. Syncing here first is
+		// order-independent: same-user saves don't trigger the reset, so whichever of the two
+		// sync sites runs second is a no-op. (Observed: on a direct load the first presence
+		// heartbeat PATCH 404'd and no realtime event was ever delivered.)
+		syncClientPBAuth(data.pbAuthToken ?? null, data.currentUser ?? null);
 		pb = getClientPB();
 	});
 
