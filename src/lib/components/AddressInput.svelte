@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import debounce from 'debounce';
 	import { texts } from '$lib/texts';
 
@@ -41,7 +40,12 @@
 		try {
 			const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
 			if (res.ok) {
-				suggestions = (await res.json()).suggestions;
+				const fetched: typeof suggestions = (await res.json()).suggestions;
+				// ORS can return two features with the same formatted label. They would be
+				// indistinguishable in the dropdown and collide as {#each} keys, so keep the first.
+				suggestions = fetched.filter(
+					(s, i, arr) => arr.findIndex((o) => o.label === s.label) === i
+				);
 				showSuggestions = suggestions.length > 0;
 			}
 		} catch {
@@ -61,18 +65,25 @@
 		isValidSelection = cityText.length === 0;
 	}
 
-	function handleCityInput(e: Event) {
-		// Redundant today, kept deliberately: `bind:value` compiles to `bind_value`, which
-		// attaches a *direct* listener on the input (target phase), while this `oninput` is
-		// delegated to the mount root (bubble phase) — so `cityText` is already current here.
-		// Reading the value off the event keeps the handler self-contained instead of resting on
-		// that ordering, which is a Svelte-internal detail, not a documented guarantee.
-		cityText = (e.target as HTMLInputElement).value;
+	// Issue #613: the setter half of the function binding on #city, and the single place the
+	// free-text bookkeeping happens. Svelte calls it for every value the DOM hands back — real
+	// keystrokes and text typed into the SSR-rendered input before hydration alike — so
+	// pre-hydration input is judged exactly as if it had been typed a moment later, with no
+	// mount-time replay. Deliberately no fetchSuggestions() here: an unprompted dropdown on page
+	// load would be surprising, so the fetch stays in oninput, which only real keystrokes fire.
+	function setCityText(v: string) {
+		cityText = v;
 		markAsFreeText();
-		if (cityText.length > 3) {
+	}
+
+	// Only the suggestion lookup; reads the query off the event so it stays independent of the
+	// binding's setter above. State bookkeeping lives in setCityText.
+	function handleCityInput(e: Event) {
+		const q = (e.target as HTMLInputElement).value;
+		if (q.length > 3) {
 			isLoadingGeo = true;
 			showSuggestions = false;
-			fetchSuggestions(cityText);
+			fetchSuggestions(q);
 		}
 	}
 
@@ -91,19 +102,6 @@
 		// event and touches no state, so neither fetchSuggestions() nor the dropdown is retriggered.
 		cityInputEl?.focus();
 	}
-
-	// Issue #613: bind:value's hydration guard adopts text the user typed into the SSR-rendered
-	// input before the bundle ran, but those keystrokes fired no input event we could hear, so
-	// handleCityInput never ran for them and `selectedGeo`/`isValidSelection` still hold their
-	// seeded values. Replay that bookkeeping once, after the hydration flush (onMount runs after
-	// bind_value has adopted the value), so pre-hydration text is judged exactly as it would have
-	// been had it arrived a moment later. Deliberately no fetchSuggestions() here — an unprompted
-	// dropdown on page load would be surprising; the user's next keystroke opens it.
-	// No-op when the component is mounted client-side (onboarding's StepLocation) or untouched.
-	onMount(() => {
-		if (cityText === initialValue) return;
-		markAsFreeText();
-	});
 
 	// Single source of truth for "the address is unusable and the user needs to be told": drives
 	// the visible warning *and* `aria-invalid`, so the screen-reader state can never disagree
@@ -132,7 +130,7 @@
 		id="city"
 		placeholder="z.B. Kleine Bäckerstraße"
 		bind:this={cityInputEl}
-		bind:value={cityText}
+		bind:value={() => cityText, setCityText}
 		oninput={handleCityInput}
 		autocomplete="off"
 		aria-invalid={showCityWarning}
@@ -152,7 +150,7 @@
 			bind:this={suggestionsEl}
 			class="absolute z-10 mt-1 w-full bg-sand border border-tinte-200 rounded-lg shadow-lg dark:bg-tinte-800 dark:border-tinte-600 max-h-60 overflow-auto"
 		>
-			{#each suggestions as s (suggestions.indexOf(s))}
+			{#each suggestions as s (s.label)}
 				<li>
 					<!-- Both handlers on purpose: keyboard activation fires `click`, never
 					     `mousedown`, so without onclick a keyboard user could never pick a
