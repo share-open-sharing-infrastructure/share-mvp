@@ -1,9 +1,4 @@
-import {
-	test,
-	expect,
-	type BrowserContext,
-	type Page,
-} from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { STORAGE_STATE, VIEWER_STORAGE_STATE } from '../fixtures/users';
 
 /**
@@ -45,7 +40,9 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 
 	test.beforeEach(async ({ browser }) => {
 		ownerCtx = await browser.newContext({ storageState: STORAGE_STATE });
-		viewerCtx = await browser.newContext({ storageState: VIEWER_STORAGE_STATE });
+		viewerCtx = await browser.newContext({
+			storageState: VIEWER_STORAGE_STATE,
+		});
 		owner = await ownerCtx.newPage();
 		viewer = await viewerCtx.newPage();
 	});
@@ -80,6 +77,22 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 		await page.waitForTimeout(1000);
 	}
 
+	/** Matches the markRead POST response for `convId` — used to wait for read-marking to land. */
+	function markReadResponse(page: Page, convId: string) {
+		return page.waitForResponse(
+			(r) =>
+				r.url().includes(`/conversations/${convId}`) &&
+				r.url().includes('markRead')
+		);
+	}
+
+	/** True if `url` is `convId`'s hover-preload `__data.json` response. */
+	function isPreloadResponse(url: string, convId: string): boolean {
+		return (
+			url.includes(`/conversations/${convId}`) && url.includes('__data.json')
+		);
+	}
+
 	test('hovering a conversation link keeps it unread; opening it marks it read', async () => {
 		const markReads = countMarkRead(owner);
 
@@ -100,12 +113,28 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 		// Hover the link and wait until the hover-preload load() has actually run on the
 		// server (its __data.json response). Pre-fix this is exactly what marked the thread
 		// read; post-fix load() is read-only.
-		await Promise.all([
-			owner.waitForResponse(
-				(r) => r.url().includes(`/conversations/${convId}`) && r.url().includes('__data.json')
-			),
-			convLink.hover(),
-		]);
+		//
+		// A single hover is not reliable in dev-mode CI: SvelteKit only attaches its preload
+		// `mousemove` listener (20 ms debounce) once client hydration finishes, and the SSR list
+		// is visible (and hoverable) before that. Hovering right away can land before hydration
+		// completes; since the mouse never moves again afterwards, the preload then never fires
+		// and waitForResponse would time out. Poll instead: move the mouse away and re-hover on
+		// every iteration so each pass produces fresh mousemove events, until the first
+		// post-hydration pass actually triggers the preload.
+		let preloadFired = false;
+		owner.on('response', (r) => {
+			if (isPreloadResponse(r.url(), convId)) preloadFired = true;
+		});
+		await expect
+			.poll(
+				async () => {
+					await owner.mouse.move(0, 0);
+					await convLink.hover();
+					return preloadFired;
+				},
+				{ timeout: 15_000 }
+			)
+			.toBe(true);
 
 		// Reload the list from the server: the thread must still be UNREAD (the regression).
 		await owner.reload();
@@ -115,9 +144,7 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 
 		// Now actually OPEN the conversation. The page fires the markRead action; wait for it.
 		await Promise.all([
-			owner.waitForResponse(
-				(r) => r.url().includes(`/conversations/${convId}`) && r.url().includes('markRead')
-			),
+			markReadResponse(owner, convId),
 			convLinkAfterHover.click(),
 		]);
 		await expect(owner).toHaveURL(new RegExp(`/conversations/${convId}$`));
@@ -151,20 +178,18 @@ test.describe('conversation read-on-open (not on hover) — #412', () => {
 
 		// Owner opens the thread (direct URL) — that marks it read.
 		await Promise.all([
-			owner.waitForResponse(
-				(r) => r.url().includes(`/conversations/${convId}`) && r.url().includes('markRead')
-			),
+			markReadResponse(owner, convId),
 			owner.goto(`/conversations/${convId}`),
 		]);
 
 		// With the owner's page still open, the viewer sends a message. The owner's client gets
 		// the realtime `conversations` update whose read flag is now false, and re-fires markRead.
 		const text = `E2E Nachricht ${convId}`;
-		const remarked = owner.waitForResponse(
-			(r) => r.url().includes(`/conversations/${convId}`) && r.url().includes('markRead')
-		);
+		const remarked = markReadResponse(owner, convId);
 		await viewer.locator('input[name="messageContent"]').fill(text);
-		await viewer.locator('form[action="?/sendMessage"] button[type="submit"]').click();
+		await viewer
+			.locator('form[action="?/sendMessage"] button[type="submit"]')
+			.click();
 
 		// The message reaches the open thread (realtime works) and the re-mark POST ran.
 		await expect(owner.getByText(text)).toBeVisible();
