@@ -3,9 +3,10 @@
 	import type PocketBase from 'pocketbase';
 	import { onMount } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
-	import { getClientPB } from '$lib/client-pb';
+	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
 	import { realtimeSynced } from '$lib/stores/realtimeSynced.svelte';
 	import { subscribeConversation } from './conversationRealtime';
+	import { createReadMarker } from './readMarker';
 	import { stickToBottom } from './chatScroll';
 	import { startPresenceHeartbeat } from './presenceHeartbeat';
 
@@ -65,8 +66,47 @@
 	// Must be $state so the subscription $effect re-runs when pb is set.
 	let pb: PocketBase | undefined = $state();
 	onMount(() => {
+		// Fresh full-page load: the root layout's auth-sync $effect is not guaranteed to have
+		// run before this page's mount. Subscribing while the shared client is still
+		// unauthenticated yields no events for this participant-restricted record, and the
+		// layout's later sync then fires client-pb's user-change reset (realtime.unsubscribe()),
+		// which tears the young subscription down without a resubmit. Syncing here first is
+		// order-independent: same-user saves don't trigger the reset, so whichever of the two
+		// sync sites runs second is a no-op. (Observed: on a direct load the first presence
+		// heartbeat PATCH 404'd and no realtime event was ever delivered.)
+		syncClientPBAuth(data.pbAuthToken ?? null, data.currentUser ?? null);
 		pb = getClientPB();
 	});
+
+	// Marks this conversation read server-side (the viewer's read flag + this thread's unread
+	// notifications). Fire-and-forget: a failed mark-read must never block the page. The POST
+	// targets the CURRENT conversation by explicit path so a mid-flight client-side navigation
+	// can't retarget the wrong thread.
+	//
+	// Deliberately NOT followed by invalidate(NOTIFICATIONS_DEP) or invalidateAll():
+	// - The nav badge doesn't need it. The root layout's realtime `notifications` handler
+	//   (src/routes/+layout.svelte, onMount subscription) refetches the unread count on every
+	//   notification event — including the read=true updates markRead itself causes — and
+	//   afterNavigate resyncs it on every navigation regardless.
+	// - Invalidating actively broke this page (proven by the tester with network+DOM evidence):
+	//   invalidate(NOTIFICATIONS_DEP) re-runs only the root layout's load(), but SvelteKit still
+	//   produces a new merged `data` prop for every page, this one included. This page's
+	//   `realtimeSynced` stores ($derived over `[...data.conversation.messages]`, see
+	//   $lib/stores/realtimeSynced.svelte.ts) re-sync on that identity change and reset
+	//   `messages` back to the mount-time load() snapshot — wiping every realtime-appended
+	//   message until the next `conversations` SSE event (the markRead echo or the 15 s
+	//   heartbeat) re-delivers the ids. Observed: all messages vanished together, reappearing
+	//   after ~5 s. Do not re-add this invalidate.
+	//
+	// WHEN to send is decided by the co-located readMarker: it serialises requests and drops the
+	// stale echo of its own write, which would otherwise cost a second request on every open of
+	// an unread thread. See readMarker.ts for the sequencing contract.
+	const readMarker = createReadMarker((id: string) =>
+		fetch(`/conversations/${id}?/markRead`, {
+			method: 'POST',
+			body: new FormData(),
+		})
+	);
 
 	// Set up real-time subscription. The merge/refetch/dedupe logic lives in the
 	// co-located conversationRealtime helper (issue #469).
@@ -82,6 +122,20 @@
 				setMessages: (next) => (messages.value = next),
 				setLendingStatus: (s) => (lendingStatus.value = s),
 				setCounterfactual: (c) => (counterfactual.value = c),
+				// Re-assert read-state while the thread is open: a message from the chat
+				// partner flips MY read flag back to false server-side (sendMessage), and the
+				// open-mark effect below only runs on mount — so without this the thread pops
+				// back to unread in the list while the reader is looking at it. Sending our own
+				// markRead echoes the flag back as true, which both stops this from looping and
+				// tells the readMarker its write landed; the 15 s presence heartbeat echo makes
+				// it self-healing if a POST was ever lost.
+				// No visibility gate, deliberately: "the page is open" is the same signal the
+				// layout's notification auto-read already uses for the open conversation.
+				onReadState: ({ readByRequester, readByOwner }) =>
+					readMarker.observe(
+						loggedInUserIsItemOwner ? readByOwner : readByRequester,
+						conversationId
+					),
 			},
 			// Messages sent while the stream was down (e.g. the phone was asleep)
 			// aren't replayed by realtime — refetch the conversation on reconnect
@@ -94,6 +148,18 @@
 			// treat a longer silence as a silently frozen connection and reconnect (#528).
 			true
 		);
+	});
+
+	// Mark the conversation as read once it is actually OPENED. Read-state is no longer touched
+	// in load() because load() runs on hover-preload (data-sveltekit-preload-data="hover"),
+	// which flipped threads to read on mere hover (issue #412). Unconditional (not gated on the
+	// loaded read flag) because markRead also clears this thread's unread notifications, which
+	// can outlive a read conversation — a lending-status notification never flips readBy*.
+	// This effect intentionally reads ONLY `pb` (mounted gate) and `conversationId` — adding
+	// other reactive reads would make it re-fire and re-mark.
+	$effect(() => {
+		if (!pb) return;
+		readMarker.open(conversationId);
 	});
 
 	// Presence heartbeat: periodically update the lastSeenAt timestamp so the backend

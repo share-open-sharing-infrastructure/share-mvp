@@ -117,11 +117,15 @@
 			{/if}
 		</div>
 
-		<!-- Unread dot -->
+		<!-- Unread indicator: an sr-only label carries the meaning for screen readers (and
+		     gives tests a semantic handle); the coloured dot is purely decorative. -->
 		{#if isUnread}
-			<div class="shrink-0 w-2 h-2 rounded-full
-				{role === 'borrowing' ? 'bg-primary' : 'bg-accent'}">
-			</div>
+			<span class="sr-only">{texts.pages.conversations.unread}</span>
+			<div
+				aria-hidden="true"
+				class="shrink-0 w-2 h-2 rounded-full
+				{role === 'borrowing' ? 'bg-primary' : 'bg-accent'}"
+			></div>
 		{/if}
 	</a>
 </li>

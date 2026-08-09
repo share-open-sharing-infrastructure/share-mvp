@@ -11,6 +11,10 @@ export async function load({ locals }) {
 		const records = await locals.pb.collection('notifications').getFullList({
 			filter: locals.pb.filter('recipient={:userId}', { userId: locals.user.id }),
 			sort: '-created',
+			// The root layout load lists this same collection for the unread badge on the very
+			// same request; without an explicit key the SDK's method+path auto-cancellation
+			// aborts one of the two at random (see +layout.server.ts).
+			requestKey: null,
 		});
 		notifications = records as unknown as Notification[];
 	} catch (err) {

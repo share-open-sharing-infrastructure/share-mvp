@@ -17,7 +17,10 @@ import type { Conversation, Message } from '$lib/types/models';
  *
  * @param pb             Shared client PocketBase instance (from `getClientPB()`).
  * @param conversationId Record id of the conversation to subscribe to.
- * @param accessors      Read/write hooks for the caller's reactive state.
+ * @param accessors      Read/write hooks for the caller's reactive state, plus `onReadState`:
+ *   a notification (not a state mirror) carrying the record's `readByRequester`/`readByOwner`
+ *   on every update event, so the caller can re-assert read-state while the thread is open —
+ *   an incoming message flips the recipient's flag back to `false` server-side (issue #412).
  * @param onReconnect    Optional callback run after the stream reconnects —
  *   messages sent while the stream was down are not replayed, so the caller
  *   should refetch (e.g. `invalidateAll()`). Fixes the "doesn't update for one
@@ -36,11 +39,12 @@ export function subscribeConversation(
 		setMessages: (next: Message[]) => void;
 		setLendingStatus: (s: Conversation['lendingStatus']) => void;
 		setCounterfactual: (c: Conversation['counterfactual']) => void;
+		onReadState: (flags: { readByRequester: boolean; readByOwner: boolean }) => void;
 	},
 	onReconnect?: () => void,
 	expectsHeartbeat?: boolean
 ): () => void {
-	const { getMessages, setMessages, setLendingStatus, setCounterfactual } = accessors;
+	const { getMessages, setMessages, setLendingStatus, setCounterfactual, onReadState } = accessors;
 
 	return subscribeRealtime<Conversation>({
 		collection: 'conversations',
@@ -54,6 +58,20 @@ export function subscribeConversation(
 			}
 			if (event.record.counterfactual !== undefined) {
 				setCounterfactual(event.record.counterfactual || undefined);
+			}
+
+			// Report the record's read flags on every update — the caller re-asserts read-state
+			// from them while the thread is open (issue #412; see `onReadState` above). Both
+			// flags must be real booleans: a record that omits them must never be read as
+			// "unread", or every event (incl. the 15 s heartbeat echo) would trigger a re-mark.
+			if (
+				typeof event.record.readByRequester === 'boolean' &&
+				typeof event.record.readByOwner === 'boolean'
+			) {
+				onReadState({
+					readByRequester: event.record.readByRequester,
+					readByOwner: event.record.readByOwner,
+				});
 			}
 
 			// A coalesced/batched SSE event can carry more than one new message at once

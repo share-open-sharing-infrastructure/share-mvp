@@ -40,12 +40,14 @@ function makeState(initialMessages: Message[] = []) {
 	const setMessages = vi.fn((next: Message[]) => {
 		messages = next;
 	});
+	const onReadState = vi.fn<(flags: { readByRequester: boolean; readByOwner: boolean }) => void>();
 	return {
 		accessors: {
 			getMessages: () => messages,
 			setMessages,
 			setLendingStatus,
 			setCounterfactual,
+			onReadState,
 		},
 		get messages() {
 			return messages;
@@ -53,6 +55,7 @@ function makeState(initialMessages: Message[] = []) {
 		setMessages,
 		setLendingStatus,
 		setCounterfactual,
+		onReadState,
 	};
 }
 
@@ -213,5 +216,46 @@ describe('subscribeConversation', () => {
 		expect(state.setMessages).not.toHaveBeenCalled();
 		expect(state.setLendingStatus).not.toHaveBeenCalled();
 		expect(state.setCounterfactual).not.toHaveBeenCalled();
+		expect(state.onReadState).not.toHaveBeenCalled();
+	});
+
+	// The read flags let the page re-assert read-state while the thread is open: an incoming
+	// message flips the recipient's flag back to false server-side (issue #412).
+	it('reports the record read flags on an update event (case 8)', async () => {
+		const state = makeState([msg('m1')]);
+		subscribeConversation(makePb(vi.fn()), 'conv1', state.accessors);
+
+		await registeredHandler()(updateEvent({ messages: ['m1'], readByRequester: false, readByOwner: true }));
+
+		expect(state.onReadState).toHaveBeenCalledTimes(1);
+		expect(state.onReadState).toHaveBeenCalledWith({ readByRequester: false, readByOwner: true });
+	});
+
+	it('reports the read flags even when the event carries a new message (case 8b)', async () => {
+		const state = makeState([msg('m1')]);
+		const getOne = vi.fn().mockResolvedValue(msg('m2'));
+		subscribeConversation(makePb(getOne), 'conv1', state.accessors);
+
+		await registeredHandler()(
+			updateEvent({ messages: ['m1', 'm2'], readByRequester: false, readByOwner: true })
+		);
+
+		// Both halves run: the message is appended AND the flags are reported (the flag check
+		// must not sit behind the "nothing new to fetch" early return).
+		expect(state.messages).toEqual([msg('m1'), msg('m2')]);
+		expect(state.onReadState).toHaveBeenCalledWith({ readByRequester: false, readByOwner: true });
+	});
+
+	it('does not report read flags when the record omits them (case 9)', async () => {
+		const state = makeState([msg('m1')]);
+		subscribeConversation(makePb(vi.fn()), 'conv1', state.accessors);
+
+		const handler = registeredHandler();
+		// Absent entirely, and half-present — neither may be read as "unread", or every event
+		// (incl. the 15 s heartbeat echo) would trigger a pointless re-mark.
+		await handler(updateEvent({ messages: ['m1'] }));
+		await handler(updateEvent({ messages: ['m1'], readByOwner: false }));
+
+		expect(state.onReadState).not.toHaveBeenCalled();
 	});
 });
