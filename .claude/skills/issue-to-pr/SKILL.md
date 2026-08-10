@@ -119,11 +119,17 @@ what depends on / exercises them) and runs, in order, reporting each result plai
    PocketBase + superuser creds). Use the `drive-app` skill's stack-bringup
    (`scripts/dev-stack.sh --seed e2e`, ports PB `127.0.0.1:8091` / web `127.0.0.1:5173`,
    superuser `admin@local.test` / `localdev12345`, plus its background-task reap gotcha).
-3. **Interactive smoke via MCP:** with the stack up, exercise the changed flow in the browser
-   using the **Playwright MCP** and the **Chrome DevTools MCP** (`chrome-devtools` — navigate,
-   click, snapshot, `list_console_messages`, `list_network_requests`, screenshots, and a
-   `lighthouse_audit` when the change is UI/perf-relevant). Watch for console errors and failed
-   requests.
+3. **Interactive smoke, when it adds something the specs didn't:** with the stack up, exercise the
+   changed flow in the browser using whichever browser MCP the session has (Playwright or Chrome
+   DevTools — the user's choice) — navigate, click, snapshot, read console messages and network
+   requests, screenshot the end state, and run a Lighthouse/perf audit only when the change is
+   UI/perf-relevant. Watch for console errors and failed requests. If step 2's specs already cover
+   the changed flow and passed, skip this and **record it as skipped**, not as passed.
+
+Because the tester runs with the full tool set (its browser-MCP tool names can't be safely
+allowlisted), its read-only contract is enforced here by post-condition: snapshot
+`git -C <repo> status --porcelain` before spawning it, compare afterwards, and treat any change to
+tracked files as a failed run instead of a pass.
 
 If anything fails, hand the failure back into the Stage 4 fix loop (coder → reviewer → tester)
 until green. Report the full test summary.

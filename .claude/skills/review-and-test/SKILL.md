@@ -4,8 +4,8 @@ description: >
   Review-and-verify workflow for AllerLeih: review the current change for security & project
   correctness, and verify it end-to-end in a real browser — then report. Runs four specialised
   reviewer roles in parallel (security & data protection, code quality, accessibility,
-  conventions) plus allerleih-tester for the browser + test drive via the Chrome DevTools MCP,
-  and produces one consolidated report.
+  conventions) plus allerleih-tester for the test drive, with a browser pass via whichever browser
+  MCP the session has when the tests can't answer the question, and produces one consolidated report.
   READ-ONLY: it changes no code, runs no fix-loop, opens no PR. Use when you have a change on a
   feature branch (or uncommitted) and want it reviewed and browser-tested without shipping it.
 ---
@@ -40,6 +40,13 @@ Review and browser-test are independent — spawn **all sub-agents in the same m
 run in parallel. All must be told to obey the relevant repo's `CLAUDE.md` guardrails and consult
 its skills, and all are read-only w.r.t. source.
 
+The four reviewer roles are read-only **by permission** — their `tools:` grant excludes `Edit` and
+`Write`. `allerleih-tester` is not: it needs browser-MCP tools whose names differ per setup, so an
+allowlist would silently break its browser step. Enforce its read-only contract by post-condition
+instead: record `git -C <repo> status --porcelain` for every affected repo **before** spawning it,
+compare **after** it returns, and treat any change to tracked files as a **failed test run** — say
+so in the report rather than accepting a green that was edited into place.
+
 ### Review — four role agents
 The review is split into four specialised roles; each has its own beat and shares the contract in
 `.claude/review-contract.md` (in the frontend repo's root) (scope, severity, output format,
@@ -70,10 +77,13 @@ Spawn it to verify the change end-to-end, scoped to the diff's impact set. It:
 1. Runs the relevant **unit/integration** tests (frontend `npx vitest run <files>`; backend
    `npm test`) — scoped, not a blanket full-suite run unless the change is broad.
 2. Runs the **affected Playwright e2e specs** (`npm run test:e2e -- <spec>`).
-3. Drives the changed flow **interactively in a real browser** via the **Chrome DevTools MCP**
-   (`chrome-devtools` — `navigate_page`, `click`, `take_snapshot`, `list_console_messages`,
-   `list_network_requests`, `take_screenshot`, and `lighthouse_audit` when UI/perf-relevant) and
-   the Playwright MCP — watching for console errors and 4xx/5xx from the changed endpoints.
+3. Drives the changed flow **interactively in a real browser** — but **only when the browser can
+   answer something the specs cannot**: a visual/interactive change with no covering spec, a spec
+   that failed and needs diagnosing, suspected console/network errors, or an a11y/perf question. If
+   step 2's specs cover the flow and passed, **skip it and record it as skipped** — never let a
+   skipped step read as a passed one. Use whichever browser MCP the session has (Chrome DevTools or
+   Playwright — the user's choice); watch console errors and 4xx/5xx from the changed endpoints, and
+   snapshot only when needed to pick the next target or prove the outcome.
 
 Stack bring-up (per the tester's own instructions / `drive-app` skill):
 `scripts/dev-stack.sh --seed e2e` → PB `127.0.0.1:8091`, web `127.0.0.1:5173`, superuser

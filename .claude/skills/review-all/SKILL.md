@@ -5,8 +5,10 @@ description: >
   protection, code quality, accessibility, conventions) run in parallel against the diff, then the
   findings are consolidated, deduped and fixed directly — with a change log that records what/where/
   why for each fix. Use when a change should be reviewed from all angles and the findings fixed in
-  one go, without opening a PR. Not for GitHub PR reviews (use /review for those) and without a
-  browser test (use /review-and-test for that).
+  one go, without opening a PR, and without a browser test (use /review-and-test for that).
+  For a GitHub PR — or any review that should also be verified in a browser and shipped — use the
+  repo's /review-and-test, or the maintainer's local /review-ship where that is set up. Do not fall
+  back to the built-in /review: it is a generic prompt with no AllerLeih knowledge.
 ---
 
 # review-all
