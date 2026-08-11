@@ -18,7 +18,10 @@ Do this before running anything. The scope drives everything else.
    uncommitted work. `git -C <repo> diff main...HEAD` to see *what* changed.
 2. Build the **impact set** = the changed files + everything that depends on or exercises them:
    - Co-located tests of changed files (`foo.ts` → `foo.test.ts`).
-   - Modules that import a changed module (`grep -rl` the export/symbol names).
+   - Modules that import a changed module. Use `find_referencing_symbols` (Serena MCP) when the
+     session has it — an under-derived impact set means you test the wrong things, and `grep -rl` on
+     symbol names both misses aliased imports and over-reports comment/substring matches. Fall back
+     to `grep -rl` when Serena isn't connected.
    - Routes/pages/flows whose `+page.server.ts`, components, `$lib/server/*`, `texts.ts` keys,
      PocketBase collections/views, or hooks/migrations were touched.
    - For a backend change: the frontend surfaces that consume the changed collection/view/endpoint.

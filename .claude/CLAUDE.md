@@ -230,6 +230,28 @@ prompt — the contract forbids the agents from re-deriving scope and caps them 
 
 These complement the built-in `/code-review` and `/security-review`.
 
+**MCP servers are optional and must be named to be used.** Nobody's setup is guaranteed to have
+them, and Claude Code loads MCP tools on demand — so an agent that isn't told a server exists never
+looks for it and quietly falls back to `grep`/`cat`. Whichever of these the session has:
+
+| Server | Use it for |
+|---|---|
+| `svelte` | any Svelte 5 / SvelteKit API question; `svelte-autofixer` on components you write |
+| Context7 | signatures of other external libraries (Flowbite, Tailwind, web-push, ORS) |
+| **Serena** (`mcp__serena__*`) | navigating *this* codebase by symbol instead of by text |
+| a browser MCP (Playwright **or** Chrome DevTools) | driving the running app; see `/drive-app` |
+
+Serena is worth naming explicitly because the built-in tools always look sufficient: the case where
+it is not a preference but a correctness difference is **"where else is this symbol used?"** —
+`find_referencing_symbols` resolves that through the type checker, while `grep` misses aliased
+re-imports (`import { displayName as dn }`) and pads the result with comments and substring hits. For
+a security helper, a guardrail or a dead-code claim, that gap decides whether the answer is right.
+Also useful: `get_symbols_overview` instead of reading a long file, `rename_symbol` /
+`replace_symbol_body` / `safe_delete_symbol` for edits, `get_diagnostics_for_file` for type errors
+without a full `npm run check`. Keep `Grep` for literal text and anything Serena doesn't index (YAML,
+Markdown). The four reviewer roles are granted its **read-only** tools only — their enforced
+read-only property depends on the mutating ones staying out of the grant.
+
 ## Keep in sync
 
 Docs in `./docs` are published to GitHub Pages. When you add/remove/rename a route, an

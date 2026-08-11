@@ -23,8 +23,13 @@ get the result before continuing), enforce the loop logic, and stop at the two h
   repos. Commits & PRs only ever apply to the frontend and backend repos.
 
 **Cross-cutting rule for EVERY stage:** the sub-agent must be told to (a) obey the relevant
-`CLAUDE.md` guardrails of whichever repo it touches, and (b) consult the applicable skills of
-that repo before acting. Name the concrete skills in the sub-agent's prompt (lists below).
+`CLAUDE.md` guardrails of whichever repo it touches, (b) consult the applicable skills of
+that repo before acting, and (c) **use the MCP servers the session actually has** — name them in the
+prompt. Sub-agents do not discover tooling on their own: MCP tools are loaded on demand, so an agent
+that isn't told a server exists will never look for it and falls back to `grep`/`cat`. This applies
+to the Svelte MCP, Context7 and **Serena** (`mcp__serena__*`, semantic symbol search/edit for this
+codebase). Where a server is missing, the stage still works with the built-in tools — say so rather
+than blocking.
 
 ## Stage 0 — Intake & branch
 
@@ -45,6 +50,13 @@ Spawn the built-in `Plan` agent. Prompt it to:
   `docs/domain-model.md`, `docs/groups.md`, etc. as relevant).
 - Identify which project skills the coding stage will need (e.g. `new-route`,
   `add-notification-type`, `schema-change`, backend `new-migration`, `write-tests`).
+- **Map the blast radius with the Serena MCP if the session has it** (`mcp__serena__*`): the plan is
+  only as good as its list of affected call sites, and this is the stage where an omission is
+  cheapest to fix. `find_referencing_symbols` on every symbol the plan will touch, plus
+  `get_symbols_overview` to see a file's shape without reading it whole. Tell the Plan agent this
+  explicitly in its prompt — sub-agents default to `grep`/`cat` unless told otherwise, and grep
+  misses aliased imports while padding the result with comment hits. Without Serena, grep is fine;
+  then say in the plan that the call-site list is textual and may be incomplete.
 - Produce a concrete, file-level, step-by-step implementation plan **honouring the guardrails**
   (pb.filter, trust/group visibility, runes, form actions, texts.ts, displayName, public-view
   leakage). For schema work the plan must cover both repos (migration → models.ts → docs).

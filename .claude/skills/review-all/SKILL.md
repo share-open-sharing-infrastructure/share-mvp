@@ -67,7 +67,10 @@ repo themselves. So pass **in the prompt**:
   each agent again,
 - the list of changed files with line counts (`wc -l`),
 - the note that the review contract lives in `.claude/review-contract.md` (in this repo's root),
-- the pointer to the affected repo's `CLAUDE.md`.
+- the pointer to the affected repo's `CLAUDE.md`,
+- **which MCP servers this session has** — name them. Sub-agents don't discover tooling: MCP tools
+  load on demand, so a role that isn't told Serena exists will grep instead. The roles are granted
+  Serena's read-only symbol tools; the contract says where they beat grep.
 
 If the diff is very large (> ~1500 lines), pass the file list + the instruction to read
 selectively instead of the full text — then the diff in the prompt is more expensive than reading.

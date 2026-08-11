@@ -62,6 +62,10 @@ boundaries). Spawn them against the current diff of **each affected repo**
 
 Each role returns a findings list (**file:line + concrete fix**, severity), empty if clean.
 
+**Name the available MCP servers in each role's prompt** — MCP tools load on demand, so a role that
+isn't told Serena exists falls back to grep; the roles hold its read-only symbol tools and the
+contract says where those beat grep.
+
 **Cost:** fetch the diff **once yourself** and pass it to the agents in the prompt — otherwise four
 agents re-run the same `git diff`. **Only start roles whose gate applies:** `sveltekit-pb-reviewer`
 for server/routes/hooks/migrations/auth/personal data, `code-quality-reviewer` from ~80 changed

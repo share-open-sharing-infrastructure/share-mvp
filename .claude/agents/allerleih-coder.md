@@ -33,6 +33,28 @@ to for the area you're touching (`docs/architecture.md`, `docs/data-model.md`,
   until it's clean. Do not rely on training memory for Svelte APIs.
 - **Context7** — for other external libraries/APIs (Flowbite, Tailwind, web-push, ORS, etc.)
   when unsure of a signature: `resolve-library-id` → `query-docs`.
+- **Serena MCP (`mcp__serena__*`), when the session has it** — for navigating and editing *this*
+  codebase semantically instead of textually. It is easy to forget because Read/Grep/Edit are always
+  there; these are the cases where it is materially better and you should reach for it:
+  - **Before changing a shared symbol, list its real call sites** with `find_referencing_symbols`.
+    This is the big one: a refactor that misses a caller compiles fine and breaks at runtime, and
+    `grep` misses aliased imports (`import { lendingStatusFilter as f }`) while adding false hits
+    from comments and substrings. The lending/trust/texts helpers are imported from many places —
+    exactly the shape where grep under-reports.
+  - **Renaming a symbol project-wide** → `rename_symbol` instead of N hand-made `Edit`s; it is
+    type-aware and respects shadowing.
+  - **Replacing a function body** → `replace_symbol_body`, which needs no exact-match of the old
+    text and so can't half-apply.
+  - **Deleting something** → `safe_delete_symbol`, which refuses while references remain.
+  - **Reading an unfamiliar file** → `get_symbols_overview` for its shape before pulling the whole
+    file into context.
+  - **After editing** → `get_diagnostics_for_file` gives you the type errors immediately, without
+    waiting for a full `npm run check`.
+
+  Keep using `Read`/`Grep`/`Edit` where they fit: literal text (a `texts.ts` string, a Tailwind
+  class), whole-file reading, new files, and anything outside a language Serena indexes — YAML,
+  Markdown and `pb_migrations/*.js` fragments included. And if Serena isn't connected, just work
+  the normal way; don't stall on it.
 - **Project skills** (invoke with `/<name>`) — prefer them over improvising:
   - Frontend: `new-route` (new page: +page.server.ts + .svelte + co-located test + texts.ts),
     `add-notification-type` (wire a notification end-to-end), `schema-change` (coordinate a
