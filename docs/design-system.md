@@ -134,7 +134,9 @@ no markup or component changes:
 
 1. Add a `[data-theme='<operator>']` block in `src/app.css` next to the `@theme` block,
    overriding the `--color-*` tokens the operator wants changed (at minimum the shades
-   the design system uses: base + `200`/`400`/`600` of `primary`, plus `accent` if used).
+   the design system uses: base + `200`/`400`/`600` of `primary`, plus `accent` if used,
+   plus `700`/`800` of `primary`/`accent` — `InitialsAvatar.svelte` pairs those shades for
+   contrast, so leaving them un-overridden can drop a pair below the 4.5:1 AA floor).
 2. Set `data-theme="<operator>"` on `<html>` in `src/app.html` (or dynamically on a
    wrapper element).
 

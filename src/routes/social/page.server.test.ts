@@ -54,8 +54,8 @@ function callLoad(pb: unknown) {
 describe('social load — bidirectional trust network', () => {
 	it('merges mutual + one-directional edges and excludes deleted counterparts', async () => {
 		const trustees = [
-			{ trustee: 'A', expand: { trustee: { id: 'A', username: 'Alice', deleted: false } } }, // mutual (below)
-			{ trustee: 'B', expand: { trustee: { id: 'B', username: 'Bob' } } }, // I trust B only
+			{ trustee: 'A', expand: { trustee: { id: 'A', username: 'Alice', deleted: false, profileImage: 'alice.png' } } }, // mutual (below)
+			{ trustee: 'B', expand: { trustee: { id: 'B', username: 'Bob' } } }, // I trust B only, no profileImage
 			{ trustee: 'D', expand: { trustee: { id: 'D', username: 'deleted-D', deleted: true } } }, // deleted → skip
 		];
 		const trusters = [
@@ -66,11 +66,27 @@ describe('social load — bidirectional trust network', () => {
 		const data = await callLoad(makePb(trustees, trusters));
 		const byId = Object.fromEntries(data.trustNetwork.map((n) => [n.id, n]));
 
-		expect(byId['A']).toMatchObject({ username: 'Alice', iTrustThem: true, theyTrustMe: true });
-		expect(byId['B']).toMatchObject({ iTrustThem: true, theyTrustMe: false });
-		expect(byId['C']).toMatchObject({ iTrustThem: false, theyTrustMe: true });
+		expect(byId['A']).toMatchObject({
+			username: 'Alice',
+			profileImage: 'alice.png',
+			iTrustThem: true,
+			theyTrustMe: true,
+		});
+		expect(byId['B']).toMatchObject({ iTrustThem: true, theyTrustMe: false, profileImage: null });
+		expect(byId['C']).toMatchObject({ iTrustThem: false, theyTrustMe: true, profileImage: null });
 		expect(byId['D']).toBeUndefined(); // anonymized counterpart must not surface
 		expect(data.trustNetwork).toHaveLength(3);
+	});
+
+	it('builds no avatar URL server-side — only the raw profileImage filename', async () => {
+		const trustees = [
+			{ trustee: 'A', expand: { trustee: { id: 'A', username: 'Alice', profileImage: 'alice.png' } } },
+		];
+		const data = await callLoad(makePb(trustees, []));
+
+		expect(data.trustNetwork).toHaveLength(1);
+		expect(data.trustNetwork[0]).not.toHaveProperty('profilePic');
+		expect(JSON.stringify(data.trustNetwork)).not.toContain('http');
 	});
 
 	it('returns an empty network when there are no edges', async () => {

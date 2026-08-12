@@ -24,7 +24,10 @@ export async function load({ locals, url }) {
 	// Build the bidirectional trust network from the join: edges where I am the
 	// truster ("I trust them") and edges where I am the trustee ("they trust me").
 	// Deleted (anonymized) counterparts are skipped so they never surface here.
-	const network = new Map<string, { username: string; iTrustThem: boolean; theyTrustMe: boolean }>();
+	const network = new Map<
+		string,
+		{ username: string; profileImage: string | null; iTrustThem: boolean; theyTrustMe: boolean }
+	>();
 	try {
 		const [trustees, trusters] = await Promise.all([
 			getTrustees(locals.pb, locals.user.id),
@@ -33,14 +36,25 @@ export async function load({ locals, url }) {
 		for (const t of trustees) {
 			const u = t.expand?.trustee;
 			if (!u || u.deleted) continue;
-			network.set(u.id, { username: u.username, iTrustThem: true, theyTrustMe: false });
+			network.set(u.id, {
+				username: u.username,
+				profileImage: u.profileImage ?? null,
+				iTrustThem: true,
+				theyTrustMe: false,
+			});
 		}
 		for (const t of trusters) {
 			const u = t.expand?.truster;
 			if (!u || u.deleted) continue;
 			const existing = network.get(u.id);
 			if (existing) existing.theyTrustMe = true;
-			else network.set(u.id, { username: u.username, iTrustThem: false, theyTrustMe: true });
+			else
+				network.set(u.id, {
+					username: u.username,
+					profileImage: u.profileImage ?? null,
+					iTrustThem: false,
+					theyTrustMe: true,
+				});
 		}
 	} catch (error: Error | any) {
 		console.error(error.message ? error.message : error);
@@ -49,7 +63,7 @@ export async function load({ locals, url }) {
 	const trustNetwork = [...network].map(([id, v]) => ({
 		id,
 		username: v.username,
-		profilePic: `https://ui-avatars.com/api/?name=${v.username}&background=random`,
+		profileImage: v.profileImage,
 		iTrustThem: v.iTrustThem,
 		theyTrustMe: v.theyTrustMe,
 	}));

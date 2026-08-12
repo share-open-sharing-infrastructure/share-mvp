@@ -9,9 +9,11 @@
 		TableBodyCell
 	} from 'flowbite-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
+	import InitialsAvatar from '$lib/components/InitialsAvatar.svelte';
 	import { ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
+	import { PUBLIC_PB_URL } from '$env/static/public';
 
 	/**
 	 * The sortable, paginated trust-network table of /social (rows post to the page's
@@ -22,7 +24,7 @@
 		trustNetwork: {
 			id: string;
 			username: string;
-			profilePic: string;
+			profileImage: string | null;
 			iTrustThem: boolean;
 			theyTrustMe: boolean;
 		}[];
@@ -122,11 +124,17 @@
 							href={resolve('/users/[id]', { id: entry.id })}
 							class="flex flex-row items-center font-medium text-tinte-900 dark:text-white hover:underline"
 						>
-							<img
-								src={entry.profilePic}
-								alt="@{entry.username}"
-								class="h-9 w-9 mr-4 shrink-0 rounded-full object-cover hidden sm:block"
-							/>
+							<span class="hidden sm:block mr-4 shrink-0" aria-hidden="true">
+								{#if entry.profileImage}
+									<img
+										src="{PUBLIC_PB_URL}api/files/users/{entry.id}/{entry.profileImage}"
+										alt="@{entry.username}"
+										class="h-9 w-9 rounded-full object-cover"
+									/>
+								{:else}
+									<InitialsAvatar name={entry.username} class="h-9 w-9 rounded-full text-sm" />
+								{/if}
+							</span>
 							{entry.username}
 						</a>
 					</TableBodyCell>

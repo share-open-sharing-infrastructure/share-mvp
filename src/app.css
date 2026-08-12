@@ -66,7 +66,8 @@
    tokens here. Tailwind v4 utilities like bg-primary-200 read var(--color-primary-200)
    at runtime, so a [data-theme] block on a DOM ancestor re-skins the whole app —
    including $lib/components/ui/Button.svelte — with no markup changes. Override at
-   least the shades the design system uses (base + 200/400/600 for buttons/links).
+   least the shades the design system uses (base + 200/400/600 for buttons/links, plus
+   700/800 of primary/accent — InitialsAvatar.svelte pairs those for contrast).
    See docs/design-system.md → "White-Labeling". */
 [data-theme='example'] {
 	--color-primary: #4da2ff;
