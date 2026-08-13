@@ -1,5 +1,6 @@
 import { USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH } from '$lib/utils/username';
 import { instance } from '$lib/instance';
+import { instanceContent } from '$lib/instance-content';
 
 /** App name — referenced in interpolated strings below (object literals can't self-reference via `this`). */
 const APP_NAME = instance.appName;
@@ -8,6 +9,10 @@ const APP_NAME = instance.appName;
 // constant here (mainContactMail, feedbackMail) so the "user-facing strings live in texts.ts"
 // rule holds even though the value originates in `$lib/instance.ts`; a `mailto:` href (not
 // itself visible text) may still read straight from `instance` at the call site, like URLs do.
+// `instanceContent` (from `$lib/instance-content`) is the counterpart for instance-specific
+// PROSE whose wording itself (not just a variable) would change for a different instance — see
+// that module's doc comment for the full boundary rule. Used directly at the value site below
+// (e.g. `faqItems[0].a`), not hoisted to a const like the scalars above.
 const CITY = instance.city;
 const CONTACT_MAIL = instance.contactEmail;
 const FEEDBACK_MAIL = instance.feedbackEmail;
@@ -538,10 +543,9 @@ export const texts = {
 			faqItems: [
 				{
 					q: 'Wer seid ihr?',
-					// Gründer-Biografie: Betreiber-Inhalt, bewusst NICHT instanzabhängig — die beiden
-					// Gründer haben tatsächlich in Lüneburg studiert; das bliebe wahr für jede Instanz,
-					// eine Interpolation von CITY würde den Satz für eine andere Stadt verfälschen.
-					a: 'Derzeit sind wir ein Duo: Timo und Matteo! Wir haben beide in Lüneburg studiert und wollen mit AllerLeih einen Beitrag zum Gemeinwohl leisten. Wir sind der Auffassung, dass das Teilen und Leihen in vielerlei Hinsicht eine bessere Alternative zum Kaufen ist. Und wir wollen, dass die Infrastruktur dafür nicht nur einfach und zugänglich ist, sondern auch nachhaltig für alle funktioniert. Deswegen entwickeln wir AllerLeih als gemeinnützige Organisation und Open-Source-Software. So verhindern wir die Kommerzialisierung und manipulative Algorithmen.',
+					// Text + Begründung, warum er nicht CITY-interpoliert wird, lebt in
+					// `instance-content.ts` (`instanceContent.faq.whoWeAre`).
+					a: instanceContent.faq.whoWeAre,
 				},
 				{
 					q: 'Was passiert, wenn etwas kaputt geht?',
