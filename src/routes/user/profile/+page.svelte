@@ -47,22 +47,19 @@
 	let settingsForm = $state<HTMLFormElement>();
 
 	// The save bar's button submits the main form via its `form` attribute. If the
-	// form is invalid (e.g. AddressInput's hidden validity guard when a city was
+	// form is invalid (e.g. AddressInput's address guard when a city was
 	// typed but not picked from the search), the browser blocks submission before
 	// use:enhance runs — so no toast would appear. Surface it and scroll the user
 	// to the offending field instead of failing silently.
 	function handleSaveClick(e: MouseEvent) {
 		if (!settingsForm || settingsForm.checkValidity()) return;
 		e.preventDefault();
-		const invalid = settingsForm.querySelector(':invalid');
-		// The address validity lives on an sr-only input; guide the user to the
-		// visible city field instead of an invisible one.
-		const target =
-			invalid?.getAttribute('aria-hidden') === 'true'
-				? document.getElementById('city')
-				: (invalid as HTMLElement | null);
+		// Every invalid control is a visible field of its own — AddressInput's address guard
+		// included, since it sits on the city input itself — so the first one is the right
+		// thing to scroll to.
+		const target = settingsForm.querySelector<HTMLElement>(':invalid');
 		target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		(target as HTMLElement | null)?.focus?.();
+		target?.focus?.();
 		pushToast('error', texts.pages.profile.fixErrorsBeforeSave);
 	}
 
