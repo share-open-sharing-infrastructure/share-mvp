@@ -1,9 +1,15 @@
 import { json, error } from '@sveltejs/kit';
-import { MISTRAL_API_KEY } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { Mistral } from '@mistralai/mistralai';
 import { ITEM_CATEGORIES } from '$lib/categories';
 
-const client = new Mistral({ apiKey: MISTRAL_API_KEY });
+let client: Mistral | null = null;
+/** Lazy: `$env/dynamic/private` is empty while `vite build` analyses this endpoint module. */
+function getClient(): Mistral | null {
+	if (!env.MISTRAL_API_KEY) return null;
+	return (client ??= new Mistral({ apiKey: env.MISTRAL_API_KEY }));
+}
+
 const imageRecognitionPrompt = `Du bist ein Assistent für eine offene Verleih-Plattform. Analysiere das Bild und erkenne den dargestellten Gegenstand. Antworte NUR mit einem JSON-Objekt ohne Markdown-Formatierung in der folgenden Form:
 	{
 	"name": "Kurzname auf Deutsch (max. 50 Zeichen)",
@@ -19,7 +25,7 @@ const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const rateLimits = new Map<string, { count: number; resetAt: number }>();
 
 export async function POST({ request, locals }) {
-	if (!locals.user) error(401, 'Unauthorized');
+	if (!locals.user) throw error(401, 'Unauthorized');
 	const userId = locals.user.id;
 	const now = Date.now();
 	const entry = rateLimits.get(userId);
@@ -32,11 +38,16 @@ export async function POST({ request, locals }) {
 		entry.count++;
 	}
 
+	const mistral = getClient();
+	// MISTRAL_API_KEY is the one optional var (see $lib/server/env.ts). Unset ⇒ the feature is
+	// off; say so with a 503 instead of letting an unauthenticated SDK call surface as a 500.
+	if (!mistral) throw error(503, 'AI item analysis is not configured on this instance.');
+
 	const { imageBase64, mimeType } = await request.json();
 	if (!imageBase64 || !mimeType) throw error(400, 'Missing image data');
 
 	const model = 'pixtral-12b-2409';
-	const response = await client.chat.complete({
+	const response = await mistral.chat.complete({
 		model: model,
 		messages: [
 			{

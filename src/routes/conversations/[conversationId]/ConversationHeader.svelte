@@ -2,7 +2,7 @@
 	import { texts } from '$lib/texts';
 	import { itemStatusBadgeClasses, itemStatusLabel } from '$lib/utils/itemStatus';
 	import { formatTimestamp, displayName, itemOwnFileUrls, buildItemRedirectHref } from '$lib/utils/utils';
-	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { pbUrl } from '$lib/publicEnv';
 	import { TrashBinSolid, ChevronLeftOutline } from 'flowbite-svelte-icons';
 	import { Tooltip } from 'flowbite-svelte';
 	import { enhance } from '$app/forms';
@@ -43,10 +43,10 @@
 	const itemName = $derived(item?.name ?? texts.ui.itemUnavailable);
 	const itemRedirectItemId = $derived(item?.id ?? '');
 
-	const requestedItemCoverUrl = $derived(item ? (itemOwnFileUrls(PUBLIC_PB_URL, item)[0] ?? null) : null);
+	const requestedItemCoverUrl = $derived(item ? (itemOwnFileUrls(pbUrl(), item)[0] ?? null) : null);
 
 	const chatPartnerAvatarUrl = $derived(
-		chatPartner.profileImage ? `${PUBLIC_PB_URL}api/files/users/${chatPartner.id}/${chatPartner.profileImage}` : null
+		chatPartner.profileImage ? `${pbUrl()}api/files/users/${chatPartner.id}/${chatPartner.profileImage}` : null
 	);
 </script>
 

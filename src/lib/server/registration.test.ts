@@ -1,18 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import type PocketBase from 'pocketbase';
 
-// Hermetic env: registration.ts pulls in notifications.ts, whose import-time
-// `setVapidDetails` call crashes when a checkout has no .env (e.g. CI). web-push
-// validates key shapes, so the dummies must decode to 32 (private) / 65 (public) bytes.
-vi.mock('$env/static/private', () => ({
-	VAPID_PRIVATE_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-	VAPID_SUBJECT: 'mailto:test@example.com',
-}));
-vi.mock('$env/static/public', () => ({
-	PUBLIC_PB_URL: 'http://localhost:8090',
-	PUBLIC_VAPID_PUBLIC_KEY:
-		'BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-}));
+// No env mock needed since #627: notifications.ts configures web-push lazily inside
+// sendPushToUser (`ensureVapidConfigured`), so importing it no longer validates VAPID keys.
 // The inviter-relationship path fires a notification + push; stub them so the test
 // exercises only the trust-edge creation.
 vi.mock('$lib/server/notifications', () => ({

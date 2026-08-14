@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase';
-import { PUBLIC_PB_URL } from '$env/static/public';
+import { pbUrl } from '$lib/publicEnv';
 
 // The resilient realtime layer (subscribeRealtime + retry/watchdog machinery,
 // issue #435) lives in $lib/realtime.ts — this module is only the shared client
@@ -28,7 +28,7 @@ let instance: PocketBase | null = null;
  */
 export function getClientPB(): PocketBase {
 	if (!instance) {
-		instance = new PocketBase(PUBLIC_PB_URL);
+		instance = new PocketBase(pbUrl());
 
 		let lastUserId: string | null = instance.authStore.record?.id ?? null;
 		instance.authStore.onChange((_token, record) => {

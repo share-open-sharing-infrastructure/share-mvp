@@ -1,4 +1,4 @@
-import { PUBLIC_PB_URL } from '$env/static/public';
+import { pbUrl } from '$lib/publicEnv';
 import { requireGroupMembership } from '$lib/server/groups';
 import type { ItemPublic } from '$lib/types/models';
 
@@ -32,6 +32,6 @@ export async function load({ locals, params }) {
 		},
 		isOwner,
 		items,
-		PB_IMG_URL: PUBLIC_PB_URL,
+		PB_IMG_URL: pbUrl(),
 	};
 }

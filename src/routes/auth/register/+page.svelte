@@ -8,7 +8,7 @@
 	import CustomAlert from '$lib/components/CustomAlert.svelte';
 	import debounce from 'debounce';
 	import PocketBase from 'pocketbase';
-	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { pbUrl } from '$lib/publicEnv';
 	import LegalDocModal from '$lib/components/LegalDocModal.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import { USERNAME_MAX_LENGTH, normalizeUsername, validateUsername } from '$lib/utils/username';
@@ -21,7 +21,7 @@
 	let openTos = $state(false);
 	let openPrivacy = $state(false);
 
-	const pb = new PocketBase(PUBLIC_PB_URL);
+	const pb = new PocketBase(pbUrl());
 
 	let username = $state('');
 	let usernameStatus: 'idle' | 'checking' | 'available' | 'taken' | 'too_short' | 'too_long' | 'invalid' =

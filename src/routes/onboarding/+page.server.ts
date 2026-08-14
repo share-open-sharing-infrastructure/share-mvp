@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { fail } from '@sveltejs/kit';
 import { texts } from '$lib/texts';
-import { PUBLIC_PB_URL } from '../../hooks.server';
+import { pbUrl } from '$lib/publicEnv';
 import type { User } from '$lib/types/models';
 import { addTrustAndNotify, removeTrust, getTrustees } from '$lib/server/trust';
 import { generateInviteSlug } from '$lib/inviteSlug';
@@ -29,7 +29,7 @@ export async function load({ locals, url }) {
 	const trustIds = (await getTrustees(locals.pb, locals.user.id)).map((t) => t.trustee);
 
 	return {
-		PB_URL: PUBLIC_PB_URL,
+		PB_URL: pbUrl(),
 		inviteUrl: `${url.origin}/invite/${inviteCode}`,
 		username: locals.user.username as string,
 		users,

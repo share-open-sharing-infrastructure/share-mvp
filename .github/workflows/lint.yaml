@@ -12,20 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     # Skip on fork PRs (mirrors the Vitest workflow); still runs on manual dispatch.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    # `svelte-kit sync` generates the `$env/static/*` type declarations from the environment,
-    # so `npm run check` fails on missing members without these. Dummy values are fine — only
-    # the presence of the members matters for type-checking, not the values.
-    env:
-      PUBLIC_PB_URL: http://127.0.0.1:8090
-      PUBLIC_VAPID_PUBLIC_KEY: dummy
-      VAPID_PRIVATE_KEY: dummy
-      VAPID_SUBJECT: mailto:ci@example.com
-      ORS_API_KEY: dummy
-      MISTRAL_API_KEY: dummy
-      # Read by `$lib/server/superuser.ts` for the superuser-only `metrics_daily` reads.
-      # (SYNC_SECRET is gone with #487 Phase 3 — the integrations moved into the backend.)
-      PB_SUPERUSER_EMAIL: ci@example.com
-      PB_SUPERUSER_PASSWORD: dummy
+    # No `env:` block on purpose (issue #627): every app var is read at runtime via
+    # `$env/dynamic/*`, so `svelte-kit sync` generates index-signature types
+    # (`string | undefined`) instead of per-var members. `npm run check` therefore passes with a
+    # COMPLETELY EMPTY env only if the code is genuinely undefined-safe — that is the point of
+    # the check. Re-adding dummy values here would make CI type-check the *looser* variant while
+    # a contributor with a filled `.env` type-checks the stricter one, i.e. CI weaker than local.
     steps:
       - name: Check out code
         uses: actions/checkout@v4

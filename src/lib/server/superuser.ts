@@ -1,6 +1,6 @@
 import PocketBase from 'pocketbase';
-import { PUBLIC_PB_URL } from '$env/static/public';
-import { PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD } from '$env/static/private';
+import { pbUrl } from '$lib/publicEnv';
+import { env } from '$env/dynamic/private';
 
 let cachedSuperuserClient: PocketBase | null = null;
 
@@ -12,8 +12,13 @@ let cachedSuperuserClient: PocketBase | null = null;
  * layer down; it is a general-purpose helper, not integration-specific, and `$lib/server/metrics.ts`
  * still needs it to read the superuser-only `metrics_daily` collection.
  *
- * Server-only: it reads `PB_SUPERUSER_*` from `$env/static/private`. Never import it from a
- * `.svelte` component or any module reachable by the client bundle.
+ * Server-only: it reads `PB_SUPERUSER_*` from `$env/dynamic/private` (at call time, since #627).
+ * Never import it from a `.svelte` component or any module reachable by the client bundle.
+ *
+ * This is a **per-request runtime dependency**, not just tooling: the root `+layout.server.ts`
+ * calls `isAdmin()` (via `$lib/server/metrics.ts`) on every authenticated request, so without
+ * the two vars the `/admin` gate closes and the public stats disappear. Both are therefore in
+ * `REQUIRED_PRIVATE_ENV` (`$lib/server/env.ts`) and validated at server start.
  *
  * @returns An authenticated `PocketBase` instance valid for superuser operations.
  */
@@ -22,10 +27,18 @@ export async function getSuperuserClient(): Promise<PocketBase> {
 		return cachedSuperuserClient;
 	}
 
-	const newSuperuserClient = new PocketBase(PUBLIC_PB_URL);
-	await newSuperuserClient
-		.collection('_superusers')
-		.authWithPassword(PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD);
+	const email = env.PB_SUPERUSER_EMAIL;
+	const password = env.PB_SUPERUSER_PASSWORD;
+	// Same shape as scripts/seed/lib.js. Every caller already treats a rejection as "no
+	// superuser access" (metrics.ts logs and degrades), so rejecting is the honest signal.
+	if (!email || !password) {
+		throw new Error(
+			'PB_SUPERUSER_EMAIL and PB_SUPERUSER_PASSWORD must be set to use the PocketBase superuser client.'
+		);
+	}
+
+	const newSuperuserClient = new PocketBase(pbUrl());
+	await newSuperuserClient.collection('_superusers').authWithPassword(email, password);
 	cachedSuperuserClient = newSuperuserClient;
 	return newSuperuserClient;
 }

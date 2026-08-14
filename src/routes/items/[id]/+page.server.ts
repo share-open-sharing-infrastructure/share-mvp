@@ -1,4 +1,4 @@
-import { PUBLIC_PB_URL } from '../../../hooks.server';
+import { pbUrl } from '$lib/publicEnv';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { ItemPublic, UnmetRequirement } from '$lib/types/models';
 import type { ClientResponseError } from 'pocketbase';
@@ -121,7 +121,7 @@ export async function load({ params, locals }) {
 
 	return {
 		item,
-		PB_IMG_URL: PUBLIC_PB_URL,
+		PB_IMG_URL: pbUrl(),
 		currentUserId,
 		isAuthenticated,
 		isTrustRestricted,

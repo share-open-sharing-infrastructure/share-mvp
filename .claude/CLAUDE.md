@@ -54,22 +54,30 @@ PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- 
 
 ## Environment variables
 
-Required in `.env` (see `docs/architecture.md` for what each does; template: `.env.example`):
-`PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
-`MISTRAL_API_KEY` (prod only), `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`. The superuser
-credentials are read at runtime by `$lib/server/superuser.ts` (`getSuperuserClient`), which backs
-the superuser-only `metrics_daily` reads in `$lib/server/metrics.ts`; local tooling (seed scripts,
-Playwright e2e) reads the same two vars via `process.env`. `SYNC_SECRET` is **gone** as of #487
-Phase 3 — the integrations run entirely in the backend, so the frontend holds no sync secret and
-no `/api/sync`/`/api/refresh` endpoints.
+**All app env is read at runtime via `$env/dynamic/*`** (issue #627) — `$env/static/*` is banned
+repo-wide (ESLint), so one build artefact serves any instance and nothing is baked in. The
+**required** set lives in `$lib/server/env.ts` (`REQUIRED_PUBLIC_ENV` + `REQUIRED_PRIVATE_ENV`)
+and is validated by the `init` hook in `src/hooks.server.ts`: a missing **or empty** value makes
+the server refuse to start, naming every offender. Required (template: `.env.example`; see
+`docs/architecture.md` for what each does): `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL`,
+`PB_SUPERUSER_PASSWORD`. `MISTRAL_API_KEY` is the **only optional** var (unset ⇒
+`/api/analyze-item` answers 503). `SYNC_SECRET` is **gone** as of #487 Phase 3 — the integrations
+run entirely in the backend, so the frontend holds no sync secret and no `/api/sync`/`/api/refresh`
+endpoints.
+The two public plumbing vars are read only through `$lib/publicEnv.ts` (`pbUrl()` /
+`vapidPublicKey()`) — functions, never module-scope constants, so nothing is snapshotted at import
+time. The superuser credentials are read at runtime by `$lib/server/superuser.ts`
+(`getSuperuserClient`), which backs `isAdmin()` + the `metrics_daily` reads in
+`$lib/server/metrics.ts` — that makes them a **per-request app dependency**, not just tooling;
+local tooling (seed scripts, Playwright e2e) reads the same two vars via `process.env`.
 Instance configuration (multi-city, all optional — see `docs/architecture.md` → "Instance
 configuration"): `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
-`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`. These are the
-only vars read via `$lib/instance.ts` (the sole `$env/dynamic/public` user in the repo — every
-other env access is `$env/static/*`). Unlike `$env/static/public`, `$env/dynamic/public`
-serialises the **whole** `PUBLIC_*` env into every rendered page, not just the vars a module
-references — treat any new `PUBLIC_*` var as fully public the moment it's set, whether or not
-`$lib/instance.ts` reads it (see `docs/architecture.md` → "Instance configuration").
+`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` — read via
+`$lib/instance.ts`. `$env/dynamic/public` serialises the **whole** `PUBLIC_*` env into every
+rendered page, not just the vars a module references — treat any `PUBLIC_*` var as fully public
+the moment it's set, whether or not any module reads it (see `docs/architecture.md` → "Instance
+configuration").
 For personal local overrides (local ports, sandbox creds) that shouldn't be shared with the team,
 use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this file.
 
@@ -81,6 +89,15 @@ These prevent the most common bugs/security issues here — follow them without 
   `let x = data.x` detaches `use:enhance` reactivity — and a *user-editable* field seeded from
   `data.x`/a prop needs a seed-once `$state` + `bind:value`, never one-way `value=`, or hydration
   clobbers it (issue #558). → `docs/best-practices.md`
+- **Never `$env/static/*`** — env is read at **runtime** so one build artefact serves any
+  instance (issue #627); a static import bakes an instance's value into the bundle. ESLint bans
+  both static modules. Public vars go through `$lib/publicEnv.ts` (`pbUrl()`/`vapidPublicKey()`)
+  or `$lib/instance.ts`; private vars `import { env } from '$env/dynamic/private'` at module scope
+  as usual — what must never happen is **reading** `env.X` at module scope, i.e. into a
+  module-level `const` or by passing it to something at import time (as the old
+  `webpush.setVapidDetails` call did). `vite build` imports every server module with an empty env,
+  so an import-time read sees `undefined`; read inside the function that needs the value. New
+  required vars go into `$lib/server/env.ts`, which the `init` hook validates at startup.
 - **Always build PocketBase filters with `pb.filter(raw, {params})`** — never template-literal
   interpolation. Applies to *every* value, including IDs from `locals.user.id` / route params
   (filter injection). Use `locals.pb.filter(...)` in routes, `pb.filter(...)` in `$lib/server/*`.
