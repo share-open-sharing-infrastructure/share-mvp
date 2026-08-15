@@ -223,6 +223,70 @@ see "Current Deployment Pipeline" below for where that has to live and which thr
 
 **CI on pull requests:** Vitest runs with coverage (json + lcov) on every PR to `main` via `.github/workflows/vitest.yaml`. Coverage is posted as a PR comment via `davelosert/vitest-coverage-report-action`. The build step also catches TypeScript and Svelte compilation errors before merging.
 
+## Running the official container image
+
+An official multi-stage image (`Dockerfile`, repo root) is built by
+`.github/workflows/docker-publish.yaml` and published to GHCR as
+`ghcr.io/share-open-sharing-infrastructure/allerleih-frontend` — the explicit name rather than
+`ghcr.io/${{ github.repository }}` (which would resolve to `.../share-mvp`), symmetric to the
+backend's own image (allerleih-backend#55). The build stage runs `npm ci && npm run build` on
+`node:<version>-alpine`; the runtime stage copies only `build/`, `package.json` and
+`package-lock.json`, runs `npm ci --omit=dev` as the non-root `node` user, and strips `*.map`
+files before shipping. As with the Uberspace deploy, the build stage takes **no** application env
+(#627) — the resulting image is instance-agnostic, and this is an **additional** distribution
+channel, not a replacement for the Uberspace pipeline above.
+
+Every runtime var from "Instance configuration" and the required-env table above applies
+unchanged. Pass them as **process environment** — `docker run --env-file`/`-e`, compose
+`env_file:`, or your orchestrator's secret store. Note the difference to the Uberspace channel:
+that service runs `node -r dotenv/config build` and therefore reads a `.env` file next to
+`build/`, whereas the image's entrypoint is plain `node build`, so **a `.env` mounted into the
+container is ignored** and the app refuses to start as if nothing were configured. This table is
+the **single canonical, fully-detailed reference** — README.md only summarizes it and links back
+here:
+
+| Variable | Needed for | Default |
+|---|---|---|
+| `PUBLIC_PB_URL` | PocketBase base URL every request talks to | — (required) |
+| `PUBLIC_VAPID_PUBLIC_KEY` | Web-Push VAPID public key | — (required) |
+| `VAPID_PRIVATE_KEY` | Web-Push VAPID private key | — (required) |
+| `VAPID_SUBJECT` | Web-Push VAPID subject (`mailto:`/`https:` URL) | — (required) |
+| `ORS_API_KEY` | Address autocomplete (`/api/geocode`) | — (required) |
+| `PB_SUPERUSER_EMAIL` / `PB_SUPERUSER_PASSWORD` | **Full PocketBase superuser credentials** — unrestricted read/write on every collection (all users' emails, coordinates, trust graph, messages) plus schema and admin control, bypassing every collection rule. This app only *uses* them for the `/admin` gate, public stats, and `metrics_daily`, but the credential itself is not scoped to those three features — store and rotate it like any other master secret, not like a feature-scoped API key. | — (required) |
+| `MISTRAL_API_KEY` | AI item-photo analysis | unset ⇒ `/api/analyze-item` answers 503 |
+| `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` | Instance branding/analytics | see "Instance configuration" above |
+
+Two adapter-node knobs are **not** in that set and cannot be, because `assertRequiredEnv()` has
+no way to see them — they are validated by adapter-node itself, not by this app:
+
+- **`BODY_SIZE_LIMIT`** — the image sets this to `10485760` (10 MB) by default, for parity with
+  the Uberspace deploy's bulk image-upload limit. This is the **only** effective knob: the
+  `bodySize` option passed to `adapter()` in `svelte.config.js` is **not** a real adapter-node
+  option (only `out`/`precompress`/`envPrefix` are) and is a silent no-op — don't be misled by it
+  into thinking the limit is configured there.
+- **`ORIGIN=https://app.example.org`** — required in essentially **every** deployment, not only
+  behind a reverse proxy, and the single most common self-hosting failure. adapter-node's
+  `get_origin()` takes the expected origin from `ORIGIN`, or else builds it from the request's
+  `Host` header plus a protocol that **defaults to `https`** whenever `PROTOCOL_HEADER` is unset
+  (`@sveltejs/adapter-node/files/handler.js`). A container reached directly over plain HTTP with no
+  proxy at all therefore derives `https://<host>`, never matches the browser's `Origin:
+  http://<host>`, and rejects every POST form action with "Cross-site POST form submissions are
+  forbidden" — verified empirically against this image, including `http://127.0.0.1:3000`. Set it
+  to the exact scheme, host and port users reach the app on. Alternative behind a proxy that sets
+  them: `PROTOCOL_HEADER=x-forwarded-proto` + `HOST_HEADER=x-forwarded-host`.
+- **`ADDRESS_HEADER`** / **`XFF_DEPTH`** — set these so the app sees the real client IP rather
+  than the proxy's.
+- **Only set `ADDRESS_HEADER`, `PROTOCOL_HEADER` or `HOST_HEADER` if the reverse proxy is
+  configured to *overwrite* that header on every request — never if it merely passes a
+  client-supplied one through.** adapter-node trusts these header values verbatim
+  (`node_modules/@sveltejs/adapter-node/files/handler.js`) to derive the client IP and the
+  CSRF-relevant request origin. A proxy that forwards an incoming `X-Forwarded-For`/`-Proto`/
+  `-Host` instead of setting its own lets a client spoof those headers directly at the app,
+  defeating the very origin check `PROTOCOL_HEADER`+`HOST_HEADER` exists to provide.
+
+A `docker compose` setup that wires this image together with a PocketBase container is tracked
+separately in #630 — this section covers the frontend image alone.
+
 ## Real-time Architecture
 
 AllerLeih uses PocketBase's built-in realtime (SSE) subscriptions for live chat in the conversations view. The single entry point `subscribeRealtime()` in `src/lib/client-pb.ts` wraps this pattern:
