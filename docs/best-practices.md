@@ -109,7 +109,9 @@ stays visible at the call site. See `MessengerField.svelte`.
   through a primitive that re-syncs on invalidation doesn't just clobber at hydration — it
   discards unsaved input on the next navigation or reconnect, too. (`realtimeSynced` is the
   right tool when re-sync-on-invalidate is the actual goal, e.g. realtime conversation state —
-  just not for a plain editable field.)
+  just not for a plain editable field. This is exactly the shape "URL-synced fields" below
+  rejected for `/user/items`' search box — a writable `$derived` sitting directly over the
+  churning source, with no absorber in between.)
 - **A sync `$effect` that re-seeds the local `$state` from the prop.** Same discard-on-invalidate
   problem as above, and `svelte/prefer-writable-derived` is an error-level lint rule that
   specifically flags this shape — treat that as a correct rejection of the pattern here, not a
@@ -133,14 +135,52 @@ outside too.
 **Sweep criterion — "is the field in the server-rendered HTML?"** Only fields a user can reach
 *before* hydration are in this bug class. Fields behind an `{#if}` (modal bodies, wizard steps
 such as `src/routes/onboarding/`) are not, and there re-seeding on remount is usually the
-*desired* behaviour — see `src/routes/user/items/ItemModal.svelte`.
+*desired* behaviour — see `src/routes/user/items/ItemModal.svelte`. Also excluded: controls whose
+pre-hydration interaction did nothing without JS in the first place —
+`TrustNetworkTable.svelte:148-153`, the status `<select>` on `/user/items`, and
+`search/Pagination.svelte`'s page-size select; a "rescued" value there would claim a filter that
+was never actually applied.
 
-**Open case — URL-synced fields** (tracked as issue #619). `/user/items`' search box syncs from the URL
-(`$derived(data.search)`) so back/forward and a filter reset win, which rules seed-once out. But
-`bind:value` on that writable `$derived` does not fix #613 either: measured in a hydrated browser
-reproduction, the binding *does* adopt the pre-hydration text, and the `afterNavigate` invalidate
-above then recomputes the derived and overwrites it a few ms later. Neither shape is correct
-today — don't "fix" such a field with either one without solving the re-sync trigger first.
+**URL-synced fields — absorb the invalidate, keep the re-sync** (issue #619). Some editable fields
+have to keep following an external value: `/user/items`' search box mirrors `?search=`, so
+back/forward and a filter reset must win — which rules seed-once out. Both obvious shapes fail,
+and for the same reason: a writable `$derived` off `data.search` *or* off `page.url.searchParams`
+adopts the pre-hydration text and then loses it milliseconds later. `invalidate(NOTIFICATIONS_DEP)`
+makes SvelteKit rebuild the page props **and** hand out a fresh `URL` instance (`client.js`:
+`url: new URL(url)` as soon as any node's data changed), so both sources change identity even
+though the search string didn't; the derived recomputes, and a recompute always overwrites an
+override. Measured directly (not inferred from state alone): the box really does go empty for a
+moment and recovers again shortly after — comfortably within the time a web-first assertion would
+keep polling — so a test that only checks the end state (`toHaveValue`, which retries until it
+matches) cannot tell "never went empty" apart from "went empty, then recovered" and passes either
+way; see `e2e/tests/user-items-search.spec.ts`'s core-regression test for a timed, single-snapshot
+assertion that actually catches the gap.
+
+Put a read-only derived in between, so the churn is absorbed by Svelte's own rule that
+*downstream updates are skipped when a derived's new value is referentially identical to its
+previous one*:
+
+```svelte
+// Recomputes on every invalidate — but to the same string, so nothing downstream reruns.
+const loadedSearch = $derived(data.search);
+// The input owns this one via bind:. It only re-syncs when loadedSearch actually changes.
+let searchValue = $derived(loadedSearch);
+```
+```svelte
+<input type="search" bind:value={searchValue} oninput={onSearchInput} />
+```
+
+Both halves are load-bearing: collapsing them into one `$derived(data.search)` *is* the bug, and
+swapping `bind:` for `value=` is #558. The equality rule protects the writable derived only for as
+long as it is never marked dirty — once it does recompute, it compares the fresh value against
+the current, *overridden* one and discards the override. A seed-once `$state` plus a guarded sync
+`$effect` gets the same result and is **not** flagged by `svelte/prefer-writable-derived` (that
+rule only matches a bare single-statement assignment), but it needs its own "did the string
+actually change?" bookkeeping and is the shape #469 moved away from.
+
+Known limit, unrelated to hydration: characters typed *while* the box's own debounced `goto` is
+still in flight are still lost, because the URL then lands one keystroke behind. That predates
+this fix.
 
 ### The submit action
 
