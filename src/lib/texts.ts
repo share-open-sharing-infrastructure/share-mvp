@@ -130,6 +130,11 @@ export const texts = {
 		invalidContactUrl: 'Bitte gib einen gültigen Link an (muss mit https:// beginnen).',
 		contactOffPlatformOnly:
 			'Dieser Anbieter wickelt Anfragen außerhalb der Plattform ab. Bitte nutze den „Anfragen"-Button auf der Gegenstandsseite.',
+		// AddressInput: freier Text im Adressfeld, der nicht aus der Vorschlagsliste stammt und
+		// daher keine Koordinaten trägt. Steht an zwei Stellen derselben Komponente (sichtbare
+		// Warnung, setCustomValidity()) und muss überall gleich lauten – die Warnung ist der
+		// zugängliche Name des Feldes, auf dem die Browser-Validierung landet.
+		addressNotSelected: 'Bitte nutze die Suche, um eine gültige Adresse auszuwählen.',
 		feedbackFailed: 'Feedback konnte nicht gesendet werden.',
 		userConsentRequired: 'Bitte stimme der Datenschutzerklärung und den AGB zu, um fortzufahren.',
 		itemNotFound: 'Gegenstand nicht gefunden.',

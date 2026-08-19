@@ -76,6 +76,26 @@ describe('settings — updateGroup', () => {
 		const res = await actions.updateGroup({ locals, params, request: req({ name: 'Neu' }) } as never);
 		expect(r(res).data).toMatchObject({ message: texts.errors.somethingWentWrong });
 	});
+
+	// Pre-existing, intentional server semantics, pinned here so nobody "fixes" them later:
+	// `description` uses a `?? ''` fallback, so an absent field clears the stored description
+	// just like an explicitly emptied one (unlike profile's `bio`, which is left untouched when
+	// absent). The server therefore cannot tell a deliberate clear from a field that hydration
+	// blanked before the user typed — which is precisely why #613's fix has to live client-side
+	// (seed-once $state + bind:value in +page.svelte). Its regression coverage is the Playwright
+	// spec, not this file.
+	it.each([
+		['submitted empty', { name: 'Neu', description: '' }],
+		['absent entirely', { name: 'Neu' }],
+	])('clears the stored description when the field is %s', async (_case, body) => {
+		const update = vi.fn().mockResolvedValue({ id: 'g1' });
+		const locals = makeLocals({ groups: { update } });
+
+		const res = await actions.updateGroup({ locals, params, request: req(body) } as never);
+
+		expect(res).toMatchObject({ success: true });
+		expect(update).toHaveBeenCalledWith('g1', { name: 'Neu', description: '', isPublic: false });
+	});
 });
 
 describe('settings — createInvite', () => {

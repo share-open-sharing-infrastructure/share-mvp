@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { STORAGE_STATE, THIRD_STORAGE_STATE, VIEWER } from '../fixtures/users';
+import { expectFieldsSurvivePreHydration } from '../fixtures/preHydration';
 
 /**
  * Groups — the owner-managed lifecycle and the invite-token join.
@@ -78,6 +79,34 @@ test.describe('groups', () => {
 			await page.getByRole('button', { name: 'Gruppe löschen' }).click();
 			await expect(page).toHaveURL(/\/user\/groups$/);
 			await expect(page.getByRole('link', { name: groupName })).toHaveCount(0);
+		} finally {
+			await ctx.close();
+		}
+	});
+
+	test('group name and description typed before hydration survive it (#613 regression)', async ({
+		browser,
+	}) => {
+		const ctx = await browser.newContext({ storageState: STORAGE_STATE });
+		const page = await ctx.newPage();
+		try {
+			// The seeded group's id isn't stable across seed runs, so look it up by name
+			// instead of hard-coding it.
+			await page.goto('/user/groups');
+			const card = page.getByRole('link', { name: PRIVATE_GROUP });
+			await expect(card).toBeVisible();
+			const groupId = (await card.getAttribute('href'))?.split('/').pop();
+			expect(groupId).toBeTruthy();
+
+			// Regression for #613: both fields passed a one-way `value=` into Flowbite's
+			// Input/Textarea, which the root layout's afterNavigate invalidate then clobbered
+			// right after hydration (docs/best-practices.md → "Editable fields: seed-once +
+			// bind:, never one-way value="). The helper never saves, so this cannot rename the
+			// shared seed group out from under the join test below under `fullyParallel`.
+			await expectFieldsSurvivePreHydration(page, `/user/groups/${groupId}/settings`, {
+				'input[name="name"]': `E2E Vor-Hydration ${Date.now()}`,
+				'textarea[name="description"]': `E2E Beschreibung ${Date.now()}`,
+			});
 		} finally {
 			await ctx.close();
 		}
