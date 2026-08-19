@@ -31,6 +31,24 @@
 	let cityInputEl: HTMLInputElement | undefined = $state(undefined);
 	let suggestionsEl: HTMLUListElement | undefined = $state(undefined);
 
+	// Whether the field has stopped changing long enough to judge it. Free text under the
+	// suggestion-lookup threshold (≤3 chars, see handleCityInput) never sets isLoadingGeo, so
+	// without this gate the very first keystroke would flag the field invalid — both audibly
+	// (the live region below) and via setCustomValidity. markSettled() below re-arms it on every
+	// keystroke; only a pause lets it flip back to true.
+	let hasSettled = $state(true);
+	const markSettled = debounce(() => {
+		hasSettled = true;
+	}, 500);
+
+	// Single source of truth for "the address is unusable and the user needs to be told": drives
+	// the visible warning, `aria-invalid` and setCustomValidity() alike, so none of the three can
+	// disagree. Held back while a lookup runs, the dropdown is open, or the field hasn't settled
+	// yet — the user is mid-input there, and flagging every keystroke as an error would be noise
+	// (and, for setCustomValidity, would make the native :invalid state flicker independently of
+	// what's shown on screen).
+	let isInvalid = $derived(!isValidSelection && hasSettled && !isLoadingGeo && !showSuggestions);
+
 	// Native constraint validation lives on the city input itself: setCustomValidity() is what
 	// blocks the submit, and the browser anchors its bubble to the field the user actually typed
 	// in — the same element that carries aria-invalid and aria-describedby, so the native, the
@@ -38,9 +56,7 @@
 	// `required` (address optional) clears whatever a previous run left behind.
 	$effect(() => {
 		if (!cityInputEl) return;
-		cityInputEl.setCustomValidity(
-			required && !isValidSelection ? texts.errors.addressNotSelected : ''
-		);
+		cityInputEl.setCustomValidity(required && isInvalid ? texts.errors.addressNotSelected : '');
 	});
 
 	const fetchSuggestions = debounce(async (q: string) => {
@@ -86,6 +102,8 @@
 	function setCityText(v: string) {
 		cityText = v;
 		markAsFreeText();
+		hasSettled = false;
+		markSettled();
 	}
 
 	// Only the suggestion lookup; reads the query off the event so it stays independent of the
@@ -115,13 +133,7 @@
 		cityInputEl?.focus();
 	}
 
-	// Single source of truth for "the address is unusable and the user needs to be told": drives
-	// the visible warning *and* `aria-invalid`, so the screen-reader state can never disagree
-	// with what is on screen. Held back while a lookup runs or the dropdown is open — the user is
-	// mid-selection there, and flagging every keystroke as an error would be pure noise.
-	let showCityWarning = $derived(
-		cityText.length > 0 && !isValidSelection && !isLoadingGeo && !showSuggestions
-	);
+	let showCityWarning = $derived(cityText.length > 0 && isInvalid);
 
 	function handleWindowMousedown(e: MouseEvent) {
 		if (
