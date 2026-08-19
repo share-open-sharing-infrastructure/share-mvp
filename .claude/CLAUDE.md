@@ -134,13 +134,19 @@ These prevent the most common bugs/security issues here — follow them without 
   purposes `resolve()` doesn't cover (search params, notification targets, the redirect-proxy for
   external links). → `docs/best-practices.md`
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
-  `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
+  `src/hooks.server.ts` runs `sequence(authentication, authorization, instanceHead)`.
   Authentication loads PocketBase auth from cookies and refreshes the token. Authorization
   redirects unauthenticated users to `/auth/login` (preserving `redirectTo`). Unprotected
   prefixes: `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/confirm-verification`,
   `/auth/confirm-email-change`, `/search`, `/items`, `/users`,
   `/misc`, `/invite`, `/sitemap.xml`, `/robots.txt`, `/api/redirect`, `/api/diagnostics`,
-  `/auth/account-deleted`. Everything else — including `/` (home) — requires authentication.
+  `/auth/account-deleted`. **`/` (home) is public too** — it is exempted explicitly
+  (`&& pathname !== '/'` in `authorization`) and its load returns only `getPublicStats()`, so
+  **never assume `locals.user` is set on `/`**. Everything else requires authentication.
+  On top of that, `authorization` runs the legal-consent gate (#399) for every *logged-in*
+  request outside `legalGateExempt` (`/legal`, `/auth`, `/misc`, `/api/diagnostics`,
+  `/api/redirect`): a declined user is sent to `/legal/locked`, one with outstanding
+  ToS/privacy versions to `/legal/accept`.
 
 ## Where to look (load on demand)
 
@@ -179,6 +185,9 @@ run one explicitly with `/<name>`. Build / change work:
   backend `new-migration`) → `models.ts` → `docs/data-model.md` → public-view leak check.
 - `/write-tests` — author tests to the repo's conventions (Vitest with mocked PocketBase).
 - `/seed-scenario` — add a deterministic local seed scenario (items get generated placeholder images).
+- `/drive-app` — bring up the local stack and drive the running app in a browser (whichever browser
+  MCP the session has) to see a change work for real. Prefer `npm run test:e2e` when a spec can
+  already answer the question — it's cheaper and repeatable.
 
 Maintenance & review:
 
@@ -207,8 +216,11 @@ orchestrating skill.
 - `allerleih-coder` — implementation agent used by `/review-all` (and the maintainer's local
   issue pipeline) to carry out multi-file fixes. Does **not** commit, push, or open PRs.
 - `allerleih-tester` — change-scoped QA agent: runs the Vitest/backend/e2e tests the diff impacts
-  and drives the changed flow in a real browser (Playwright + Chrome DevTools MCP). Read-only on
-  source. Invoke it directly to verify a change, or via the local `/review-and-test` pipeline.
+  and, when the tests can't answer the question, drives the changed flow in a real browser using
+  whichever browser MCP the session has (Playwright or Chrome DevTools — the user's choice).
+  Read-only on source **by contract, not by permission**: unlike the reviewer roles it runs with
+  the full tool set, so the orchestrating skill checks the working tree afterwards and treats any
+  modification as a failed run. Invoke it directly to verify a change, or via `/review-and-test`.
 
 **Cost rules baked into `/review-all` — do not optimise them away:** (1) diff ≤ 40 lines over
 ≤ 3 files ⇒ the orchestrator reviews it itself, no agents; (2) each role only starts when the
@@ -217,6 +229,28 @@ prompt — the contract forbids the agents from re-deriving scope and caps them 
 `/security-review` is a second lens only for genuinely security-critical diffs, not routine.
 
 These complement the built-in `/code-review` and `/security-review`.
+
+**MCP servers are optional and must be named to be used.** Nobody's setup is guaranteed to have
+them, and Claude Code loads MCP tools on demand — so an agent that isn't told a server exists never
+looks for it and quietly falls back to `grep`/`cat`. Whichever of these the session has:
+
+| Server | Use it for |
+|---|---|
+| `svelte` | any Svelte 5 / SvelteKit API question; `svelte-autofixer` on components you write |
+| Context7 | signatures of other external libraries (Flowbite, Tailwind, web-push, ORS) |
+| **Serena** (`mcp__serena__*`) | navigating *this* codebase by symbol instead of by text |
+| a browser MCP (Playwright **or** Chrome DevTools) | driving the running app; see `/drive-app` |
+
+Serena is worth naming explicitly because the built-in tools always look sufficient: the case where
+it is not a preference but a correctness difference is **"where else is this symbol used?"** —
+`find_referencing_symbols` resolves that through the type checker, while `grep` misses aliased
+re-imports (`import { displayName as dn }`) and pads the result with comments and substring hits. For
+a security helper, a guardrail or a dead-code claim, that gap decides whether the answer is right.
+Also useful: `get_symbols_overview` instead of reading a long file, `rename_symbol` /
+`replace_symbol_body` / `safe_delete_symbol` for edits, `get_diagnostics_for_file` for type errors
+without a full `npm run check`. Keep `Grep` for literal text and anything Serena doesn't index (YAML,
+Markdown). The four reviewer roles are granted its **read-only** tools only — their enforced
+read-only property depends on the mutating ones staying out of the grant.
 
 ## Keep in sync
 

@@ -46,10 +46,36 @@ Every tool call costs. Stick to the cheapest order:
 
 ## Read-only
 
-All reviewer roles are **strictly read-only**: Read/Grep/Glob and read-only Bash (`git diff`,
-`git log`, `git show`, `wc -l`, `rg`). Never edit, commit, stage, or run mutating commands. Fixing
-is the orchestrator's job (`/review-all`) — your work ends at the report. That's why every finding
-must be **actionable without a follow-up question**.
+All reviewer roles are **strictly read-only**: Read/Grep/Glob, read-only Bash (`git diff`,
+`git log`, `git show`, `wc -l`, `rg`), and — when the session has the Serena MCP — its **read-only**
+symbol tools (see below). Never edit, commit, stage, or run mutating commands. This is enforced, not
+just asked for: the `tools:` grant contains no `Edit`/`Write` and deliberately **omits** Serena's
+mutating tools (`replace_symbol_body`, `rename_symbol`, `safe_delete_symbol`, `insert_*`,
+`*_memory`). Fixing is the orchestrator's job (`/review-all`) — your work ends at the report. That's
+why every finding must be **actionable without a follow-up question**.
+
+### Serena (optional, use it where it beats grep)
+
+If `mcp__serena__*` tools are present, they answer *semantically* what grep answers textually — and
+grep gets these wrong:
+
+- **"Is this symbol used anywhere else / still used at all?"** → `find_referencing_symbols`. Grep
+  misses aliased re-imports (`import { displayName as dn }` → call sites named `dn`) and produces
+  false hits from comments, strings and substring matches (`userDisplayName`). For anything where
+  *completeness matters* — a security helper, a guardrail, a leak check, dead-code claims — prefer
+  it over `grep -rl` and say you did.
+- **"What's in this file?"** → `get_symbols_overview` instead of reading a 600-line component.
+- **"Which implementations satisfy this interface / where is this declared?"** →
+  `find_implementations` / `find_declaration` / `find_symbol`.
+- **"Does this file currently type-check?"** → `get_diagnostics_for_file`.
+
+Not a reason to abandon grep: literal text patterns (a string in `texts.ts`, a Tailwind class, an
+`outline-none`, a `confirm(` call) are what grep is *for* — it is faster and cheaper there. Serena
+also costs a language-server start on first use, so on a two-file diff grep usually wins.
+
+**The ~15-tool-call budget below applies unchanged.** Serena is there to make you *right*, not to
+make you thorough at any price. And if the tools aren't present, don't wait for them and don't
+report their absence as a finding — just use grep.
 
 ## Severity
 
