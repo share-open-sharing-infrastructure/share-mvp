@@ -64,8 +64,8 @@
 		{/if}
 	</div>
 
-	<!-- Vollständiger Bedingungstext (PocketBase richtext = HTML; bereits server-seitig
-	     normalisiert in lendingTerms.cleanTermsHtml). Quelle ist admin-only. -->
+	<!-- Full terms text (PocketBase richtext = HTML; already normalized server-side
+	     in lendingTerms.cleanTermsHtml). Source is admin-only. -->
 	<article
 		class="terms-body rounded-2xl border border-tinte-200 dark:border-tinte-700 bg-sand dark:bg-tinte-800 p-6 leading-relaxed text-tinte-800 dark:text-tinte-200"
 	>
@@ -73,7 +73,7 @@
 		{@html data.terms.body}
 	</article>
 
-	<!-- Minderjährigen-Hinweis -->
+	<!-- Minor notice -->
 	<div class="rounded-2xl bg-secondary-100 dark:bg-tinte-700 p-4 text-sm text-tinte-800 dark:text-tinte-100">
 		<p class="font-semibold">{texts.lendingTerms.minorHintTitle}</p>
 		<p class="mt-1">{texts.lendingTerms.minorHintBody}</p>
@@ -87,7 +87,7 @@
 		<Alert color="green">{texts.lendingTerms.alreadyAcceptedNote}</Alert>
 	{/if}
 
-	<!-- Zustimmungs-Form -->
+	<!-- Consent form -->
 	<form method="POST" action="?/accept" use:enhance class="space-y-4">
 		<Checkbox bind:checked={confirmAdult} name="confirmAdult">
 			{texts.lendingTerms.confirmAdultLabel(data.terms.minAge ?? 18)}
@@ -112,9 +112,9 @@
 </div>
 
 <style>
-	/* Lokale Typografie nur für den Bedingungs-Block — wir wollen nicht von einem
-	   globalen `.prose`-Plugin abhängen, und PB liefert eine eher schlichte
-	   <div>/<h2>/<a>-Struktur, der wir hier passende Abstände geben. */
+	/* Local typography just for the terms block — we don't want to depend on a
+	   global `.prose` plugin, and PB delivers a fairly plain
+	   <div>/<h2>/<a> structure, so we give it matching spacing here. */
 	.terms-body :global(h2) {
 		font-size: 1.25rem;
 		font-weight: 700;
