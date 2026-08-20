@@ -123,6 +123,13 @@ out the issue:
   (finding B1) — see §8's `APP_URL` row for the resolution order that fixes this.
 - **Logo loads** — `{{.ASSET_URL}}/AllerLeih.png` in the mail layout resolves to a reachable
   backend URL (single `/`, no more missing/doubled slash).
+- **Item thumbnails load** — an uploaded item image in the digest is
+  `{assetBase}/api/files/items_searchable/{itemId}/{filename}?thumb=0x300`, **never**
+  `items_public` (that view's `image` column is a masking `CASE` expression PocketBase types as
+  `json`, so it can never serve a file at all — this was #622). Only genuinely public items
+  (`trusteesOnly = false`, no groups) get a file URL in the first place; trustees-only/group items
+  always fall back to `externalImgUrl` instead, regardless of whether they also have an uploaded
+  image.
 
 ## 8. Environment variables
 
@@ -231,6 +238,7 @@ To trigger a digest send on demand for testing (cron schedules can't be fired ma
 | Digest/mail links point at `localhost:8090` or otherwise 404 | `APP_URL` is unset and `settings().meta.appURL` is still PocketBase's loopback default — see the `APP_URL` trap in §8. |
 | Logo missing from mails | `assetBase()` resolved to `''` — check `APP_URL`/`FRONTEND_URL` per the trap above. |
 | Digest item links 404 | `FRONTEND_URL` is unset, so `siteBase()` has nothing to fall back to beyond `settings().meta.appURL` (the backend host — wrong for a frontend page). |
+| Digest item **thumbnails** 404 | The image URL points at `items_public` instead of `items_searchable` (#622 — `items_public.image` is masked to `json`, never a file); or `APP_URL`/`assetBase()` resolves to the wrong host (see the `APP_URL` trap above). |
 | Mails only reach some/verified addresses | Classic sendmail-fallback symptom (see §6.1) — configure real SMTP via env vars. |
 | `535 5.7.8 auth invalid` | Use the **full email address** as `SMTP_USERNAME`, not just the local part. |
 
