@@ -2,7 +2,7 @@
 	import { texts } from '$lib/texts';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
-	const { address } = texts.pages.imprint;
+	const { address, legalFields } = texts.pages.imprint;
 </script>
 
 <SeoHead
@@ -16,28 +16,13 @@
 	<li>{address.name}</li>
 	<li>{address.street}</li>
 	<li>{address.postalCode} {address.city}, {address.country}</li>
+	<li>{address.representative}</li>
 	<li>{texts.names.mainContactMail}</li>
+	<li>{legalFields.registerEntry}</li>
 	<!-- Weitere Informationen unten nur falls zutreffend in Zukunft:  https://www.anwalt.de/rechtstipps/impressumspflicht-in-deutschland-was-muss-ins-impressum-und-welche-konsequenzen-drohen-241288.html -->
-	<li hidden>
-		Zuständige Aufsichtsbehörde: Falls der Betreiber einer behördlichen Aufsicht
-		unterliegt (z. B. Finanzdienstleister, Versicherungsvermittler).
-	</li>
-	<li hidden>
-		Berufsrechtliche Angaben: Für reglementierte Berufe wie Anwälte, Ärzte oder
-		Steuerberater (Berufsbezeichnung, Kammer, berufsrechtliche Regelungen).
-	</li>
-	<li hidden>
-		Umsatzsteuer-Identifikationsnummer (falls vorhanden): Nach § 27a UStG.
-	</li>
-	<li hidden>
-		Handelsregistereintrag: Falls das Unternehmen im Handels-, Vereins- oder
-		Partnerschaftsregister eingetragen ist (inkl. Registernummer).
-	</li>
-	<li hidden>
-		Hinweis auf die Online-Streitbeilegung (für Online-Shops): Link zur
-		EU-Plattform zur Streitbeilegung.
-	</li>
-	<li hidden>
-		GmbH & Co. KG, AG, UG: Angabe der Geschäftsführer oder Vorstandsmitglieder.
-	</li>
+	<li hidden>{legalFields.supervisoryAuthority}</li>
+	<li hidden>{legalFields.professionalRegulation}</li>
+	<li hidden>{legalFields.vatId}</li>
+	<li hidden>{legalFields.disputeResolution}</li>
+	<li hidden>{legalFields.management}</li>
 </ul>

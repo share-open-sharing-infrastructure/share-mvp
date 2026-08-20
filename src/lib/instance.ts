@@ -41,10 +41,19 @@ export interface InstanceLinks {
 /** Operator's postal address (§5 TMG) — operator-scoped, not city-specific. */
 export interface InstanceImprint {
 	operator: string;
+	representative: string;
 	street: string;
 	postalCode: string;
 	city: string;
 	country: string;
+	legal: {
+		supervisoryAuthority: string;
+		professionalRegulation: string;
+		vatId: string;
+		registerEntry: string;
+		disputeResolution: string;
+		management: string;
+	}
 }
 
 /** Empty values ⇒ analytics fully off (opt-in, no fallback to a default instance). */
@@ -182,11 +191,24 @@ export const instance: InstanceConfig = {
 			'https://allerleih.notion.site/36de086dc6ab80f69529e6cf68afe7c4?v=36de086dc6ab80869c89000c98bbac63',
 	},
 	imprint: {
-		operator: 'Matteo Ramin',
+		operator: 'AllerLeih e.V.',
+		representative: 'Vertreten durch Matteo Ramin und Timo Johner',
 		street: 'Lüner Weg 17',
 		postalCode: '21337',
 		city: 'Lüneburg',
 		country: 'Deutschland',
+		legal: {
+			supervisoryAuthority:
+				'Zuständige Aufsichtsbehörde: Falls der Betreiber einer behördlichen Aufsicht unterliegt (z. B. Finanzdienstleister, Versicherungsvermittler).',
+			professionalRegulation:
+				'Berufsrechtliche Angaben: Für reglementierte Berufe wie Anwälte, Ärzte oder Steuerberater (Berufsbezeichnung, Kammer, berufsrechtliche Regelungen).',
+			vatId: 'Umsatzsteuer-Identifikationsnummer (falls vorhanden): Nach § 27a UStG.',
+			registerEntry:
+				'Vereinsregisternummer: VR 202438 (Amtsgericht Lüneburg).',
+			disputeResolution:
+				'Hinweis auf die Online-Streitbeilegung (für Online-Shops): Link zur EU-Plattform zur Streitbeilegung.',
+			management: 'GmbH & Co. KG, AG, UG: Angabe der Geschäftsführer oder Vorstandsmitglieder.',
+		}
 	},
 	analytics: resolveAnalytics(env.PUBLIC_ANALYTICS_ORIGIN, env.PUBLIC_ANALYTICS_WEBSITE_ID),
 };

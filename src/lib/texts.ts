@@ -39,7 +39,7 @@ export const texts = {
 		showPassword: 'Passwort anzeigen',
 		hidePassword: 'Passwort verbergen',
 		usernamePlaceholder: 'z.B. Noah Lüni',
-		usernameHint: 'Öffentlich sichtbarer Anzeigename – Leerzeichen sind erlaubt. Anmelden kannst du dich mit deiner E-Mail-Adresse.',
+		usernameHint: 'Öffentlich sichtbarer Anzeigename. Anmelden kannst du dich mit deiner E-Mail-Adresse.',
 		loginWithEmailHint: 'Anmelden mit deiner E-Mail-Adresse.',
 		loginFailed: 'Login fehlgeschlagen.',
 		resetPassword: 'Setze mein Passwort zurück!',
@@ -49,7 +49,7 @@ export const texts = {
 		loginButton: 'Anmelden',
 		registerLink: 'Registrieren',
 		privacyConsentLabel: 'Ich habe die Datenschutzerklärung gelesen und stimme ihr zu.',
-		newsletterOptOut: 'Ich möchte den AllerLeih Newsletter erhalten (maximal 1x pro Monat, kein Spam).',
+		newsletterOptOut: `Ich möchte den ${APP_NAME} Newsletter erhalten (maximal 1x pro Monat, kein Spam).`,
 	},
 
 	// Navigation
@@ -93,9 +93,9 @@ export const texts = {
 
 	// Footer
 	footer: {
-		instagram: 'AllerLeih auf Instagram',
-		mastodon: 'AllerLeih auf Mastodon',
-		pixelfed: 'AllerLeih auf PixelFed',
+		instagram: `${APP_NAME} auf Instagram`,
+		mastodon: `${APP_NAME} auf Mastodon`,
+		pixelfed: `${APP_NAME} auf PixelFed`,
 	},
 
 	// Error messages
@@ -218,7 +218,7 @@ export const texts = {
 		urlHelp: 'Muss mit https:// beginnen, z.B. zu deinem Verleih-Formular.',
 		publicLabel: 'Auch ohne Login sichtbar',
 		publicHelp:
-			'Wenn aktiviert, sehen auch nicht eingeloggte Besucher:innen den Kontaktweg – z.B. damit Anfragen ohne AllerLeih-Konto möglich sind. Andernfalls nur eingeloggte Nutzer:innen.',
+			`Wenn aktiviert, sehen auch nicht eingeloggte Besucher:innen den Kontaktweg – z.B. damit Anfragen ohne ${APP_NAME}-Konto möglich sind. Andernfalls nur eingeloggte Nutzer:innen.`,
 	},
 
 	// Form labels and placeholders
@@ -356,7 +356,7 @@ export const texts = {
 		joinPublicTitle: 'Öffentliche Gruppe',
 		joinPublicIntro: (name: string) => `Du kannst der Gruppe „${name}" beitreten.`,
 		joinedPublic: (name: string) => `Du bist der Gruppe „${name}" beigetreten.`,
-		shareText: (name: string) => `Tritt der Gruppe „${name}" auf AllerLeih bei: `,
+		shareText: (name: string) => `Tritt der Gruppe „${name}" auf ${APP_NAME} bei: `,
 		shareGroupButton: 'Einladung teilen',
 		publicLinkTitle: 'Öffentlicher Link',
 		publicLinkIntro:
@@ -391,7 +391,7 @@ export const texts = {
 		registeredSince: 'Registriert seit:',
 		emailAddress: 'Mailadresse:',
 		here: 'hier',
-		welcome: 'Willkommen bei AllerLeih',
+		welcome: `Willkommen bei ${APP_NAME}`,
 		welcomeShort: 'Willkommen!',
 		welcomeBack: 'Willkommen zurück!',
 		profileTitle: 'Dein Profil',
@@ -447,13 +447,13 @@ export const texts = {
 			howLinkText: 'Hier ist eine kurze Anleitung',
 			howBodyPart1: 'für',
 			howBodyPart2: '. Oder schau dich einfach um!',
-			howVideoTitle: 'Erklärvideo: Wie funktioniert AllerLeih?',
+			howVideoTitle: `Erklärvideo: Wie funktioniert ${APP_NAME}?`,
 			who: 'Wer seid ihr?',
 			whoBodyPart1: `Wir sind eine gemeinwohl-orientierte Initiative aus ${CITY}. Unter`,
 			whoLinkText: 'Über Uns',
 			whoBodyPart2: ' erfährst du mehr!',
 			support: 'Was passiert gerade?',
-			supportBodyPart1: 'Wir testen AllerLeih und brauchen Dein Feedback! Nutze den Feedback-Button oben oder',
+			supportBodyPart1: `Wir testen ${APP_NAME} und brauchen Dein Feedback! Nutze den Feedback-Button oben oder`,
 			supportLinkText: 'schreib\' uns',
 			contribute: 'Wie kann ich helfen?',
 			contributeBodyPart1: 'Registrier\' dich, biete etwas an und erzähl\'s weiter. Oder schau dich auf unserer ',
@@ -461,26 +461,39 @@ export const texts = {
 			contributeBodyPart2: ' um.',
 		},
 		about: {
-			title: 'Über AllerLeih',
+			title: `Über ${APP_NAME}`,
 			description: 'von und für Freunde, Familie und die lokale Gemeinschaft',
 			joinMailSubject: `Interesse an Mitmachen Bei ${APP_NAME}`,
+			missionHeading: `Was ist ${APP_NAME}?`,
+			missionBody: `${APP_NAME} ermöglicht es Menschen und Organisationen, Gegenstände innerhalb ihrer Gemeinschaft zu teilen. Wir wollen das Teilen und Leihen so einfach machen, dass es selbstverständlich wird. Dafür bauen wir diese Plattform, gründen eigene Leih-Orte und integrieren bestehende Verleihe. Außerdem unterstützen wir andere dabei, eigene Leih-Orte zu gründen und ${APP_NAME} in ihrer Region aufzubauen.`,
+			teamHeading: 'Team',
+			joinCardName: 'Du?',
+			joinCardPrompt: 'Hast du Lust?',
+			joinCardTagline: 'Mach mit!',
+			contactAriaLabel: 'Kontakt aufnehmen',
+			linkedInAriaLabel: 'LinkedIn',
+			gitHubAriaLabel: 'GitHub',
+			openSourceHeading: 'Open-Source',
+			openSourceBody: 'Diese Software ist quelloffen. Das heißt, jede(r) kann den Quellcode einsehen, mitentwickeln und selber nutzen. Den Code findest du auf GitHub. Wir freuen uns über Beiträge, Feedback und Unterstützung!',
+			viewOnGithubButton: 'Auf GitHub ansehen',
 		},
 		contact: {
 			title: 'Kontakt',
+			body: 'Für Fragen, Anregungen oder sonstige Anliegen erreichst du uns unter:',
 		},
 		imprint: {
 			title: 'Impressum',
-			// Betreiber-Postadresse (§5 TMG) — instanzabhängig, daher aus $lib/instance gespeist
-			// statt hier hart hinterlegt (siehe Guardrail: URLs/Adressdaten kommen aus `instance`).
-			// Heißt bewusst `address`, nicht `operator`: `instance.imprint.operator` ist der
-			// Betreiber-NAME (string), dieses Objekt ist die ganze Postadresse (Name+Straße+…).
 			address: {
 				name: instance.imprint.operator,
+				representative: instance.imprint.representative,
 				street: instance.imprint.street,
 				postalCode: instance.imprint.postalCode,
 				city: instance.imprint.city,
 				country: instance.imprint.country,
 			},
+			// Currently unused (all `hidden`) — placeholders for legal fields that only apply
+			// to some operators; kept here so they're ready to surface without re-authoring.
+			legalFields: instance.imprint.legal,
 		},
 		faq: {
 			title: 'Häufige Fragen (FAQ)',
@@ -489,12 +502,12 @@ export const texts = {
 			title: "Und so funktioniert's:",
 		},
 		guide: {
-			title: 'Wie funktioniert AllerLeih?',
+			title: `Wie funktioniert ${APP_NAME}?`,
 			video: {
-				title: 'Erklärvideo: Wie funktioniert AllerLeih?',
+				title: `Erklärvideo: Wie funktioniert ${APP_NAME}?`,
 			},
 			intro:
-				'AllerLeih ist eine offene, gemeinwohlorientierte Plattform, auf der du kostenlos Dinge aus- und verleihen kannst.',
+				`${APP_NAME} ist eine offene, gemeinwohlorientierte Plattform, auf der du kostenlos Dinge aus- und verleihen kannst.`,
 			borrowing: {
 				title: 'Ausleihen',
 				steps: [
@@ -513,7 +526,7 @@ export const texts = {
 					},
 					{
 						label: 'Zurückgeben',
-						text: 'Gib den Gegenstand nach der Nutzung so zurück, wie du ihn gerne ausleihen würdest – AllerLeih lebt von Vertrauen und gegenseitigem Respekt.',
+						text: `Gib den Gegenstand nach der Nutzung so zurück, wie du ihn gerne ausleihen würdest – ${APP_NAME} lebt von Vertrauen und gegenseitigem Respekt.`,
 					},
 				],
 			},
@@ -531,7 +544,7 @@ export const texts = {
 					},
 					{
 						label: 'Anfragen empfangen',
-						text: 'Interessierte melden sich direkt über AllerLeih bei dir. Du entscheidest, ob und wann du verleihst.',
+						text: `Interessierte melden sich direkt über ${APP_NAME} bei dir. Du entscheidest, ob und wann du verleihst.`,
 					},
 					{
 						label: 'Verfügbarkeit verwalten',
@@ -540,52 +553,29 @@ export const texts = {
 				],
 			},
 			faqTitle: 'Häufige Fragen',
-			faqItems: [
-				{
-					q: 'Wer seid ihr?',
-					// Text + Begründung, warum er nicht CITY-interpoliert wird, lebt in
-					// `instance-content.ts` (`instanceContent.faq.whoWeAre`).
-					a: instanceContent.faq.whoWeAre,
-				},
-				{
-					q: 'Was passiert, wenn etwas kaputt geht?',
-					a: 'Wir bekommen die Frage häufiger und haben eine vielleicht etwas unbefriedigende Antwort: das, was sonst auch passieren würde. Wenn euer Gegenüber eine Haftpflicht hat, greift die. Oder ihr regelt das zwischen euch. Wir wollen bewusst keine Sozialtechnik wie Versicherungen oder Ähnliches anbieten, weil wir Vertrauen nicht outsourcen wollen. Über die Vertrauensfunktion habt ihr die volle Kontrolle darüber, an wen ihr verleiht. Wenn es doch einmal zu größeren Problemen kommt, meldet euch gerne und wir versuchen zu helfen!',
-				},
-				{
-					q: 'Was kostet das?',
-					a: 'AllerLeih kostet dich als Privatperson nichts, und das wird auch so bleiben, denn AllerLeih ist für alle! Wir finanzieren uns aktuell aus eigener Tasche und suchen aktiv nach Finanzierungsmöglichkeiten. Falls ihr Ideen oder Kontakte habt, meldet euch gerne bei uns!',
-				},
-				{
-					q: 'Was habt ihr vor?',
-					a: 'AllerLeih für alle! Wir wollen AllerLeih zu DER Plattform für das Teilen und Leihen machen. Im Gegensatz zu anderen Plattformen setzen wir dafür auf open-source und versuchen, ein dezentrales Modell zu entwickeln, das nicht von uns abhängt. In Zukunft soll also jeder Mensch in seiner Stadt, seinem Quartier oder seiner Kommune die Möglichkeit haben, eine eigene AllerLeih-Instanz zu betreiben und sich vor Ort um die Community zu kümmern.',
-				},
-				{
-					q: 'Was passiert mit meinen Daten?',
-					a: 'Wir sind noch im Aufbau und es gibt noch Allerlei(h) zu tun, deswegen läuft hier vielleicht noch nicht alles 100% rund. Aber digitale Freiheitsrechte (Persönlichkeitsrecht, Datenschutz, Teilhabe) sind für uns unverhandelbare Grundwerte und wir werden AllerLeih so entwickeln, dass ihr die volle Kontrolle über eure Daten habt. Zu jeder Zeit. Für immer. Das heißt: wir verkaufen keine Daten, Daten liegen auf Servern in Deutschland oder maximal der EU, und wir schützen eure Daten bestmöglich. Falls ihr feststellt, dass das nicht der Fall ist, meldet euch gerne sofort bei uns! Wir wollen transparent sein und Fehler schnellstmöglich beheben.',
-				},
-			],
+			faqItems: instanceContent.faq.faqItems,
 		},
 		app: {
-			title: 'AllerLeih als App',
+			title: `${APP_NAME} als App`,
 			intro:
-				'AllerLeih ist eine sogenannte Progressive Web App (PWA). Das heißt: Du kannst AllerLeih mit einem Tippen auf deinen Startbildschirm legen und wie eine ganz normale App nutzen – ganz ohne App-Store und ohne großen Download.',
+				`${APP_NAME} ist eine sogenannte Progressive Web App (PWA). Das heißt: Du kannst ${APP_NAME} mit einem Tippen auf deinen Startbildschirm legen und wie eine ganz normale App nutzen – ganz ohne App-Store und ohne großen Download.`,
 			installNow: 'Jetzt installieren',
 			installNowHint: 'Dein Browser unterstützt die Installation mit einem Klick.',
-			alreadyInstalled: 'AllerLeih ist auf diesem Gerät bereits als App installiert. 🎉',
+			alreadyInstalled: `${APP_NAME} ist auf diesem Gerät bereits als App installiert. 🎉`,
 			followStepsHint:
-				'Wähle unten deinen Browser aus – dort steht Schritt für Schritt, wie du AllerLeih installierst.',
+				`Wähle unten deinen Browser aus – dort steht Schritt für Schritt, wie du ${APP_NAME} installierst.`,
 			whatIs: {
 				title: 'Was bringt mir die App?',
 				intro:
-					'Einmal installiert, verhält sich AllerLeih wie eine App aus dem Store – nur eben direkt aus deinem Browser heraus:',
+					`Einmal installiert, verhält sich ${APP_NAME} wie eine App aus dem Store – nur eben direkt aus deinem Browser heraus:`,
 				features: [
 					{
 						title: 'Eigenes Icon',
-						text: 'AllerLeih bekommt ein eigenes Symbol auf deinem Startbildschirm – ein Tipp und du bist drin.',
+						text: `${APP_NAME} bekommt ein eigenes Symbol auf deinem Startbildschirm – ein Tipp und du bist drin.`,
 					},
 					{
 						title: 'Benachrichtigungen',
-						text: 'Du wirst über neue Nachrichten und Anfragen informiert, auch wenn AllerLeih gerade nicht offen ist.',
+						text: `Du wirst über neue Nachrichten und Anfragen informiert, auch wenn ${APP_NAME} gerade nicht offen ist.`,
 					},
 					{
 						title: 'Vollbild ohne Browserleiste',
@@ -593,7 +583,7 @@ export const texts = {
 					},
 					{
 						title: 'Schnell & sparsam',
-						text: 'Die Installation belegt kaum Speicherplatz und AllerLeih startet spürbar schneller.',
+						text: `Die Installation belegt kaum Speicherplatz und ${APP_NAME} startet spürbar schneller.`,
 					},
 					{
 						title: 'Immer aktuell',
@@ -602,7 +592,7 @@ export const texts = {
 				],
 			},
 			howTo: {
-				title: 'So installierst du AllerLeih',
+				title: `So installierst du ${APP_NAME}`,
 				intro:
 					'Die Schritte unterscheiden sich je nach Gerät und Browser. Wir haben deinen Browser markiert – wenn das nicht passt, klapp einfach den passenden auf.',
 				detectedNote: 'Das ist vermutlich dein Gerät:',
@@ -643,7 +633,7 @@ export const texts = {
 						steps: [
 							`Öffne ${ORIGIN_HOST} im Browser.`,
 							'Klicke rechts in der Adressleiste auf das Installations-Symbol (Bildschirm mit Pfeil nach unten).',
-							'Alternativ: Menü (⋮) → „AllerLeih installieren".',
+							`Alternativ: Menü (⋮) → „${APP_NAME} installieren".`,
 							'Bestätige mit „Installieren".',
 						],
 					},
@@ -652,7 +642,7 @@ export const texts = {
 						label: 'Computer (Firefox)',
 						steps: [
 							'Firefox am Computer bietet keine Installation an.',
-							'Du kannst AllerLeih trotzdem als Lesezeichen speichern – oder nutze am Handy einen der anderen Browser.',
+							`Du kannst ${APP_NAME} trotzdem als Lesezeichen speichern – oder nutze am Handy einen der anderen Browser.`,
 						],
 					},
 					{
@@ -669,20 +659,20 @@ export const texts = {
 			whyNoNative: {
 				title: 'Warum gibt es (noch) keine eigene App im Store?',
 				paragraphs: [
-					'Wir sind ein kleines, gemeinnütziges Team und entwickeln AllerLeih als Open-Source-Software. Eine eigene App für iOS und Android würde bedeuten, gleich drei Programme parallel zu pflegen – das kostet Zeit und Geld, die wir lieber in die Plattform selbst stecken.',
+					`Wir sind ein kleines, gemeinnütziges Team und entwickeln ${APP_NAME} als Open-Source-Software. Eine eigene App für iOS und Android würde bedeuten, gleich drei Programme parallel zu pflegen – das kostet Zeit und Geld, die wir lieber in die Plattform selbst stecken.`,
 					'Native Apps müssen außerdem durch die Stores von Apple und Google, die Gebühren verlangen und eigene Regeln vorgeben. Als PWA bleiben wir unabhängig, und du bekommst Updates sofort, ohne etwas herunterzuladen.',
 					'Das Beste: Eine PWA fühlt sich schon heute fast wie eine echte App an – mit eigenem Icon, Vollbild und Benachrichtigungen. Sollte der Bedarf wachsen, schließen wir eine App im Store für die Zukunft nicht aus.',
 				],
 			},
 		},
 		search: {
-			// Sichtbare <h1> von `/search` (nicht der Navigationslabel — das ist `nav.search`).
-			// Trägt den Ort, weil `/search` eine indexierbare Landingpage ist und ein blankes
-			// "Suche" als h1 kein lokales Signal liefert.
+			// Visible <h1> of `/search` (not the navigation label — that's `nav.search`).
+			// Carries the place because `/search` is an indexable landing page and a bare
+			// "Search" as h1 gives no local signal.
 			title: `Gegenstände leihen in ${CITY}`,
 			welcome: 'Nutze einfach die Suche oben oder',
 			description:
-				'Bei AllerLeih findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...',
+				`Bei ${APP_NAME} findest du allerlei Dinge aus deiner Umgebung zum leihen, teilen, mieten, ...`,
 			transportModePrompt: 'Wie transportierst du das Ding?',
 			transportModes: {
 				foot: 'Zu Fuß',
@@ -890,7 +880,7 @@ export const texts = {
 			copyButton: 'Link kopieren',
 			copied: 'Link kopiert!',
 			shareText: (username: string) =>
-				`${username} lädt dich ein, auf AllerLeih Dinge mit ihm/ihr zu teilen. Folge dem Einladungslink: `,
+				`${username} lädt dich ein, auf ${APP_NAME} Dinge mit ihm/ihr zu teilen. Folge dem Einladungslink: `,
 			shareButton: 'Weitere Menschen einladen!',
 			linkCopied: 'Link und Text kopiert!',
 			welcomeMessage: (username: string) => `Du wurdest von ${username} eingeladen.`,
@@ -917,9 +907,9 @@ export const texts = {
 			institutionCardTitle: 'Angeboten von',
 			ownerItemCount: (n: number) => `${n} ${n === 1 ? 'Gegenstand' : 'Gegenstände'}`,
 			// mailto: CTA for owners who opted into email contact (issue #438)
-			mailtoSubject: (item: string) => `Anfrage zu „${item}" über AllerLeih`,
+			mailtoSubject: (item: string) => `Anfrage zu „${item}" über ${APP_NAME}`,
 			mailtoBody: (item: string) =>
-				`Hallo,\n\nich interessiere mich für „${item}" auf AllerLeih und würde es gerne ausleihen.\n\nViele Grüße`,
+				`Hallo,\n\nich interessiere mich für „${item}" auf ${APP_NAME} und würde es gerne ausleihen.\n\nViele Grüße`,
 		},
 		userProfile: {
 			activeSince: (date: string) => `Aktiv seit ${date}`,
@@ -928,7 +918,7 @@ export const texts = {
 			doesNotTrustYou: 'Diese Person vertraut dir (noch) nicht.',
 			trustsThisUser: 'Du vertraust diesem Account',
 			doesNotTrustThisUser: 'Du vertraust diesem Account (noch) nicht.',
-			addressNote: 'AllerLeih nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.',
+			addressNote: `${APP_NAME} nutzt deine Adresse, um dir und anderen Nutzer:innen die Reisezeit zueinander anzuzeigen. Wir geben deine Adresse nicht nach außen.`,
 			addressHint: 'Du kannst auch nur eine ungefähre Adresse (PLZ, Ort) angeben oder das Feld leer lassen. Manche Anbieter:innen verleihen nur an Nutzer:innen mit hinterlegter Adresse.',
 			itemsSectionTitle: 'Gegenstände',
 			allCategories: 'Alle',
@@ -977,7 +967,7 @@ export const texts = {
 	onboarding: {
 		welcome: {
 			title: 'Willkommen bei',
-			body: 'Auf AllerLeih kannst du Dinge aus deiner Umgebung leihen und verleihen. Du hast jetzt die Möglichkeit, ein paar Einstellungen festzulegen, oder dich erstmal umzuschauen.',
+			body: `Auf ${APP_NAME} kannst du Dinge aus deiner Umgebung leihen und verleihen. Du hast jetzt die Möglichkeit, ein paar Einstellungen festzulegen, oder dich erstmal umzuschauen.`,
 			findSettings: 'Die Einstellungen kannst du jederzeit wieder über dein Profil festlegen.',
 		},
 		howItWorks: {
@@ -987,7 +977,7 @@ export const texts = {
 			trust:
 				'Baue ein Vertrauensnetzwerk auf und teile bestimmte Dinge nur mit ausgewählten Personen.',
 			contact:
-				'Kontaktiere andere direkt über AllerLeih, Telegram oder Signal – ohne deine Telefonnummer zu teilen.',
+				`Kontaktiere andere direkt über ${APP_NAME}, Telegram oder Signal – ohne deine Telefonnummer zu teilen.`,
 		},
 		profile: {
 			title: 'Dein Profil',
@@ -999,14 +989,14 @@ export const texts = {
 		location: {
 			title: 'Wo verleihst du?',
 			explanation:
-				'AllerLeih nutzt diesen Standort, um anderen Nutzer:innen die ungefähre Wegzeit zum Ausleihen anzuzeigen. Wir geben diese Adresse nicht nach außen.',
+				`${APP_NAME} nutzt diesen Standort, um anderen Nutzer:innen die ungefähre Wegzeit zum Ausleihen anzuzeigen. Wir geben diese Adresse nicht nach außen.`,
 			hint:
 				'Du kannst auch nur eine ungefähre Adresse (z.B. nur Straßennamen oder eine Straße um die Ecke) angeben oder das Feld leer lassen.',
 		},
 		contact: {
 			title: 'Wie kann man dich erreichen?',
 			explanation:
-				'Füge deinen Telegram-Nutzernamen oder Signal-Link hinzu, damit andere dich bei Interesse direkt kontaktieren können – ganz ohne Telefonnummer. Das ist natürlich optional, du kannst auch über AllerLeih kontaktiert werden, ohne diese Informationen anzugeben.',
+				`Füge deinen Telegram-Nutzernamen oder Signal-Link hinzu, damit andere dich bei Interesse direkt kontaktieren können – ganz ohne Telefonnummer. Das ist natürlich optional, du kannst auch über ${APP_NAME} kontaktiert werden, ohne diese Informationen anzugeben.`,
 			notificationsTitle: 'Benachrichtigungen',
 			notificationsNote: 'Kommt bald',
 			inApp: 'In-App Benachrichtigungen',
@@ -1024,7 +1014,7 @@ export const texts = {
 		browserLocation: {
 			title: 'Standort freigeben?',
 			explanation:
-				'AllerLeih kann deinen aktuellen GPS-Standort nutzen, um dir Dinge in deiner unmittelbaren Nähe anzuzeigen. Dein Standort wird dabei nicht gespeichert.',
+				`${APP_NAME} kann deinen aktuellen GPS-Standort nutzen, um dir Dinge in deiner unmittelbaren Nähe anzuzeigen. Dein Standort wird dabei nicht gespeichert.`,
 			allow: 'Standort freigeben',
 			denied: 'Standort konnte nicht abgerufen werden. Bitte stelle sicher dass du die Standortfreigabe in deinem Browser oder Betriebssytem aktiviert hast, um diese Funktion zu nutzen.',
 		},
@@ -1038,7 +1028,7 @@ export const texts = {
 		transportMode: {
 			title: 'Wie kommst du am liebsten voran?',
 			explanation:
-				'AllerLeih zeigt dir, wie lange du zu den Dingen in deiner Umgebung unterwegs bist. Wähle dein bevorzugtes Verkehrsmittel.',
+				`${APP_NAME} zeigt dir, wie lange du zu den Dingen in deiner Umgebung unterwegs bist. Wähle dein bevorzugtes Verkehrsmittel.`,
 		},
 		done: {
 			title: 'Alles bereit! 🎉',
@@ -1056,7 +1046,7 @@ export const texts = {
 		},
 		survey:{
 			title: 'Eine ganz kurze Umfrage',
-			explanation: 'Wir wollen verstehen, was dich zum Teilen motiviert. Deine Antwort hilft uns, AllerLeih besser zu machen und Fördermittel zu beantragen. Die Antwort bleibt vollständig anonym! Du kannst die Umfrage auch überspringen.'
+			explanation: `Wir wollen verstehen, was dich zum Teilen motiviert. Deine Antwort hilft uns, ${APP_NAME} besser zu machen und Fördermittel zu beantragen. Die Antwort bleibt vollständig anonym! Du kannst die Umfrage auch überspringen.`
 		}
 	},
 
@@ -1119,7 +1109,7 @@ export const texts = {
 		newMessage: (from: string) => `Neue Nachricht von ${from}`,
 		newRequest: (from: string, item: string) => `${from} möchte „${item}" ausleihen`,
 		trustAdded: (from: string) => `${from} vertraut dir jetzt`,
-		pushTitle: 'AllerLeih',
+		pushTitle: `${APP_NAME}`,
 		inviteAccepted: (username: string) => `${username} hat deinen Einladungslink genutzt – nutze die "Vertrauen"-Funktion um dich mit der Person zu verbinden.`,
 		requestAccepted: (item: string) => `Deine Anfrage für „${item}" wurde angenommen`,
 		requestRejected: (item: string) => `Deine Anfrage für „${item}" wurde abgelehnt`,
@@ -1226,30 +1216,30 @@ export const texts = {
 
 	// SEO meta titles and descriptions.
 	//
-	// Lokale Auffindbarkeit: die indexierbaren Seiten tragen den Ortsnamen (`CITY`) in Title
-	// und/oder Description. Ohne ihn rankte die Instanz nur auf den Markennamen — lokale
-	// Anfragen wie "leihen <Stadt>" oder "bohrmaschine leihen <Stadt>" fanden keinerlei
-	// Übereinstimmung. Der Ort kommt IMMER aus `CITY` (= `instance.city`), nie als Literal:
-	// ein Build-Artefakt bedient mehrere Stadt-Instanzen (siehe `$lib/instance.ts`).
-	// `src/lib/texts.test.ts` pinnt beides — Ortsbezug und Interpolierbarkeit.
+	// Local discoverability: the indexable pages carry the place name (`CITY`) in the title
+	// and/or description. Without it the instance only ranked on the brand name — local
+	// queries like "borrow <city>" or "borrow drill <city>" found no match at all. The
+	// place always comes from `CITY` (= `instance.city`), never as a literal: one build
+	// artifact serves multiple city instances (see `$lib/instance.ts`).
+	// `src/lib/texts.test.ts` pins both — the place reference and its interpolatability.
 	//
-	// Bewusst OHNE Ort — Stand dieser Änderung vollständig, damit niemand einen der Fälle für ein
-	// Versehen hält (spätere Ergänzungen bitte hier nachpflegen):
-	//   · noindex-Seiten, die kein Crawler sieht: adminMetrics, conversations, social,
+	// Deliberately WITHOUT a place — this list is complete as of this change, so nobody
+	// mistakes one of these cases for an oversight (please keep it updated for later additions):
+	//   · noindex pages no crawler sees: adminMetrics, conversations, social,
 	//     onboarding, userImport, register, resetConfirm, confirmVerification,
 	//     confirmEmailChange
-	//   · indexierbar, aber ohne lokale Suchintention: login, reset, app, publicStats,
+	//   · indexable, but with no local search intent: login, reset, app, publicStats,
 	//     newsletter
-	//   · userProfile/userProfileDescription: die Query ist der Username, nicht der Ort
-	//   · imprint: trägt die Postadresse ohnehin
+	//   · userProfile/userProfileDescription: the query is the username, not the place
+	//   · imprint: already carries the postal address
 	//
-	// Gemischtes Bild `${APP_NAME}` vs. Literal "AllerLeih" ist ebenfalls Absicht: Fortsetzung
-	// der partiellen #473-Entscheidung (siehe `$lib/instance.ts` → `appName`). Umgestellt sind
-	// nur die ohnehin angefassten Strings; die übrigen ~89 Vorkommen in der deutschen Copy
-	// bleiben Literale. Neue oder überarbeitete Strings nutzen `${APP_NAME}`.
+	// The mixed picture of `${APP_NAME}` vs. the literal "${APP_NAME}" is also deliberate:
+	// a continuation of the partial #473 decision (see `$lib/instance.ts` → `appName`). Only
+	// the strings already being touched were converted; the remaining ~89 occurrences in the
+	// German copy stay literals. New or reworked strings use `${APP_NAME}`.
 	//
-	// Längenbudget der angefassten Strings: Title ≤ 60, Description ≤ 155 Zeichen (ab da
-	// kürzen Suchmaschinen). Im Test als `it.each` hinterlegt.
+	// Length budget for the touched strings: title ≤ 60, description ≤ 155 characters (search
+	// engines truncate beyond that). Pinned as `it.each` in the test.
 	seo: {
 		home: {
 			title: `Dinge leihen und verleihen in ${CITY} – ${APP_NAME}`,
@@ -1264,85 +1254,84 @@ export const texts = {
 			description: `${APP_NAME} ist eine gemeinnützige Initiative aus ${CITY} für lokales Leihen und Teilen. Lerne das Team dahinter kennen.`,
 		},
 		adminMetrics: {
-			title: 'Kennzahlen – Admin – AllerLeih',
+			title: `Kennzahlen – Admin – ${APP_NAME}`,
 		},
 		publicStats: {
-			title: 'AllerLeih Zahlen',
+			title: `${APP_NAME} Zahlen`,
 			description:
-				'Offene Kennzahlen der AllerLeih-Plattform: registrierte Nutzer:innen, verfügbare Gegenstände und abgeschlossene Ausleihen.',
+				`Offene Kennzahlen der ${APP_NAME}-Plattform: registrierte Nutzer:innen, verfügbare Gegenstände und abgeschlossene Ausleihen.`,
 		},
 		guide: {
-			// Title bleibt ohne Ort: "Wie funktioniert AllerLeih?" ist eine Brand-Query.
-			title: 'Wie funktioniert AllerLeih? – Anleitung',
+			title: `Wie funktioniert ${APP_NAME}? – Anleitung`,
 			description: `Schritt-für-Schritt-Anleitungen zum Leihen und Verleihen in ${CITY}. Tipps, FAQs und erste Schritte mit ${APP_NAME}.`,
 		},
 		app: {
-			title: 'AllerLeih als App installieren',
+			title: `${APP_NAME} als App installieren`,
 			description:
-				'Lege AllerLeih als App auf deinen Startbildschirm – ohne App-Store. So installierst du die Progressive Web App Schritt für Schritt auf iPhone, Android und Computer.',
+				`Lege ${APP_NAME} als App auf deinen Startbildschirm – ohne App-Store. So installierst du die Progressive Web App Schritt für Schritt auf iPhone, Android und Computer.`,
 		},
 		contact: {
 			title: `Kontakt – ${APP_NAME} ${CITY}`,
 			description: `Schreib uns! Fragen, Feedback oder Kooperationsanfragen rund um ${APP_NAME} in ${CITY} sind herzlich willkommen.`,
 		},
 		imprint: {
-			title: 'Impressum – AllerLeih',
-			description: 'Rechtliche Angaben und Kontaktinformationen des Betreibers von AllerLeih.',
+			title: `Impressum – ${APP_NAME}`,
+			description: `Rechtliche Angaben und Kontaktinformationen des Betreibers von ${APP_NAME}.`,
 		},
 		newsletter: {
-			title: 'AllerLeih News – Newsletter',
+			title: `${APP_NAME} News – Newsletter`,
 			description:
-				'Bleib auf dem Laufenden: Abonniere den AllerLeih Newsletter für Neuigkeiten und Community-Geschichten.',
+				`Bleib auf dem Laufenden: Abonniere den ${APP_NAME} Newsletter für Neuigkeiten und Community-Geschichten.`,
 		},
 		login: {
-			title: 'Anmelden – AllerLeih',
+			title: `Anmelden – ${APP_NAME}`,
 			description:
-				'Melde dich bei AllerLeih an, um Gegenstände zu leihen, Anfragen zu verwalten und dich mit deiner Umgebung zu verbinden.',
+				`Melde dich bei ${APP_NAME} an, um Gegenstände zu leihen, Anfragen zu verwalten und dich mit deiner Umgebung zu verbinden.`,
 		},
 		register: {
-			title: 'Registrieren – AllerLeih',
+			title: `Registrieren – ${APP_NAME}`,
 			description:
-				'Erstelle ein kostenloses AllerLeih-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.',
+				`Erstelle ein kostenloses ${APP_NAME}-Konto und fang an, Dinge in deiner Umgebung zu leihen und zu teilen.`,
 		},
 		reset: {
-			title: 'Passwort zurücksetzen – AllerLeih',
-			description: 'Setze dein AllerLeih-Passwort zurück, um wieder auf dein Konto zugreifen zu können.',
+			title: `Passwort zurücksetzen – ${APP_NAME}`,
+			description: `Setze dein ${APP_NAME}-Passwort zurück, um wieder auf dein Konto zugreifen zu können.`,
 		},
 		resetConfirm: {
-			title: 'Neues Passwort festlegen – AllerLeih',
-			description: 'Lege ein neues Passwort für dein AllerLeih-Konto fest.',
+			title: `Neues Passwort festlegen – ${APP_NAME}`,
+			description: `Lege ein neues Passwort für dein ${APP_NAME}-Konto fest.`,
 		},
 		confirmVerification: {
-			title: 'E-Mail-Adresse bestätigen – AllerLeih',
-			description: 'Bestätige deine E-Mail-Adresse, um dein AllerLeih-Konto zu aktivieren.',
+			title: `E-Mail-Adresse bestätigen – ${APP_NAME}`,
+			description: `Bestätige deine E-Mail-Adresse, um dein ${APP_NAME}-Konto zu aktivieren.`,
 		},
 		confirmEmailChange: {
-			title: 'Neue E-Mail-Adresse bestätigen – AllerLeih',
-			description: 'Bestätige die Änderung deiner E-Mail-Adresse für dein AllerLeih-Konto.',
+			title: `Neue E-Mail-Adresse bestätigen – ${APP_NAME}`,
+			description: `Bestätige die Änderung deiner E-Mail-Adresse für dein ${APP_NAME}-Konto.`,
 		},
-		// Der Owner steht bewusst NICHT mehr im Title: er bringt kein Ranking und verdrängt
-		// bei langen Item-Namen den Ortsnamen aus dem angezeigten Snippet. Sein Platz ist die
-		// Description. Der Fixteil muss einem Item-Namen von ~29 Zeichen Platz im 60-Zeichen-
-		// Budget lassen (im Test gepinnt); bei längeren Namen kürzt Google nach Pixelbreite,
-		// der Ort steht direkt hinter dem Namen und überlebt das in aller Regel. Bewusst
-		// keine Kürzungslogik hier.
+		// The owner is deliberately NO LONGER in the title: it brings no ranking value and,
+		// for long item names, pushes the place name out of the displayed snippet. Its place
+		// is the description. The fixed part must leave room for an item name of ~29
+		// characters within the 60-character budget (pinned in the test); for longer names
+		// Google truncates by pixel width, and the place sits right after the name and
+		// usually survives that. Deliberately no truncation logic here.
 		itemDetail: (name: string) => `${name} leihen in ${CITY} – ${APP_NAME}`,
 		itemDetailDescription: (name: string, owner: string) =>
 			`Leihe ${name} von ${owner} in ${CITY} – kostenlos und nachbarschaftlich über ${APP_NAME}.`,
-		userProfile: (username: string) => `@${username} – AllerLeih`,
+		userProfile: (username: string) => `@${username} – ${APP_NAME}`,
 		userProfileDescription: (username: string) =>
-			`Sieh dir die Gegenstände von @${username} auf AllerLeih an und kontaktiere ihn oder sie für eine Leihanfrage.`,
+			`Sieh dir die Gegenstände von @${username} auf ${APP_NAME} an und kontaktiere ihn oder sie für eine Leihanfrage.`,
 		conversations: {
-			title: 'Nachrichten – AllerLeih',
+			title: `Nachrichten – ${APP_NAME}`,
 		},
 		social: {
-			title: 'Vertraute – AllerLeih',
+			title: `Vertraute – ${APP_NAME}`,
 		},
 		onboarding: {
-			title: 'Willkommen – AllerLeih',
+			title: `Willkommen – ${APP_NAME}`,
 		},
 		userImport: {
-			title: 'Gegenstände importieren – AllerLeih',
+			title: `Gegenstände importieren – ${APP_NAME}`,
 		},
 	},
 
@@ -1358,10 +1347,10 @@ export const texts = {
 		notifBannerText: 'Erhalte Benachrichtigungen für neue Nachrichten und Anfragen.',
 		notifEnable: 'Aktivieren',
 		notifDismiss: 'Später',
-		installBannerText: 'Installiere AllerLeih für das beste Erlebnis.',
+		installBannerText: `Installiere ${APP_NAME} für das beste Erlebnis.`,
 		installButton: 'Installieren',
 		installLearnMore: 'So geht’s',
-		installManualLink: 'So installierst du AllerLeih',
+		installManualLink: `So installierst du ${APP_NAME}`,
 	},
 
 	// Flash messages and alerts
@@ -1380,7 +1369,7 @@ export const texts = {
 		// Issue #368 — permanent "how the lending works" box on external/institution items.
 		externalLendingInfoTitle: 'So funktioniert die Ausleihe',
 		externalLendingInfoDefault:
-			'Dieser Gegenstand wird von einer Partner-Institution bereitgestellt und kann nicht direkt über AllerLeih reserviert oder gebucht werden. Für die Ausleihe wendest du dich direkt an die Institution — meist brauchst du dort ein eigenes Konto, und die Abholung erfolgt vor Ort. Über den Button gelangst du zum Angebot der Institution mit allen Details.',
+			`Dieser Gegenstand wird von einer Partner-Institution bereitgestellt und kann nicht direkt über ${APP_NAME} reserviert oder gebucht werden. Für die Ausleihe wendest du dich direkt an die Institution — meist brauchst du dort ein eigenes Konto, und die Abholung erfolgt vor Ort. Über den Button gelangst du zum Angebot der Institution mit allen Details.`,
 		// Self-service editor (profile form, institutions only).
 		externalLendingInfoEditLabel: 'Ausleih-Hinweis',
 		externalLendingInfoEditHint:
@@ -1415,7 +1404,7 @@ export const texts = {
 		importRefreshFailed: 'Synchronisierung fehlgeschlagen. Bitte später erneut versuchen.',
 		/** No `sync_config` row for this institution — the button has nothing to synchronise. */
 		importRefreshNoIntegration:
-			'Für diesen Account ist keine automatische Quelle eingerichtet — es gibt nichts zu synchronisieren. Bitte an die AllerLeih-Administration wenden.',
+			`Für diesen Account ist keine automatische Quelle eingerichtet — es gibt nichts zu synchronisieren. Bitte an die ${APP_NAME}-Administration wenden.`,
 		importActionLabels: {
 			create: 'Neu',
 			update: 'Update',
@@ -1468,7 +1457,7 @@ export const texts = {
 		responsibleNote: (contact: string) =>
 			`Verantwortlich für den Verleih und im Sinne der DSGVO: ${contact}.`,
 		platformOnlyNote:
-			'AllerLeih ist nicht Vertragspartner des Verleihs, sondern vermittelt nur die Anfrage zwischen dir und der oben genannten Stelle.',
+			`${APP_NAME} ist nicht Vertragspartner des Verleihs, sondern vermittelt nur die Anfrage zwischen dir und der oben genannten Stelle.`,
 		versionLabel: (version: string) => `Version ${version}`,
 		effectiveFromLabel: (date: string) => `Gültig ab ${date}`,
 		confirmAdultLabel: (minAge: number) =>
@@ -1500,7 +1489,7 @@ export const texts = {
 			unsure: 'Weiß ich nicht.',
 			other: 'Anderes (bitte beschreibe kurz):',
 		},
-		explainer: 'Wir fragen dich, weil wir verstehen wollen, ob AllerLeih tatsächlich ökologische und/oder soziale Wirkung entfaltet. Antworte gerne ehrlich und direkt. Danke!',
+		explainer: `Wir fragen dich, weil wir verstehen wollen, ob ${APP_NAME} tatsächlich ökologische und/oder soziale Wirkung entfaltet. Antworte gerne ehrlich und direkt. Danke!`,
 		otherPlaceholder: 'Bitte beschreibe kurz ...',
 		skip: 'Lieber nicht beantworten',
 		submit: 'Abschicken',
@@ -1513,7 +1502,7 @@ export const texts = {
 		accept: {
 			pageTitle: 'Aktualisierte Bedingungen',
 			intro:
-				'Wir haben unsere rechtlichen Dokumente überarbeitet. Bitte lies die unten genannten Dokumente und stimme ihnen zu, um AllerLeih weiter zu nutzen.',
+				`Wir haben unsere rechtlichen Dokumente überarbeitet. Bitte lies die unten genannten Dokumente und stimme ihnen zu, um ${APP_NAME} weiter zu nutzen.`,
 			gateNotice:
 				'Du musst zuerst den aktuellen Bedingungen zustimmen, bevor du diese Seite aufrufen kannst.',
 			reviewLinkLabel: 'Vollständiges Dokument öffnen',
@@ -1620,8 +1609,8 @@ export const texts = {
 			},
 		},
 		public: {
-			title: 'AllerLeih Zahlen',
-			intro: 'Ein kleiner Einblick in die AllerLeih-Plattform.',
+			title: `${APP_NAME} Zahlen`,
+			intro: `Ein kleiner Einblick in die ${APP_NAME}-Plattform.`,
 			usersTotal: 'Registrierte Nutzer:innen',
 			itemsTotal: 'Gegenstände auf der Plattform',
 			loansCompleted: 'Abgeschlossene Ausleihen',

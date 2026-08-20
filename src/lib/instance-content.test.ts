@@ -9,12 +9,13 @@ import { instanceContent } from './instance-content';
 
 describe('instanceContent — defaults (static, not env-driven)', () => {
 	it('has a non-empty FAQ founder-bio answer', () => {
-		expect(typeof instanceContent.faq.whoWeAre).toBe('string');
-		expect(instanceContent.faq.whoWeAre.length).toBeGreaterThan(0);
+		const whoWeAre = instanceContent.faq.faqItems[0].a;
+		expect(typeof whoWeAre).toBe('string');
+		expect(whoWeAre.length).toBeGreaterThan(0);
 	});
 
 	it('pins the current default founder-bio content (Lüneburg, deliberately not CITY-interpolated)', () => {
-		expect(instanceContent.faq.whoWeAre).toContain('Lüneburg');
+		expect(instanceContent.faq.faqItems[0].a).toContain('Lüneburg');
 	});
 
 	it('does not change based on env vars — this is static content, not a template', async () => {
@@ -23,8 +24,8 @@ describe('instanceContent — defaults (static, not env-driven)', () => {
 			env: { PUBLIC_INSTANCE_CITY: 'Marburg', PUBLIC_APP_NAME: 'AndersLeih' },
 		}));
 		const { instanceContent: overridden } = await import('./instance-content');
-		expect(overridden.faq.whoWeAre).toBe(instanceContent.faq.whoWeAre);
-		expect(overridden.faq.whoWeAre).toContain('Lüneburg');
+		expect(overridden.faq.faqItems[0].a).toBe(instanceContent.faq.faqItems[0].a);
+		expect(overridden.faq.faqItems[0].a).toContain('Lüneburg');
 		vi.doUnmock('$env/dynamic/public');
 	});
 });
