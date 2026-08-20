@@ -83,6 +83,16 @@ describe('instance — defaults (no env vars set)', () => {
 	it('analyticsHeadSnippet is empty when analytics is unset', () => {
 		expect(analyticsHeadSnippet()).toBe('');
 	});
+
+	it('has a non-empty FAQ founder-bio answer', () => {
+		const whoWeAre = instance.faq.faqItems[0].a;
+		expect(typeof whoWeAre).toBe('string');
+		expect(whoWeAre.length).toBeGreaterThan(0);
+	});
+
+	it('pins the current default founder-bio content (Lüneburg, deliberately not CITY-interpolated)', () => {
+		expect(instance.faq.faqItems[0].a).toContain('Lüneburg');
+	});
 });
 
 // Pure validation logic, called directly — no module reset / env mocking needed since
@@ -254,6 +264,15 @@ describe('instance — env var wiring (integration)', () => {
 		expect(overridden.city).toBe('Marburg');
 		expect(overridden.origin).toBe('https://allerleih.org');
 		expect(overridden.appName).toBe('AllerLeih');
+	});
+
+	it('keeps faq/team static prose unchanged regardless of env vars — not a template', async () => {
+		vi.doMock('$env/dynamic/public', () => ({
+			env: { PUBLIC_INSTANCE_CITY: 'Marburg', PUBLIC_APP_NAME: 'AndersLeih' },
+		}));
+		const { instance: overridden } = await import('./instance');
+		expect(overridden.faq.faqItems[0].a).toBe(instance.faq.faqItems[0].a);
+		expect(overridden.faq.faqItems[0].a).toContain('Lüneburg');
 	});
 
 	it('wires PUBLIC_ANALYTICS_ORIGIN/PUBLIC_ANALYTICS_WEBSITE_ID into instance.analytics and analyticsHeadSnippet()', async () => {

@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { texts } from '$lib/texts';
 	import { instance } from '$lib/instance';
-	import { instanceContent } from '$lib/instance-content';
 	import { GithubSolid, LinkedinSolid, EnvelopeOutline } from 'flowbite-svelte-icons';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 
-	const members = instanceContent.team;
+	const members = instance.team;
 </script>
 
 <SeoHead
