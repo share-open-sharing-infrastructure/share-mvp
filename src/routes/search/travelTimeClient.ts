@@ -3,8 +3,9 @@ import type { ItemPublic } from '$lib/types/models';
 /**
  * Framework-free plumbing for the search page's travel-time filter (mirrors how the
  * conversations route splits chatScroll/presenceHeartbeat out of its components):
- * the ORS fetch with its timeout + diagnostics, the browser-geolocation wrapper and
- * the fire-and-forget mode persistence. All UI state stays in TravelTimeFilter.svelte.
+ * the ORS fetch with its timeout + diagnostics and the fire-and-forget mode
+ * persistence. Browser geolocation lives in $lib/utils/geolocation.ts; all UI state
+ * stays in TravelTimeFilter.svelte.
  */
 
 export type TransportMode = 'foot' | 'bicycle' | 'car';
@@ -53,17 +54,6 @@ export async function fetchTravelTimes(
 	} finally {
 		clearTimeout(timeoutId);
 	}
-}
-
-/** Asks the browser for the user's position; exactly one of the callbacks runs. */
-export function requestBrowserLocation(
-	onSuccess: (location: GeoPoint) => void,
-	onDenied: () => void
-): void {
-	navigator.geolocation.getCurrentPosition(
-		(pos) => onSuccess({ lon: pos.coords.longitude, lat: pos.coords.latitude }),
-		onDenied
-	);
 }
 
 /** Persists the chosen mode to user_preferences via the page's form action.

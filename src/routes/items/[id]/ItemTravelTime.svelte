@@ -1,10 +1,17 @@
 <script lang="ts">
 	import { Dropdown, DropdownItem } from 'flowbite-svelte';
 	import { ChevronDownOutline } from 'flowbite-svelte-icons';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { texts } from '$lib/texts';
 	import TransportModeIcon from '$lib/components/TransportModeIcon.svelte';
 	import AllerLoader from '$lib/components/AllerLoader.svelte';
+	import Button from '$lib/components/ui/Button.svelte';
+	import {
+		getPosition,
+		isPermissionBlocked,
+		queryGeoPermission,
+		supportsPermissionsQuery,
+	} from '$lib/utils/geolocation';
 
 	type TransportMode = 'foot' | 'bicycle' | 'car';
 
@@ -21,7 +28,11 @@
 	let travelMinutes = $state<number | null | undefined>(undefined);
 	let dropdownOpen = $state(false);
 	let calculating = $state(false);
+	let locationBlocked = $state(false);
 	let cachedUserLocation: { lon: number; lat: number } | null = null;
+	// Focus target for the blocked-guidance message so it's reachable after the
+	// clicked control it replaces is removed from the DOM (see focusBlockedMessage).
+	let blockedMessageEl: HTMLParagraphElement | null = $state(null);
 
 	// Fire-and-forget: sends a diagnostic event to the server log. Never throws.
 	function sendDiag(payload: Record<string, unknown>) {
@@ -55,21 +66,47 @@
 		}
 	}
 
-	function requestAndFetch(mode: TransportMode) {
-		calculating = true;
+	/** Requests the user's location for `mode`, routed through the shared geolocation
+	 *  helper. Where the Permissions API is available we check it first so a hard
+	 *  denial goes straight to the blocked UI instead of a futile `getCurrentPosition()`
+	 *  call. Where it isn't (iOS Safari never implements it for geolocation) we call
+	 *  `getPosition()` directly — awaiting the permission query first would break the
+	 *  click handler's user-gesture chain and silently suppress the native prompt. */
+	async function requestAndFetch(mode: TransportMode) {
+		locationBlocked = false;
+
 		if (cachedUserLocation) {
+			calculating = true;
 			fetchTravelTime(mode, cachedUserLocation);
 			return;
 		}
-		navigator.geolocation.getCurrentPosition(
-			(pos) => {
-				cachedUserLocation = { lon: pos.coords.longitude, lat: pos.coords.latitude };
-				fetchTravelTime(mode, cachedUserLocation);
-			},
-			() => {
-				calculating = false;
+
+		if (supportsPermissionsQuery()) {
+			const permission = await queryGeoPermission();
+			if (isPermissionBlocked(permission)) {
+				locationBlocked = true;
+				await focusBlockedMessage();
+				return;
 			}
-		);
+		}
+
+		calculating = true;
+		try {
+			cachedUserLocation = await getPosition();
+			fetchTravelTime(mode, cachedUserLocation);
+		} catch {
+			calculating = false;
+			locationBlocked = true;
+			await focusBlockedMessage();
+		}
+	}
+
+	// The button the user clicked is unmounted once the blocked message replaces
+	// it, so focus would otherwise fall back to <body>; move it onto the message
+	// once Svelte has patched the DOM for the new state.
+	async function focusBlockedMessage() {
+		await tick();
+		blockedMessageEl?.focus();
 	}
 
 	function handleModeChange(mode: TransportMode) {
@@ -82,6 +119,19 @@
 
 {#if calculating}
 	<AllerLoader size={22} speed={1.2} variant="rotate" label="Reisezeiten werden berechnet …" />
+{:else if locationBlocked}
+	<div class="flex flex-col items-start gap-1" role="status">
+		<p
+			class="text-sm text-gray-500 dark:text-gray-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+			tabindex="-1"
+			bind:this={blockedMessageEl}
+		>
+			{texts.onboarding.browserLocation.blocked}
+		</p>
+		<Button variant="secondary" size="sm" onclick={() => location.reload()}>
+			{texts.onboarding.browserLocation.reload}
+		</Button>
+	</div>
 {:else if travelMinutes === undefined}
 	<button
 		type="button"

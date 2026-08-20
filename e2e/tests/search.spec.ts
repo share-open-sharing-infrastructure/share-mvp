@@ -10,7 +10,7 @@ import { VIEWER_STORAGE_STATE, STRANGER_STORAGE_STATE } from '../fixtures/users'
  */
 
 const SECRET_ITEM = 'E2E Geheimwerkzeug'; // trustees-only, owned by e2e_owner_seed
-const PUBLIC_ITEM = 'E2E Campingzelt'; // public, not touched by any other spec
+const PUBLIC_ITEM = 'E2E Campingzelt'; // public; no other spec writes to it (user-items-search.spec.ts also reads it)
 
 async function searchAs(browser: Browser, storageState: string, query: string) {
 	const ctx = await browser.newContext({ storageState });

@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { onMount } from 'svelte';
 	import { SvelteSet, SvelteURLSearchParams } from 'svelte/reactivity';
 	import { texts } from '$lib/texts';
 	import Button from '$lib/components/ui/Button.svelte';
@@ -13,29 +14,62 @@
 	let { data, form } = $props();
 
 	let showAddModal = $state(false);
-	let searchValue = $derived(data.search);
+	// #619 — two deriveds, on purpose, do NOT collapse them into one.
+	// The root layout fires invalidate(NOTIFICATIONS_DEP) from afterNavigate (even on the
+	// first load) and on every realtime reconnect. SvelteKit rebuilds every node's props when
+	// that happens — `data` is a fresh object even though `search` is unchanged (and so is
+	// `page.url`: client.js hands out `url: new URL(url)` as soon as any node has new data —
+	// so deriving from the URL instead doesn't help either).
+	// `loadedSearch` does recompute, but to the same string, and Svelte doesn't propagate a
+	// recompute whose result is referentially identical to the previous one. That keeps
+	// `searchValue` from being marked dirty, so it keeps whatever the user typed.
+	// A real ?search= change (back/forward, our own debounced navigation) changes the string
+	// and re-syncs the box. A single $derived here is exactly #619.
+	const loadedSearch = $derived(data.search);
+	let searchValue = $derived(loadedSearch);
 	let debounceTimer: ReturnType<typeof setTimeout>;
 	const selectedIds = new SvelteSet<string>();
 
+	// Absorber like above: the effect should run on real list changes (navigation, filter,
+	// page, delete), not on every invalidate(NOTIFICATIONS_DEP), which only repackages `data`
+	// — otherwise the bulk selection would disappear the moment a notification arrives or
+	// realtime reconnects.
+	const itemIdsKey = $derived(data.items.map((item) => item.id).join(','));
 	$effect(() => {
-		// Reading the current item ids registers this effect as a dependency of
-		// data.items, so the bulk selection is cleared on every list change
-		// (navigation, filter, page, delete).
-		data.items.map((item) => item.id);
+		void itemIdsKey;
 		selectedIds.clear();
 	});
 
-	function onSearchInput(e: Event) {
-		const value = (e.currentTarget as HTMLInputElement).value;
-		searchValue = value;
+	function scheduleSearchNavigation(value: string, replace = false) {
 		clearTimeout(debounceTimer);
 		debounceTimer = setTimeout(() => {
 			const params = new SvelteURLSearchParams(window.location.search);
 			params.set('search', value);
 			params.set('page', '1');
-			goto(resolve(`/user/items?${params.toString()}`), { keepFocus: true });
+			goto(resolve(`/user/items?${params.toString()}`), {
+				keepFocus: true,
+				replaceState: replace,
+			});
 		}, 300);
 	}
+
+	function onSearchInput(e: Event) {
+		const value = (e.currentTarget as HTMLInputElement).value;
+		// Redundant with bind:value today — bind_value attaches its own direct listener, this
+		// oninput is delegated — but kept so the handler doesn't depend on a Svelte-internal
+		// listener-ordering detail (see AddressInput.svelte, PR #620).
+		searchValue = value;
+		scheduleSearchNavigation(value);
+	}
+
+	onMount(() => {
+		// #619: bind_value adopts text typed before hydration, but onSearchInput never ran for
+		// those keystrokes — the list is still on the old filter. Replay the same debounce so a
+		// user who keeps typing overwrites this navigation instead of navigating on half a word.
+		// replaceState because the user never triggered this navigation themselves. No-op if
+		// nothing was adopted.
+		if (searchValue !== loadedSearch) scheduleSearchNavigation(searchValue, true);
+	});
 
 	function onStatusChange(e: Event) {
 		const value = (e.currentTarget as HTMLSelectElement).value;
@@ -68,7 +102,14 @@
 		<h2 class="text-2xl tracking-tight font-extrabold text-tinte-900 dark:text-white">
 			{texts.pages.items.title}
 		</h2>
-		<div>
+		<!-- Live region: this text already changes on every search/filter navigation, including
+		     #619's onMount replay, which the user never triggered themselves — and that replay's
+		     goto(..., { keepFocus: true }) skips SvelteKit's own reset_focus announcement, so this
+		     is the only announcement a screen reader gets. Unlike ItemsSection.svelte /
+		     GroupItemsSection.svelte (whose visible per-category badges are terse numbers unfit to
+		     read aloud, so they carry a separate sr-only `texts.ui.resultsFound` line), this text
+		     is already a full sentence — no need for a second, duplicate node/string. -->
+		<div aria-live="polite">
 			{#if data.totalItems > 0}
 				<span class="text-accent">{texts.pages.items.countSome(data.totalItems)}</span>
 			{:else}
@@ -97,8 +138,9 @@
 		<div class="flex flex-col sm:flex-row gap-3 mb-4">
 			<input
 				type="search"
-				value={searchValue}
+				bind:value={searchValue}
 				oninput={onSearchInput}
+				aria-label={texts.pages.items.search}
 				placeholder={texts.pages.items.search}
 				class="flex-1 rounded-full border border-tinte-300 bg-papier px-4 py-2 text-sm text-tinte-900 placeholder-tinte-400 focus:border-primary focus:ring-primary dark:border-tinte-600 dark:bg-tinte-700 dark:text-white"
 			/>
