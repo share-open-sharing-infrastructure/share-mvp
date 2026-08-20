@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// client-pb.ts (imported by realtime.ts) reads PUBLIC_PB_URL from here at import time.
-vi.mock('$env/static/public', () => ({ PUBLIC_PB_URL: 'http://localhost:8090' }));
+// client-pb.ts (imported by realtime.ts) reads PUBLIC_PB_URL from here via $lib/publicEnv's
+// pbUrl(), at call time. Vitest bakes $env/dynamic/* at transform time, so vi.mock is the only
+// way to control it (process.env / vi.stubEnv do not reach the module).
+vi.mock('$env/dynamic/public', () => ({ env: { PUBLIC_PB_URL: 'http://localhost:8090' } }));
 
 // A hoisted holder collects every PocketBase instance the module constructs, so
 // a test can reach the singleton created lazily by getClientPB().

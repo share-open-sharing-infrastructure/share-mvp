@@ -4,7 +4,7 @@ import type { Conversation, Message } from '$lib/types/models';
 import { makeMockPb } from '$lib/test-utils/pocketbase';
 
 // Capture the options passed to subscribeRealtime so tests can fire synthetic
-// events at the registered handler. The real client-pb pulls in $env/static/public
+// events at the registered handler. The real client-pb pulls in $env/dynamic/public
 // and opens an EventSource — neither is wanted here, so the whole module is mocked.
 const { subscribeRealtime, unsubscribe } = vi.hoisted(() => ({
 	subscribeRealtime: vi.fn(),

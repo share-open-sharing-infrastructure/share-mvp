@@ -4,12 +4,13 @@
  * Literale ("allerleih.org", "Lüneburg") in Routen und Komponenten. `texts.ts` interpoliert
  * daraus die deutschen Copy-Strings (siehe dort); Code liest URLs/E-Mails direkt von hier.
  *
- * Bewusste Ausnahme von der `$env/static/*`-Konvention des Repos: Diese Datei nutzt
- * `$env/dynamic/public`, weil ein einziges Build-Artefakt N Stadt-Instanzen bedienen soll —
- * `adapter-node` liest Umgebungsvariablen zur Laufzeit aus `process.env`, nicht zur Build-Zeit.
- * `$env/static/public` würde die Werte fest in den Build backen (ein Artefakt pro Instanz).
- * Alle anderen 12 `$env/static/*`-Imports im Repo bleiben unverändert – dies ist die einzige
- * Stelle mit `$env/dynamic/public`.
+ * `$env/dynamic/*` ist seit #627 die **repo-weite** Konvention, nicht mehr die Ausnahme dieser
+ * Datei: `$env/static/*` ist verboten (ESLint `no-restricted-imports`), weil ein einziges
+ * Build-Artefakt N Stadt-Instanzen bedienen soll — `adapter-node` liest Umgebungsvariablen zur
+ * Laufzeit aus `process.env`, nicht zur Build-Zeit. Diese Datei ist die Quelle für
+ * **Instanz-/Branding**-Werte; die zwei öffentlichen Infrastruktur-Variablen
+ * (`PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`) kommen aus `$lib/publicEnv.ts`. Welche Variablen
+ * beim Start vorhanden sein MÜSSEN, steht in `$lib/server/env.ts`.
  *
  * Sicherheitshinweise für Wartende:
  * (a) Die Top-Level-Auswertung unten (Modul wird einmal beim ersten Import ausgewertet) ist
@@ -18,7 +19,8 @@
  *     dieses Modul zum ersten Mal importiert wird. Bei einem Adapter-Wechsel (weg von
  *     adapter-node) diese Annahme erneut prüfen.
  * (b) `$lib/instance` (und damit `$lib/texts`) darf NIE aus `src/service-worker.ts` importiert
- *     werden — `$env/dynamic/public` ist dort ein Hard-Error (kein Request-Kontext).
+ *     werden — `$env/dynamic/public` ist dort ein Hard-Error (kein Request-Kontext). Gilt
+ *     genauso für `$lib/publicEnv.ts`; `eslint.config.js` erzwingt das für diese Datei.
  *
  * Nie direkt `throw`en: ein Fehler hier würde die komplette App mit 500 lahmlegen. Ungültige
  * Werte fallen still auf sichere Defaults zurück (siehe `resolveOrigin`/`resolveAnalytics`).

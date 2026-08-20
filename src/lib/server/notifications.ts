@@ -1,11 +1,53 @@
 import webpush from 'web-push';
-import { VAPID_PRIVATE_KEY, VAPID_SUBJECT } from '$env/static/private';
-import { PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
+import { env } from '$env/dynamic/private';
+import { vapidPublicKey } from '$lib/publicEnv';
 import type { NotificationType } from '$lib/types/models.js';
 import { texts } from '$lib/texts';
 import type PocketBase from 'pocketbase';
 
-webpush.setVapidDetails(VAPID_SUBJECT, PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+let vapidConfigured = false;
+let vapidWarned = false;
+
+/**
+ * web-push stores the VAPID details in module state, so they only need setting once — but NOT
+ * at import time. `vite build`'s analyse pass imports every server node with an empty
+ * `$env/dynamic/private`, and `setVapidDetails` throws on an empty subject/key (issue #627).
+ * Called from `sendPushToUser` instead — by then SvelteKit has populated the dynamic env, so the
+ * read sees the value the running instance was started with.
+ * Returns false (logging once) instead of throwing — for a missing value AND for a non-empty but
+ * malformed one, which `assertRequiredEnv()` waves through because it only checks non-emptiness.
+ * A misconfiguration must not turn a lending-status change, or an invite-code registration whose
+ * user record already exists, into a 500.
+ */
+function ensureVapidConfigured(): boolean {
+	if (vapidConfigured) return true;
+	const subject = env.VAPID_SUBJECT;
+	const privateKey = env.VAPID_PRIVATE_KEY;
+	const publicKey = vapidPublicKey();
+	if (!subject || !privateKey || !publicKey) {
+		if (!vapidWarned) {
+			vapidWarned = true;
+			console.error(
+				'Web Push disabled: VAPID_SUBJECT, VAPID_PRIVATE_KEY and PUBLIC_VAPID_PUBLIC_KEY must all be set.'
+			);
+		}
+		return false;
+	}
+	try {
+		webpush.setVapidDetails(subject, publicKey, privateKey);
+	} catch (err) {
+		// Rejected by web-push: a VAPID_SUBJECT without a mailto:/https: scheme, or a key whose
+		// decoded length is wrong. Set-but-invalid passes the startup validator, so this is the
+		// only place that can catch it.
+		if (!vapidWarned) {
+			vapidWarned = true;
+			console.error('Web Push disabled: web-push rejected the VAPID configuration.', err);
+		}
+		return false;
+	}
+	vapidConfigured = true;
+	return true;
+}
 
 /** Minimum gap between new_message notifications for the same conversation (ms). */
 export const MESSAGE_NOTIFICATION_COOLDOWN_MS = 60_000; // 1 minute — adjust to taste
@@ -96,6 +138,8 @@ export async function sendPushToUser(
 	body: string,
 	url: string
 ): Promise<void> {
+	if (!ensureVapidConfigured()) return;
+
 	let subscriptions;
 	try {
 		subscriptions = await pb

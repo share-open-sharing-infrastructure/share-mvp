@@ -62,19 +62,27 @@ npm ci
 cp .env.example .env
 ```
 
-**Every variable in `.env.example` must exist in your `.env`, even if the value is empty.** The app imports them via SvelteKit's `$env/static/private` and `$env/static/public`, which fail the build with `Missing export "X"` when a member is absent — an empty value is fine, a missing line is not. (CI does the same thing with dummy values; see `.github/workflows/lint.yaml`.)
+**Copy `.env.example` and keep its placeholders — the file is filled in so a fresh clone boots.**
+Every variable is read at **runtime** via SvelteKit's `$env/dynamic/*`, not baked into the build,
+so one build artefact serves any instance. The flip side: the server **refuses to start** when a
+required variable is missing **or empty** — it prints every offending name with what it is for and
+exits non-zero (`assertRequiredEnv()` in `src/lib/server/env.ts`, called from the `init` hook). An
+empty value is *not* "unset but fine". The old `Missing export "X"` build failure no longer exists.
+`MISTRAL_API_KEY` is the only variable you may leave empty. The check is presence-only, though: it
+guarantees a non-empty line exists, **not** that the value is valid — `ORS_API_KEY=replace-me-…`
+satisfies it and still yields empty address suggestions.
 
 | Variable                                                     | Needed for                                                               | How to get it                                                                                                                           |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `PUBLIC_PB_URL`                                              | Everything — the PocketBase instance the app talks to                    | Your local backend, e.g. `http://127.0.0.1:8090/`. **Keep the trailing slash** — image URLs are built as `${PUBLIC_PB_URL}api/files/…`. |
+| `PUBLIC_PB_URL`                                              | Everything — the PocketBase instance the app talks to                    | Your local backend, e.g. `http://127.0.0.1:8090/`. A trailing slash is added if you omit it — image URLs are built as `${pbUrl()}api/files/…`. |
 | `PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`              | Web push notifications                                                   | Ask kontakt@allerleih.org for the shared dev pair, or generate a throwaway one with `npx web-push generate-vapid-keys`.                 |
 | `VAPID_SUBJECT`                                              | Web push                                                                 | A `mailto:` URI, e.g. `mailto:you@example.com`.                                                                                         |
 | `ORS_API_KEY`                                                | Address autocomplete (`/api/geocode`)                                    | Request from kontakt@allerleih.org. Travel times additionally need the **backend's** own `ORS_API_KEY`.                                 |
-| `MISTRAL_API_KEY`                                            | AI item-photo analysis (`/api/analyze-item`)                             | Request from kontakt@allerleih.org. Safe to leave empty in dev — only that one feature stops working.                                   |
-| `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` | Partner-catalogue sync (`/api/sync`, `/api/refresh`) and the seed runner | The superuser is one you create on your own local backend (step 4). `SYNC_SECRET` must match the backend's; any string works locally.   |
+| `MISTRAL_API_KEY`                                            | AI item-photo analysis (`/api/analyze-item`)                              | Request from kontakt@allerleih.org. **The only optional variable** — unset ⇒ that endpoint answers 503 and nothing else changes.        |
+| `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`                | The app at runtime (the `/admin` gate via `isAdmin()`, the public stats on `/` and `/misc/stats`, `metrics_daily`) **and** the seed runner + Playwright e2e | A superuser you create on your own local backend (step 4). `scripts/dev-stack.sh` upserts the pair from `.env.example`. (`SYNC_SECRET` is gone — #487 Phase 3 moved the integrations into the backend.) |
 | `DEV_ALLOWED_HOST`, `DEV_DISABLE_MKCERT`                     | Optional dev-server tweaks (see `vite.config.ts`)                        | Set `DEV_DISABLE_MKCERT=true` when mkcert can't install its CA (no sudo) or TLS is terminated upstream.                                 |
 
-Credentials for the real external services are **not** in the repo. Ask kontakt@allerleih.org for shared development credentials; until you have them, leave the values empty — the dependent feature won't work, but the rest of the app runs fine.
+Credentials for the real external services are **not** in the repo. Ask kontakt@allerleih.org for shared development credentials; until you have them, keep the `.env.example` placeholders for the required variables — the dependent feature won't work, but the app starts and the rest runs fine. Do **not** blank a required variable out: an empty value stops the server from starting at all.
 
 ### 4. Start the stack
 

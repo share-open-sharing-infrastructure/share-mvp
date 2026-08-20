@@ -1,5 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
-import { PUBLIC_PB_URL } from '$env/static/public';
+import { pbUrl } from '$lib/publicEnv';
 import type { Item, User } from '$lib/types/models.js';
 import type { ClientResponseError } from 'pocketbase';
 import { texts } from '$lib/texts';
@@ -36,7 +36,7 @@ export async function load({ params, locals }) {
 			loggedIn: !!locals.user,
 			viewerTrustsProfile: false,
 			profileTrustsViewer: false,
-			PB_IMG_URL: PUBLIC_PB_URL,
+			PB_IMG_URL: pbUrl(),
 		};
 	}
 
@@ -123,7 +123,7 @@ export async function load({ params, locals }) {
 		loggedIn: !!currentUser,
 		viewerTrustsProfile,
 		profileTrustsViewer,
-		PB_IMG_URL: PUBLIC_PB_URL,
+		PB_IMG_URL: pbUrl(),
 	};
 }
 

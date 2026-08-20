@@ -17,8 +17,10 @@ vi.mock('$lib/server/items', () => ({
 }));
 // sanitizeGroups() calls getAttachableGroups; mock it so the group-filtering wiring is testable.
 vi.mock('$lib/server/groups', () => ({ getAttachableGroups: getAttachableGroupsMock }));
-// hooks.server.ts (re-exported by +page.server) reads PUBLIC_PB_URL from here.
-vi.mock('$env/static/public', () => ({ PUBLIC_PB_URL: 'http://localhost', PUBLIC_VAPID_PUBLIC_KEY: 'x' }));
+// +page.server's load returns PB_URL from $lib/publicEnv's pbUrl(), which reads here.
+vi.mock('$env/dynamic/public', () => ({
+	env: { PUBLIC_PB_URL: 'http://localhost', PUBLIC_VAPID_PUBLIC_KEY: 'x' },
+}));
 
 import { actions, load } from './+page.server';
 import { texts } from '$lib/texts';

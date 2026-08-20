@@ -1,4 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// The load returns PB_IMG_URL from $lib/publicEnv's pbUrl(). Mocked so the assertion below
+// pins an exact value instead of depending on the runner's env (issue #627 removed the
+// PUBLIC_PB_URL injection that vitest.yaml used to do for exactly this test).
+vi.mock('$env/dynamic/public', () => ({ env: { PUBLIC_PB_URL: 'http://localhost/' } }));
+
 import { load } from './+page.server';
 import { ME, params, makeLocals } from './groupTestHelpers';
 
@@ -34,7 +40,7 @@ describe('group overview — load', () => {
 
 		expect(res.items).toEqual(groupItems);
 		expect(res.isOwner).toBe(true);
-		expect(res.PB_IMG_URL).toBeTruthy();
+		expect(res.PB_IMG_URL).toBe('http://localhost/');
 		// Filter is built with pb.filter (injection-safe), scoped to this group.
 		expect(locals.pb.filter).toHaveBeenCalledWith('groups ~ {:gid}', { gid: 'g1' });
 		// The query must not return the `groups` column (would leak an item's other groups).

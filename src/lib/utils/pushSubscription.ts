@@ -1,4 +1,4 @@
-import { PUBLIC_VAPID_PUBLIC_KEY } from '$env/static/public';
+import { vapidPublicKey } from '$lib/publicEnv';
 
 /** Convert a base64url VAPID public key to a Uint8Array for the Web Push API. */
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
@@ -77,7 +77,7 @@ export async function setupPushSubscription(): Promise<void> {
 			existing ??
 			(await registration.pushManager.subscribe({
 				userVisibleOnly: true,
-				applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_PUBLIC_KEY),
+				applicationServerKey: urlBase64ToUint8Array(vapidPublicKey()),
 			}));
 
 		const { endpoint, keys } = subscription.toJSON() as {

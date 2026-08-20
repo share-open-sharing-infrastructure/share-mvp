@@ -5,8 +5,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // without a real PocketBase.
 const { getAttachableGroupsMock } = vi.hoisted(() => ({ getAttachableGroupsMock: vi.fn() }));
 vi.mock('$lib/server/groups', () => ({ getAttachableGroups: getAttachableGroupsMock }));
-// +page.server re-exports PUBLIC_PB_URL from hooks.server, which reads it from $env at import.
-vi.mock('$env/static/public', () => ({ PUBLIC_PB_URL: 'http://localhost', PUBLIC_VAPID_PUBLIC_KEY: 'x' }));
+// +page.server's load returns PB_IMG_URL from $lib/publicEnv's pbUrl(), which reads here.
+vi.mock('$env/dynamic/public', () => ({
+	env: { PUBLIC_PB_URL: 'http://localhost', PUBLIC_VAPID_PUBLIC_KEY: 'x' },
+}));
 
 import { load } from './+page.server';
 
