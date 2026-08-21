@@ -1,6 +1,6 @@
 name: Vitest on PR
 env:
-  node_version: '25.2.1'
+  node_version: '24.19.0'
   # Deliberately no app env vars here (issue #627). Every var is read at RUNTIME via
   # `$env/dynamic/*`, so `npm run build` must succeed with a COMPLETELY EMPTY env — that is
   # exactly what the Build job below now verifies. Tests mock `$env/dynamic/*` per file

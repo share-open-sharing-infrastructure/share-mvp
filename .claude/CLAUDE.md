@@ -78,6 +78,10 @@ configuration"): `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`
 rendered page, not just the vars a module references — treat any `PUBLIC_*` var as fully public
 the moment it's set, whether or not any module reads it (see `docs/architecture.md` → "Instance
 configuration").
+Two adapter-node runtime knobs — `BODY_SIZE_LIMIT` (the official Docker image defaults this to
+10 MB, matching the Uberspace deploy) and `ORIGIN` (required behind any reverse proxy, or form
+actions fail their origin check) — are deliberately **not** in `REQUIRED_*`: `assertRequiredEnv()`
+validates only app-level vars and has no way to see adapter-node's own env surface.
 For personal local overrides (local ports, sandbox creds) that shouldn't be shared with the team,
 use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this file.
 
@@ -189,6 +193,7 @@ These prevent the most common bugs/security issues here — follow them without 
 | Mail deliverability (SPF/DKIM/DMARC, digest one-click unsubscribe, `assetBase`/`siteBase` URL split, `digestEmails` opt-out) | `docs/operations/mail-deliverability.md`; backend hooks in `allerleih-backend/pb_hooks/services/{mail,unsubscribe}.js`, `utils/urls.js`; frontend: `$lib/server/userPreferences.ts`, `src/routes/user/profile/{NotificationSettings,PushNotificationSection,EmailNotificationForm}.svelte`, the `saveNotificationPrefs` action in `src/routes/user/profile/+page.server.ts` |
 | Running a second (city) instance: origin/city/contact/analytics config, the origin rule, branding limits | `docs/architecture.md` → "Instance configuration (multi-city)"; config in `src/lib/instance.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
+| Docker image / self-hosting | `docs/architecture.md` → "Running the official container image"; `Dockerfile`, `.github/workflows/docker-publish.yaml` |
 | A backend-only issue (no frontend changes) | Still drive it through `/issue-to-pr` + `/create-pr` **here** — the plan gate and review dispatch (`sveltekit-pb-reviewer` covers `pb_hooks`/`pb_migrations`) live in this repo. The backend also has its own `allerleih-backend/.claude/skills/create-pr` for standalone use when working in that repo alone. |
 
 ## Project tooling (this repo's `.claude/`)

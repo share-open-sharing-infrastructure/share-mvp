@@ -101,9 +101,12 @@ export function formatMissingEnvError(
 		'',
 		...lines,
 		'',
-		'These are read at runtime from process.env, not baked into the build. The production',
-		'service is started as `node -r dotenv/config build`, so one KEY=value line per variable',
-		'in a `.env` next to `build/` is what reaches process.env.',
+		'These are read at runtime from process.env, not baked into the build. How they get there',
+		'depends on the deployment channel: the Uberspace service is started as',
+		'`node -r dotenv/config build`, so one KEY=value line per variable in a `.env` next to',
+		'`build/` reaches process.env. The Docker image runs plain `node build` and reads the',
+		'process environment only — pass `--env-file`/`-e` (or compose `env_file:`); a `.env`',
+		'mounted into the container is NOT read.',
 		'See .env.example for the full, annotated list.',
 	].join('\n');
 }

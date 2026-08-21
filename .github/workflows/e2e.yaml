@@ -1,6 +1,6 @@
 name: E2E on PR
 env:
-  node_version: '25.2.1'
+  node_version: '24.19.0'
   # Known-good PocketBase version pinned in allerleih-backend/README.md. Bumping this is a
   # deliberate, reviewable diff — see e2e/README.md. A bump touches *two* lines: the version
   # and the checksum below (upstream publishes it as `checksums.txt` on the release).
