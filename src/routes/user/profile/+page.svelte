@@ -84,17 +84,17 @@
 
 	// Table-of-contents entries — ids must match the <section> anchors below.
 	const sections = [
-		{ id: 'profil', label: texts.pages.profile.sections.profile },
-		{ id: 'standort', label: texts.pages.profile.sections.location },
-		{ id: 'kontakt', label: texts.pages.profile.sections.contact },
-		{ id: 'verleih', label: texts.lendingRequirements.sectionTitle },
+		{ id: 'profile', label: texts.pages.profile.sections.profile },
+		{ id: 'location', label: texts.pages.profile.sections.location },
+		{ id: 'contact', label: texts.pages.profile.sections.contact },
+		{ id: 'lending', label: texts.lendingRequirements.sectionTitle },
 		{
-			id: 'benachrichtigungen',
+			id: 'notifications',
 			label: texts.pages.profile.sections.notifications,
 		},
 		{ id: 'email', label: texts.pages.profile.sections.email },
-		{ id: 'einladung', label: texts.pages.profile.sections.invite },
-		{ id: 'konto', label: texts.pages.profile.sections.account },
+		{ id: 'invite', label: texts.pages.profile.sections.invite },
+		{ id: 'account', label: texts.pages.profile.sections.account },
 	];
 
 	const cardClass =
@@ -147,8 +147,8 @@
 								isDirty = false;
 						}}
 				>
-					<!-- PROFIL: username, image, bio -->
-					<section id="profil" class={cardClass}>
+					<!-- PROFILE: username, image, bio -->
+					<section id="profile" class={cardClass}>
 						<h2 class={sectionTitleClass}>
 							{texts.pages.profile.sections.profile}
 						</h2>
@@ -160,8 +160,8 @@
 						/>
 					</section>
 
-					<!-- STANDORT & MOBILITÄT: address + transport mode -->
-					<section id="standort" class={cardClass}>
+					<!-- LOCATION & MOBILITY: address + transport mode -->
+					<section id="location" class={cardClass}>
 						<h2 class={sectionTitleClass}>
 							{texts.pages.profile.sections.location}
 						</h2>
@@ -173,8 +173,8 @@
 						/>
 					</section>
 
-					<!-- KONTAKT: messenger handles + visibility -->
-					<section id="kontakt" class={cardClass}>
+					<!-- CONTACT: messenger handles + visibility -->
+					<section id="contact" class={cardClass}>
 						<h2 class={sectionTitleClass}>
 							{texts.pages.profile.sections.contact}
 						</h2>
@@ -217,7 +217,7 @@
 							contactPublic={data.currentUser.contactPublic ?? false}
 						/>
 
-						<!-- Ausleih-Hinweis for external items (#368): institutions only. Saves via
+						<!-- Lending hint for external items (#368): institutions only. Saves via
 						     the shared save bar. -->
 						{#if data.currentUser.isInstitution}
 							<ExternalLendingInfoSection
@@ -226,15 +226,15 @@
 						{/if}
 					</section>
 
-					<!-- VERLEIH-VORAUSSETZUNGEN: lender-defined borrower requirements (#443).
+					<!-- Lending requirements: lender-defined borrower requirements (#443).
 					     Toggles live in the main form and save via the shared save bar. -->
-					<section id="verleih" class={cardClass}>
+					<section id="lending" class={cardClass}>
 						<LendingRequirementsSection settings={data.requirementSettings} />
 					</section>
 				</form>
 
-				<!-- BENACHRICHTIGUNGEN: auto-saving toggles (push + email) -->
-				<section id="benachrichtigungen" class="scroll-mt-28">
+				<!-- NOTIFICATIONS: auto-saving toggles (push + email) -->
+				<section id="notifications" class="scroll-mt-28">
 					<NotificationSettings prefs={data.currentUserPreferences} />
 				</section>
 
@@ -249,14 +249,14 @@
 					/>
 				</section>
 
-				<!-- EINLADUNG -->
-				<section id="einladung" class="scroll-mt-28">
+				<!-- Invite -->
+				<section id="invite" class="scroll-mt-28">
 					<InviteLink inviteUrl={data.inviteUrl} />
 				</section>
 
-				<!-- KONTO & DATENSCHUTZ -->
+				<!-- Account & Privacy -->
 				<section
-					id="konto"
+					id="account"
 					class="{cardClass} flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
 				>
 					<div>

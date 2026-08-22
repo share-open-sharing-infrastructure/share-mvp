@@ -5,28 +5,7 @@
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 
-	const members = [
-		{
-			id: 1,
-			linkedIn: 'https://www.linkedin.com/in/matteo-ramin/',
-			gitHub: 'https://github.com/MaRaMinden',
-			src: 'https://avatars.githubusercontent.com/u/7858896?v=4',
-			alt: 'Matteo Ramin',
-			name: 'Matteo Ramin',
-			jobTitle: 'Initiator & Koordinator',
-			description: 'Macht irgendwie alles son bisschen!',
-		},
-		{
-			id: 2,
-			linkedIn: 'https://www.linkedin.com/in/timo-johner',
-			gitHub: 'https://github.com/timojohlo',
-			src: 'https://avatars.githubusercontent.com/u/32620814?v=4',
-			alt: 'Timo Johner',
-			name: 'Timo Johner',
-			jobTitle: 'Initiator & Technik-Guru',
-			description: 'Ohne den läuft hier kein Server.',
-		},
-	];
+	const members = instance.team;
 </script>
 
 <SeoHead
@@ -38,12 +17,11 @@
 <!-- Mission -->
 <section class="px-4 py-8">
 	<div class="mx-auto max-w-2xl">
-		<h2 class="mb-4 text-2xl font-bold text-tinte-900 text-center">Was ist {texts.names.app}?</h2>
+		<h2 class="mb-4 text-2xl font-bold text-tinte-900 text-center">
+			{texts.pages.about.missionHeading}
+		</h2>
 		<p class="leading-relaxed text-tinte-500 text-center">
-			{texts.names.app} ermöglicht es Menschen und Organisationen, Gegenstände innerhalb ihrer Gemeinschaft zu teilen.
-			Wir wollen das Teilen und Leihen so einfach machen, dass es selbstverständlich wird. 
-			Dafür bauen wir diese Plattform, gründen eigene Leih-Orte und integrieren bestehende Verleihe. 
-			Außerdem unterstützen wir andere dabei, eigene Leih-Orte zu gründen und AllerLeih in ihrer Region aufzubauen.
+			{texts.pages.about.missionBody}
 		</p>
 	</div>
 </section>
@@ -51,7 +29,9 @@
 <!-- Team -->
 <section class="px-4 py-8">
 	<div class="mx-auto max-w-4xl">
-		<h2 class="mb-10 text-center text-2xl font-bold text-tinte-900">Team</h2>
+		<h2 class="mb-10 text-center text-2xl font-bold text-tinte-900">
+			{texts.pages.about.teamHeading}
+		</h2>
 		<div class="flex flex-wrap justify-center gap-10">
 			{#each members as member (member.id)}
 				<div class="flex max-w-45 flex-col items-center gap-2 text-center">
@@ -71,7 +51,7 @@
 							target="_blank"
 							rel="external noopener noreferrer"
 							class="text-tinte-400 hover:text-accent"
-							aria-label="LinkedIn"
+							aria-label={texts.pages.about.linkedInAriaLabel}
 						>
 							<LinkedinSolid class="h-5 w-5" />
 						</a>
@@ -81,7 +61,7 @@
 								target="_blank"
 								rel="external noopener noreferrer"
 								class="text-tinte-400 hover:text-accent"
-								aria-label="GitHub"
+								aria-label={texts.pages.about.gitHubAriaLabel}
 							>
 								<GithubSolid class="h-5 w-5" />
 							</a>
@@ -94,15 +74,15 @@
 					<EnvelopeOutline class="h-8 w-8 text-primary-400" />
 				</div>
 				<div>
-					<p class="font-semibold text-tinte-900">Du?</p>
-					<p class="text-sm text-tinte-500">Hast du Lust?</p>
+					<p class="font-semibold text-tinte-900">{texts.pages.about.joinCardName}</p>
+					<p class="text-sm text-tinte-500">{texts.pages.about.joinCardPrompt}</p>
 				</div>
-				<p class="text-sm italic text-tinte-400">„Mach mit!"</p>
+				<p class="text-sm italic text-tinte-400">„{texts.pages.about.joinCardTagline}"</p>
 				<a
 					href={`mailto:${texts.names.mainContactMail}?subject=${encodeURIComponent(texts.pages.about.joinMailSubject)}`}
 					rel="external"
 					class="mt-1 text-tinte-400 hover:text-accent"
-					aria-label="Kontakt aufnehmen"
+					aria-label={texts.pages.about.contactAriaLabel}
 				>
 					<EnvelopeOutline class="h-5 w-5" />
 				</a>
@@ -116,10 +96,11 @@
 	<div class="mx-auto max-w-2xl">
 		<div class="rounded-2xl border border-gray-200 bg-white p-8 text-center">
 			<GithubSolid class="mx-auto mb-4 h-10 w-10 text-tinte-900" />
-			<h2 class="mb-3 text-2xl font-bold text-tinte-900">Open-Source</h2>
+			<h2 class="mb-3 text-2xl font-bold text-tinte-900">
+				{texts.pages.about.openSourceHeading}
+			</h2>
 			<p class="mb-6 text-tinte-500">
-				{texts.names.app} ist quelloffen. Das heißt, jeder kann den Quellcode einsehen, mitentwickeln und selber nutzen. Den Code findest du auf
-				GitHub. Wir freuen uns über Beiträge, Feedback und Unterstützung!
+				{texts.pages.about.openSourceBody}
 			</p>
 			<Button
 				href={instance.links.github}
@@ -127,7 +108,7 @@
 				rel="noopener noreferrer"
 			>
 				<GithubSolid class="h-5 w-5" />
-				Auf GitHub ansehen
+				{texts.pages.about.viewOnGithubButton}
 			</Button>
 		</div>
 	</div>
