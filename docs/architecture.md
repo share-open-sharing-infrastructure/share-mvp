@@ -284,8 +284,10 @@ no way to see them — they are validated by adapter-node itself, not by this ap
   `-Host` instead of setting its own lets a client spoof those headers directly at the app,
   defeating the very origin check `PROTOCOL_HEADER`+`HOST_HEADER` exists to provide.
 
-A `docker compose` setup that wires this image together with a PocketBase container is tracked
-separately in #630 — this section covers the frontend image alone.
+A `docker compose` setup that wires this image together with a PocketBase container lives in
+[`deploy/`](../deploy) — see
+[docs/operations/self-hosting.md](operations/self-hosting.md) for the stack plus the first-run
+runbook (share-mvp#630); this section covers the frontend image alone.
 
 ## Real-time Architecture
 

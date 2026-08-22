@@ -11,6 +11,12 @@ e2e/
 docs/
 .git/
 
+# deploy/ (share-mvp#630): the reference docker-compose stack that CONSUMES the image built from
+# this Dockerfile — never needed inside the image itself, and may contain an operator's locally
+# filled-in deploy/.env (see the .env* rule below, which would also catch it, but this is more
+# explicit about why the whole directory is excluded).
+deploy/
+
 # vite.config.ts calls `loadEnv(mode, process.cwd(), '')` at config time (no `VITE_` prefix
 # filter), so any `.env*` present in the build context would be readable during `npm run build`.
 # The image is built with no application env at all (#627) — never let a contributor's local
