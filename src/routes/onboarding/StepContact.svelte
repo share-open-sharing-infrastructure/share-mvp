@@ -22,6 +22,18 @@
 	let showTrustInfo = $state(false);
 
 	let errorMessage = $state<string | undefined>(undefined);
+
+	// Issue #613, prophylactic: seed once, then bind: — docs/best-practices.md → "Editable
+	// fields: seed-once + bind:, never one-way value=". No bug to reproduce and hence no
+	// regression test: the wizard is a client-only stepper ({#if}-gated steps) and this is step 7,
+	// so these inputs are never in the SSR HTML today. Fixed anyway so the step stays correct if
+	// the wizard ever becomes resumable (e.g. a `?step=` deep link that server-renders it).
+	// svelte-ignore state_referenced_locally
+	let telegramValue = $state(
+		currentUser?.telegramUsername ? `@${currentUser.telegramUsername}` : ''
+	);
+	// svelte-ignore state_referenced_locally
+	let signalValue = $state(currentUser?.signalLink ?? '');
 </script>
 
 <div class="space-y-4">
@@ -65,7 +77,7 @@
 				type="text"
 				name="telegramUsername"
 				id="telegramUsername"
-				value={currentUser?.telegramUsername ? `@${currentUser.telegramUsername}` : ''}
+				bind:value={telegramValue}
 				placeholder={texts.messenger.telegramUsernamePlaceholder}
 				autocomplete="off"
 				class="w-full px-3 py-2 bg-papier border border-tinte-300 rounded-lg text-sm text-tinte-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-tinte-700 dark:border-tinte-600 dark:text-white"
@@ -115,7 +127,7 @@
 				type="text"
 				name="signalLink"
 				id="signalLink"
-				value={currentUser?.signalLink ?? ''}
+				bind:value={signalValue}
 				placeholder={texts.messenger.signalLinkPlaceholder}
 				autocomplete="off"
 				class="w-full px-3 py-2 bg-papier border border-tinte-300 rounded-lg text-sm text-tinte-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-tinte-700 dark:border-tinte-600 dark:text-white"

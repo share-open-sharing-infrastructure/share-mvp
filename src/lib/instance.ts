@@ -4,12 +4,13 @@
  * literals ("allerleih.org", "Lüneburg") across routes and components. `texts.ts` interpolates
  * the German copy strings from this (see there); code reads URLs/emails directly from here.
  *
- * Deliberate exception to the repo's `$env/static/*` convention: this file uses
- * `$env/dynamic/public`, because a single build artifact is meant to serve N city instances —
- * `adapter-node` reads environment variables from `process.env` at runtime, not at build time.
- * `$env/static/public` would bake the values into the build (one artifact per instance).
- * All 12 other `$env/static/*` imports in the repo remain unchanged — this is the only
- * place using `$env/dynamic/public`.
+ * `$env/dynamic/*` has been the **repo-wide** convention since #627, no longer this file's
+ * exception: `$env/static/*` is forbidden (ESLint `no-restricted-imports`), because a single
+ * build artifact is meant to serve N city instances — `adapter-node` reads environment
+ * variables from `process.env` at runtime, not at build time. This file is the source for
+ * **instance/branding** values; the two public infrastructure variables (`PUBLIC_PB_URL`,
+ * `PUBLIC_VAPID_PUBLIC_KEY`) come from `$lib/publicEnv.ts`. Which variables MUST be present at
+ * startup is documented in `$lib/server/env.ts`.
  *
  * Safety notes for maintainers:
  * (a) The top-level evaluation below (the module is evaluated once on first import) is safe,
@@ -18,7 +19,9 @@
  *     is first imported. Re-verify this assumption if the adapter is ever changed away from
  *     adapter-node.
  * (b) `$lib/instance` (and therefore `$lib/texts`) must NEVER be imported from
- *     `src/service-worker.ts` — `$env/dynamic/public` is a hard error there (no request context).
+ *     `src/service-worker.ts` — `$env/dynamic/public` is a hard error there (no request
+ *     context). The same applies to `$lib/publicEnv.ts`; `eslint.config.js` enforces this for
+ *     that file.
  *
  * Never `throw` directly: an error here would take down the whole app with a 500. Invalid
  * values silently fall back to safe defaults (see `resolveOrigin`/`resolveAnalytics`).

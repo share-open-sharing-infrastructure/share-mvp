@@ -1,13 +1,34 @@
 import PocketBase from 'pocketbase';
-import { PUBLIC_PB_URL } from '$env/static/public';
-import type { Handle } from '@sveltejs/kit';
+import { building } from '$app/environment';
+import type { Handle, ServerInit } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
 import { getOutstandingLegalDocs, isLegalLocked, type LegalUser } from '$lib/server/legal';
 import { getActiveLegalVersions } from '$lib/server/legalDocs';
 import { analyticsHeadSnippet } from '$lib/instance';
+import { pbUrl } from '$lib/publicEnv';
+import { assertRequiredEnv, logOptionalEnvGaps } from '$lib/server/env';
 
-export { PUBLIC_PB_URL };
+/**
+ * Fail fast, once, before the first request (issue #627). Since env moved from
+ * `$env/static/*` to `$env/dynamic/*`, `vite build` no longer catches a missing variable —
+ * so a misconfigured instance would otherwise 500 (or silently degrade: no admin gate, no
+ * public stats, no push) on first use. `assertRequiredEnv()` names every missing variable at
+ * once; adapter-node awaits this before `listen()`, so the throw kills the process with the
+ * full list in the supervisord log instead of leaving a half-working server up.
+ *
+ * Skipped while `building`: `vite build` analyses/prerenders with a possibly empty env, and
+ * building a generic artefact must never require an instance's configuration.
+ *
+ * `logOptionalEnvGaps()` then prints one line naming the optional vars this instance runs
+ * without (and what that disables), so a self-hoster sees a quietly-off feature in the startup
+ * log rather than discovering it as a 503. Names only — never values.
+ */
+export const init: ServerInit = () => {
+	if (building) return;
+	assertRequiredEnv();
+	logOptionalEnvGaps();
+};
 
 const unprotectedPrefix = [
 	'/auth/login',
@@ -34,7 +55,7 @@ const unprotectedPrefix = [
 const legalGateExempt = ['/legal', '/auth', '/misc', '/api/diagnostics', '/api/redirect'];
 
 export const authentication: Handle = async ({ event, resolve }) => {
-	event.locals.pb = new PocketBase(PUBLIC_PB_URL);
+	event.locals.pb = new PocketBase(pbUrl());
 
 	event.locals.pb.authStore.loadFromCookie(
 		event.request.headers.get('cookie') || ''

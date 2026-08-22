@@ -1,16 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 
-// social/+page.server imports notifications.ts (web-push), which validates VAPID key
-// shapes at import time — provide decodable dummies.
-vi.mock('$env/static/private', () => ({
-	VAPID_PRIVATE_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-	VAPID_SUBJECT: 'mailto:test@example.com',
-}));
-vi.mock('$env/static/public', () => ({
-	PUBLIC_PB_URL: 'http://localhost:8090',
-	PUBLIC_VAPID_PUBLIC_KEY:
-		'BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
-}));
+// No env mock needed since #627: social/+page.server still imports notifications.ts, but
+// web-push is configured lazily inside sendPushToUser, so the import validates nothing.
 
 import { load } from './+page.server';
 

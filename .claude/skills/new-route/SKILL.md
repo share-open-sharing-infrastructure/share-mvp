@@ -29,14 +29,14 @@ unrelated route subtrees → `src/lib/components` (design-system primitives go i
 
 ```ts
 import type { PageServerLoad } from './$types';
-import { PUBLIC_PB_URL } from '$env/static/public';
+import { pbUrl } from '$lib/publicEnv';
 
 export const load: PageServerLoad = async ({ locals }) => {
   const items = await locals.pb.collection('items').getFullList({
     filter: locals.pb.filter('owner = {:ownerId}', { ownerId: locals.user.id }),
     sort: '-updated',
   });
-  return { items, PB_URL: PUBLIC_PB_URL };
+  return { items, PB_URL: pbUrl() };
 };
 ```
 
@@ -52,7 +52,9 @@ Guardrails (these prevent the bugs we actually hit):
   *relationship* itself (e.g. "does the owner trust the viewer"), use `$lib/server/trust.ts`
   (`isTrusting` / `getTrustees` / `getTrusters`) — never re-implement trust filtering client-side.
 - `locals.pb` is the server client; `locals.user` is the auth record (null if unauthenticated).
-- Pass `PUBLIC_PB_URL` (from `$env/static/public`) down as `PB_URL` so the client can build file URLs.
+- Pass `pbUrl()` (from `$lib/publicEnv`) down as `PB_URL` so the client can build file URLs. Never
+  import `$env/static/*` — env is read at runtime so one artefact serves any instance (#627), and
+  ESLint rejects the static modules.
 
 ## 2. `actions` — mutations
 

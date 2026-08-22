@@ -2,10 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { texts } from '$lib/texts';
 import { USERNAME_MAX_LENGTH } from '$lib/utils/username';
 
-// hooks.server.ts (reached via +page.server's import chain) reads these.
-vi.mock('$env/static/public', () => ({
-	PUBLIC_PB_URL: 'http://localhost/',
-	PUBLIC_VAPID_PUBLIC_KEY: 'x',
+// +page.server's load returns PB_URL from $lib/publicEnv's pbUrl(), which reads here.
+vi.mock('$env/dynamic/public', () => ({
+	env: { PUBLIC_PB_URL: 'http://localhost/', PUBLIC_VAPID_PUBLIC_KEY: 'x' },
 }));
 // Stub the server helpers saveProfile delegates to, so the tests exercise the
 // action's own logic (validation, field parsing, folded-in requirement save).

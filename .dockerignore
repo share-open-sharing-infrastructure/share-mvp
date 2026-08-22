@@ -1,0 +1,35 @@
+# Docker build context denylist (#628). The issue's baseline list, plus repo-specific additions
+# noted below.
+
+node_modules/
+build/
+.svelte-kit/
+test-results/
+playwright-report/
+blob-report/
+e2e/
+docs/
+.git/
+
+# vite.config.ts calls `loadEnv(mode, process.cwd(), '')` at config time (no `VITE_` prefix
+# filter), so any `.env*` present in the build context would be readable during `npm run build`.
+# The image is built with no application env at all (#627) — never let a contributor's local
+# secrets leak into a layer. CLAUDE.local.md is this repo's own gitignored spot for local sandbox
+# creds (see .claude/CLAUDE.md) — same risk, same treatment.
+.env*
+!.env.example
+CLAUDE.local.md
+
+# Claude Code / Serena tooling — not part of the app, never needed in a build context.
+.github/
+.claude/
+.serena/
+scripts/
+coverage/
+playwright.config.ts
+.playwright-mcp/
+
+# proxmox-jobs.sqlite3 sits at the repo root and is only ignored via `.git/info/exclude` (a local,
+# unshared exclude list) — invisible to a fresh clone's build context, so it must be denied here
+# explicitly rather than relying on .gitignore alone.
+*.sqlite3*

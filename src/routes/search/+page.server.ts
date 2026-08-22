@@ -1,4 +1,4 @@
-import { PUBLIC_PB_URL } from '../../hooks.server';
+import { pbUrl } from '$lib/publicEnv';
 import type { ItemPublic } from '$lib/types/models';
 import { parseSearchParameters, buildItemFilter, sortToPbSort, type SearchParameters } from './searchFilter';
 import type { ListResult } from 'pocketbase';
@@ -59,7 +59,7 @@ export async function load({ locals, url }) {
 
 	return {
 		items: result.items,
-		PB_IMG_URL: PUBLIC_PB_URL,
+		PB_IMG_URL: pbUrl(),
 		q: searchParameters.query,
 		selectedCategories: searchParameters.selectedCategories,
 		op: searchParameters.op,

@@ -101,8 +101,12 @@ keep it in sync with `computeDailyMetrics()` in `jobs/metrics.js` when the catal
 - Both read through `src/lib/server/metrics.ts` (`isAdmin`, `getLiveCoreMetrics`,
   `getMetricsHistory`, `getPublicStats`), which uses `getSuperuserClient()` from
   `src/lib/server/superuser.ts`. That helper lived in the frontend integration core until #487
-  Phase 3 tore it down; it reads `PB_SUPERUSER_*` from `$env/static/private`, so those two vars
-  must be present at **build** time (they are set in the lint/vitest/deploy workflows).
+  Phase 3 tore it down; it reads `PB_SUPERUSER_*` from `$env/dynamic/private`, so those two vars
+  must be present at **runtime** (issue #627 — nothing is baked into the build any more). They are
+  in `REQUIRED_PRIVATE_ENV` (`src/lib/server/env.ts`) and validated at server start by the `init`
+  hook, so a missing value makes the process refuse to start rather than silently closing the
+  `/admin` gate. In production they come from the `.env` the deploy's SSH step writes
+  (`.github/workflows/deploy-to-uberspace.yaml`); the lint/vitest workflows no longer set them.
 
 ## Adding a new metric
 

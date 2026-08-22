@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { PUBLIC_PB_URL } from '../../../hooks.server';
+import { pbUrl } from '$lib/publicEnv';
 import { texts } from '$lib/texts';
 import { failFromPbError } from '$lib/server/pbErrors';
 import type { Item } from '$lib/types/models';
@@ -50,7 +50,7 @@ export async function load({ locals, url }) {
 		perPage,
 		search,
 		statusFilter,
-		PB_URL: PUBLIC_PB_URL,
+		PB_URL: pbUrl(),
 	};
 }
 

@@ -2,7 +2,7 @@
 
 Documentation for [AllerLeih](https://github.com/share-open-sharing-infrastructure/share-mvp), a community item-sharing platform built with SvelteKit + PocketBase. Diagrams use [Mermaid.js](https://mermaid.js.org/); everything else is plain Markdown.
 
-- [architecture.md](architecture.md) — system overview: tech stack, deployment pipeline, auth flow, AI integrations, and external API boundaries. **Start here.**
+- [architecture.md](architecture.md) — system overview: tech stack, deployment pipeline, container image, auth flow, AI integrations, and external API boundaries. **Start here.**
 - [domain-model.md](domain-model.md) — conceptual model: class diagrams, lending workflow state machine, trust + groups model, and institutional partner model.
 - [data-model.md](data-model.md) — ER diagram mapping directly onto PocketBase collections and the `items_public` / `items_searchable` SQL views.
 - [search-discovery.md](search-discovery.md) — the `/search` route: URL params, filter building, pagination, and which view it reads.
@@ -18,6 +18,7 @@ Documentation for [AllerLeih](https://github.com/share-open-sharing-infrastructu
 - [operations/updating-legal-documents.md](operations/updating-legal-documents.md) — how an operator edits the ToS / privacy text and publishes a new version that triggers re-consent (Issue #399).
 - [operations/metrics.md](operations/metrics.md) — the nightly `metrics_daily` snapshot and the `/admin/metrics` / `/misc/stats` pages that read it.
 - [operations/mail-deliverability.md](operations/mail-deliverability.md) — SPF/DKIM/DMARC checklist, the `assetBase`/`siteBase` URL split, one-click digest unsubscribe, and the new mail-deliverability env vars (Issue #607).
+- [architecture.md → Running the official container image](architecture.md#running-the-official-container-image) — self-hosting with the official Docker image: the two-stage build, the canonical runtime-variable reference, and the `ORIGIN` / reverse-proxy settings without which form actions fail. A reference `docker compose` setup and a full self-hosting runbook are tracked separately in [#630](https://github.com/share-open-sharing-infrastructure/share-mvp/issues/630).
 
 **Key source files:**
 - `src/lib/types/models.ts` — canonical TypeScript types for all PocketBase collections

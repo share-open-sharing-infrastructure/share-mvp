@@ -32,7 +32,7 @@ If you wish to contribute or are otherwise interested in the project, please don
 
 | What              | Version / note                                                                                                                                          |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Node.js**       | **25.2.1** — the version CI pins (`.github/workflows/*.yaml`). Use `nvm install 25.2.1 && nvm use 25.2.1` so local and CI behave identically.           |
+| **Node.js**       | **24.19.0** (Active LTS) — the version CI pins (`.github/workflows/*.yaml`). Use `nvm install 24.19.0 && nvm use 24.19.0` so local and CI behave identically. |
 | **npm**           | Ships with Node. Use `npm ci` (not `npm install`) so `package-lock.json` is respected.                                                                  |
 | **git**           | Any recent version.                                                                                                                                     |
 | **A POSIX shell** | `scripts/dev-stack.sh` and the backend's test harness are bash scripts. On **Windows, use WSL** (or Git Bash) — native PowerShell/cmd is not supported. |
@@ -62,19 +62,27 @@ npm ci
 cp .env.example .env
 ```
 
-**Every variable in `.env.example` must exist in your `.env`, even if the value is empty.** The app imports them via SvelteKit's `$env/static/private` and `$env/static/public`, which fail the build with `Missing export "X"` when a member is absent — an empty value is fine, a missing line is not. (CI does the same thing with dummy values; see `.github/workflows/lint.yaml`.)
+**Copy `.env.example` and keep its placeholders — the file is filled in so a fresh clone boots.**
+Every variable is read at **runtime** via SvelteKit's `$env/dynamic/*`, not baked into the build,
+so one build artefact serves any instance. The flip side: the server **refuses to start** when a
+required variable is missing **or empty** — it prints every offending name with what it is for and
+exits non-zero (`assertRequiredEnv()` in `src/lib/server/env.ts`, called from the `init` hook). An
+empty value is *not* "unset but fine". The old `Missing export "X"` build failure no longer exists.
+`MISTRAL_API_KEY` is the only variable you may leave empty. The check is presence-only, though: it
+guarantees a non-empty line exists, **not** that the value is valid — `ORS_API_KEY=replace-me-…`
+satisfies it and still yields empty address suggestions.
 
 | Variable                                                     | Needed for                                                               | How to get it                                                                                                                           |
 | ------------------------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `PUBLIC_PB_URL`                                              | Everything — the PocketBase instance the app talks to                    | Your local backend, e.g. `http://127.0.0.1:8090/`. **Keep the trailing slash** — image URLs are built as `${PUBLIC_PB_URL}api/files/…`. |
+| `PUBLIC_PB_URL`                                              | Everything — the PocketBase instance the app talks to                    | Your local backend, e.g. `http://127.0.0.1:8090/`. A trailing slash is added if you omit it — image URLs are built as `${pbUrl()}api/files/…`. |
 | `PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`              | Web push notifications                                                   | Ask kontakt@allerleih.org for the shared dev pair, or generate a throwaway one with `npx web-push generate-vapid-keys`.                 |
 | `VAPID_SUBJECT`                                              | Web push                                                                 | A `mailto:` URI, e.g. `mailto:you@example.com`.                                                                                         |
 | `ORS_API_KEY`                                                | Address autocomplete (`/api/geocode`)                                    | Request from kontakt@allerleih.org. Travel times additionally need the **backend's** own `ORS_API_KEY`.                                 |
-| `MISTRAL_API_KEY`                                            | AI item-photo analysis (`/api/analyze-item`)                             | Request from kontakt@allerleih.org. Safe to leave empty in dev — only that one feature stops working.                                   |
-| `SYNC_SECRET`, `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` | Partner-catalogue sync (`/api/sync`, `/api/refresh`) and the seed runner | The superuser is one you create on your own local backend (step 4). `SYNC_SECRET` must match the backend's; any string works locally.   |
+| `MISTRAL_API_KEY`                                            | AI item-photo analysis (`/api/analyze-item`)                              | Request from kontakt@allerleih.org. **The only optional variable** — unset ⇒ that endpoint answers 503 and nothing else changes.        |
+| `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`                | The app at runtime (the `/admin` gate via `isAdmin()`, the public stats on `/` and `/misc/stats`, `metrics_daily`) **and** the seed runner + Playwright e2e | A superuser you create on your own local backend (step 4). `scripts/dev-stack.sh` upserts the pair from `.env.example`. (`SYNC_SECRET` is gone — #487 Phase 3 moved the integrations into the backend.) |
 | `DEV_ALLOWED_HOST`, `DEV_DISABLE_MKCERT`                     | Optional dev-server tweaks (see `vite.config.ts`)                        | Set `DEV_DISABLE_MKCERT=true` when mkcert can't install its CA (no sudo) or TLS is terminated upstream.                                 |
 
-Credentials for the real external services are **not** in the repo. Ask kontakt@allerleih.org for shared development credentials; until you have them, leave the values empty — the dependent feature won't work, but the rest of the app runs fine.
+Credentials for the real external services are **not** in the repo. Ask kontakt@allerleih.org for shared development credentials; until you have them, keep the `.env.example` placeholders for the required variables — the dependent feature won't work, but the app starts and the rest runs fine. Do **not** blank a required variable out: an empty value stops the server from starting at all.
 
 ### 4. Start the stack
 
@@ -148,6 +156,65 @@ npx vitest run src/path/to/file.test.ts   # a single test file
 
 ---
 
+## Run with Docker (self-hosting)
+
+An official multi-stage image is published to GHCR by `.github/workflows/docker-publish.yaml`:
+`ghcr.io/share-open-sharing-infrastructure/allerleih-frontend`. It complements the Uberspace
+deploy above rather than replacing it — see [Dockerfile](Dockerfile) for the build itself and
+[docs/architecture.md](docs/architecture.md#running-the-official-container-image) for the
+canonical runtime-configuration reference (this section only summarizes it).
+
+```bash
+docker run -d \
+  --name allerleih-frontend \
+  -p 3000:3000 \
+  --env-file .env \
+  -e ORIGIN=https://app.example.org \
+  ghcr.io/share-open-sharing-infrastructure/allerleih-frontend:latest
+```
+
+`ORIGIN` is not optional — set it to the URL users actually type, including the scheme and any
+non-default port (`http://localhost:3000` for a plain local trial). Omit it and every form action,
+login included, fails with "Cross-site POST form submissions are forbidden"; see
+[Origin and proxy headers](#origin-and-proxy-headers) below for why.
+
+Prefer pinning a specific version or SHA tag (`:v1.2.3`, `:sha-abc1234`) over `:latest` in
+anything other than a quick trial — see the tags on the [package page](https://github.com/orgs/share-open-sharing-infrastructure/packages/container/package/allerleih-frontend).
+
+**The browser talks to PocketBase directly** (it is never proxied through the SvelteKit server),
+so `PUBLIC_PB_URL` must be the **publicly reachable** PocketBase URL, not a Docker-internal one.
+A ready-made `docker compose` setup that wires both containers together is tracked in #630.
+
+All variables are read at **runtime** (issue #627) — the same image serves any instance. The
+seven required vars are `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
+`VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL` and `PB_SUPERUSER_PASSWORD` — the last two
+are **full PocketBase superuser credentials** (unrestricted database read/write, not scoped to
+any single feature), so store and rotate them like any other master secret. `MISTRAL_API_KEY` is
+the only optional variable (unset ⇒ `/api/analyze-item` answers 503); the six
+`PUBLIC_SITE_ORIGIN`/`PUBLIC_INSTANCE_CITY`/`PUBLIC_APP_NAME`/`PUBLIC_CONTACT_EMAIL`/
+`PUBLIC_ANALYTICS_ORIGIN`/`PUBLIC_ANALYTICS_WEBSITE_ID` instance-branding vars are optional too.
+See [docs/architecture.md#running-the-official-container-image](docs/architecture.md#running-the-official-container-image)
+for the full reference with defaults — that table is the single source of truth, this is only a
+summary.
+
+A missing or empty required variable makes the process refuse to start (`assertRequiredEnv()`),
+naming every offender — see `src/lib/server/env.ts`.
+
+### Origin and proxy headers
+
+**`ORIGIN` is required in essentially every deployment, not just behind a reverse proxy** — it is
+the single most common self-hosting failure. adapter-node derives the expected origin from
+`ORIGIN`, or else from the request's `Host` header combined with a protocol that **defaults to
+`https`** when `PROTOCOL_HEADER` is unset (`get_origin()` in
+`@sveltejs/adapter-node/files/handler.js`). So a container reached directly over plain HTTP —
+`http://localhost:3000`, no proxy involved — derives `https://localhost:3000`, which never matches
+the browser's `Origin: http://localhost:3000`, and every POST form action is rejected with
+"Cross-site POST form submissions are forbidden". Set `ORIGIN` to the exact scheme, host and port
+users reach the app on. See
+[docs/architecture.md#running-the-official-container-image](docs/architecture.md#running-the-official-container-image)
+for the full proxy-header reference (the `PROTOCOL_HEADER`/`HOST_HEADER` alternative,
+`ADDRESS_HEADER`/`XFF_DEPTH` for client IPs, and the header-spoofing caveat).
+
 ## Testing
 
 ### Unit tests (Vitest)
@@ -179,7 +246,7 @@ npm run test:e2e:ui               # interactive UI mode
 npm run test:e2e:report           # open the last HTML report
 ```
 
-The e2e suite runs locally only for now — it is not wired into CI. Full details: [e2e/README.md](e2e/README.md).
+The e2e suite also runs in CI on every PR to `main` via `.github/workflows/e2e.yaml` (see the CI table below). Full details: [e2e/README.md](e2e/README.md).
 
 ---
 
@@ -207,6 +274,8 @@ The e2e suite runs locally only for now — it is not wired into CI. Full detail
 | -------------------------- | -------------- | --------------------------------------------------------------------------- |
 | `lint.yaml`                | PRs to `main`  | `npm run lint` + `npm run check`                                            |
 | `vitest.yaml`              | PRs to `main`  | `npm run build`, then `npx vitest run --coverage`; posts a coverage comment |
+| `e2e.yaml`                 | PRs to `main`  | Playwright e2e (`npm run test:e2e`) against a real-schema PocketBase        |
+| `docker-publish.yaml`      | PRs to `main` (build-only, no push) · push to `main`/`v*.*.*` tags/dispatch (publish) | Builds the image; publishes to GHCR outside PRs — see [Run with Docker](#run-with-docker-self-hosting) |
 | `deploy-to-uberspace.yaml` | push to `main` | Builds and deploys to production                                            |
 
 The PR workflows are skipped for pull requests from forks — a maintainer runs them instead.

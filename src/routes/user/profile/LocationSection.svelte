@@ -20,19 +20,23 @@
 	let { city, initialTransportMode, ondirty }: Props = $props();
 
 	let selectedTransportMode = $state<TransportMode>(initialTransportMode);
+
+	// The city input lives inside AddressInput, its label out here — so this section owns the id
+	// and hands it down, instead of the shared component hardcoding one.
+	const cityId = $props.id();
 </script>
 
 <div class="mt-4 space-y-4">
 	<!-- #address is a deep-link target from the item-page lending-requirement CTA. -->
 	<div id="address" class="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 scroll-mt-28">
 		<label
-			for="city"
+			for={cityId}
 			class="sm:w-36 sm:shrink-0 sm:pt-2 text-sm font-medium text-tinte-900 dark:text-white"
 		>
 			{texts.ui.location}
 		</label>
 		<div class="sm:flex-1">
-			<AddressInput initialValue={city} />
+			<AddressInput id={cityId} initialValue={city} />
 			<p class="text-sm text-tinte-600 dark:text-tinte-400 mb-2 mt-2">
 				{texts.pages.userProfile.addressNote}
 			</p>

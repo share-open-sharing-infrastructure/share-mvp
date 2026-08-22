@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// hooks.server.ts (re-exported by +page.server) reads PUBLIC_PB_URL from here.
-vi.mock('$env/static/public', () => ({
-	PUBLIC_PB_URL: 'http://localhost/',
-	PUBLIC_VAPID_PUBLIC_KEY: 'x',
+// +page.server's load returns PB_IMG_URL from $lib/publicEnv's pbUrl(), which reads here.
+vi.mock('$env/dynamic/public', () => ({
+	env: { PUBLIC_PB_URL: 'http://localhost/', PUBLIC_VAPID_PUBLIC_KEY: 'x' },
 }));
-// Avoid loading web-push + VAPID env at import time.
+// No env mock needed since #627: notifications.ts configures web-push lazily inside
+// sendPushToUser (`ensureVapidConfigured`), so importing it no longer validates VAPID keys.
+// Stubbed only to keep this test focused on the load/actions logic.
 vi.mock('$lib/server/notifications.js', () => ({
 	createNotification: vi.fn(),
 	sendPushToUser: vi.fn(),
