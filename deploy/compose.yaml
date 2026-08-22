@@ -1,0 +1,67 @@
+# AllerLeih reference self-hosting stack (share-mvp#630) — the two official GHCR images plus a
+# persistent PocketBase data directory, for a single host behind a reverse proxy.
+# First-run runbook: ../docs/operations/self-hosting.md · proxy example: ./Caddyfile
+#
+# Run from this directory: `cp .env.docker.example .env` (fill it in), then `docker compose up -d`.
+#
+# Two things not to "simplify" away, both explained in full in the runbook:
+#   1. PUBLIC_PB_URL must be PocketBase's *public* URL, never `http://backend:8090`. The browser
+#      talks to PocketBase directly, so a compose-internal address still works server-side while
+#      silently breaking realtime, every item image and every client-side call.
+#   2. `./pb_data` is a bind mount, and unlike a named volume it inherits nothing from the image.
+#      Before the first `up`: `mkdir -p pb_data && sudo chown 1001:1001 pb_data` (1001 = the uid
+#      the backend image runs as). Skip it and the backend fails with
+#      `unable to open database file (14)`.
+#
+# Both services read the same .env. Nothing breaks from that, but the frontend container then also
+# holds backend-only secrets it never reads (SMTP_PASSWORD, UNSUBSCRIBE_SECRET) — a compromised
+# frontend process inherits mail-sending credentials and the unsubscribe HMAC. Point each service
+# at its own .env.frontend/.env.backend if that trade-off matters to you.
+
+services:
+  backend:
+    # Set BACKEND_IMAGE_TAG in .env to pin or roll back a version without editing this file.
+    image: ghcr.io/share-open-sharing-infrastructure/allerleih-backend:${BACKEND_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      # `required: false` (Compose v2.24+) keeps `docker compose config` working in a fresh clone,
+      # where .env doesn't exist yet. With no .env the frontend refuses to start and names every
+      # missing variable — a more useful failure than Compose's own "file not found".
+      - path: .env
+        required: false
+    volumes:
+      - ./pb_data:/app/pb_data
+    ports:
+      # Loopback only: PocketBase has no TLS of its own, and this port carries the superuser login
+      # and session tokens. Caddy proxies the public PocketBase hostname to it.
+      - '127.0.0.1:8090:8090'
+    # Mirrors the image's own HEALTHCHECK so the frontend's `depends_on` below has something to
+    # poll — keep in sync if the image's ever changes. `start_interval` probes every 2s during
+    # start_period instead of waiting a full `interval` for the first verdict; without it the
+    # container sits in `health: starting` for 30s and `docker compose up` gives up on the
+    # frontend before the first probe runs, which looks exactly like a broken backend.
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:8090/api/health']
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      start_interval: 2s
+      retries: 3
+
+  frontend:
+    # Same tag mechanism as the backend, via FRONTEND_IMAGE_TAG.
+    image: ghcr.io/share-open-sharing-infrastructure/allerleih-frontend:${FRONTEND_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      # "healthy", not just "started": PocketBase applies pending migrations on boot, and a
+      # frontend that beats it there serves a broken homepage on first run.
+      backend:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - '127.0.0.1:3000:3000'
+    # ORIGIN and BODY_SIZE_LIMIT come from .env — see .env.docker.example. ORIGIN has no safe
+    # default: it must equal the exact scheme, host and port users reach the app on, or every form
+    # action (login included) fails its origin check.

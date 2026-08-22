@@ -18,7 +18,8 @@ Documentation for [AllerLeih](https://github.com/share-open-sharing-infrastructu
 - [operations/updating-legal-documents.md](operations/updating-legal-documents.md) — how an operator edits the ToS / privacy text and publishes a new version that triggers re-consent (Issue #399).
 - [operations/metrics.md](operations/metrics.md) — the nightly `metrics_daily` snapshot and the `/admin/metrics` / `/misc/stats` pages that read it.
 - [operations/mail-deliverability.md](operations/mail-deliverability.md) — SPF/DKIM/DMARC checklist, the `assetBase`/`siteBase` URL split, one-click digest unsubscribe, and the new mail-deliverability env vars (Issue #607).
-- [architecture.md → Running the official container image](architecture.md#running-the-official-container-image) — self-hosting with the official Docker image: the two-stage build, the canonical runtime-variable reference, and the `ORIGIN` / reverse-proxy settings without which form actions fail. A reference `docker compose` setup and a full self-hosting runbook are tracked separately in [#630](https://github.com/share-open-sharing-infrastructure/share-mvp/issues/630).
+- [architecture.md → Running the official container image](architecture.md#running-the-official-container-image) — self-hosting with the official Docker image: the two-stage build, the canonical runtime-variable reference, and the `ORIGIN` / reverse-proxy settings without which form actions fail.
+- [operations/self-hosting.md](operations/self-hosting.md) — the reference `docker compose` stack (`deploy/`) wiring both official images together, plus the first-run runbook: VAPID keys, superuser creation, SMTP, replacing the seeded legal documents, the imprint/instance vars (and the current #629 gap there), backups, and image-upgrade guidance.
 
 **Key source files:**
 - `src/lib/types/models.ts` — canonical TypeScript types for all PocketBase collections

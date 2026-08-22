@@ -6,9 +6,19 @@ dist
 .env
 .env.*
 !.env.example
+!deploy/.env.docker.example
 .vscode
 .claude/worktrees
 CLAUDE.local.md
+
+# docker compose self-hosting stack (deploy/, share-mvp#630) — the bind-mounted PocketBase data
+# directory an operator creates locally; never the reference compose/env-template files above.
+deploy/pb_data/
+# Compose auto-loads compose.override.yaml next to compose.yaml. That is the right place for
+# host-specific tweaks (different published ports, an extra service, a non-loopback binding for
+# a LAN test) and the wrong thing to share: the reference stack deliberately publishes to
+# loopback only, and an operator's local override must never become someone else's default.
+deploy/compose.override.yaml
 
 # Playwright e2e
 /test-results/

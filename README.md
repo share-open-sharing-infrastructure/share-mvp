@@ -183,7 +183,10 @@ anything other than a quick trial — see the tags on the [package page](https:/
 
 **The browser talks to PocketBase directly** (it is never proxied through the SvelteKit server),
 so `PUBLIC_PB_URL` must be the **publicly reachable** PocketBase URL, not a Docker-internal one.
-A ready-made `docker compose` setup that wires both containers together is tracked in #630.
+A ready-made `docker compose` setup that wires both containers together lives in
+[`deploy/`](deploy) — see
+[docs/operations/self-hosting.md](docs/operations/self-hosting.md) for the stack plus the
+first-run runbook (VAPID keys, superuser creation, SMTP, legal documents, backups).
 
 All variables are read at **runtime** (issue #627) — the same image serves any instance. The
 seven required vars are `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,

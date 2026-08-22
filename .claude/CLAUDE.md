@@ -193,7 +193,7 @@ These prevent the most common bugs/security issues here — follow them without 
 | Mail deliverability (SPF/DKIM/DMARC, digest one-click unsubscribe, `assetBase`/`siteBase` URL split, `digestEmails` opt-out) | `docs/operations/mail-deliverability.md`; backend hooks in `allerleih-backend/pb_hooks/services/{mail,unsubscribe}.js`, `utils/urls.js`; frontend: `$lib/server/userPreferences.ts`, `src/routes/user/profile/{NotificationSettings,PushNotificationSection,EmailNotificationForm}.svelte`, the `saveNotificationPrefs` action in `src/routes/user/profile/+page.server.ts` |
 | Running a second (city) instance: origin/city/contact/analytics config, the origin rule, branding limits | `docs/architecture.md` → "Instance configuration (multi-city)"; config in `src/lib/instance.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
-| Docker image / self-hosting | `docs/architecture.md` → "Running the official container image"; `Dockerfile`, `.github/workflows/docker-publish.yaml` |
+| Docker image / self-hosting | `docs/architecture.md` → "Running the official container image" (frontend image alone); `Dockerfile`, `.github/workflows/docker-publish.yaml`; for the full `docker compose` stack (both images) + first-run runbook, `docs/operations/self-hosting.md` and `deploy/` (`compose.yaml`, `.env.docker.example`, `Caddyfile`) |
 | A backend-only issue (no frontend changes) | Still drive it through `/issue-to-pr` + `/create-pr` **here** — the plan gate and review dispatch (`sveltekit-pb-reviewer` covers `pb_hooks`/`pb_migrations`) live in this repo. The backend also has its own `allerleih-backend/.claude/skills/create-pr` for standalone use when working in that repo alone. |
 
 ## Project tooling (this repo's `.claude/`)

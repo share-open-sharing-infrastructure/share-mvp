@@ -1,0 +1,50 @@
+# AllerLeih reference reverse-proxy config (share-mvp#630) — Caddy, for two reasons: automatic
+# HTTPS (Let's Encrypt/ZeroSSL) with no extra config, and no special setting needed for
+# PocketBase's realtime endpoint, which streams over SSE (server-sent events).
+#
+# WHY NO SSE-SPECIFIC SETTING: Caddy's reverse_proxy partially buffers responses by default for
+# wire efficiency, but "certain conditions, such as specific content types or unknown content
+# lengths, will automatically trigger immediate flushing regardless of the interval setting"
+# (https://caddyserver.com/docs/caddyfile/directives/reverse_proxy#streaming). PocketBase's SSE
+# stream answers with `Content-Type: text/event-stream` and a chunked, unknown-length body, so
+# Caddy already flushes it immediately — this is the behavior the issue's "Caddy handles this
+# out of the box" note refers to. nginx has no such heuristic and needs an explicit
+# `proxy_buffering off;` on that location instead.
+#
+# `flush_interval -1` below is not strictly required given the above — it's kept explicit on the
+# PocketBase site so a reader doesn't have to trust Caddy's content-type heuristic on faith.
+#
+# This assumes Caddy runs on the HOST (already common if you self-host more than one thing on
+# this machine) and reaches the two containers via the loopback ports compose.yaml publishes
+# (`127.0.0.1:3000`, `127.0.0.1:8090`). If you'd rather run Caddy as a THIRD container inside
+# this same compose stack instead, add it as a `caddy` service on the same (default) network and
+# change the two `reverse_proxy` targets below to the service names `frontend:3000` /
+# `backend:8090` — Caddy's own container-to-container DNS resolves those, whereas a browser or
+# the frontend server never could (see compose.yaml's header comment on why `PUBLIC_PB_URL` must
+# stay a public hostname regardless of which of these two you pick).
+#
+# Replace both placeholder hostnames with your own, point their A/AAAA (and AAAA, if you have
+# IPv6) records at this host's IP, and see docs/operations/self-hosting.md for the full
+# first-run runbook this fits into (VAPID keys, superuser creation, SMTP, legal documents,
+# backups).
+
+app.example.org {
+	reverse_proxy 127.0.0.1:3000
+}
+
+pb.example.org {
+	reverse_proxy 127.0.0.1:8090 {
+		flush_interval -1
+	}
+
+	# OPTIONAL HARDENING — the admin UI at /_/ is a full superuser panel with unrestricted DB
+	# access, and the block above makes it as publicly reachable as the rest of the API. Restrict
+	# it to trusted source IPs by uncommenting and filling in your own admin CIDRs/addresses (see
+	# docs/operations/self-hosting.md → "First run" step 2) — the two lines inside the matcher are
+	# ANDed, so this drops the connection for any /_/* request NOT from one of the listed ranges.
+	# @admin_denied {
+	# 	path /_/*
+	# 	not remote_ip 203.0.113.0/24 198.51.100.7
+	# }
+	# abort @admin_denied
+}
