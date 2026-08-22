@@ -47,14 +47,16 @@ export async function load({ locals, url }) {
 			const u = t.expand?.truster;
 			if (!u || u.deleted) continue;
 			const existing = network.get(u.id);
-			if (existing) existing.theyTrustMe = true;
-			else
+			if (existing) {
+				existing.theyTrustMe = true;
+			} else {
 				network.set(u.id, {
 					username: u.username,
 					profileImage: u.profileImage ?? null,
 					iTrustThem: false,
 					theyTrustMe: true,
 				});
+			}
 		}
 	} catch (error: Error | any) {
 		console.error(error.message ? error.message : error);

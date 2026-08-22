@@ -13,7 +13,7 @@
 	import { ArrowUpDownOutline, ArrowUpOutline, ArrowDownOutline, CheckCircleOutline } from 'flowbite-svelte-icons';
 	import { resolve } from '$app/paths';
 	import { texts } from '$lib/texts.js';
-	import { PUBLIC_PB_URL } from '$env/static/public';
+	import { pbUrl } from '$lib/publicEnv';
 
 	/**
 	 * The sortable, paginated trust-network table of /social (rows post to the page's
@@ -32,6 +32,15 @@
 	}
 
 	const { trustNetwork, search }: Props = $props();
+
+	// Row avatar URL. `pbUrl()` is the single home for the trailing-slash invariant, so the
+	// path must not start with one. `?thumb=100x100` is the size the backend whitelists for
+	// `users.profileImage` (a centre crop for exactly this round chip) — serving the original
+	// would ship the user's un-re-encoded upload, EXIF/GPS included.
+	const avatarUrl = (entry: { id: string; profileImage: string | null }) =>
+		entry.profileImage
+			? `${pbUrl()}api/files/users/${entry.id}/${entry.profileImage}?thumb=100x100`
+			: null;
 
 	type SortCol = 'username' | 'theyTrustMe' | 'iTrustThem';
 	let sortCol = $state<SortCol>('username');
@@ -125,10 +134,12 @@
 							class="flex flex-row items-center font-medium text-tinte-900 dark:text-white hover:underline"
 						>
 							<span class="hidden sm:block mr-4 shrink-0" aria-hidden="true">
-								{#if entry.profileImage}
+								{#if avatarUrl(entry)}
+									<!-- alt="" — the wrapper is aria-hidden, and a non-empty alt would render as
+									     literal text next to the username it duplicates if the image 404s. -->
 									<img
-										src="{PUBLIC_PB_URL}api/files/users/{entry.id}/{entry.profileImage}"
-										alt="@{entry.username}"
+										src={avatarUrl(entry)}
+										alt=""
 										class="h-9 w-9 rounded-full object-cover"
 									/>
 								{:else}

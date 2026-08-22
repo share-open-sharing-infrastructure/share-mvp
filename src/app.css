@@ -66,16 +66,27 @@
    tokens here. Tailwind v4 utilities like bg-primary-200 read var(--color-primary-200)
    at runtime, so a [data-theme] block on a DOM ancestor re-skins the whole app —
    including $lib/components/ui/Button.svelte — with no markup changes. Override at
-   least the shades the design system uses (base + 200/400/600 for buttons/links, plus
-   700/800 of primary/accent — InitialsAvatar.svelte pairs those for contrast).
+   least the shades the design system uses (base + 200/400/600 for buttons/links); for
+   avatar contrast, re-check every pair in COLOR_PALETTE in
+   src/lib/components/InitialsAvatar.svelte — that list is the source of truth for which
+   shades need to stay >= 4.5:1, and it spans more families than primary/accent.
    See docs/design-system.md → "White-Labeling". */
 [data-theme='example'] {
+	/* The 700/800 shades exist so the two COLOR_PALETTE entries this block re-skins keep
+	   AA: primary-800 on primary-200 6.46:1, primary-200 on primary-700 5.10:1,
+	   accent-800 on accent-200 8.23:1, accent-200 on accent-700 5.38:1. secondary-* and
+	   tinte-* are left alone, so those two palette entries keep the verified base values. */
 	--color-primary: #4da2ff;
 	--color-primary-200: #6ab2ff;
 	--color-primary-400: #2e8fe8;
 	--color-primary-600: #1a6fd4;
+	--color-primary-700: #0e3a6e;
+	--color-primary-800: #0a2a50;
 	--color-accent: #fb4a03;
+	--color-accent-200: #ffd0bb;
 	--color-accent-600: #d13c00;
+	--color-accent-700: #9c2d00;
+	--color-accent-800: #6b1f00;
 }
 
 .search-bar {

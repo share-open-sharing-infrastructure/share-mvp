@@ -69,15 +69,17 @@ describe('social load — bidirectional trust network', () => {
 		expect(data.trustNetwork).toHaveLength(3);
 	});
 
-	it('builds no avatar URL server-side — only the raw profileImage filename', async () => {
+	it('passes profileImage through as the raw filename and adds no derived avatar field', async () => {
 		const trustees = [
 			{ trustee: 'A', expand: { trustee: { id: 'A', username: 'Alice', profileImage: 'alice.png' } } },
 		];
 		const data = await callLoad(makePb(trustees, []));
 
 		expect(data.trustNetwork).toHaveLength(1);
+		// The avatar URL is built in the component (TrustNetworkTable.svelte) from pbUrl();
+		// the loader must ship the bare filename, and no leftover third-party avatar field.
+		expect(data.trustNetwork[0].profileImage).toBe('alice.png');
 		expect(data.trustNetwork[0]).not.toHaveProperty('profilePic');
-		expect(JSON.stringify(data.trustNetwork)).not.toContain('http');
 	});
 
 	it('returns an empty network when there are no edges', async () => {

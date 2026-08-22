@@ -2,7 +2,12 @@
 	// Fixed bg/text token-class pairs, each >= 4.5:1 (WCAG AA) in light and dark mode.
 	// Full class strings, not `bg-${colour}-200` — Tailwind can't see concatenated names
 	// and would purge them. A `[data-theme]` override should re-check the contrast.
-	const COLOR_PALETTE = [
+	// The secondary entry's `dark:bg-secondary-800` is load-bearing, not a stray from the
+	// `-700` its two neighbours use: secondary-200 text on secondary-700 is only 3.45:1
+	// (AA fail), on secondary-800 it is 6.46:1. Nothing guards this — a future
+	// "harmonise the palette" pass must not level it to -700.
+	// Exported for InitialsAvatar.test.ts, which asserts the hash's spread over it.
+	export const COLOR_PALETTE = [
 		'bg-tinte-200 dark:bg-tinte-700 text-tinte-600 dark:text-tinte-300',
 		'bg-primary-200 dark:bg-primary-700 text-primary-800 dark:text-primary-200',
 		'bg-secondary-200 dark:bg-secondary-800 text-secondary-800 dark:text-secondary-200',
@@ -10,9 +15,11 @@
 	];
 
 	// Pure string hash — no Math.random/Date, so SSR and CSR agree. The final mixing step
-	// matters: `% 4` reads only the low bits, and 31 ≡ -1 (mod 4) would pile short
-	// lowercase usernames onto one or two colours without it.
-	function hashString(value: string): number {
+	// matters because `% 4` reads only the low two bits: under the 31-multiplier those bits
+	// are just the alternating character-code sum, which skews the four buckets to ~21/29 %
+	// (measured over ~2700 realistic names); the xor-shift/multiply tail flattens that to
+	// ~25 % each. Not swapped for FNV-1a — that would re-colour every existing avatar.
+	export function hashString(value: string): number {
 		let hash = 0;
 		for (let i = 0; i < value.length; i++) {
 			hash = (Math.imul(hash, 31) + value.charCodeAt(i)) | 0;
