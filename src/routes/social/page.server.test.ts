@@ -45,8 +45,8 @@ function callLoad(pb: unknown) {
 describe('social load — bidirectional trust network', () => {
 	it('merges mutual + one-directional edges and excludes deleted counterparts', async () => {
 		const trustees = [
-			{ trustee: 'A', expand: { trustee: { id: 'A', username: 'Alice', deleted: false } } }, // mutual (below)
-			{ trustee: 'B', expand: { trustee: { id: 'B', username: 'Bob' } } }, // I trust B only
+			{ trustee: 'A', expand: { trustee: { id: 'A', username: 'Alice', deleted: false, profileImage: 'alice.png' } } }, // mutual (below)
+			{ trustee: 'B', expand: { trustee: { id: 'B', username: 'Bob' } } }, // I trust B only, no profileImage
 			{ trustee: 'D', expand: { trustee: { id: 'D', username: 'deleted-D', deleted: true } } }, // deleted → skip
 		];
 		const trusters = [
@@ -57,11 +57,29 @@ describe('social load — bidirectional trust network', () => {
 		const data = await callLoad(makePb(trustees, trusters));
 		const byId = Object.fromEntries(data.trustNetwork.map((n) => [n.id, n]));
 
-		expect(byId['A']).toMatchObject({ username: 'Alice', iTrustThem: true, theyTrustMe: true });
-		expect(byId['B']).toMatchObject({ iTrustThem: true, theyTrustMe: false });
-		expect(byId['C']).toMatchObject({ iTrustThem: false, theyTrustMe: true });
+		expect(byId['A']).toMatchObject({
+			username: 'Alice',
+			profileImage: 'alice.png',
+			iTrustThem: true,
+			theyTrustMe: true,
+		});
+		expect(byId['B']).toMatchObject({ iTrustThem: true, theyTrustMe: false, profileImage: null });
+		expect(byId['C']).toMatchObject({ iTrustThem: false, theyTrustMe: true, profileImage: null });
 		expect(byId['D']).toBeUndefined(); // anonymized counterpart must not surface
 		expect(data.trustNetwork).toHaveLength(3);
+	});
+
+	it('passes profileImage through as the raw filename and adds no derived avatar field', async () => {
+		const trustees = [
+			{ trustee: 'A', expand: { trustee: { id: 'A', username: 'Alice', profileImage: 'alice.png' } } },
+		];
+		const data = await callLoad(makePb(trustees, []));
+
+		expect(data.trustNetwork).toHaveLength(1);
+		// The avatar URL is built in the component (TrustNetworkTable.svelte) from pbUrl();
+		// the loader must ship the bare filename, and no leftover third-party avatar field.
+		expect(data.trustNetwork[0].profileImage).toBe('alice.png');
+		expect(data.trustNetwork[0]).not.toHaveProperty('profilePic');
 	});
 
 	it('returns an empty network when there are no edges', async () => {

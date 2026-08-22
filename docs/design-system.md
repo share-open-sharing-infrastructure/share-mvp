@@ -135,6 +135,10 @@ no markup or component changes:
 1. Add a `[data-theme='<operator>']` block in `src/app.css` next to the `@theme` block,
    overriding the `--color-*` tokens the operator wants changed (at minimum the shades
    the design system uses: base + `200`/`400`/`600` of `primary`, plus `accent` if used).
+   For avatar contrast, don't work from a shade list here — `COLOR_PALETTE` in
+   `src/lib/components/InitialsAvatar.svelte` is the source of truth for which pairs must
+   stay above the 4.5:1 AA floor, and it spans more families than `primary`/`accent`.
+   Override a family and you own re-checking every pair it appears in.
 2. Set `data-theme="<operator>"` on `<html>` in `src/app.html` (or dynamically on a
    wrapper element).
 
