@@ -17,11 +17,14 @@ vi.mock('$lib/server/items', () => ({
 }));
 // sanitizeGroups() calls getAttachableGroups; mock it so the group-filtering wiring is testable.
 vi.mock('$lib/server/groups', () => ({ getAttachableGroups: getAttachableGroupsMock }));
-// hooks.server.ts (re-exported by +page.server) reads PUBLIC_PB_URL from here.
-vi.mock('$env/static/public', () => ({ PUBLIC_PB_URL: 'http://localhost', PUBLIC_VAPID_PUBLIC_KEY: 'x' }));
+// +page.server's load returns PB_URL from $lib/publicEnv's pbUrl(), which reads here.
+vi.mock('$env/dynamic/public', () => ({
+	env: { PUBLIC_PB_URL: 'http://localhost', PUBLIC_VAPID_PUBLIC_KEY: 'x' },
+}));
 
-import { actions } from './+page.server';
+import { actions, load } from './+page.server';
 import { texts } from '$lib/texts';
+import { makeMockPb } from '$lib/test-utils/pocketbase';
 
 // The actions return a union of fail() shapes (validation vs. save-error), so narrow the
 // data to a permissive shape for assertions instead of indexing the union directly.
@@ -42,6 +45,59 @@ function callDelete(itemId?: string) {
 		request: { formData: vi.fn().mockResolvedValue(fd) },
 	} as unknown as DeleteEvent);
 }
+
+type LoadEvent = Parameters<typeof load>[0];
+
+function buildLoadPb(getListImpl?: ReturnType<typeof vi.fn>) {
+	const getList =
+		getListImpl ?? vi.fn().mockResolvedValue({ items: [], totalItems: 0, totalPages: 0 });
+	const loadPb = makeMockPb({
+		users: { getOne: vi.fn().mockResolvedValue({ id: 'u1' }) },
+		items: { getList },
+	});
+	getAttachableGroupsMock.mockResolvedValue([]);
+	return { pb: loadPb, getList };
+}
+
+function callLoad(loadPb: unknown, search: string) {
+	return load({
+		locals: { pb: loadPb, user: { id: 'u1' } },
+		url: new URL(`http://localhost/user/items${search}`),
+	} as unknown as LoadEvent);
+}
+
+describe('user items: load', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('passes the ?search= query param through as data.search', async () => {
+		const { pb: loadPb } = buildLoadPb();
+
+		const result = await callLoad(loadPb, '?search=Bohrmaschine');
+
+		expect(result.search).toBe('Bohrmaschine');
+	});
+
+	it('defaults data.search to an empty string when no ?search= param is present', async () => {
+		const { pb: loadPb } = buildLoadPb();
+
+		const result = await callLoad(loadPb, '');
+
+		expect(result.search).toBe('');
+	});
+
+	it('builds the name filter via pb.filter with a name ~ {:search} placeholder', async () => {
+		const { pb: loadPb, getList } = buildLoadPb();
+
+		await callLoad(loadPb, '?search=Bohrmaschine');
+
+		expect(loadPb.filter).toHaveBeenCalledWith('name ~ {:search}', { search: 'Bohrmaschine' });
+		expect(getList).toHaveBeenCalledWith(
+			1,
+			25,
+			expect.objectContaining({ filter: expect.stringContaining("name ~ 'Bohrmaschine'") })
+		);
+	});
+});
 
 describe('user items: delete action', () => {
 	beforeEach(() => vi.clearAllMocks());

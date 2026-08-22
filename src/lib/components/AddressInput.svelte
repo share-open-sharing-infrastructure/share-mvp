@@ -1,13 +1,24 @@
 <script lang="ts">
 	import debounce from 'debounce';
+	import { texts } from '$lib/texts';
 
 	interface Props {
 		initialValue?: string;
 		initialGeo?: { lon: number; lat: number } | null;
 		required?: boolean;
+		/**
+		 * DOM id for the city input. Pass it when the `<label for>` lives outside this component
+		 * (as on the profile page). Left unset, every instance derives its own id, so two
+		 * AddressInputs on one page cannot collide — neither on the input nor on its error region.
+		 */
+		id?: string;
 	}
 
-	let { initialValue = '', initialGeo = null, required = true }: Props = $props();
+	let { initialValue = '', initialGeo = null, required = true, id }: Props = $props();
+
+	const uid = $props.id();
+	const cityId = $derived(id ?? `${uid}-city`);
+	const cityErrorId = $derived(`${cityId}-error`);
 
 	// svelte-ignore state_referenced_locally
 	let cityText = $state(initialValue);
@@ -19,15 +30,33 @@
 	let showSuggestions = $state(false);
 	let cityInputEl: HTMLInputElement | undefined = $state(undefined);
 	let suggestionsEl: HTMLUListElement | undefined = $state(undefined);
-	let validationInputEl: HTMLInputElement | undefined = $state(undefined);
 
+	// Whether the field has stopped changing long enough to judge it. Free text under the
+	// suggestion-lookup threshold (≤3 chars, see handleCityInput) never sets isLoadingGeo, so
+	// without this gate the very first keystroke would flag the field invalid — both audibly
+	// (the live region below) and via setCustomValidity. markSettled() below re-arms it on every
+	// keystroke; only a pause lets it flip back to true.
+	let hasSettled = $state(true);
+	const markSettled = debounce(() => {
+		hasSettled = true;
+	}, 500);
+
+	// Single source of truth for "the address is unusable and the user needs to be told": drives
+	// the visible warning, `aria-invalid` and setCustomValidity() alike, so none of the three can
+	// disagree. Held back while a lookup runs, the dropdown is open, or the field hasn't settled
+	// yet — the user is mid-input there, and flagging every keystroke as an error would be noise
+	// (and, for setCustomValidity, would make the native :invalid state flicker independently of
+	// what's shown on screen).
+	let isInvalid = $derived(!isValidSelection && hasSettled && !isLoadingGeo && !showSuggestions);
+
+	// Native constraint validation lives on the city input itself: setCustomValidity() is what
+	// blocks the submit, and the browser anchors its bubble to the field the user actually typed
+	// in — the same element that carries aria-invalid and aria-describedby, so the native, the
+	// visual and the assistive state cannot disagree. Sole writer of the message, so dropping
+	// `required` (address optional) clears whatever a previous run left behind.
 	$effect(() => {
-		if (!validationInputEl || !required) return;
-		if (isValidSelection) {
-			validationInputEl.setCustomValidity('');
-		} else {
-			validationInputEl.setCustomValidity('Bitte nutze die Suche, um eine gültige Adresse auszuwählen.');
-		}
+		if (!cityInputEl) return;
+		cityInputEl.setCustomValidity(required && isInvalid ? texts.errors.addressNotSelected : '');
 	});
 
 	const fetchSuggestions = debounce(async (q: string) => {
@@ -39,7 +68,12 @@
 		try {
 			const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
 			if (res.ok) {
-				suggestions = (await res.json()).suggestions;
+				const fetched: typeof suggestions = (await res.json()).suggestions;
+				// ORS can return two features with the same formatted label. They would be
+				// indistinguishable in the dropdown and collide as {#each} keys, so keep the first.
+				suggestions = fetched.filter(
+					(s, i, arr) => arr.findIndex((o) => o.label === s.label) === i
+				);
 				showSuggestions = suggestions.length > 0;
 			}
 		} catch {
@@ -48,18 +82,38 @@
 		isLoadingGeo = false;
 	}, 1000);
 
-	function handleCityInput(e: Event) {
-		cityText = (e.target as HTMLInputElement).value;
+	/**
+	 * The city field holds free text that was *not* picked from the suggestion list: it carries
+	 * no coordinates, so it has to fail the "choose an address from the search" guard. An empty
+	 * field stays valid — the address is optional, `required` only means "if you type something,
+	 * it has to resolve".
+	 */
+	function markAsFreeText() {
 		selectedGeo = null;
-		if (cityText.length === 0) {
-			isValidSelection = true;
-		} else {
-			isValidSelection = false;
-		}
-		if (cityText.length > 3) {
+		isValidSelection = cityText.length === 0;
+	}
+
+	// Issue #613: the setter half of the city field's function binding, and the single place the
+	// free-text bookkeeping happens. Svelte calls it for every value the DOM hands back — real
+	// keystrokes and text typed into the SSR-rendered input before hydration alike — so
+	// pre-hydration input is judged exactly as if it had been typed a moment later, with no
+	// mount-time replay. Deliberately no fetchSuggestions() here: an unprompted dropdown on page
+	// load would be surprising, so the fetch stays in oninput, which only real keystrokes fire.
+	function setCityText(v: string) {
+		cityText = v;
+		markAsFreeText();
+		hasSettled = false;
+		markSettled();
+	}
+
+	// Only the suggestion lookup; reads the query off the event so it stays independent of the
+	// binding's setter above. State bookkeeping lives in setCityText.
+	function handleCityInput(e: Event) {
+		const q = (e.target as HTMLInputElement).value;
+		if (q.length > 3) {
 			isLoadingGeo = true;
 			showSuggestions = false;
-			fetchSuggestions(cityText);
+			fetchSuggestions(q);
 		}
 	}
 
@@ -69,7 +123,17 @@
 		isValidSelection = true;
 		showSuggestions = false;
 		suggestions = [];
+		// Emptying `suggestions` unmounts the <ul> — including the button a keyboard user just
+		// activated, whose focus would otherwise fall back to <body> and strand them at the top of
+		// the document. Deliberately synchronous rather than after a tick(): focus has to leave the
+		// button before it is detached, so there is never a frame with focus on a detached node.
+		// Pure no-op on the pointer path, where onmousedown's preventDefault() kept focus in the
+		// city input all along. Focusing fires no `input` event and touches no state, so neither
+		// fetchSuggestions() nor the dropdown is retriggered.
+		cityInputEl?.focus();
 	}
+
+	let showCityWarning = $derived(cityText.length > 0 && isInvalid);
 
 	function handleWindowMousedown(e: MouseEvent) {
 		if (
@@ -87,12 +151,14 @@
 	<input
 		type="text"
 		name="city"
-		id="city"
+		id={cityId}
 		placeholder="z.B. Kleine Bäckerstraße"
 		bind:this={cityInputEl}
-		value={cityText}
+		bind:value={() => cityText, setCityText}
 		oninput={handleCityInput}
 		autocomplete="off"
+		aria-invalid={showCityWarning}
+		aria-describedby={cityErrorId}
 		class="w-full px-3 py-2 bg-papier border border-tinte-300 rounded-lg text-tinte-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-tinte-700 dark:border-tinte-600 dark:text-white pr-8"
 	/>
 	{#if isLoadingGeo}
@@ -108,12 +174,21 @@
 			bind:this={suggestionsEl}
 			class="absolute z-10 mt-1 w-full bg-sand border border-tinte-200 rounded-lg shadow-lg dark:bg-tinte-800 dark:border-tinte-600 max-h-60 overflow-auto"
 		>
-			{#each suggestions as s (suggestions.indexOf(s))}
+			{#each suggestions as s (s.label)}
 				<li>
+					<!-- Both handlers on purpose: keyboard activation fires `click`, never
+					     `mousedown`, so without onclick a keyboard user could never pick a
+					     suggestion — the only route back to a valid selection. onmousedown stays
+					     for its preventDefault (keeps focus in the input on a pointer pick). A
+					     mouse click does not run both: selectSuggestion() empties `suggestions`,
+					     so the button is gone before `click` would be dispatched — and even if a
+					     browser did dispatch it, selectSuggestion() is idempotent (same
+					     assignments, no fetch, no submit). -->
 					<button
 						type="button"
 						class="w-full text-left px-3 py-2 text-sm text-tinte-800 dark:text-tinte-200 hover:bg-tinte-100 dark:hover:bg-tinte-700"
 						onmousedown={(e) => { e.preventDefault(); selectSuggestion(s); }}
+						onclick={() => selectSuggestion(s)}
 					>
 						{s.label}
 					</button>
@@ -125,17 +200,16 @@
 		<input type="hidden" name="geolocation_lon" value={selectedGeo.lon} />
 		<input type="hidden" name="geolocation_lat" value={selectedGeo.lat} />
 	{/if}
-	{#if required}
-		<input
-			bind:this={validationInputEl}
-			type="text"
-			value={isValidSelection ? 'valid' : ''}
-			class="sr-only"
-			tabindex={-1}
-			aria-hidden="true"
-		/>
-	{/if}
-	{#if cityText.length > 0 && !isValidSelection && !isLoadingGeo && !showSuggestions}
-		<p class="mt-1 text-xs text-amber-600 dark:text-amber-400">Bitte nutze die Suche, um eine gültige Adresse auszuwählen.</p>
-	{/if}
+	<!-- Rendered unconditionally so the live region is already in the accessibility tree when it
+	     gets content — a region inserted together with its text is frequently not announced.
+	     Polite (role="status"), not alert: #613 means the field can turn invalid with no user
+	     action at all (text adopted during hydration), but interrupting mid-keystroke would be
+	     worse than waiting. aria-live is spelled out alongside the implicit role value for the
+	     same reason as /search's status line: some older screen-reader/browser pairs don't
+	     apply it. -->
+	<div id={cityErrorId} role="status" aria-live="polite">
+		{#if showCityWarning}
+			<p class="mt-1 text-xs text-amber-600 dark:text-amber-400">{texts.errors.addressNotSelected}</p>
+		{/if}
+	</div>
 </div>

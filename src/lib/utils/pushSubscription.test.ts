@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// pushSubscription.ts reads the VAPID public key from here at import time.
-vi.mock('$env/static/public', () => ({ PUBLIC_VAPID_PUBLIC_KEY: 'dGVzdA' }));
+// pushSubscription.ts reads the VAPID public key from here (via $lib/publicEnv's
+// vapidPublicKey()) at call time.
+vi.mock('$env/dynamic/public', () => ({ env: { PUBLIC_VAPID_PUBLIC_KEY: 'dGVzdA' } }));
 
 import { teardownPushSubscription, nextPushRegistration } from './pushSubscription';
 

@@ -1,4 +1,4 @@
-import { PUBLIC_PB_URL } from '../../../hooks.server';
+import { pbUrl } from '$lib/publicEnv';
 import { texts } from '$lib/texts';
 import { generateInviteSlug } from '$lib/inviteSlug';
 import { upsertUserGeolocation } from '$lib/server/geolocation';
@@ -43,7 +43,7 @@ export async function load({ locals, url }) {
 	);
 
 	return {
-		PB_URL: PUBLIC_PB_URL,
+		PB_URL: pbUrl(),
 		inviteUrl,
 		currentUser,
 		currentUserPreferences,

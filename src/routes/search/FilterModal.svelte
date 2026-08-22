@@ -89,7 +89,7 @@
 
 <Modal title={texts.pages.search.filterModalTitle} bind:open size="md" outsideclose>
 	<div class="flex flex-col gap-6">
-		<!-- Sortierung -->
+		<!-- Sort -->
 		<section>
 			<h4 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
 				{texts.pages.search.sortLabel}
@@ -101,7 +101,7 @@
 			/>
 		</section>
 
-		<!-- Verfügbarkeit -->
+		<!-- Availability -->
 		<section>
 			<Toggle bind:checked={draft.onlyAvailable} aria-describedby="availability-subtext">
 				<span class="text-sm text-tinte-600 dark:text-tinte-400">
@@ -113,7 +113,7 @@
 			</p>
 		</section>
 
-		<!-- Anbieter -->
+		<!-- Owner Type -->
 		<section>
 			<h4 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
 				{texts.pages.search.filterSectionOwnerType}
@@ -125,7 +125,7 @@
 			/>
 		</section>
 
-		<!-- Kategorien -->
+		<!-- Categories -->
 		<section>
 			<h4 id="filter-categories-heading" class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">
 				{texts.pages.search.filterSectionCategories}
@@ -135,7 +135,7 @@
 			</div>
 		</section>
 
-		<!-- Gruppe -->
+		<!-- Groups -->
 		{#if groups.length > 0}
 			<section>
 				<h4 class="mb-2 text-sm font-semibold text-tinte-700 dark:text-tinte-300">

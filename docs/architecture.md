@@ -135,22 +135,29 @@ client recomputes a right-looking value after hydration (issue #473, caught only
 reading the raw SSR response — see `e2e/tests/seo-canonical.spec.ts`). `instanceUrl()` logs a
 DEV-only console error if given a non-root-absolute path, to make a repeat loud instead of silent.
 
-**This is the only place in the frontend that uses `$env/dynamic/public`** — every other env
-access in the repo goes through `$env/static/*` (build-time replaced). The exception is
-deliberate: one build artefact must serve N city instances, and `adapter-node` reads environment
-variables from `process.env` at **server start** (runtime), not at build time — `$env/static/public`
-would bake a single instance's values into the build, requiring one build per city.
-`$lib/instance.ts` (and therefore `$lib/texts.ts`) must never be imported from
-`src/service-worker.ts` — `$env/dynamic/public` is a hard error there (no request context).
+**`$env/dynamic/*` is the repo-wide convention** (issue #627): every env access — public and
+private — is read at **runtime**, and `$env/static/*` is banned by ESLint. The reason is the one
+this file already gave for `instance.ts`: one build artefact must serve N city instances, and
+`adapter-node` reads environment variables from `process.env` at **server start**, not at build
+time; `$env/static/*` would bake a single instance's values into the bundle, requiring one build
+per city. What differs is only the *scope* of each module: `$lib/instance.ts` is the source for
+**instance/branding** values (city, origin, contact, analytics), `$lib/publicEnv.ts` for the two
+public **plumbing** vars (`pbUrl()` → `PUBLIC_PB_URL`, `vapidPublicKey()` →
+`PUBLIC_VAPID_PUBLIC_KEY`), and each private var is read with `{ env } from
+'$env/dynamic/private'` in the single module that needs it. Which vars must exist at startup is
+declared in `$lib/server/env.ts` and enforced by the `init` server hook (see "Runtime env vars"
+below). `$lib/instance.ts`, `$lib/publicEnv.ts` — and therefore `$lib/texts.ts` — must never be
+imported from `src/service-worker.ts`: `$env/dynamic/public` is a hard error there (no request
+context), which `eslint.config.js` now enforces for that file.
 
-**Consequence for every future `PUBLIC_*` var:** `$env/static/public` only ships the `PUBLIC_*`
-constants a module actually references (build-time, tree-shaken), but `$env/dynamic/public`
-serialises the **entire** `PUBLIC_*` env into every rendered page (SvelteKit ships the whole
-dynamic-public object to the client so it can hydrate) — and since `$lib/instance.ts` is
-transitively imported by `$lib/texts.ts`, which reaches the client bundle, that whole-object
-broadcast now applies repo-wide, not just to the six vars above. Harmless today because only
-already-public vars exist, but treat any new `PUBLIC_*` var as fully public from the moment it is
-set in the server env — it is shipped to every visitor whether or not any module reads it.
+**Consequence for every `PUBLIC_*` var:** `$env/dynamic/public` serialises the **entire**
+`PUBLIC_*` env into every rendered page (SvelteKit ships the whole dynamic-public object to the
+client so it can hydrate) — unlike the tree-shaken `$env/static/public` this repo no longer uses.
+Since `$lib/instance.ts` and `$lib/publicEnv.ts` are both transitively reachable from the client
+bundle, that whole-object broadcast applies repo-wide. Harmless today because only already-public
+vars exist, but treat any new `PUBLIC_*` var as fully public from the moment it is set in the
+server env — it is shipped to every visitor whether or not any module reads it. Never put a secret
+behind the `PUBLIC_` prefix.
 
 **Branding is only partially instance-configurable.** `PUBLIC_APP_NAME` overrides `texts.names.app`
 (used in `<title>`s, meta tags, a handful of UI strings), but it does **not** rewrite the ~89
@@ -168,29 +175,117 @@ separate, unrelated mechanisms:
 stops Umami tracking rather than falling back to a default. Production therefore has to supply
 `PUBLIC_ANALYTICS_ORIGIN=https://analytics.allerleih.org` and
 `PUBLIC_ANALYTICS_WEBSITE_ID=6cfb6acd-259e-4771-baa7-c677387ea292` in its **runtime** environment —
-see "Current Deployment Pipeline" below for where that has to live and which two traps to avoid.
+see "Current Deployment Pipeline" below for where that has to live and which three traps to avoid.
 
 ## Current Deployment Pipeline for "AllerLeih" (proof-of-concept instance)
 
 - **Platform:** Uberspace shared hosting (Linux, Node.js, supervisord)
 - **Deploy trigger:** push to `main` → GitHub Actions (`.github/workflows/deploy-to-uberspace.yaml`) → `npm ci && npm run build` → `rsync` to Uberspace
 - **Process restart:** `supervisorctl restart svelte`
-- **Build-time secrets injected:** `PUBLIC_PB_URL`, `ORS_API_KEY`, `MISTRAL_API_KEY`, VAPID keys (`PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`); a tracked `.env.example` lists all required vars. (Integration sync/refresh + the CSV write path run entirely in the backend as of #487 Phase 3 — no frontend sync secret. `PB_SUPERUSER_*` are used only by local seed/e2e tooling, not the app runtime.)
+- **Build-time secrets injected: none.** As of issue #627 the build takes **no** environment at
+  all — `npm run build` produces a generic, instance-agnostic artefact, and a value passed to the
+  build step would silently do nothing. All seven required vars are **runtime** vars, written by
+  the deploy's SSH step into a `.env` next to `build/`: `PUBLIC_PB_URL`,
+  `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
+  `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD` (plus the optional `MISTRAL_API_KEY`, the
+  optional `PUBLIC_*` instance vars, and the adapter's `BODY_SIZE_LIMIT`). That `.env` is written
+  with a truncating `>`, so **every** runtime var must be listed in the workflow — anything
+  hand-added on the server is discarded on the next deploy. The contract is enforced in-app: the
+  `init` hook in `src/hooks.server.ts` calls `assertRequiredEnv()` (`$lib/server/env.ts`) before
+  the server listens, so a missing or empty required var makes the process exit non-zero with
+  every offender named, instead of leaving a half-working site up. The check is presence-only — it
+  proves a non-empty line exists, not that the value is usable (a placeholder `ORS_API_KEY`
+  satisfies it). `logOptionalEnvGaps()` then prints one `console.info` line naming the vars from
+  `OPTIONAL_ENV` this instance runs without and what that disables (names only, never values), so a
+  quietly-off feature shows up in the startup log instead of surfacing later as a 503.
+  (Integration sync/refresh + the CSV write path run entirely in the backend as of #487 Phase 3 —
+  no frontend sync secret.
+  `PB_SUPERUSER_*` are **not** tooling-only: `$lib/server/superuser.ts` → `$lib/server/metrics.ts`
+  → the root `+layout.server.ts`'s `isAdmin()` call reads them on every authenticated request, and
+  they also back the public stats on `/` and `/misc/stats`.)
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
-- **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend now requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — not only in the SvelteKit build.
-- **Instance config vars** (`PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
-  `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`) are read via
-  `$env/dynamic/public` at **runtime** from `process.env` (adapter-node), not baked into the build
-  like the other `PUBLIC_*` vars above — so one build artefact serves every city instance and only
-  each instance's runtime environment differs. Two traps when adding one: (1) putting it in the
-  workflow's `npm run build` step has **no** effect, that only reaches `$env/static/*`; (2) the
-  deploy's SSH step runs `echo "BODY_SIZE_LIMIT=…" > .env` — with `>`, so anything hand-added to that
-  file on the server is discarded on the next deploy. Add runtime vars to that line in
-  `deploy-to-uberspace.yaml` (these six are public values, so GitHub Actions *variables*, not
-  secrets), or to the `svelte` supervisord service's own environment. See "Instance configuration"
-  above.
+- **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — a separate value from the frontend's, which lives in the SvelteKit runtime `.env`.
+- **Runtime env vars** — since #627 that is *all* of them (the seven required ones,
+  `MISTRAL_API_KEY`, and the optional instance vars `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`,
+  `PUBLIC_APP_NAME`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`,
+  `PUBLIC_ANALYTICS_WEBSITE_ID`). They are read via `$env/dynamic/*` from `process.env`
+  (adapter-node) at server start, never baked into the build — so one build artefact serves every
+  city instance and only each instance's runtime environment differs. Three traps when adding one:
+  (1) putting it in the workflow's `npm run build` step has **no** effect — that is now true for
+  *every* var, not just the instance ones, and it is the single most likely mistake; (2) the
+  deploy's SSH step writes the whole `.env` with a truncating `>`, so anything hand-added to that
+  file on the server is discarded on the next deploy — add the var to that block in
+  `deploy-to-uberspace.yaml` (public instance values are GitHub Actions *variables*, secrets are
+  *secrets*); (3) the `svelte` supervisord service has no `environment=` line, so `.env` +
+  `node -r dotenv/config build` is the **only** bridge into `process.env` — which means `dotenv`
+  must stay in `dependencies` (`dotenv@^17.2.3`, `package.json`), never move it to
+  `devDependencies`. See "Instance configuration" above.
 
 **CI on pull requests:** Vitest runs with coverage (json + lcov) on every PR to `main` via `.github/workflows/vitest.yaml`. Coverage is posted as a PR comment via `davelosert/vitest-coverage-report-action`. The build step also catches TypeScript and Svelte compilation errors before merging.
+
+## Running the official container image
+
+An official multi-stage image (`Dockerfile`, repo root) is built by
+`.github/workflows/docker-publish.yaml` and published to GHCR as
+`ghcr.io/share-open-sharing-infrastructure/allerleih-frontend` — the explicit name rather than
+`ghcr.io/${{ github.repository }}` (which would resolve to `.../share-mvp`), symmetric to the
+backend's own image (allerleih-backend#55). The build stage runs `npm ci && npm run build` on
+`node:<version>-alpine`; the runtime stage copies only `build/`, `package.json` and
+`package-lock.json`, runs `npm ci --omit=dev` as the non-root `node` user, and strips `*.map`
+files before shipping. As with the Uberspace deploy, the build stage takes **no** application env
+(#627) — the resulting image is instance-agnostic, and this is an **additional** distribution
+channel, not a replacement for the Uberspace pipeline above.
+
+Every runtime var from "Instance configuration" and the required-env table above applies
+unchanged. Pass them as **process environment** — `docker run --env-file`/`-e`, compose
+`env_file:`, or your orchestrator's secret store. Note the difference to the Uberspace channel:
+that service runs `node -r dotenv/config build` and therefore reads a `.env` file next to
+`build/`, whereas the image's entrypoint is plain `node build`, so **a `.env` mounted into the
+container is ignored** and the app refuses to start as if nothing were configured. This table is
+the **single canonical, fully-detailed reference** — README.md only summarizes it and links back
+here:
+
+| Variable | Needed for | Default |
+|---|---|---|
+| `PUBLIC_PB_URL` | PocketBase base URL every request talks to | — (required) |
+| `PUBLIC_VAPID_PUBLIC_KEY` | Web-Push VAPID public key | — (required) |
+| `VAPID_PRIVATE_KEY` | Web-Push VAPID private key | — (required) |
+| `VAPID_SUBJECT` | Web-Push VAPID subject (`mailto:`/`https:` URL) | — (required) |
+| `ORS_API_KEY` | Address autocomplete (`/api/geocode`) | — (required) |
+| `PB_SUPERUSER_EMAIL` / `PB_SUPERUSER_PASSWORD` | **Full PocketBase superuser credentials** — unrestricted read/write on every collection (all users' emails, coordinates, trust graph, messages) plus schema and admin control, bypassing every collection rule. This app only *uses* them for the `/admin` gate, public stats, and `metrics_daily`, but the credential itself is not scoped to those three features — store and rotate it like any other master secret, not like a feature-scoped API key. | — (required) |
+| `MISTRAL_API_KEY` | AI item-photo analysis | unset ⇒ `/api/analyze-item` answers 503 |
+| `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` | Instance branding/analytics | see "Instance configuration" above |
+
+Two adapter-node knobs are **not** in that set and cannot be, because `assertRequiredEnv()` has
+no way to see them — they are validated by adapter-node itself, not by this app:
+
+- **`BODY_SIZE_LIMIT`** — the image sets this to `10485760` (10 MB) by default, for parity with
+  the Uberspace deploy's bulk image-upload limit. This is the **only** effective knob: the
+  `bodySize` option passed to `adapter()` in `svelte.config.js` is **not** a real adapter-node
+  option (only `out`/`precompress`/`envPrefix` are) and is a silent no-op — don't be misled by it
+  into thinking the limit is configured there.
+- **`ORIGIN=https://app.example.org`** — required in essentially **every** deployment, not only
+  behind a reverse proxy, and the single most common self-hosting failure. adapter-node's
+  `get_origin()` takes the expected origin from `ORIGIN`, or else builds it from the request's
+  `Host` header plus a protocol that **defaults to `https`** whenever `PROTOCOL_HEADER` is unset
+  (`@sveltejs/adapter-node/files/handler.js`). A container reached directly over plain HTTP with no
+  proxy at all therefore derives `https://<host>`, never matches the browser's `Origin:
+  http://<host>`, and rejects every POST form action with "Cross-site POST form submissions are
+  forbidden" — verified empirically against this image, including `http://127.0.0.1:3000`. Set it
+  to the exact scheme, host and port users reach the app on. Alternative behind a proxy that sets
+  them: `PROTOCOL_HEADER=x-forwarded-proto` + `HOST_HEADER=x-forwarded-host`.
+- **`ADDRESS_HEADER`** / **`XFF_DEPTH`** — set these so the app sees the real client IP rather
+  than the proxy's.
+- **Only set `ADDRESS_HEADER`, `PROTOCOL_HEADER` or `HOST_HEADER` if the reverse proxy is
+  configured to *overwrite* that header on every request — never if it merely passes a
+  client-supplied one through.** adapter-node trusts these header values verbatim
+  (`node_modules/@sveltejs/adapter-node/files/handler.js`) to derive the client IP and the
+  CSRF-relevant request origin. A proxy that forwards an incoming `X-Forwarded-For`/`-Proto`/
+  `-Host` instead of setting its own lets a client spoof those headers directly at the app,
+  defeating the very origin check `PROTOCOL_HEADER`+`HOST_HEADER` exists to provide.
+
+A `docker compose` setup that wires this image together with a PocketBase container is tracked
+separately in #630 — this section covers the frontend image alone.
 
 ## Real-time Architecture
 

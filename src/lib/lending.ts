@@ -1,13 +1,13 @@
 /**
- * Kanonische Definition der Lending-State-Machine. JEDE Status-Liste im Frontend
- * kommt von hier; das Backend hält einen bewussten, dokumentierten Spiegel in
- * allerleih-backend pb_hooks/services/account.js (Lösch-Guard, = ACTIVE_LENDING_STATES).
- * Status ergänzen ⇒ HIER + texts.lending.statusLabel + Backend-Spiegel (Kommentar dort).
+ * Canonical definition of the lending state machine. EVERY status list in the frontend
+ * comes from here; the backend keeps a deliberate, documented mirror in
+ * allerleih-backend pb_hooks/services/account.js (delete guard, = ACTIVE_LENDING_STATES).
+ * Adding a status ⇒ HERE + texts.lending.statusLabel + the backend mirror (comment there).
  */
 
 /**
- * Die 5 Forward-Schritte in Lifecycle-Reihenfolge. Sackgassen: `rejected` (Owner lehnt
- * aus `pending` ab) und `aborted` (Abbruch aus `pending`/`accepted`, #373).
+ * The 5 forward steps in lifecycle order. Dead ends: `rejected` (owner declines
+ * from `pending`) and `aborted` (abort from `pending`/`accepted`, #373).
  */
 export const LENDING_LIFECYCLE = [
 	'pending',
@@ -22,9 +22,9 @@ export const LENDING_STATUSES = [...LENDING_LIFECYCLE, 'rejected', 'aborted'] as
 export type LendingStatus = (typeof LENDING_STATUSES)[number];
 
 /**
- * Verbindliche/laufende Leihe (Borrower hält den Gegenstand oder ist verabredet).
- * Spiegel: Backend-Lösch-Guard. Bewusst OHNE `pending` — eine bloße Anfrage ist
- * keine Leihe (darf z. B. Kontolöschung nicht blockieren).
+ * Committed/ongoing loan (borrower holds the item or has a pickup arranged).
+ * Mirror: backend delete guard. Deliberately WITHOUT `pending` — a mere request
+ * is not a loan (e.g. must not block account deletion).
  */
 export const ACTIVE_LENDING_STATES = [
 	'accepted',
@@ -33,33 +33,33 @@ export const ACTIVE_LENDING_STATES = [
 ] as const satisfies readonly LendingStatus[];
 
 /**
- * Unabgeschlossen: blockiert Item-Löschung und zählt als „bestehende Anfrage"
- * (verhindert Doppel-Anfragen desselben Users für dasselbe Item). Die Sackgassen
- * `rejected`/`aborted` und `completed` sind bewusst NICHT offen — danach darf
- * derselbe User erneut anfragen.
+ * Unfinished: blocks item deletion and counts as an "existing request"
+ * (prevents duplicate requests from the same user for the same item). The dead
+ * ends `rejected`/`aborted` and `completed` are deliberately NOT open — after
+ * those the same user may request again.
  */
 export const OPEN_LENDING_STATES = ['pending', ...ACTIVE_LENDING_STATES] as const;
 
 /**
- * Zustände, in denen eine Anfrage abgebrochen werden kann (#373): in `pending`
- * nur durch den Requester (der Owner nutzt Ablehnen), in `accepted` durch beide
- * Seiten. Ab `active` ist der Gegenstand unterwegs — kein Abbruch mehr.
+ * States in which a request can be aborted (#373): in `pending` only by the
+ * requester (the owner uses reject), in `accepted` by either side. From `active`
+ * onward the item is out — no more aborting.
  */
 export const ABORTABLE_LENDING_STATES = [
 	'pending',
 	'accepted',
 ] as const satisfies readonly LendingStatus[];
 
-/** Type-Guard statt `as`-Casts/`?? ''`-Tricks an den Call-Sites. */
+/** Type guard instead of `as` casts/`?? ''` tricks at the call sites. */
 export function isLendingStatusIn(states: readonly LendingStatus[], value: unknown): boolean {
 	return typeof value === 'string' && (states as readonly string[]).includes(value);
 }
 
 /**
- * PocketBase-Filterfragment `(lendingStatus = "a" || lendingStatus = "b" || …)`.
- * Bewusst OHNE pb.filter-Parameter sicher: die Werte stammen ausschließlich aus den
- * obigen Compile-Time-Konstanten, nie aus User-Input — dynamische Werte (itemId,
- * requesterId, …) laufen an den Call-Sites weiterhin durch pb.filter.
+ * PocketBase filter fragment `(lendingStatus = "a" || lendingStatus = "b" || …)`.
+ * Deliberately safe WITHOUT pb.filter parameters: the values come exclusively from
+ * the compile-time constants above, never from user input — dynamic values (itemId,
+ * requesterId, …) still go through pb.filter at the call sites.
  */
 export function lendingStatusFilter(states: readonly LendingStatus[]): string {
 	return '(' + states.map((s) => `lendingStatus = "${s}"`).join(' || ') + ')';
@@ -95,7 +95,6 @@ export interface LendingTransition {
 export const LENDING_TRANSITIONS: Record<LendingAction, LendingTransition> = {
 	acceptRequest: { role: 'owner', from: ['pending'], to: 'accepted' },
 	rejectRequest: { role: 'owner', from: ['pending'], to: 'rejected' },
-	// Reuses ABORTABLE_LENDING_STATES rather than re-deriving an equivalent state list.
 	abortRequest: { role: 'participant', from: ABORTABLE_LENDING_STATES, to: 'aborted' },
 	confirmHandover: { role: 'owner', from: ['accepted'], to: 'active' },
 	requestReturn: { role: 'requester', from: ['active'], to: 'return_requested' },
@@ -120,11 +119,11 @@ export function canTransition(
 }
 
 /**
- * UI-only rule for showing the "Anfrage abbrechen" button (#373 decision 1) —
+ * UI-only rule for showing the "Abort request" button (#373 decision 1) —
  * INTENTIONALLY DIFFERENT from `LENDING_TRANSITIONS.abortRequest`'s server-side rule.
  * The server allows either party to abort in `pending` OR `accepted`
  * (`ABORTABLE_LENDING_STATES`, `role: 'participant'`); the UI additionally hides the
- * button from the OWNER while `pending`, since the owner has a dedicated "Ablehnen"
+ * button from the OWNER while `pending`, since the owner has a dedicated "Decline"
  * action for that state instead. Do NOT collapse this into `canTransition` — the
  * divergence between the two is deliberate, not a bug to "fix" into one predicate.
  */

@@ -11,26 +11,16 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6.1.0
         with:
-          node-version: 25.2.1
+          node-version: 24.19.0
           cache: npm
       - name: Install dependencies
         run: npm ci
 
+      # No `env:` here on purpose — since #627 every app var is read at runtime via
+      # `$env/dynamic/*`, so a build-step value would silently do nothing (it would not even
+      # reach the artefact). Runtime vars go into the `.env` written in the SSH step below.
       - name: Build Svelte app
         run: npm run build
-        env:
-          PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
-          ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
-          PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
-          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
-          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
-          # PB_SUPERUSER_*: still required at build time — `$lib/server/superuser.ts` reads them
-          # via `$env/static/private` for the superuser-only `metrics_daily` reads in
-          # `$lib/server/metrics.ts`. No SYNC_SECRET: #487 Phase 3 moved the integrations into
-          # the backend, so the frontend shares no sync secret anymore.
-          PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
-          PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
       - name: Deploy build folder
         uses: burnett01/rsync-deployments@8.0.2
         with:
@@ -46,29 +36,96 @@ jobs:
         # interpolated into `script:` as `${{ … }}`. Textual interpolation would break on a
         # value containing a quote or `;` and is a shell-injection shape even when the input
         # is repo-admin-controlled.
+        #
+        # Each forwarded variable is named EXACTLY like its `.env` target, so there is no
+        # translation layer to get out of step: adding one means one `env:` line, one `envs:`
+        # entry and one `echo` line in the `{ … } > .env` block below. A forgotten `envs:` entry
+        # is visible by diffing the two lists; a forgotten `echo` line is the dangerous one — the
+        # var stays forwarded but is never written, and `assertRequiredEnv()` then refuses to boot.
+        # `envs:` is a comma-separated list, kept flat and space-free — see the note on it below.
         env:
-          ANALYTICS_ORIGIN: ${{ vars.PUBLIC_ANALYTICS_ORIGIN }}
-          ANALYTICS_WEBSITE_ID: ${{ vars.PUBLIC_ANALYTICS_WEBSITE_ID }}
+          PUBLIC_PB_URL: ${{ secrets.PUBLIC_PB_URL }}
+          PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.PUBLIC_VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          ORS_API_KEY: ${{ secrets.ORS_API_KEY }}
+          MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+          PB_SUPERUSER_EMAIL: ${{ secrets.PB_SUPERUSER_EMAIL }}
+          PB_SUPERUSER_PASSWORD: ${{ secrets.PB_SUPERUSER_PASSWORD }}
+          PUBLIC_ANALYTICS_ORIGIN: ${{ vars.PUBLIC_ANALYTICS_ORIGIN }}
+          PUBLIC_ANALYTICS_WEBSITE_ID: ${{ vars.PUBLIC_ANALYTICS_WEBSITE_ID }}
+          PUBLIC_SITE_ORIGIN: ${{ vars.PUBLIC_SITE_ORIGIN }}
+          PUBLIC_INSTANCE_CITY: ${{ vars.PUBLIC_INSTANCE_CITY }}
         with:
           host: ${{ vars.SSH_HOST }}
           username: ${{ vars.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: ANALYTICS_ORIGIN,ANALYTICS_WEBSITE_ID
+          # Deliberately one line, no spaces: `origin/main` has always used the space-free form, so
+          # per-element trimming by the action is unproven in this pipeline. If it did not trim, 11 of
+          # 12 names would be looked up with a leading space, silently resolve to empty, and
+          # `assertRequiredEnv()` would refuse to boot the freshly deployed site. Keep it flat.
+          envs: PUBLIC_PB_URL,PUBLIC_VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,VAPID_SUBJECT,ORS_API_KEY,MISTRAL_API_KEY,PB_SUPERUSER_EMAIL,PB_SUPERUSER_PASSWORD,PUBLIC_ANALYTICS_ORIGIN,PUBLIC_ANALYTICS_WEBSITE_ID,PUBLIC_SITE_ORIGIN,PUBLIC_INSTANCE_CITY
           script: |
+            # `set -e` so a failing `npm ci` fails the deploy instead of reporting success with a
+            # half-updated server; `set -u` to catch a typo'd variable name. Because of `set -u`,
+            # EVERY forwarded var is referenced as `${VAR:-}`: appleboy/ssh-action may not export
+            # a variable whose repo Secret/Variable does not exist, and an unset reference would
+            # abort the whole deploy.
+            set -eu
+            # `.env` carries the PocketBase superuser password, the VAPID private key and two API
+            # keys, and Uberspace is shared hosting: with the login's default umask (0644) every
+            # other account on the host could read full-database credentials. Set before anything
+            # is written, so it also covers the conditional appends below. `rsync … --delete` has
+            # already removed the server-side `.env`, so the file is always created fresh here and
+            # really does get the umask (a `>` onto an existing file would keep its old mode).
+            umask 077
             cd share-mvp
-            npm ci
             # Runtime environment for the `svelte` service. `~/etc/services.d/share-mvp.ini`
             # starts it as `node -r dotenv/config build`, so this file — and only this file —
-            # is what reaches `process.env`. The service has no `environment=` line, and the
-            # `>` truncates, so every runtime var must be listed here: anything added to
-            # `.env` by hand on the server is discarded on the next deploy.
+            # is what reaches `process.env`. The service has no `environment=` line, the `>`
+            # below truncates, and the preceding `rsync … --delete` removes a server-side `.env`
+            # that isn't in the CI workspace: nothing hand-added on the server survives a deploy.
             #
-            # Build-time vars (`$env/static/*`) belong in the build step above instead; they
-            # are baked into the artefact. These are the `$env/dynamic/public` ones read by
-            # `src/lib/instance.ts` at server start, so the build step cannot supply them.
+            # Written BEFORE `npm ci` on purpose. `rsync --delete` has already deleted the old
+            # `.env`, so with the write after `npm ci` a failing install would abort via `set -e`
+            # and leave the server with NO `.env` at all: the running process survives (dotenv
+            # loaded it at start), but the next restart or reboot hits `assertRequiredEnv()` and
+            # the site is hard-down with no file left to recover from.
+            #
+            # Since #627 EVERY app var is runtime (`$env/dynamic/*`) — there is no such thing as
+            # a build-time var any more, so anything omitted here is simply absent at runtime.
+            # The app now REFUSES TO START when one of the seven required vars is missing or
+            # empty, so a forgotten line shows up as a FATAL `svelte` service in the supervisord
+            # log (with the missing names printed), not as a half-working site. The exception is
+            # `BODY_SIZE_LIMIT`: an adapter-node var the app validator cannot see, so only this
+            # comment and review protect it.
+            #
+            # Secrets are single-quoted because `dotenv` strips an inline ` # comment` from an
+            # UNQUOTED value — a password containing ` #` would be silently truncated. Quoting is
+            # what dotenv reads as "take it literally". Consequence: a secret value must contain
+            # NO single quote and NO newline. The two `PUBLIC_ANALYTICS_*` values are known-safe
+            # and stay unquoted, as before.
             {
               echo "BODY_SIZE_LIMIT=10485760"
-              echo "PUBLIC_ANALYTICS_ORIGIN=${ANALYTICS_ORIGIN}"
-              echo "PUBLIC_ANALYTICS_WEBSITE_ID=${ANALYTICS_WEBSITE_ID}"
+              echo "PUBLIC_PB_URL='${PUBLIC_PB_URL:-}'"
+              echo "PUBLIC_VAPID_PUBLIC_KEY='${PUBLIC_VAPID_PUBLIC_KEY:-}'"
+              echo "VAPID_PRIVATE_KEY='${VAPID_PRIVATE_KEY:-}'"
+              echo "VAPID_SUBJECT='${VAPID_SUBJECT:-}'"
+              echo "ORS_API_KEY='${ORS_API_KEY:-}'"
+              echo "MISTRAL_API_KEY='${MISTRAL_API_KEY:-}'"
+              echo "PB_SUPERUSER_EMAIL='${PB_SUPERUSER_EMAIL:-}'"
+              echo "PB_SUPERUSER_PASSWORD='${PB_SUPERUSER_PASSWORD:-}'"
+              echo "PUBLIC_ANALYTICS_ORIGIN=${PUBLIC_ANALYTICS_ORIGIN:-}"
+              echo "PUBLIC_ANALYTICS_WEBSITE_ID=${PUBLIC_ANALYTICS_WEBSITE_ID:-}"
             } > .env
+            # Appended only when non-empty: an explicit empty line would OVERRIDE the code
+            # defaults in `src/lib/instance.ts` with "", whereas an absent line lets them apply.
+            # This is what makes the two repo Variables optional rather than mandatory.
+            if [ -n "${PUBLIC_SITE_ORIGIN:-}" ]; then
+              echo "PUBLIC_SITE_ORIGIN='${PUBLIC_SITE_ORIGIN}'" >> .env
+            fi
+            if [ -n "${PUBLIC_INSTANCE_CITY:-}" ]; then
+              echo "PUBLIC_INSTANCE_CITY='${PUBLIC_INSTANCE_CITY}'" >> .env
+            fi
+            npm ci
             supervisorctl restart svelte

@@ -71,7 +71,7 @@
 	}
 </script>
 
-<!-- E-Mail + Wochen-Rückblick — one form, auto-submitted on either toggle's change. -->
+<!-- Email + weekly digest ("Wochen-Rückblick") — one form, auto-submitted on either toggle's change. -->
 <form
 	method="POST"
 	action="?/saveNotificationPrefs"

@@ -36,11 +36,23 @@ describe('instance — defaults (no env vars set)', () => {
 				'https://allerleih.notion.site/36de086dc6ab80f69529e6cf68afe7c4?v=36de086dc6ab80869c89000c98bbac63',
 		});
 		expect(instance.imprint).toEqual({
-			operator: 'Matteo Ramin',
+			operator: 'AllerLeih e.V.',
+			representative: 'Vertreten durch Matteo Ramin und Timo Johner',
 			street: 'Lüner Weg 17',
 			postalCode: '21337',
 			city: 'Lüneburg',
 			country: 'Deutschland',
+			legal: {
+				supervisoryAuthority:
+					'Zuständige Aufsichtsbehörde: Falls der Betreiber einer behördlichen Aufsicht unterliegt (z. B. Finanzdienstleister, Versicherungsvermittler).',
+				professionalRegulation:
+					'Berufsrechtliche Angaben: Für reglementierte Berufe wie Anwälte, Ärzte oder Steuerberater (Berufsbezeichnung, Kammer, berufsrechtliche Regelungen).',
+				vatId: 'Umsatzsteuer-Identifikationsnummer (falls vorhanden): Nach § 27a UStG.',
+				registerEntry: 'Vereinsregisternummer: VR 202438 (Amtsgericht Lüneburg).',
+				disputeResolution:
+					'Hinweis auf die Online-Streitbeilegung (für Online-Shops): Link zur EU-Plattform zur Streitbeilegung.',
+				management: 'GmbH & Co. KG, AG, UG: Angabe der Geschäftsführer oder Vorstandsmitglieder.',
+			},
 		});
 	});
 
@@ -70,6 +82,16 @@ describe('instance — defaults (no env vars set)', () => {
 
 	it('analyticsHeadSnippet is empty when analytics is unset', () => {
 		expect(analyticsHeadSnippet()).toBe('');
+	});
+
+	it('has a non-empty FAQ founder-bio answer', () => {
+		const whoWeAre = instance.faq.faqItems[0].a;
+		expect(typeof whoWeAre).toBe('string');
+		expect(whoWeAre.length).toBeGreaterThan(0);
+	});
+
+	it('pins the current default founder-bio content (Lüneburg, deliberately not CITY-interpolated)', () => {
+		expect(instance.faq.faqItems[0].a).toContain('Lüneburg');
 	});
 });
 
@@ -242,6 +264,15 @@ describe('instance — env var wiring (integration)', () => {
 		expect(overridden.city).toBe('Marburg');
 		expect(overridden.origin).toBe('https://allerleih.org');
 		expect(overridden.appName).toBe('AllerLeih');
+	});
+
+	it('keeps faq/team static prose unchanged regardless of env vars — not a template', async () => {
+		vi.doMock('$env/dynamic/public', () => ({
+			env: { PUBLIC_INSTANCE_CITY: 'Marburg', PUBLIC_APP_NAME: 'AndersLeih' },
+		}));
+		const { instance: overridden } = await import('./instance');
+		expect(overridden.faq.faqItems[0].a).toBe(instance.faq.faqItems[0].a);
+		expect(overridden.faq.faqItems[0].a).toContain('Lüneburg');
 	});
 
 	it('wires PUBLIC_ANALYTICS_ORIGIN/PUBLIC_ANALYTICS_WEBSITE_ID into instance.analytics and analyticsHeadSnippet()', async () => {

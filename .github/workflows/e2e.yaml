@@ -1,6 +1,6 @@
 name: E2E on PR
 env:
-  node_version: '25.2.1'
+  node_version: '24.19.0'
   # Known-good PocketBase version pinned in allerleih-backend/README.md. Bumping this is a
   # deliberate, reviewable diff — see e2e/README.md. A bump touches *two* lines: the version
   # and the checksum below (upstream publishes it as `checksums.txt` on the release).
@@ -106,9 +106,12 @@ jobs:
           PB_SUPERUSER_EMAIL: ci@example.com
           PB_SUPERUSER_PASSWORD: ci-e2e-password-only
           # playwright.config.ts's webServer only sets PUBLIC_PB_URL/DEV_DISABLE_MKCERT itself —
-          # everything else the dev server reads via $env/static/* (e.g. web-push's VAPID setup
-          # in $lib/server/notifications.ts) must already be in this step's env, since Playwright
-          # spawns the dev server inheriting process.env. vitest.yaml carries its own copy of
+          # everything else the dev server reads via `$env/dynamic/*` must already be in this
+          # step's env, since Playwright spawns the dev server inheriting process.env. Since
+          # #627 these are required at DEV-SERVER START, not at build time: the `init` hook runs
+          # `assertRequiredEnv()` in `vite dev` too, so a missing var makes every request 500 —
+          # Playwright's `webServer` readiness probe then times out and the whole run fails
+          # loudly, rather than specs failing one by one. vitest.yaml carries its own copy of
           # these dummy values; the two are independent and nothing keeps them in sync, so treat
           # a change here as a prompt to check that file too rather than assuming it matches.
           PUBLIC_VAPID_PUBLIC_KEY: BOFZzlLgQ1kjzoCIyyPuVu-BKj4UYV1kpx6Rkl827Kqg5V27QOLsJnJqbNjdGCb1g4QvOEnb8Bi7oV12HiEMdWQ

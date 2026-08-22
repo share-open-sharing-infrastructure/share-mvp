@@ -69,9 +69,41 @@ return fail(400, {
 
 ## Adding New Text
 
+0. First decide **where** the string belongs — generic UI copy vs. instance-specific content —
+   per the rule in "Instance-specific content vs. generic UI strings" below. Most strings are
+   generic UI copy and go straight into `texts.ts`; only genuinely instance-specific prose goes
+   into `instance-content.ts`.
 1. Add your text to the appropriate category in `src/lib/texts.ts`
 2. Use it in your component or server file via the import above
 3. Keep texts organized by functional area; use function signatures for dynamic values
+
+## Instance-specific content vs. generic UI strings
+
+Two modules feed instance-related copy into `texts.ts`, and they're not interchangeable:
+
+- **`src/lib/instance.ts`** — instance-*derived* scalars/URLs (city, origin, contact/feedback
+  email, social links, analytics config). These are values a template interpolates; the wording
+  around them stays identical across instances.
+- **`src/lib/instance-content.ts`** — instance-*specific* prose. Content whose actual wording
+  (not just a variable inside it) would need to change if AllerLeih relaunched in a different
+  city with a different team.
+
+**Boundary rule:** would this string's wording need to change (not just a variable substituted
+into it) if AllerLeih relaunched in a different city with a different team?
+- Yes → `instance-content.ts`.
+- No, it only needs `CITY`/`APP_NAME`/an email substituted into an otherwise-identical template →
+  stays in `texts.ts`, parameterized from `$lib/instance.ts` as today.
+
+**Concrete example:** the FAQ founder-bio answer (`texts.pages.guide.faqItems[0].a`, "Wer seid
+ihr?") is biographical — it names the founders and says they studied in Lüneburg. That's true
+regardless of which city currently runs the instance, so it's *not* `CITY`-interpolated; it lives
+verbatim in `instanceContent.faq.whoWeAre` (`src/lib/instance-content.ts`) and `texts.ts` just
+references it.
+
+**Guardrail:** like `$lib/instance`, never import `$lib/instance-content` from
+`src/service-worker.ts`.
+
+See `instance-content.ts`'s own top-of-file doc comment for the full rationale.
 
 ## Categories
 
@@ -89,7 +121,7 @@ return fail(400, {
 | `buttons` | Button labels |
 | `ui` | General UI elements; many entries are functions `(value: T) => string` for dynamic values |
 | `itemStatus` | Item availability status display labels |
-| `pages` | Large per-page text objects, keyed by route name |
+| `pages` | Large per-page text objects, keyed by route name. Exception: `pages.guide.faqItems[0].a` ("Wer seid ihr?") is sourced from `instanceContent.faq.whoWeAre` in `src/lib/instance-content.ts` — see "Instance-specific content vs. generic UI strings" below |
 | `bulkUpload` | AI bulk photo upload workflow texts (institution import flow) |
 | `onboarding` | 10-step post-registration onboarding wizard texts |
 | `notifications` | Notification inbox text; also contains the push notification title |

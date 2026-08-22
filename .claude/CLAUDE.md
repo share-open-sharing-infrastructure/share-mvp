@@ -54,22 +54,34 @@ PB_SUPERUSER_EMAIL=you@example.com PB_SUPERUSER_PASSWORD=secret npm run seed -- 
 
 ## Environment variables
 
-Required in `.env` (see `docs/architecture.md` for what each does; template: `.env.example`):
-`PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`,
-`MISTRAL_API_KEY` (prod only), `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`. The superuser
-credentials are read at runtime by `$lib/server/superuser.ts` (`getSuperuserClient`), which backs
-the superuser-only `metrics_daily` reads in `$lib/server/metrics.ts`; local tooling (seed scripts,
-Playwright e2e) reads the same two vars via `process.env`. `SYNC_SECRET` is **gone** as of #487
-Phase 3 — the integrations run entirely in the backend, so the frontend holds no sync secret and
-no `/api/sync`/`/api/refresh` endpoints.
+**All app env is read at runtime via `$env/dynamic/*`** (issue #627) — `$env/static/*` is banned
+repo-wide (ESLint), so one build artefact serves any instance and nothing is baked in. The
+**required** set lives in `$lib/server/env.ts` (`REQUIRED_PUBLIC_ENV` + `REQUIRED_PRIVATE_ENV`)
+and is validated by the `init` hook in `src/hooks.server.ts`: a missing **or empty** value makes
+the server refuse to start, naming every offender. Required (template: `.env.example`; see
+`docs/architecture.md` for what each does): `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL`,
+`PB_SUPERUSER_PASSWORD`. `MISTRAL_API_KEY` is the **only optional** var (unset ⇒
+`/api/analyze-item` answers 503). `SYNC_SECRET` is **gone** as of #487 Phase 3 — the integrations
+run entirely in the backend, so the frontend holds no sync secret and no `/api/sync`/`/api/refresh`
+endpoints.
+The two public plumbing vars are read only through `$lib/publicEnv.ts` (`pbUrl()` /
+`vapidPublicKey()`) — functions, never module-scope constants, so nothing is snapshotted at import
+time. The superuser credentials are read at runtime by `$lib/server/superuser.ts`
+(`getSuperuserClient`), which backs `isAdmin()` + the `metrics_daily` reads in
+`$lib/server/metrics.ts` — that makes them a **per-request app dependency**, not just tooling;
+local tooling (seed scripts, Playwright e2e) reads the same two vars via `process.env`.
 Instance configuration (multi-city, all optional — see `docs/architecture.md` → "Instance
 configuration"): `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
-`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`. These are the
-only vars read via `$lib/instance.ts` (the sole `$env/dynamic/public` user in the repo — every
-other env access is `$env/static/*`). Unlike `$env/static/public`, `$env/dynamic/public`
-serialises the **whole** `PUBLIC_*` env into every rendered page, not just the vars a module
-references — treat any new `PUBLIC_*` var as fully public the moment it's set, whether or not
-`$lib/instance.ts` reads it (see `docs/architecture.md` → "Instance configuration").
+`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` — read via
+`$lib/instance.ts`. `$env/dynamic/public` serialises the **whole** `PUBLIC_*` env into every
+rendered page, not just the vars a module references — treat any `PUBLIC_*` var as fully public
+the moment it's set, whether or not any module reads it (see `docs/architecture.md` → "Instance
+configuration").
+Two adapter-node runtime knobs — `BODY_SIZE_LIMIT` (the official Docker image defaults this to
+10 MB, matching the Uberspace deploy) and `ORIGIN` (required behind any reverse proxy, or form
+actions fail their origin check) — are deliberately **not** in `REQUIRED_*`: `assertRequiredEnv()`
+validates only app-level vars and has no way to see adapter-node's own env surface.
 For personal local overrides (local ports, sandbox creds) that shouldn't be shared with the team,
 use a gitignored `CLAUDE.local.md` at the repo root — it loads alongside this file.
 
@@ -80,7 +92,18 @@ These prevent the most common bugs/security issues here — follow them without 
 - **Never destructure the `data` prop.** Access `data.x` directly in markup; assigning
   `let x = data.x` detaches `use:enhance` reactivity — and a *user-editable* field seeded from
   `data.x`/a prop needs a seed-once `$state` + `bind:value`, never one-way `value=`, or hydration
-  clobbers it (issue #558). → `docs/best-practices.md`
+  clobbers it (issue #558). A field that must keep *following* an external value (a URL-synced
+  filter box) needs the absorbing-derived variant of the same rule instead of seed-once —
+  issue #619. → `docs/best-practices.md`
+- **Never `$env/static/*`** — env is read at **runtime** so one build artefact serves any
+  instance (issue #627); a static import bakes an instance's value into the bundle. ESLint bans
+  both static modules. Public vars go through `$lib/publicEnv.ts` (`pbUrl()`/`vapidPublicKey()`)
+  or `$lib/instance.ts`; private vars `import { env } from '$env/dynamic/private'` at module scope
+  as usual — what must never happen is **reading** `env.X` at module scope, i.e. into a
+  module-level `const` or by passing it to something at import time (as the old
+  `webpush.setVapidDetails` call did). `vite build` imports every server module with an empty env,
+  so an import-time read sees `undefined`; read inside the function that needs the value. New
+  required vars go into `$lib/server/env.ts`, which the `init` hook validates at startup.
 - **Always build PocketBase filters with `pb.filter(raw, {params})`** — never template-literal
   interpolation. Applies to *every* value, including IDs from `locals.user.id` / route params
   (filter injection). Use `locals.pb.filter(...)` in routes, `pb.filter(...)` in `$lib/server/*`.
@@ -134,13 +157,19 @@ These prevent the most common bugs/security issues here — follow them without 
   purposes `resolve()` doesn't cover (search params, notification targets, the redirect-proxy for
   external links). → `docs/best-practices.md`
 - `locals.pb` = server PocketBase client; `locals.user` = auth record (null if unauthenticated).
-  `src/hooks.server.ts` runs `sequence(authentication, authorization)`; `/` requires auth.
+  `src/hooks.server.ts` runs `sequence(authentication, authorization, instanceHead)`.
   Authentication loads PocketBase auth from cookies and refreshes the token. Authorization
   redirects unauthenticated users to `/auth/login` (preserving `redirectTo`). Unprotected
   prefixes: `/auth/login`, `/auth/register`, `/auth/reset`, `/auth/confirm-verification`,
   `/auth/confirm-email-change`, `/search`, `/items`, `/users`,
   `/misc`, `/invite`, `/sitemap.xml`, `/robots.txt`, `/api/redirect`, `/api/diagnostics`,
-  `/auth/account-deleted`. Everything else — including `/` (home) — requires authentication.
+  `/auth/account-deleted`. **`/` (home) is public too** — it is exempted explicitly
+  (`&& pathname !== '/'` in `authorization`) and its load returns only `getPublicStats()`, so
+  **never assume `locals.user` is set on `/`**. Everything else requires authentication.
+  On top of that, `authorization` runs the legal-consent gate (#399) for every *logged-in*
+  request outside `legalGateExempt` (`/legal`, `/auth`, `/misc`, `/api/diagnostics`,
+  `/api/redirect`): a declined user is sent to `/legal/locked`, one with outstanding
+  ToS/privacy versions to `/legal/accept`.
 
 ## Where to look (load on demand)
 
@@ -164,6 +193,7 @@ These prevent the most common bugs/security issues here — follow them without 
 | Mail deliverability (SPF/DKIM/DMARC, digest one-click unsubscribe, `assetBase`/`siteBase` URL split, `digestEmails` opt-out) | `docs/operations/mail-deliverability.md`; backend hooks in `allerleih-backend/pb_hooks/services/{mail,unsubscribe}.js`, `utils/urls.js`; frontend: `$lib/server/userPreferences.ts`, `src/routes/user/profile/{NotificationSettings,PushNotificationSection,EmailNotificationForm}.svelte`, the `saveNotificationPrefs` action in `src/routes/user/profile/+page.server.ts` |
 | Running a second (city) instance: origin/city/contact/analytics config, the origin rule, branding limits | `docs/architecture.md` → "Instance configuration (multi-city)"; config in `src/lib/instance.ts` |
 | Institutional onboarding & other runbooks | `docs/operations/` |
+| Docker image / self-hosting | `docs/architecture.md` → "Running the official container image"; `Dockerfile`, `.github/workflows/docker-publish.yaml` |
 | A backend-only issue (no frontend changes) | Still drive it through `/issue-to-pr` + `/create-pr` **here** — the plan gate and review dispatch (`sveltekit-pb-reviewer` covers `pb_hooks`/`pb_migrations`) live in this repo. The backend also has its own `allerleih-backend/.claude/skills/create-pr` for standalone use when working in that repo alone. |
 
 ## Project tooling (this repo's `.claude/`)
@@ -179,6 +209,9 @@ run one explicitly with `/<name>`. Build / change work:
   backend `new-migration`) → `models.ts` → `docs/data-model.md` → public-view leak check.
 - `/write-tests` — author tests to the repo's conventions (Vitest with mocked PocketBase).
 - `/seed-scenario` — add a deterministic local seed scenario (items get generated placeholder images).
+- `/drive-app` — bring up the local stack and drive the running app in a browser (whichever browser
+  MCP the session has) to see a change work for real. Prefer `npm run test:e2e` when a spec can
+  already answer the question — it's cheaper and repeatable.
 
 Maintenance & review:
 
@@ -207,8 +240,11 @@ orchestrating skill.
 - `allerleih-coder` — implementation agent used by `/review-all` (and the maintainer's local
   issue pipeline) to carry out multi-file fixes. Does **not** commit, push, or open PRs.
 - `allerleih-tester` — change-scoped QA agent: runs the Vitest/backend/e2e tests the diff impacts
-  and drives the changed flow in a real browser (Playwright + Chrome DevTools MCP). Read-only on
-  source. Invoke it directly to verify a change, or via the local `/review-and-test` pipeline.
+  and, when the tests can't answer the question, drives the changed flow in a real browser using
+  whichever browser MCP the session has (Playwright or Chrome DevTools — the user's choice).
+  Read-only on source **by contract, not by permission**: unlike the reviewer roles it runs with
+  the full tool set, so the orchestrating skill checks the working tree afterwards and treats any
+  modification as a failed run. Invoke it directly to verify a change, or via `/review-and-test`.
 
 **Cost rules baked into `/review-all` — do not optimise them away:** (1) diff ≤ 40 lines over
 ≤ 3 files ⇒ the orchestrator reviews it itself, no agents; (2) each role only starts when the
@@ -217,6 +253,28 @@ prompt — the contract forbids the agents from re-deriving scope and caps them 
 `/security-review` is a second lens only for genuinely security-critical diffs, not routine.
 
 These complement the built-in `/code-review` and `/security-review`.
+
+**MCP servers are optional and must be named to be used.** Nobody's setup is guaranteed to have
+them, and Claude Code loads MCP tools on demand — so an agent that isn't told a server exists never
+looks for it and quietly falls back to `grep`/`cat`. Whichever of these the session has:
+
+| Server | Use it for |
+|---|---|
+| `svelte` | any Svelte 5 / SvelteKit API question; `svelte-autofixer` on components you write |
+| Context7 | signatures of other external libraries (Flowbite, Tailwind, web-push, ORS) |
+| **Serena** (`mcp__serena__*`) | navigating *this* codebase by symbol instead of by text |
+| a browser MCP (Playwright **or** Chrome DevTools) | driving the running app; see `/drive-app` |
+
+Serena is worth naming explicitly because the built-in tools always look sufficient: the case where
+it is not a preference but a correctness difference is **"where else is this symbol used?"** —
+`find_referencing_symbols` resolves that through the type checker, while `grep` misses aliased
+re-imports (`import { displayName as dn }`) and pads the result with comments and substring hits. For
+a security helper, a guardrail or a dead-code claim, that gap decides whether the answer is right.
+Also useful: `get_symbols_overview` instead of reading a long file, `rename_symbol` /
+`replace_symbol_body` / `safe_delete_symbol` for edits, `get_diagnostics_for_file` for type errors
+without a full `npm run check`. Keep `Grep` for literal text and anything Serena doesn't index (YAML,
+Markdown). The four reviewer roles are granted its **read-only** tools only — their enforced
+read-only property depends on the mutating ones staying out of the grant.
 
 ## Keep in sync
 
