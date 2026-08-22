@@ -38,6 +38,7 @@ If a step fails, fix it or ask the user how to proceed — do not continue to PR
   - **What** changed and **why** (the problem it solves / spec it implements).
   - **Test notes:** what you ran (the preflight above) and any manual verification required by the reviewer.
   - Linked issue if the branch name encodes one (e.g. `431-...` → `Closes #431`).
+  - A step-by-step manual test procedure for the reviewer to click through and verify the change (if applicable). 
 - Keep it in the repo's style; the UI/strings are German but PR text is English.
 
 ## 4. Create it
