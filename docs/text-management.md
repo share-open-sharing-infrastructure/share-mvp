@@ -72,38 +72,44 @@ return fail(400, {
 0. First decide **where** the string belongs — generic UI copy vs. instance-specific content —
    per the rule in "Instance-specific content vs. generic UI strings" below. Most strings are
    generic UI copy and go straight into `texts.ts`; only genuinely instance-specific prose goes
-   into `instance-content.ts`.
+   into `$lib/instance.ts`.
 1. Add your text to the appropriate category in `src/lib/texts.ts`
 2. Use it in your component or server file via the import above
 3. Keep texts organized by functional area; use function signatures for dynamic values
 
 ## Instance-specific content vs. generic UI strings
 
-Two modules feed instance-related copy into `texts.ts`, and they're not interchangeable:
+`$lib/instance.ts` feeds ALL instance-related copy into `texts.ts` — there is no separate
+`instance-content.ts` module (an earlier draft of this doc described one; PR #654 landed the
+prose directly in `instance.ts` instead, and share-mvp#629 built on that). It carries two kinds
+of content that aren't interchangeable:
 
-- **`src/lib/instance.ts`** — instance-*derived* scalars/URLs (city, origin, contact/feedback
-  email, social links, analytics config). These are values a template interpolates; the wording
-  around them stays identical across instances.
-- **`src/lib/instance-content.ts`** — instance-*specific* prose. Content whose actual wording
-  (not just a variable inside it) would need to change if AllerLeih relaunched in a different
-  city with a different team.
+- Instance-*derived* scalars/URLs (city, origin, contact/feedback email, imprint, social links,
+  analytics config). These are values a template interpolates; the wording around them stays
+  identical across instances. Flagship-only literal defaults for these live in
+  `$lib/instanceDefaults.ts`.
+- Instance-*specific* PROSE, under `instance.faq`/`instance.team` — content whose actual wording
+  (not just a variable inside it) would need to change if AllerLeih relaunched with a different
+  operator and team. See `InstanceConfig`'s doc comment on the `faq` field in `instance.ts` for
+  the exact boundary rule.
 
 **Boundary rule:** would this string's wording need to change (not just a variable substituted
-into it) if AllerLeih relaunched in a different city with a different team?
-- Yes → `instance-content.ts`.
+into it) if a different operator ran this instance?
+- Yes → instance-specific prose in `instance.ts` (`faq`/`team`).
 - No, it only needs `CITY`/`APP_NAME`/an email substituted into an otherwise-identical template →
   stays in `texts.ts`, parameterized from `$lib/instance.ts` as today.
 
-**Concrete example:** the FAQ founder-bio answer (`texts.pages.guide.faqItems[0].a`, "Wer seid
-ihr?") is biographical — it names the founders and says they studied in Lüneburg. That's true
-regardless of which city currently runs the instance, so it's *not* `CITY`-interpolated; it lives
-verbatim in `instanceContent.faq.whoWeAre` (`src/lib/instance-content.ts`) and `texts.ts` just
-references it.
+**Concrete example (share-mvp#629):** FAQ item 1 ("Wer seid ihr?") used to be one hardcoded,
+biographical answer naming the founders. It's now split: an operator-specific intro sentence
+(`FLAGSHIP_FOUNDER_INTRO` in `$lib/instanceDefaults.ts`) is prepended only on the flagship
+instance, ahead of a shared, instance-neutral values paragraph that's the same everywhere.
+Three other FAQ answers were similarly neutralized (dropping "gemeinnützige Organisation", "aus
+eigener Tasche", and the "Server in Deutschland/EU" data-location claim — all operator-specific
+assertions that don't hold for every self-hosted instance) so the flagship-only wording is
+confined to that one intro sentence. `instance.team` (the "/misc/about" roster) is `[]` on a
+non-flagship instance for the same reason: real people's names are flagship-specific data.
 
-**Guardrail:** like `$lib/instance`, never import `$lib/instance-content` from
-`src/service-worker.ts`.
-
-See `instance-content.ts`'s own top-of-file doc comment for the full rationale.
+**Guardrail:** like the rest of `$lib/instance`, never import it from `src/service-worker.ts`.
 
 ## Categories
 
@@ -121,7 +127,7 @@ See `instance-content.ts`'s own top-of-file doc comment for the full rationale.
 | `buttons` | Button labels |
 | `ui` | General UI elements; many entries are functions `(value: T) => string` for dynamic values |
 | `itemStatus` | Item availability status display labels |
-| `pages` | Large per-page text objects, keyed by route name. Exception: `pages.guide.faqItems[0].a` ("Wer seid ihr?") is sourced from `instanceContent.faq.whoWeAre` in `src/lib/instance-content.ts` — see "Instance-specific content vs. generic UI strings" below |
+| `pages` | Large per-page text objects, keyed by route name. Exception: `pages.guide.faqItems` is sourced from `instance.faq.faqItems` in `$lib/instance.ts` (item 1, "Wer seid ihr?", is flagship-only in its intro sentence) — see "Instance-specific content vs. generic UI strings" below |
 | `bulkUpload` | AI bulk photo upload workflow texts (institution import flow) |
 | `onboarding` | 10-step post-registration onboarding wizard texts |
 | `notifications` | Notification inbox text; also contains the push notification title |

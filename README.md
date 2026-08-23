@@ -189,13 +189,19 @@ A ready-made `docker compose` setup that wires both containers together lives in
 first-run runbook (VAPID keys, superuser creation, SMTP, legal documents, backups).
 
 All variables are read at **runtime** (issue #627) — the same image serves any instance. The
-seven required vars are `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`,
-`VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL` and `PB_SUPERUSER_PASSWORD` — the last two
-are **full PocketBase superuser credentials** (unrestricted database read/write, not scoped to
-any single feature), so store and rotate them like any other master secret. `MISTRAL_API_KEY` is
-the only optional variable (unset ⇒ `/api/analyze-item` answers 503); the six
-`PUBLIC_SITE_ORIGIN`/`PUBLIC_INSTANCE_CITY`/`PUBLIC_APP_NAME`/`PUBLIC_CONTACT_EMAIL`/
-`PUBLIC_ANALYTICS_ORIGIN`/`PUBLIC_ANALYTICS_WEBSITE_ID` instance-branding vars are optional too.
+seven unconditionally required vars are `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`,
+`VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL` and
+`PB_SUPERUSER_PASSWORD` — the last two are **full PocketBase superuser credentials**
+(unrestricted database read/write, not scoped to any single feature), so store and rotate them
+like any other master secret. `MISTRAL_API_KEY` is the only fully optional variable (unset ⇒
+`/api/analyze-item` answers 503). Instance-branding (share-mvp#629/#646) is more nuanced: on the
+**flagship** instance (allerleih.org — `PUBLIC_SITE_ORIGIN` unset or set to
+`https://allerleih.org`) every branding var is optional and falls back to allerleih.org's own
+defaults; on any OTHER `PUBLIC_SITE_ORIGIN`, seven of them (`PUBLIC_INSTANCE_CITY`,
+`PUBLIC_CONTACT_EMAIL`, `PUBLIC_IMPRINT_OPERATOR`, `PUBLIC_IMPRINT_STREET`,
+`PUBLIC_IMPRINT_POSTAL_CODE`, `PUBLIC_IMPRINT_CITY`, `PUBLIC_IMPRINT_COUNTRY`) become required
+too — a §5 TMG imprint naming the real operator is legally mandatory for a public instance in
+Germany, so the app refuses to start without them.
 See [docs/architecture.md#running-the-official-container-image](docs/architecture.md#running-the-official-container-image)
 for the full reference with defaults — that table is the single source of truth, this is only a
 summary.

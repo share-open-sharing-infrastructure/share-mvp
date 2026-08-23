@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
+	CONDITIONAL_INSTANCE_ENV,
 	ENV_PURPOSE,
 	OPTIONAL_ENV,
 	REQUIRED_PRIVATE_ENV,
 	REQUIRED_PUBLIC_ENV,
 	formatMissingEnvError,
 	formatOptionalEnvGaps,
+	missingInstanceEnv,
 	missingRequiredEnv,
 } from './env';
 
@@ -70,6 +72,48 @@ describe('missingRequiredEnv', () => {
 	});
 });
 
+function nonFlagshipInstanceEnv(): Record<string, string> {
+	return {
+		PUBLIC_SITE_ORIGIN: 'https://marburg.example.org',
+		...Object.fromEntries(CONDITIONAL_INSTANCE_ENV.map((name) => [name, `value-for-${name}`])),
+	};
+}
+
+describe('missingInstanceEnv', () => {
+	it('reports nothing on the flagship instance (PUBLIC_SITE_ORIGIN unset) — issue #646 finding F1', () => {
+		const read = readerFor({});
+		expect(missingInstanceEnv(read)).toEqual([]);
+	});
+
+	it('reports nothing when PUBLIC_SITE_ORIGIN is explicitly the flagship origin', () => {
+		const read = readerFor({ PUBLIC_SITE_ORIGIN: 'https://allerleih.org' });
+		expect(missingInstanceEnv(read)).toEqual([]);
+	});
+
+	it('reports every Class-A var, in registry order, for a non-flagship instance with nothing else set', () => {
+		const read = readerFor({ PUBLIC_SITE_ORIGIN: 'https://marburg.example.org' });
+		expect(missingInstanceEnv(read)).toEqual([...CONDITIONAL_INSTANCE_ENV]);
+	});
+
+	it('reports nothing for a fully-configured non-flagship instance', () => {
+		const read = readerFor(nonFlagshipInstanceEnv());
+		expect(missingInstanceEnv(read)).toEqual([]);
+	});
+
+	it('additionally reports PUBLIC_SITE_ORIGIN itself when set but invalid — closes the masking hole (an invalid origin would otherwise resolve to the flagship default and skip every other check)', () => {
+		const read = readerFor({ PUBLIC_SITE_ORIGIN: 'not-a-url' });
+		const missing = missingInstanceEnv(read);
+		expect(missing).toContain('PUBLIC_SITE_ORIGIN');
+		expect(missing).toEqual(expect.arrayContaining([...CONDITIONAL_INSTANCE_ENV]));
+	});
+
+	it('counts an empty string as missing, same as unset (strict, like missingRequiredEnv)', () => {
+		const values = { ...nonFlagshipInstanceEnv(), PUBLIC_CONTACT_EMAIL: '' };
+		const read = readerFor(values);
+		expect(missingInstanceEnv(read)).toEqual(['PUBLIC_CONTACT_EMAIL']);
+	});
+});
+
 describe('formatMissingEnvError', () => {
 	it('names every missing var together with its purpose', () => {
 		const message = formatMissingEnvError([
@@ -103,6 +147,12 @@ describe('formatMissingEnvError', () => {
 		expect(formatMissingEnvError([])).toContain(
 			'0 required environment variable(s)'
 		);
+	});
+
+	it('adds the §5 TMG explainer paragraph only when a Class-A instance var is among the missing', () => {
+		expect(formatMissingEnvError(['PUBLIC_IMPRINT_OPERATOR'])).toContain('§5 TMG');
+		expect(formatMissingEnvError(['PUBLIC_SITE_ORIGIN'])).toContain('§5 TMG');
+		expect(formatMissingEnvError(['ORS_API_KEY'])).not.toContain('§5 TMG');
 	});
 });
 

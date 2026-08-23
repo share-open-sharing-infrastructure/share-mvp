@@ -2,7 +2,7 @@
 	import { texts } from '$lib/texts';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
-	const { address, legalFields } = texts.pages.imprint;
+	const { address, registerEntry, legalFields } = texts.pages.imprint;
 </script>
 
 <SeoHead
@@ -16,9 +16,13 @@
 	<li>{address.name}</li>
 	<li>{address.street}</li>
 	<li>{address.postalCode} {address.city}, {address.country}</li>
-	<li>{address.representative}</li>
+	{#if address.representative}
+		<li>{address.representative}</li>
+	{/if}
 	<li>{texts.names.mainContactMail}</li>
-	<li>{legalFields.registerEntry}</li>
+	{#if registerEntry}
+		<li>{registerEntry}</li>
+	{/if}
 	<!-- Weitere Informationen unten nur falls zutreffend in Zukunft:  https://www.anwalt.de/rechtstipps/impressumspflicht-in-deutschland-was-muss-ins-impressum-und-welche-konsequenzen-drohen-241288.html -->
 	<li hidden>{legalFields.supervisoryAuthority}</li>
 	<li hidden>{legalFields.professionalRegulation}</li>

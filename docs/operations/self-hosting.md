@@ -3,8 +3,8 @@
 A reference `docker compose` stack that wires the two official images — `allerleih-backend`
 (PocketBase) and `allerleih-frontend` (SvelteKit) — into a running instance, plus the first-run
 checklist to take it from "containers are up" to "a real, legally compliant instance". Tracked
-as share-mvp#630; pairs with #629 (making the remaining operator-specific values configurable —
-see the imprint note in step 7 below for what's still open there).
+as share-mvp#630; pairs with #629/#646 (made the remaining operator-specific values — imprint,
+feedback address, social/project links, browsing city — configurable via env; see step 7 below).
 
 **Files** (all in [`deploy/`](../../deploy)):
 
@@ -159,32 +159,50 @@ prior consents. See [updating-legal-documents.md](updating-legal-documents.md) f
 mechanics (including the version-bump path, which you'll need the *next* time you materially
 change either document after real users exist).
 
+**Scope note (share-mvp#629 decision):** replacing these seeded rows is a manual, per-instance
+step and stays that way in this PR — a neutral, non-allerleih.org-branded seed for brand-new
+installs is a separate, deliberately deferred backend improvement, not part of #629. Don't skip
+this step waiting for that: it does not exist yet.
+
 ### 7. Set the imprint and other instance-branding vars
 
 **Legally mandatory** for any public instance in Germany: an imprint (§5 TMG) naming the actual
-operator. **This is currently a gap, not a configuration step:** share-mvp#629 ("make the
-remaining operator-specific values configurable") is still **open** as of this writing.
-`src/lib/instance.ts`'s `imprint`, `feedbackEmail`, `social` and `links` fields are hardcoded to
-the flagship instance's own operator data — there is **no env var** for any of them yet, and
-`.env.docker.example` deliberately doesn't invent one that wouldn't do anything. Concretely, that
-means:
+operator. As of share-mvp#629/#646 this is a real configuration step, not a code fork: the
+frontend container **refuses to start** if it's skipped on a non-flagship instance.
 
-- Running the stock `ghcr.io/…/allerleih-frontend` image unmodified puts **the upstream
-  maintainer's real postal address** on your instance's `/misc/imprint` page. That is not a
-  placeholder you can configure away today — it is factually wrong for your instance and not
-  legally acceptable for a public instance in Germany.
-- Until #629 ships, the only way to run your own imprint is to fork the frontend repo, edit that
-  block in `src/lib/instance.ts` yourself, and build+publish your own image from that fork rather
-  than the official one. That's a real hurdle for a non-technical operator, and worth flagging to
-  anyone testing this stack for real self-hosting.
+`src/lib/instance.ts` decides whether this is the **flagship** instance (allerleih.org itself) by
+resolving `PUBLIC_SITE_ORIGIN` — unset, or explicitly `https://allerleih.org`, is the flagship;
+anything else is not. On any non-flagship `PUBLIC_SITE_ORIGIN`, seven **Class A** vars become
+mandatory and the container **will not start** without them (`missingInstanceEnv()` in
+`src/lib/server/env.ts` names every missing one in the log):
 
-The other instance vars **are** already configurable and safe to skip (they default to the
-flagship instance's own values, which is fine — they're not legally sensitive): `PUBLIC_SITE_ORIGIN`,
-`PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN` +
-`PUBLIC_ANALYTICS_WEBSITE_ID` (analytics is opt-in — unset means no analytics script loads at
-all). See
+```
+PUBLIC_INSTANCE_CITY
+PUBLIC_CONTACT_EMAIL
+PUBLIC_IMPRINT_OPERATOR
+PUBLIC_IMPRINT_STREET
+PUBLIC_IMPRINT_POSTAL_CODE
+PUBLIC_IMPRINT_CITY
+PUBLIC_IMPRINT_COUNTRY
+```
+
+Set these to YOUR OWN operator data before pointing `PUBLIC_SITE_ORIGIN` at anything other than
+`https://allerleih.org` — running the stock `ghcr.io/…/allerleih-frontend` image with a foreign
+origin and no imprint data configured is no longer possible; the container exits immediately
+instead of silently showing the wrong operator's address.
+
+A further set of **Class B** vars is optional on every instance (empty ⇒ the corresponding
+link/field is simply hidden, never a dead link): `PUBLIC_IMPRINT_REPRESENTATIVE`,
+`PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`, `PUBLIC_SOCIAL_TELEGRAM`,
+`PUBLIC_SOCIAL_MASTODON`, `PUBLIC_SOCIAL_PIXELFED`, `PUBLIC_SOCIAL_INSTAGRAM`,
+`PUBLIC_CONTRIBUTE_URL`. `PUBLIC_GITHUB_URL` (Class C) defaults to the upstream repository on
+every instance and only needs setting if you're pointing "view source" at your own fork.
+
+`PUBLIC_APP_NAME`, `PUBLIC_ANALYTICS_ORIGIN` + `PUBLIC_ANALYTICS_WEBSITE_ID` remain optional
+everywhere, including the flagship (analytics is opt-in — unset means no analytics script loads
+at all). See
 [architecture.md → Instance configuration (multi-city)](../architecture.md#instance-configuration-multi-city)
-for what each does.
+for the full class breakdown and what each var does.
 
 ### 8. Set up backups
 
@@ -216,13 +234,14 @@ service), and define a retention period rather than keeping every snapshot forev
 | Step | Mandatory for a public instance? |
 |---|---|
 | Replace the seeded ToS + privacy policy (step 6) | **Yes** — they're a binding legal document naming the wrong operator otherwise. |
-| Imprint with your real operator data (step 7) | **Yes** (§5 TMG) — but **not currently possible via env** (share-mvp#629 open); requires a custom build until it ships. |
+| Imprint with your real operator data (step 7) | **Yes** (§5 TMG) — enforced by the container itself on any non-flagship instance: it refuses to start without the seven Class A vars set (share-mvp#629/#646). |
 | VAPID keys (step 1) | **Yes** — `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` are all in `assertRequiredEnv()`'s required set (`src/lib/server/env.ts`): the frontend container **refuses to start** without them, exactly like `PB_SUPERUSER_*` below — and even once it starts, Web Push never fires without a real key pair. |
 | PocketBase superuser + `PB_SUPERUSER_*` (step 3) | Practically yes — the frontend won't start without `PB_SUPERUSER_EMAIL`/`PASSWORD` set (`assertRequiredEnv()`), even though the superuser account itself only backs the `/admin` gate and public stats. |
 | `FRONTEND_URL`/`APP_URL` (step 4) | Practically yes — no startup check catches a missing value (backend vars have no `assertRequiredEnv()`-style gate), but without them registration/password-reset mail links silently point at the wrong host. |
 | SMTP (step 5) | Optional but strongly recommended — without it, registration/verification/reset mail and digests are silently not sent. |
 | Backups (step 8) | Optional in the sense that nothing enforces it, but skipping it risks total data loss. |
-| `PUBLIC_ANALYTICS_*`, `PUBLIC_APP_NAME`, `PUBLIC_CONTACT_EMAIL`, feedback/social links | Optional — safe to leave at their flagship defaults. |
+| `PUBLIC_ANALYTICS_*`, `PUBLIC_APP_NAME` | Optional on every instance, including the flagship. |
+| Class B imprint/feedback/social/contribute vars (step 7) | Optional even on a non-flagship instance — empty just hides the corresponding link/field. |
 | `MISTRAL_API_KEY` | Fully optional — unset just disables AI item-photo analysis. |
 
 ## Updating (image tags, migrations, rollback)
@@ -287,4 +306,3 @@ step 8, not just switching the tag back.
 - [architecture.md → Running the official container image](../architecture.md#running-the-official-container-image) — the canonical, per-variable runtime-config reference for the frontend image alone.
 - [updating-legal-documents.md](updating-legal-documents.md) — the full ToS/privacy edit + re-consent mechanics referenced in step 6.
 - [allerleih-backend `README.md` → "Run with Docker (self-hosting)"](https://github.com/share-open-sharing-infrastructure/allerleih-backend#run-with-docker-self-hosting) — the backend image's own bare-`docker run` path, superuser/backup recipes, and the uid/gid-1001 bind-mount note this runbook builds on.
-- share-mvp#629 — will close the imprint/feedback/social-links gap noted in step 7.

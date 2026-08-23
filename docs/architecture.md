@@ -98,24 +98,34 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 ## Instance configuration (multi-city)
 
 **`src/lib/instance.ts` is the single source of everything that differs between AllerLeih
-instances** (city, origin, contact addresses, analytics) — routes and components read from it
-instead of hardcoding `allerleih.org` or a city name. `src/lib/texts.ts` imports it and
-interpolates the German copy at module load (e.g. `pages.landing.whoBodyPart1`, the PWA install
-steps); everything else in the app reads URLs/emails straight from `instance`.
+instances** (city, origin, contact addresses, imprint, social/project links, analytics) — routes
+and components read from it instead of hardcoding `allerleih.org` or a city name. Flagship-only
+literal defaults (allerleih.org's own operator data) live in `src/lib/instanceDefaults.ts`.
+`src/lib/texts.ts` imports `instance` and interpolates the German copy at module load (e.g.
+`pages.landing.whoBodyPart1`, the PWA install steps); everything else in the app reads
+URLs/emails straight from `instance`.
 
-| Field | Env var | Default |
+**The flagship instance** is allerleih.org itself (`isFlagshipOrigin()` in `instanceResolvers.ts`
+decides this from the *resolved* origin, not the raw env var — unset counts as flagship, since
+production doesn't set `PUBLIC_SITE_ORIGIN` at all). Every instance-branding var falls into one of
+three classes:
+
+| Class | Meaning | Vars |
 |---|---|---|
-| `origin` | `PUBLIC_SITE_ORIGIN` | `https://allerleih.org` |
-| `city` | `PUBLIC_INSTANCE_CITY` | `Lüneburg` |
-| `appName` | `PUBLIC_APP_NAME` | `AllerLeih` |
-| `contactEmail` | `PUBLIC_CONTACT_EMAIL` | `kontakt@allerleih.org` |
-| `analytics.scriptOrigin` | `PUBLIC_ANALYTICS_ORIGIN` | *(unset ⇒ off)* |
-| `analytics.websiteId` | `PUBLIC_ANALYTICS_WEBSITE_ID` | *(unset ⇒ off)* |
+| **A** | Required on a non-flagship instance — the server refuses to start without it (`missingInstanceEnv()` in `src/lib/server/env.ts`); a §5 TMG imprint is legally mandatory | `PUBLIC_INSTANCE_CITY`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_IMPRINT_OPERATOR`, `PUBLIC_IMPRINT_STREET`, `PUBLIC_IMPRINT_POSTAL_CODE`, `PUBLIC_IMPRINT_CITY`, `PUBLIC_IMPRINT_COUNTRY` |
+| **B** | Optional on every instance — unset ⇒ `''` on a non-flagship instance, and the render site hides the link/field (no dead link) | `PUBLIC_IMPRINT_REPRESENTATIVE`, `PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`, `PUBLIC_SOCIAL_TELEGRAM`, `PUBLIC_SOCIAL_MASTODON`, `PUBLIC_SOCIAL_PIXELFED`, `PUBLIC_SOCIAL_INSTAGRAM`, `PUBLIC_CONTRIBUTE_URL` |
+| **C** | Defaults unconditionally, not flagship-gated | `PUBLIC_GITHUB_URL` (upstream repo) |
 
-All six are optional; an unset/invalid value falls back to the Lüneburg/allerleih.org default
-(never throws — a bad env var must not 500 the whole app). Operator-owned values that don't vary
-per city (feedback address, social links, GitHub/Notion links, the legal imprint address) are
-hardcoded in the same module rather than env-fed.
+Plus the two cosmetic/analytics vars that predate the class system and are optional everywhere:
+`PUBLIC_APP_NAME` (default `AllerLeih`) and the opt-in analytics pair `PUBLIC_ANALYTICS_ORIGIN`/
+`PUBLIC_ANALYTICS_WEBSITE_ID` (unset ⇒ off). `PUBLIC_SITE_ORIGIN` itself defaults to
+`https://allerleih.org` when unset or invalid — never throws (a bad env var must not 500 the
+whole app) — but on a non-flagship instance a value that fails to parse as a valid http(s) origin
+is *also* reported as missing by `missingInstanceEnv()`, alongside whichever Class A vars are
+unset, rather than silently masquerading as the flagship (issue #646).
+
+In `dev`, a misconfigured non-flagship instance only logs a `console.warn` instead of refusing to
+start (`src/hooks.server.ts`'s `init` hook) — production always gets the hard failure.
 
 **The origin rule** — stated once, applied everywhere: crawler-facing absolute URLs (sitemap,
 robots, `canonical` via `SeoHead`'s opt-in `canonical` flag, `og:url`, `og:image`) always come
@@ -206,9 +216,11 @@ see "Current Deployment Pipeline" below for where that has to live and which thr
 - **Body size limit:** 10 MB, set via `BODY_SIZE_LIMIT` env var on the server after each deploy
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — a separate value from the frontend's, which lives in the SvelteKit runtime `.env`.
 - **Runtime env vars** — since #627 that is *all* of them (the seven required ones,
-  `MISTRAL_API_KEY`, and the optional instance vars `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`,
-  `PUBLIC_APP_NAME`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`,
-  `PUBLIC_ANALYTICS_WEBSITE_ID`). They are read via `$env/dynamic/*` from `process.env`
+  `MISTRAL_API_KEY`, and the instance-branding vars — see "Instance configuration" above for the
+  Class A/B/C breakdown). This deploy IS the flagship instance (`PUBLIC_SITE_ORIGIN` is one of the
+  two repo Variables the `.env` block in `deploy-to-uberspace.yaml` leaves unset), so none of the
+  Class A/B vars need setting here; a deploy pointed at any other origin would need the seven
+  Class A vars too, or the process refuses to start. They are read via `$env/dynamic/*` from `process.env`
   (adapter-node) at server start, never baked into the build — so one build artefact serves every
   city instance and only each instance's runtime environment differs. Three traps when adding one:
   (1) putting it in the workflow's `npm run build` step has **no** effect — that is now true for
@@ -254,7 +266,8 @@ here:
 | `ORS_API_KEY` | Address autocomplete (`/api/geocode`) | — (required) |
 | `PB_SUPERUSER_EMAIL` / `PB_SUPERUSER_PASSWORD` | **Full PocketBase superuser credentials** — unrestricted read/write on every collection (all users' emails, coordinates, trust graph, messages) plus schema and admin control, bypassing every collection rule. This app only *uses* them for the `/admin` gate, public stats, and `metrics_daily`, but the credential itself is not scoped to those three features — store and rotate it like any other master secret, not like a feature-scoped API key. | — (required) |
 | `MISTRAL_API_KEY` | AI item-photo analysis | unset ⇒ `/api/analyze-item` answers 503 |
-| `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` | Instance branding/analytics | see "Instance configuration" above |
+| `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_IMPRINT_OPERATOR`, `PUBLIC_IMPRINT_STREET`, `PUBLIC_IMPRINT_POSTAL_CODE`, `PUBLIC_IMPRINT_CITY`, `PUBLIC_IMPRINT_COUNTRY` | Instance branding, Class A | required unless this is the flagship instance — see "Instance configuration" above |
+| `PUBLIC_IMPRINT_REPRESENTATIVE`, `PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`, `PUBLIC_SOCIAL_TELEGRAM`, `PUBLIC_SOCIAL_MASTODON`, `PUBLIC_SOCIAL_PIXELFED`, `PUBLIC_SOCIAL_INSTAGRAM`, `PUBLIC_CONTRIBUTE_URL`, `PUBLIC_GITHUB_URL`, `PUBLIC_APP_NAME`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` | Instance branding, Class B/C + cosmetic/analytics | optional everywhere — see "Instance configuration" above |
 
 Two adapter-node knobs are **not** in that set and cannot be, because `assertRequiredEnv()` has
 no way to see them — they are validated by adapter-node itself, not by this app:

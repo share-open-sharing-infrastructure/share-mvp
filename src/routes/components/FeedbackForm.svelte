@@ -139,17 +139,19 @@
 		</div>
 	</div>
 
-	<p class="text-sm text-tinte-500">
-		{texts.feedback.voiceMemoHint}
-		<a
-			href={instance.social.telegram}
-			target="_blank"
-			rel="external noopener noreferrer"
-			class="text-primary-500 hover:underline"
-		>
-			{texts.feedback.voiceMemoLink}
-		</a>
-	</p>
+	{#if instance.social.telegram}
+		<p class="text-sm text-tinte-500">
+			{texts.feedback.voiceMemoHint}
+			<a
+				href={instance.social.telegram}
+				target="_blank"
+				rel="external noopener noreferrer"
+				class="text-primary-500 hover:underline"
+			>
+				{texts.feedback.voiceMemoLink}
+			</a>
+		</p>
+	{/if}
 
 	<details class="text-xs text-tinte-400">
 		<summary class="cursor-pointer select-none hover:text-tinte-600">
@@ -163,8 +165,11 @@
 			<li>Eingabe: {inputType}</li>
 		</ul>
 		<p class="mt-1">
-			Keine personenbezogenen Daten — du gibst anonymes Feedback. Für direkten Kontakt:
-			<a href="mailto:{texts.names.feedbackMail}" class="hover:underline">{texts.names.feedbackMail}</a>
+			Keine personenbezogenen Daten — du gibst anonymes Feedback.
+			{#if texts.names.feedbackMail}
+				Für direkten Kontakt:
+				<a href="mailto:{texts.names.feedbackMail}" class="hover:underline">{texts.names.feedbackMail}</a>
+			{/if}
 		</p>
 	</details>
 

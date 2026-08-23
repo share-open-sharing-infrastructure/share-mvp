@@ -167,16 +167,18 @@
 					</p>
 				</div>
 			{/each}
-			<div class={styles.card}>
-				<h2 class={styles.cardTitle}>{contributeInfoCard.title}</h2>
-				<p class={styles.cardBody}>
-					{contributeInfoCard.before}
-					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- buildRedirectHref() returns an already-resolved /api/redirect proxy URL; the rule cannot see through the call -->
-					<a href={contributeInfoCard.href} class={styles.cardLink}
-						>{contributeInfoCard.linkText}</a
-					>{contributeInfoCard.after}
-				</p>
-			</div>
+			{#if instance.links.contributeBoard}
+				<div class={styles.card}>
+					<h2 class={styles.cardTitle}>{contributeInfoCard.title}</h2>
+					<p class={styles.cardBody}>
+						{contributeInfoCard.before}
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- buildRedirectHref() returns an already-resolved /api/redirect proxy URL; the rule cannot see through the call -->
+						<a href={contributeInfoCard.href} class={styles.cardLink}
+							>{contributeInfoCard.linkText}</a
+						>{contributeInfoCard.after}
+					</p>
+				</div>
+			{/if}
 		</div>
 	</section>
 

@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase';
-import { building } from '$app/environment';
+import { building, dev } from '$app/environment';
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { redirect } from '@sveltejs/kit';
@@ -7,17 +7,30 @@ import { getOutstandingLegalDocs, isLegalLocked, type LegalUser } from '$lib/ser
 import { getActiveLegalVersions } from '$lib/server/legalDocs';
 import { analyticsHeadSnippet } from '$lib/instance';
 import { pbUrl } from '$lib/publicEnv';
-import { assertRequiredEnv, logOptionalEnvGaps } from '$lib/server/env';
+import {
+	assertInstanceEnv,
+	assertRequiredEnv,
+	logOptionalEnvGaps,
+	warnInstanceEnvGaps,
+} from '$lib/server/env';
 
 /**
- * Fail fast, once, before the first request (issue #627). Since env moved from
- * `$env/static/*` to `$env/dynamic/*`, `vite build` no longer catches a missing variable —
+ * Fail fast, once, before the first request (issue #627, extended by #629/#646). Since env moved
+ * from `$env/static/*` to `$env/dynamic/*`, `vite build` no longer catches a missing variable —
  * so a misconfigured instance would otherwise 500 (or silently degrade: no admin gate, no
- * public stats, no push) on first use. `assertRequiredEnv()` names every missing variable at
+ * public stats, no push, or — the #629 case — allerleih.org's own imprint on someone else's
+ * instance) on first use. `assertRequiredEnv()` names every missing "hard seven" variable at
  * once; adapter-node awaits this before `listen()`, so the throw kills the process with the
  * full list in the supervisord log instead of leaving a half-working server up.
  *
- * Skipped while `building`: `vite build` analyses/prerenders with a possibly empty env, and
+ * `assertInstanceEnv()` is a SEPARATE, conditional check (`$lib/server/env.ts`'s
+ * `missingInstanceEnv()`): it only demands anything on a non-flagship instance (a §5 TMG
+ * imprint is legally mandatory there), and is deliberately softer here — in `dev` it only
+ * `console.warn`s instead of refusing to start, so a developer with a local `PUBLIC_SITE_ORIGIN`
+ * set for other testing isn't forced to also maintain a full imprint just to run `npm run dev`.
+ * Production gets the hard failure like the required seven.
+ *
+ * Both skipped while `building`: `vite build` analyses/prerenders with a possibly empty env, and
  * building a generic artefact must never require an instance's configuration.
  *
  * `logOptionalEnvGaps()` then prints one line naming the optional vars this instance runs
@@ -27,6 +40,11 @@ import { assertRequiredEnv, logOptionalEnvGaps } from '$lib/server/env';
 export const init: ServerInit = () => {
 	if (building) return;
 	assertRequiredEnv();
+	if (dev) {
+		warnInstanceEnvGaps();
+	} else {
+		assertInstanceEnv();
+	}
 	logOptionalEnvGaps();
 };
 

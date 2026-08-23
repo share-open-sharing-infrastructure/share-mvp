@@ -12,6 +12,9 @@ const APP_NAME = instance.appName;
 // itself (not just a variable) would change for a different instance — see `$lib/instance.ts`'s
 // `InstanceConfig.faq` doc comment for the full boundary rule. Used directly at the value site
 // below (e.g. `faqItems[0].a`), not hoisted to a const like the scalars above.
+// Since #629, several of these scalars (`FEEDBACK_MAIL`, `instance.imprint.*`, `instance.social.*`,
+// `instance.links.contributeBoard`) can be `''` on an unconfigured non-flagship instance — the
+// render sites that use them wrap the result in `{#if}` rather than relying on a value here.
 const CITY = instance.city;
 const CONTACT_MAIL = instance.contactEmail;
 const FEEDBACK_MAIL = instance.feedbackEmail;
@@ -471,6 +474,10 @@ export const texts = {
 			missionHeading: `Was ist ${APP_NAME}?`,
 			missionBody: `${APP_NAME} ermöglicht es Menschen und Organisationen, Gegenstände innerhalb ihrer Gemeinschaft zu teilen. Wir wollen das Teilen und Leihen so einfach machen, dass es selbstverständlich wird. Dafür bauen wir diese Plattform, gründen eigene Leih-Orte und integrieren bestehende Verleihe. Außerdem unterstützen wir andere dabei, eigene Leih-Orte zu gründen und ${APP_NAME} in ihrer Region aufzubauen.`,
 			teamHeading: 'Team',
+			// Shown instead of `teamHeading` when `instance.team` is empty (non-flagship instance,
+			// #629) — the join-card section still needs a namable heading for screen-reader users
+			// navigating by heading, even with no roster to introduce.
+			joinTeamHeading: 'Werde Teil des Teams',
 			joinCardName: 'Du?',
 			joinCardPrompt: 'Hast du Lust?',
 			joinCardTagline: 'Mach mit!',
@@ -495,6 +502,10 @@ export const texts = {
 				city: instance.imprint.city,
 				country: instance.imprint.country,
 			},
+			// Real operator data (§5 Nr. 4 TMG) — moved out of `legalFields` in #629 (it's not
+			// generic placeholder guidance like the rest of that object; see `$lib/instance.ts`'s
+			// `InstanceImprint`).
+			registerEntry: instance.imprint.registerEntry,
 			// Currently unused (all `hidden`) — placeholders for legal fields that only apply
 			// to some operators; kept here so they're ready to surface without re-authoring.
 			legalFields: instance.imprint.legal,

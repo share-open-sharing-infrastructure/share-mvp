@@ -71,13 +71,20 @@ time. The superuser credentials are read at runtime by `$lib/server/superuser.ts
 (`getSuperuserClient`), which backs `isAdmin()` + the `metrics_daily` reads in
 `$lib/server/metrics.ts` — that makes them a **per-request app dependency**, not just tooling;
 local tooling (seed scripts, Playwright e2e) reads the same two vars via `process.env`.
-Instance configuration (multi-city, all optional — see `docs/architecture.md` → "Instance
-configuration"): `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
-`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` — read via
-`$lib/instance.ts`. `$env/dynamic/public` serialises the **whole** `PUBLIC_*` env into every
-rendered page, not just the vars a module references — treat any `PUBLIC_*` var as fully public
-the moment it's set, whether or not any module reads it (see `docs/architecture.md` → "Instance
-configuration").
+Instance configuration (multi-city, share-mvp#629/#646 — see `docs/architecture.md` → "Instance
+configuration"): read via `$lib/instance.ts`, flagship-only defaults in
+`$lib/instanceDefaults.ts`. Optional everywhere on the **flagship** instance (allerleih.org —
+`PUBLIC_SITE_ORIGIN` unset or `https://allerleih.org`); on any OTHER `PUBLIC_SITE_ORIGIN`, seven
+Class-A vars become **required or the server refuses to start**: `PUBLIC_INSTANCE_CITY`,
+`PUBLIC_CONTACT_EMAIL`, `PUBLIC_IMPRINT_OPERATOR`, `PUBLIC_IMPRINT_STREET`,
+`PUBLIC_IMPRINT_POSTAL_CODE`, `PUBLIC_IMPRINT_CITY`, `PUBLIC_IMPRINT_COUNTRY`. The rest
+(`PUBLIC_IMPRINT_REPRESENTATIVE`, `PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`,
+`PUBLIC_SOCIAL_TELEGRAM`/`MASTODON`/`PIXELFED`/`INSTAGRAM`, `PUBLIC_CONTRIBUTE_URL`,
+`PUBLIC_GITHUB_URL`, `PUBLIC_APP_NAME`, `PUBLIC_ANALYTICS_ORIGIN`/`WEBSITE_ID`) stay optional
+everywhere; empty ⇒ the corresponding link/field is hidden (`{#if}`), never a dead link.
+`$env/dynamic/public` serialises the **whole** `PUBLIC_*` env into every rendered page, not just
+the vars a module references — treat any `PUBLIC_*` var as fully public the moment it's set,
+whether or not any module reads it (see `docs/architecture.md` → "Instance configuration").
 Two adapter-node runtime knobs — `BODY_SIZE_LIMIT` (the official Docker image defaults this to
 10 MB, matching the Uberspace deploy) and `ORIGIN` (required behind any reverse proxy, or form
 actions fail their origin check) — are deliberately **not** in `REQUIRED_*`: `assertRequiredEnv()`
@@ -127,8 +134,13 @@ These prevent the most common bugs/security issues here — follow them without 
   `$lib/lending.ts` + `texts.lending.statusLabel` **and** that backend mirror in the same effort.
 - **All user-facing strings go in `src/lib/texts.ts`**, never inline. Item categories live
   in `src/lib/categories.ts` (fixed across instances; change via `docs/data-model.md` → "Item categories").
-- **Instance-specific values (city, origin, contact/feedback email, social links, analytics)
-  come only from `$lib/instance.ts`** — never hardcode `allerleih.org` or a city name.
+- **Instance-specific values (city, origin, contact/feedback email, imprint, social links,
+  analytics) come only from `$lib/instance.ts`** — never hardcode `allerleih.org`, a city name,
+  or an operator's postal address. Flagship-only literal defaults live in
+  `$lib/instanceDefaults.ts`, never inline in `instance.ts` or a route. A value that can be
+  empty on a non-flagship instance (Class B — `$lib/instance.ts`'s header explains the
+  A/B/C classes) needs an `{#if}` at its render site, since e.g. `buildRedirectHref('')` renders
+  a dead link instead of nothing.
   Crawler-facing absolute URLs (sitemap, robots, canonical, `og:url`/`og:image`) use
   `instanceUrl()` with a **literal root-absolute path** (or `SeoHead`'s opt-in `canonical` flag,
   which derives the current page's own URL from `page.url.pathname`); user-facing share/invite

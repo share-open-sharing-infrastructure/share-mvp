@@ -30,7 +30,7 @@
 <section class="px-4 py-8">
 	<div class="mx-auto max-w-4xl">
 		<h2 class="mb-10 text-center text-2xl font-bold text-tinte-900">
-			{texts.pages.about.teamHeading}
+			{members.length > 0 ? texts.pages.about.teamHeading : texts.pages.about.joinTeamHeading}
 		</h2>
 		<div class="flex flex-wrap justify-center gap-10">
 			{#each members as member (member.id)}

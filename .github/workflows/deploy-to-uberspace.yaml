@@ -121,6 +121,17 @@ jobs:
             # Appended only when non-empty: an explicit empty line would OVERRIDE the code
             # defaults in `src/lib/instance.ts` with "", whereas an absent line lets them apply.
             # This is what makes the two repo Variables optional rather than mandatory.
+            #
+            # DELIBERATELY left unset here (share-mvp#629/#646): neither repo Variable is
+            # configured, so this deploy boots as allerleih.org's own FLAGSHIP instance —
+            # `isFlagshipOrigin()` in `src/lib/instance.ts` treats an unset `PUBLIC_SITE_ORIGIN`
+            # as the flagship on purpose, precisely so this stays true. Do NOT "fix" this by
+            # adding the two vars below with allerleih.org's own values — that changes nothing
+            # (the code defaults already equal them) and would only invite someone to later "fix"
+            # them to a WRONG value, silently taking allerleih.org's own imprint down. If this
+            # deploy is ever repointed at a different origin, every Class-A instance var in
+            # `.env.example` becomes required — see `docs/architecture.md` → "Instance
+            # configuration" and `missingInstanceEnv()` in `src/lib/server/env.ts`.
             if [ -n "${PUBLIC_SITE_ORIGIN:-}" ]; then
               echo "PUBLIC_SITE_ORIGIN='${PUBLIC_SITE_ORIGIN}'" >> .env
             fi

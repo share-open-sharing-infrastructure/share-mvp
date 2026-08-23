@@ -105,9 +105,13 @@ describe('texts.seo — city is interpolated, not hardcoded', () => {
 	/**
 	 * Walks every string reachable under `texts.seo`, calling functions with placeholder args.
 	 *
-	 * Scoped to `texts.seo` on purpose: `texts.pages.imprint.address.city` is legitimately
-	 * "Lüneburg" — it comes from `instance.imprint`, the operator's postal address (§5 TMG),
-	 * which is deliberately *not* per-instance. A repo-wide walk would fail on it.
+	 * Scoped to `texts.seo` on purpose — NOT because `texts.pages.imprint.address.city` is
+	 * exempt from per-instance configuration (since #629 it IS configurable, via its own
+	 * `PUBLIC_IMPRINT_CITY`, independently of the browsing `CITY`/`PUBLIC_INSTANCE_CITY` this
+	 * file's walk is about), but because a repo-wide walk would break on unrelated shapes under
+	 * `texts.pages` (arrays, multi-arg functions) for no benefit — `instance.test.ts` already
+	 * covers the imprint/social/team denylist directly, and `texts.pages.imprint`/`texts.names`
+	 * get their own narrow walk below.
 	 *
 	 * Assumes every function under `texts.seo` takes 1–2 string args — it calls each with
 	 * `('X', 'Y')` regardless of arity. Adding a 3-arg entry will fail this test with an opaque
@@ -149,5 +153,53 @@ describe('texts.seo — city is interpolated, not hardcoded', () => {
 		vi.doMock('$env/dynamic/public', () => ({ env: { PUBLIC_INSTANCE_CITY: 'Marburg' } }));
 		const { texts: overridden } = await import('./texts');
 		expect(overridden.pages.search.title).toBe('Gegenstände leihen in Marburg');
+	});
+});
+
+/**
+ * `texts.pages.imprint` and `texts.names` are the two spots in `texts.ts` that surface
+ * `instance.imprint`/`instance.contactEmail`/`instance.feedbackEmail` as user-facing strings
+ * (issue #629) — a narrow walk, not a repo-wide one (`texts.pages` otherwise has arrays and
+ * multi-arg functions that would make a generic recursive caller fragile for no benefit; see the
+ * doc comment on `collectSeoStrings` above for why the SEO walk stays scoped too).
+ */
+describe('texts.pages.imprint / texts.names — no hardcoded flagship literals for a non-flagship instance', () => {
+	beforeEach(() => vi.resetModules());
+	afterEach(() => vi.doUnmock('$env/dynamic/public'));
+
+	function collectStrings(node: unknown): string[] {
+		if (typeof node === 'string') return [node];
+		if (node && typeof node === 'object') return Object.values(node).flatMap(collectStrings);
+		return [];
+	}
+
+	it('leaks no flagship-operator data for a fully-configured non-flagship instance', async () => {
+		vi.doMock('$env/dynamic/public', () => ({
+			env: {
+				PUBLIC_SITE_ORIGIN: 'https://marburg.example.org',
+				PUBLIC_INSTANCE_CITY: 'Marburg',
+				PUBLIC_CONTACT_EMAIL: 'kontakt@marburg.example.org',
+				PUBLIC_IMPRINT_OPERATOR: 'Marburg Teilt e.V.',
+				PUBLIC_IMPRINT_STREET: 'Teststraße 1',
+				PUBLIC_IMPRINT_POSTAL_CODE: '35037',
+				PUBLIC_IMPRINT_CITY: 'Marburg',
+				PUBLIC_IMPRINT_COUNTRY: 'Deutschland',
+				PUBLIC_IMPRINT_REPRESENTATIVE: 'Vertreten durch Erika Musterfrau',
+				PUBLIC_IMPRINT_REGISTER_ENTRY: 'Vereinsregisternummer: VR 99999 (Amtsgericht Marburg).',
+				PUBLIC_FEEDBACK_EMAIL: 'feedback@marburg.example.org',
+			},
+		}));
+		const { texts: overridden } = await import('./texts');
+
+		const strings = [
+			...collectStrings(overridden.pages.imprint),
+			...collectStrings(overridden.names),
+		];
+		expect(strings.length).toBeGreaterThan(0);
+		for (const forbidden of ['Lüneburg', 'AllerLeih e.V.', 'VR 202438', 'allerleih.org']) {
+			for (const value of strings) {
+				expect(value).not.toContain(forbidden);
+			}
+		}
 	});
 });
