@@ -158,6 +158,11 @@ npx vitest run src/path/to/file.test.ts   # a single test file
 
 ## Run with Docker (self-hosting)
 
+> **Bringing up a whole instance from scratch?** Follow the step-by-step guide rather than this
+> summary: **[INSTALL.md](INSTALL.md)** (English) · **[INSTALL.de.md](INSTALL.de.md)** (Deutsch).
+> Both containers behind Caddy, from DNS records to backups, using the files in
+> [`deploy/`](deploy).
+
 An official multi-stage image is published to GHCR by `.github/workflows/docker-publish.yaml`:
 `ghcr.io/share-open-sharing-infrastructure/allerleih-frontend`. It complements the Uberspace
 deploy above rather than replacing it — see [Dockerfile](Dockerfile) for the build itself and
