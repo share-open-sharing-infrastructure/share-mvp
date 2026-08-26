@@ -1,9 +1,13 @@
 import { fail } from '@sveltejs/kit';
 import { texts } from '$lib/texts';
 import { getPublicStats } from '$lib/server/metrics';
+import { instance } from '$lib/instance';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
+	if (!instance.showLandingStats) {
+		return { stats: null };
+	}
 	return { stats: await getPublicStats() };
 };
 

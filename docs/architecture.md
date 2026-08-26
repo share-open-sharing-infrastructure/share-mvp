@@ -111,11 +111,13 @@ steps); everything else in the app reads URLs/emails straight from `instance`.
 | `contactEmail` | `PUBLIC_CONTACT_EMAIL` | `kontakt@allerleih.org` |
 | `analytics.scriptOrigin` | `PUBLIC_ANALYTICS_ORIGIN` | *(unset ⇒ off)* |
 | `analytics.websiteId` | `PUBLIC_ANALYTICS_WEBSITE_ID` | *(unset ⇒ off)* |
+| `showLandingStats` | `PUBLIC_SHOW_LANDING_STATS` | `true` (shown) |
 
-All six are optional; an unset/invalid value falls back to the Lüneburg/allerleih.org default
+All seven are optional; an unset/invalid value falls back to the Lüneburg/allerleih.org default
 (never throws — a bad env var must not 500 the whole app). Operator-owned values that don't vary
 per city (feedback address, social links, GitHub/Notion links, the legal imprint address) are
-hardcoded in the same module rather than env-fed.
+hardcoded in the same module rather than env-fed. `showLandingStats` only gates the `/` public
+stats teaser section — `/misc/stats` always shows the same numbers on its own dedicated page.
 
 **The origin rule** — stated once, applied everywhere: crawler-facing absolute URLs (sitemap,
 robots, `canonical` via `SeoHead`'s opt-in `canonical` flag, `og:url`, `og:image`) always come

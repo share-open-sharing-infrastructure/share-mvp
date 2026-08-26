@@ -94,6 +94,8 @@ export interface InstanceConfig {
 	readonly links: InstanceLinks;
 	readonly imprint: InstanceImprint;
 	readonly analytics: InstanceAnalytics;
+	/** Landing-page ("/") public stats teaser. Unset/anything but "false" ⇒ shown. */
+	readonly showLandingStats: boolean;
 	/**
 	 * Instance-specific PROSE — the counterpart to the scalar fields above. Demarcation rule:
 	 * would this text change (and not just a variable within it) if AllerLeih restarted in a
@@ -242,6 +244,7 @@ export const instance: InstanceConfig = {
 		}
 	},
 	analytics: resolveAnalytics(env.PUBLIC_ANALYTICS_ORIGIN, env.PUBLIC_ANALYTICS_WEBSITE_ID),
+	showLandingStats: env.PUBLIC_SHOW_LANDING_STATS?.trim().toLowerCase() !== 'false',
 	faq: {
 		faqItems: [
 			{
