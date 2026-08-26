@@ -140,3 +140,79 @@ export function resolveAnalytics(
 		return off;
 	}
 }
+
+/**
+ * Path+query character set for the two Class-D third-party form URLs (share-mvp#631): the Tally
+ * onboarding survey and the Keila newsletter signup both carry a **path** (`/embed/xxx`,
+ * `/forms/xxx`), and the survey additionally carries a **query** (`?alignLeft=1&...`). Same
+ * injection-guard shape as `ORIGIN_HOST_PORT` above — an explicit denylist of the characters that
+ * would let the value break out of the HTML attribute it's interpolated into
+ * (`action="${url}"`/`src="${scriptUrl}"`/`data-tally-src={url}`): no `"`, `'`, `<`, `>`,
+ * backtick, whitespace (incl. newline), or `#` (a fragment has no server-side meaning for a form
+ * target and would otherwise be a silent way to sneak past the rest of the class). `?`/`&`/`=`
+ * stay allowed — that's the whole point of the query half.
+ */
+const URL_PATH_QUERY = "/[^\"'<>`\\s#]*";
+
+/**
+ * Injection + structure guard for `PUBLIC_ONBOARDING_SURVEY_URL` / `PUBLIC_NEWSLETTER_FORM_URL`.
+ * A dedicated pattern rather than reusing `SCRIPT_ORIGIN_PATTERN`:
+ * (a) both target values carry a **path**, and the survey URL additionally carries a **query**,
+ *     which `SCRIPT_ORIGIN_PATTERN` (origin only, `^https://host(:port)$`) would reject outright;
+ * (b) `https:` only, no `http:` exception (unlike `SITE_ORIGIN_PATTERN`) — both values are
+ *     interpolated into `action=`/`src=` attributes that fetch or embed third-party content, so
+ *     there's no local/LAN use case to accommodate the way there is for the site's own origin;
+ * (c) the path/query allowlist (`URL_PATH_QUERY` above) is deliberately narrow and contains none
+ *     of `"`, `'`, `<`, `>`, backtick, whitespace, or newline — the attribute-breakout guard,
+ *     exactly like `SCRIPT_ORIGIN_PATTERN`'s host restriction;
+ * (d) deliberately **no** `.replace(/\/+$/, '')` before matching/returning — `resolveOrigin()`
+ *     strips a trailing slash because it's meaningless on a bare origin, but on a form URL a
+ *     trailing slash can be part of the path the third-party service actually routes on. Only
+ *     `.trim()` runs here.
+ */
+const EXTERNAL_FORM_URL_PATTERN = new RegExp(`^https://${ORIGIN_HOST_PORT}${URL_PATH_QUERY}$`);
+
+/**
+ * Resolves + validates a Class-D third-party form URL (`$lib/instance.ts`'s header): opt-in,
+ * no fallback to a default on ANY instance, flagship included — unlike `resolveOrigin()`/
+ * `resolveAnalytics()`'s "off" value, an unset or invalid value here must not point at
+ * allerleih.org's own vendor account. Invalid/empty ⇒ `''`, **never** `throw` — the same
+ * transitive rule as `$lib/instance.ts`'s header: a render-time exception here would 500 the
+ * whole app over a third party's malformed value.
+ */
+export function resolveExternalFormUrl(raw: string | undefined): string {
+	const candidate = (raw ?? '').trim();
+	if (!candidate) return '';
+	if (!EXTERNAL_FORM_URL_PATTERN.test(candidate)) return '';
+	try {
+		// Normalization only (matches the `resolveOrigin`/`resolveAnalytics` precedent) — the
+		// pattern above is the actual guard, not this call.
+		return new URL(candidate).toString();
+	} catch {
+		return '';
+	}
+}
+
+/** Empty `url` ⇒ the other two fields are also `''` — the onboarding survey step doesn't exist
+ *  without a configured URL, so there is nothing for `scriptUrl`/`origin` to derive from. */
+export interface InstanceSurvey {
+	url: string;
+	scriptUrl: string;
+	origin: string;
+}
+
+/**
+ * `scriptUrl` is **derived**, not itself configured — a third env var would be the alternative,
+ * but the issue names exactly two, and a non-Tally form provider embedded at
+ * `${origin}/widgets/embed.js` simply 404s, which `StepSurvey.svelte`'s `script.onerror`
+ * already treats as "fall back to the plain iframe/link" (see its `loadTallyEmbeds`). Revisit
+ * only if a real non-Tally onboarding survey provider shows up.
+ */
+export function resolveOnboardingSurvey(raw: string | undefined): InstanceSurvey {
+	const url = resolveExternalFormUrl(raw);
+	if (!url) return { url: '', scriptUrl: '', origin: '' };
+	// `url` already passed through `new URL(...).toString()` inside `resolveExternalFormUrl` —
+	// re-parsing it here cannot throw.
+	const origin = new URL(url).origin;
+	return { url, scriptUrl: `${origin}/widgets/embed.js`, origin };
+}

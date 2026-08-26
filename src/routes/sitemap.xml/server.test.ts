@@ -1,10 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { makeMockPb } from '$lib/test-utils/pocketbase';
 
-const { TEST_ORIGIN } = vi.hoisted(() => ({ TEST_ORIGIN: 'https://marburg.example.org' }));
+const { TEST_ORIGIN, NEWSLETTER_URL } = vi.hoisted(() => ({
+	TEST_ORIGIN: 'https://marburg.example.org',
+	NEWSLETTER_URL: 'https://app.keila.io/forms/nfrm_b94Bj5RD',
+}));
 
 vi.mock('$env/dynamic/public', () => ({
-	env: { PUBLIC_SITE_ORIGIN: TEST_ORIGIN },
+	env: { PUBLIC_SITE_ORIGIN: TEST_ORIGIN, PUBLIC_NEWSLETTER_FORM_URL: NEWSLETTER_URL },
 }));
 
 import { GET } from './+server';
@@ -65,5 +68,31 @@ describe('GET /sitemap.xml', () => {
 		expect(itemsGetFullList).toHaveBeenCalledWith(
 			expect.objectContaining({ filter: 'status = "available"' })
 		);
+	});
+});
+
+// Class D (share-mvp#631): the top-level `vi.mock` above fixes the env for every test in this
+// file, so the "unconfigured" case needs its own module-reset + dynamic re-import, same as
+// `instance.test.ts`'s "env var wiring" block.
+describe('GET /sitemap.xml — PUBLIC_NEWSLETTER_FORM_URL unset', () => {
+	it('omits /misc/newsletter, without matching /misc/newsletter/thanks or similar', async () => {
+		vi.resetModules();
+		vi.doMock('$env/dynamic/public', () => ({ env: { PUBLIC_SITE_ORIGIN: TEST_ORIGIN } }));
+
+		const { GET: getUnconfigured } = await import('./+server');
+		const pb = makeMockPb({
+			items_searchable: { getFullList: vi.fn().mockResolvedValue([]) },
+			users: { getFullList: vi.fn().mockResolvedValue([]) },
+		});
+
+		const response = await getUnconfigured({ locals: { pb } } as never);
+		const xml = await response.text();
+
+		// `<` right after the path (not `/`) rules out this also matching a hypothetical
+		// `/misc/newsletter/thanks` entry.
+		expect(xml).not.toContain(`<loc>${TEST_ORIGIN}/misc/newsletter<`);
+
+		vi.doUnmock('$env/dynamic/public');
+		vi.resetModules();
 	});
 });

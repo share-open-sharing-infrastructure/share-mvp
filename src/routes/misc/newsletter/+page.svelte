@@ -28,8 +28,14 @@
 			Wir schicken dir maximal einmal pro Monat Neuigkeiten: was sich bei bei uns im Team tut, was du dir neues Ausleihen kannst, oder welche tollen neuen Funktionen wir für dich basteln.
 		</p>
 
+		<!--
+			No {#if instance.newsletterFormUrl} guard here (share-mvp#631) — the protection is
+			stronger than that: this ROUTE DOES NOT EXIST when the value is unset
+			(`+page.server.ts`'s `load` answers 404 first), so this markup is unreachable rather
+			than merely hidden.
+		-->
 		<form
-			action="https://app.keila.io/forms/nfrm_b94Bj5RD"
+			action="?/subscribe"
 			class="flex flex-col gap-4"
 			method="post"
 		>

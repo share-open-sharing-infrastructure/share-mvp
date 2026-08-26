@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { instanceUrl } from '$lib/instance';
+import { instance, instanceUrl } from '$lib/instance';
 
 const STATIC_PATHS = [
 	'/',
@@ -9,7 +9,6 @@ const STATIC_PATHS = [
 	'/misc/app',
 	'/misc/contact',
 	'/misc/imprint',
-	'/misc/newsletter',
 	'/auth/login',
 ];
 
@@ -27,10 +26,16 @@ export const GET: RequestHandler = async ({ locals }) => {
 		locals.pb.collection('users').getFullList({ fields: 'id,updated' }),
 	]);
 
+	// Class D (share-mvp#631): /misc/newsletter 404s without a configured newsletter form, so
+	// it must not be listed for crawlers either — a dead sitemap entry is worse than a missing one.
+	const staticPaths = instance.newsletterFormUrl
+		? [...STATIC_PATHS, '/misc/newsletter']
+		: STATIC_PATHS;
+
 	// <loc> values are crawler-facing output, not internal navigation — `resolve()` (which
 	// needs literal route IDs) buys nothing here, so these are built directly via instanceUrl().
 	const urls = [
-		...STATIC_PATHS.map((path) => ({ loc: instanceUrl(path), lastmod: today })),
+		...staticPaths.map((path) => ({ loc: instanceUrl(path), lastmod: today })),
 		...items.map((item) => ({
 			loc: instanceUrl(`/items/${item.id}`),
 			lastmod: (item.updated as string).split(' ')[0],

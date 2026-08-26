@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { resolveOrigin, isFlagshipOrigin, isValidSiteOrigin, resolveAnalytics } from './instanceResolvers';
+import {
+	resolveOrigin,
+	isFlagshipOrigin,
+	isValidSiteOrigin,
+	resolveAnalytics,
+	resolveExternalFormUrl,
+	resolveOnboardingSurvey,
+} from './instanceResolvers';
 
 // Pure validation logic, called directly — no module reset / env mocking needed, since every
 // function here takes its input as an argument instead of reading `$env/dynamic/public` (see
@@ -172,5 +179,98 @@ describe('resolveAnalytics (pure validation)', () => {
 			scriptOrigin: VALID_ORIGIN,
 			websiteId: VALID_WEBSITE_ID,
 		});
+	});
+});
+
+// Class D (share-mvp#631) — the Tally onboarding survey / Keila newsletter form URLs. Unlike
+// `resolveOrigin`/`resolveAnalytics`, there is no "off" default distinct from `''`: any
+// invalid/empty input resolves to the same empty string, since there is no fallback instance to
+// route to (see `$lib/instance.ts`'s Class-D header paragraph for why).
+describe('resolveExternalFormUrl (pure validation)', () => {
+	const KEILA_URL = 'https://app.keila.io/forms/nfrm_b94Bj5RD';
+	const QUERY_URL =
+		'https://tally.so/embed/Pdropd?alignLeft=1&hideTitle=1&transparentBackground=1';
+
+	it('accepts a plain form URL unchanged', () => {
+		expect(resolveExternalFormUrl(KEILA_URL)).toBe(KEILA_URL);
+	});
+
+	it('accepts a form URL with a query string unchanged', () => {
+		expect(resolveExternalFormUrl(QUERY_URL)).toBe(QUERY_URL);
+	});
+
+	it('resolves to empty for unset/empty/whitespace-only input', () => {
+		expect(resolveExternalFormUrl(undefined)).toBe('');
+		expect(resolveExternalFormUrl('')).toBe('');
+		expect(resolveExternalFormUrl('   ')).toBe('');
+	});
+
+	it('rejects http:// — unlike resolveOrigin, there is no local/LAN exception for a third-party data sink', () => {
+		expect(resolveExternalFormUrl('http://app.keila.io/forms/x')).toBe('');
+	});
+
+	it('rejects non-http(s) protocols', () => {
+		expect(resolveExternalFormUrl('javascript:alert(1)')).toBe('');
+		expect(resolveExternalFormUrl('ftp://example.org/x')).toBe('');
+	});
+
+	it('rejects a value that would break out of the action=/src= attribute (attribute breakout guard)', () => {
+		expect(resolveExternalFormUrl('https://app.keila.io/forms/x" onload=alert(1)')).toBe('');
+	});
+
+	it('rejects a bare apostrophe in the path — new URL() alone does not sanitize it, unlike ", <, >, backtick and space (which it percent-encodes)', () => {
+		// Sanity check on the premise: unlike the other breakout characters, `new URL()` does NOT
+		// percent-encode a bare "'" in a path — the pattern above is the actual protection for a
+		// single-quoted attribute, `new URL()` alone is not sufficient (mirrors resolveOrigin's/
+		// resolveAnalytics' analogous premise check for a `"` surviving unescaped in a host).
+		expect(new URL("https://x.example/a'b").pathname).toBe("/a'b");
+		expect(resolveExternalFormUrl("https://x.example/a'b")).toBe('');
+	});
+
+	it('rejects a value that would break out of the enclosing <script>/<iframe> tag (tag breakout guard)', () => {
+		expect(
+			resolveExternalFormUrl('https://x.example/a</script><script>alert(1)</script>')
+		).toBe('');
+	});
+
+	it('rejects a backtick, space, "<", ">", or "\'" anywhere in the path', () => {
+		expect(resolveExternalFormUrl('https://x.example/a`b')).toBe('');
+		expect(resolveExternalFormUrl('https://x.example/a b')).toBe('');
+		expect(resolveExternalFormUrl('https://x.example/a<b')).toBe('');
+		expect(resolveExternalFormUrl('https://x.example/a>b')).toBe('');
+		expect(resolveExternalFormUrl("https://x.example/a'b")).toBe('');
+	});
+
+	it('keeps a trailing slash — deliberately, unlike resolveOrigin (it can be semantically part of the form path)', () => {
+		expect(resolveExternalFormUrl('https://x.example/forms/')).toBe('https://x.example/forms/');
+	});
+
+	it('rejects a path carrying a #fragment (decision pinned deliberately, not just an oversight)', () => {
+		expect(resolveExternalFormUrl('https://x.example/forms/x#section')).toBe('');
+	});
+});
+
+describe('resolveOnboardingSurvey (pure validation)', () => {
+	it('derives origin + scriptUrl from a valid Tally URL, keeping the url itself unchanged', () => {
+		const url =
+			'https://tally.so/embed/Pdropd?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1&formEventsForwarding=1';
+		expect(resolveOnboardingSurvey(url)).toEqual({
+			url,
+			origin: 'https://tally.so',
+			scriptUrl: 'https://tally.so/widgets/embed.js',
+		});
+	});
+
+	it('resolves all three fields to empty for unset/invalid input — scriptUrl never exists without a url', () => {
+		expect(resolveOnboardingSurvey(undefined)).toEqual({ url: '', scriptUrl: '', origin: '' });
+		expect(resolveOnboardingSurvey('not-a-url')).toEqual({ url: '', scriptUrl: '', origin: '' });
+	});
+
+	it('derives scriptUrl from whatever host is configured, never hardcoded to tally.so (acceptance criterion)', () => {
+		const url = 'https://survey.example.org/embed/xyz';
+		const result = resolveOnboardingSurvey(url);
+		expect(result.origin).toBe('https://survey.example.org');
+		expect(result.scriptUrl).toBe('https://survey.example.org/widgets/embed.js');
+		expect(result.scriptUrl).not.toContain('tally.so');
 	});
 });

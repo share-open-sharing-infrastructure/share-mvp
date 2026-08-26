@@ -14,8 +14,19 @@
  * Every instance-branding value below is commented with its class: **Class A** (required on a
  * non-flagship instance, else the server refuses to start — `missingInstanceEnv()` in
  * `$lib/server/env.ts`, since a §5 TMG imprint is legally mandatory), **Class B** (optional,
- * unset ⇒ `''` on a non-flagship instance — render sites wrap these in `{#if}`), or **Class C**
- * (`PUBLIC_GITHUB_URL` only — defaults unconditionally, still overridable for a fork).
+ * unset ⇒ `''` on a non-flagship instance — render sites wrap these in `{#if}`), **Class C**
+ * (`PUBLIC_GITHUB_URL` only — defaults unconditionally, still overridable for a fork), or
+ * **Class D — opt-in third-party data sinks** (`onboardingSurvey`, `newsletterFormUrl`;
+ * share-mvp#631). Class D is optional on **every** instance, flagship included, and — unlike A/B/C
+ * — is deliberately **NOT** routed through `flagshipValue()`/`FLAGSHIP_*` in
+ * `$lib/instanceDefaults.ts`: a forgotten env var on a Class-A/B/C field degrades to "no imprint
+ * link" (safe), but a forgotten Class-D var falling back to a default would silently pipe a
+ * self-hoster's users' survey answers or email signups into the flagship's OWN Tally/Keila
+ * account — the exact opposite failure mode, and a data-protection incident rather than a
+ * cosmetic gap. Empty/invalid ⇒ the feature doesn't exist: the render site vanishes, the route
+ * 404s, and no request ever reaches the third party. `PUBLIC_ANALYTICS_ORIGIN`/`WEBSITE_ID`
+ * (`analytics` below) are Class D too, for the same reason — they only look like a plain optional
+ * value because they predate this naming.
  *
  * `$env/dynamic/*` is the **repo-wide** convention since #627 (`$env/static/*` is ESLint-banned):
  * one build artifact serves N instances, so `adapter-node` reads `process.env` at runtime, not
@@ -40,9 +51,12 @@ import {
 	resolveOrigin,
 	isFlagshipOrigin,
 	resolveAnalytics,
+	resolveExternalFormUrl,
+	resolveOnboardingSurvey,
 	SCRIPT_ORIGIN_PATTERN,
 	WEBSITE_ID_PATTERN,
 	type InstanceAnalytics,
+	type InstanceSurvey,
 } from './instanceResolvers';
 import {
 	FLAGSHIP_CITY,
@@ -108,7 +122,7 @@ export interface InstanceTeamMember {
 	description: string;
 }
 
-export type { InstanceAnalytics };
+export type { InstanceAnalytics, InstanceSurvey };
 
 export interface InstanceConfig {
 	/** Without trailing slash. */
@@ -123,6 +137,10 @@ export interface InstanceConfig {
 	readonly links: InstanceLinks;
 	readonly imprint: InstanceImprint;
 	readonly analytics: InstanceAnalytics;
+	/** Class D — see header. `url` empty ⇒ the onboarding survey step doesn't exist. */
+	readonly onboardingSurvey: InstanceSurvey;
+	/** Class D — see header. `''` ⇒ `/misc/newsletter` 404s, every newsletter link/checkbox hides. */
+	readonly newsletterFormUrl: string;
 	/**
 	 * Instance-specific PROSE — the counterpart to the scalar fields above. Demarcation rule:
 	 * would this text's WORDING (not just a variable within it) change if AllerLeih restarted in
@@ -200,6 +218,8 @@ export const instance: InstanceConfig = {
 		}
 	},
 	analytics: resolveAnalytics(env.PUBLIC_ANALYTICS_ORIGIN, env.PUBLIC_ANALYTICS_WEBSITE_ID),
+	onboardingSurvey: resolveOnboardingSurvey(env.PUBLIC_ONBOARDING_SURVEY_URL),
+	newsletterFormUrl: resolveExternalFormUrl(env.PUBLIC_NEWSLETTER_FORM_URL),
 	faq: {
 		faqItems: [
 			{

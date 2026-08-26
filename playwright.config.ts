@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test';
 import { STORAGE_STATE } from './e2e/fixtures/users';
-import { CITY, ORIGIN } from './e2e/fixtures/instance';
+import { CITY, ORIGIN, SURVEY_URL, NEWSLETTER_FORM_URL } from './e2e/fixtures/instance';
 
 /**
  * End-to-end tests (see e2e/README.md).
@@ -98,6 +98,10 @@ export default defineConfig({
 			DEV_DISABLE_MKCERT: 'true',
 			PUBLIC_INSTANCE_CITY: CITY,
 			PUBLIC_SITE_ORIGIN: ORIGIN,
+			// Class D (share-mvp#631) — dummy hosts (see e2e/fixtures/instance.ts), pinned so the
+			// onboarding survey step + newsletter opt-in exist for the specs that need them.
+			PUBLIC_ONBOARDING_SURVEY_URL: SURVEY_URL,
+			PUBLIC_NEWSLETTER_FORM_URL: NEWSLETTER_FORM_URL,
 		},
 	},
 });

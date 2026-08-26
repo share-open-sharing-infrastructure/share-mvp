@@ -68,7 +68,10 @@ so one build artefact serves any instance. The flip side: the server **refuses t
 required variable is missing **or empty** — it prints every offending name with what it is for and
 exits non-zero (`assertRequiredEnv()` in `src/lib/server/env.ts`, called from the `init` hook). An
 empty value is *not* "unset but fine". The old `Missing export "X"` build failure no longer exists.
-`MISTRAL_API_KEY` is the only variable you may leave empty. The check is presence-only, though: it
+`MISTRAL_API_KEY` is the only one of the variables in the table below you may leave empty (the
+opt-in `PUBLIC_ANALYTICS_*`/`PUBLIC_ONBOARDING_SURVEY_URL`/`PUBLIC_NEWSLETTER_FORM_URL` vars, not
+listed here, are optional too — see "Instance configuration" in `docs/architecture.md`). The
+check is presence-only, though: it
 guarantees a non-empty line exists, **not** that the value is valid — `ORS_API_KEY=replace-me-…`
 satisfies it and still yields empty address suggestions.
 
@@ -78,7 +81,7 @@ satisfies it and still yields empty address suggestions.
 | `PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`              | Web push notifications                                                   | Ask kontakt@allerleih.org for the shared dev pair, or generate a throwaway one with `npx web-push generate-vapid-keys`.                 |
 | `VAPID_SUBJECT`                                              | Web push                                                                 | A `mailto:` URI, e.g. `mailto:you@example.com`.                                                                                         |
 | `ORS_API_KEY`                                                | Address autocomplete (`/api/geocode`)                                    | Request from kontakt@allerleih.org. Travel times additionally need the **backend's** own `ORS_API_KEY`.                                 |
-| `MISTRAL_API_KEY`                                            | AI item-photo analysis (`/api/analyze-item`)                              | Request from kontakt@allerleih.org. **The only optional variable** — unset ⇒ that endpoint answers 503 and nothing else changes.        |
+| `MISTRAL_API_KEY`                                            | AI item-photo analysis (`/api/analyze-item`)                              | Request from kontakt@allerleih.org. **Optional** — unset ⇒ that endpoint answers 503 and nothing else changes. (Also optional, not in this table: the opt-in `PUBLIC_ANALYTICS_*`/`PUBLIC_ONBOARDING_SURVEY_URL`/`PUBLIC_NEWSLETTER_FORM_URL` third-party data-sink vars — see `docs/architecture.md`.) |
 | `PB_SUPERUSER_EMAIL`, `PB_SUPERUSER_PASSWORD`                | The app at runtime (the `/admin` gate via `isAdmin()`, the public stats on `/` and `/misc/stats`, `metrics_daily`) **and** the seed runner + Playwright e2e | A superuser you create on your own local backend (step 4). `scripts/dev-stack.sh` upserts the pair from `.env.example`. (`SYNC_SECRET` is gone — #487 Phase 3 moved the integrations into the backend.) |
 | `DEV_ALLOWED_HOST`, `DEV_DISABLE_MKCERT`                     | Optional dev-server tweaks (see `vite.config.ts`)                        | Set `DEV_DISABLE_MKCERT=true` when mkcert can't install its CA (no sudo) or TLS is terminated upstream.                                 |
 
@@ -193,8 +196,12 @@ seven unconditionally required vars are `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KE
 `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL` and
 `PB_SUPERUSER_PASSWORD` — the last two are **full PocketBase superuser credentials**
 (unrestricted database read/write, not scoped to any single feature), so store and rotate them
-like any other master secret. `MISTRAL_API_KEY` is the only fully optional variable (unset ⇒
-`/api/analyze-item` answers 503). Instance-branding (share-mvp#629/#646) is more nuanced: on the
+like any other master secret. `MISTRAL_API_KEY` is fully optional (unset ⇒ `/api/analyze-item`
+answers 503) — so are the four Class D third-party data-sink vars, `PUBLIC_ANALYTICS_ORIGIN`/
+`PUBLIC_ANALYTICS_WEBSITE_ID`/`PUBLIC_ONBOARDING_SURVEY_URL`/`PUBLIC_NEWSLETTER_FORM_URL`, on
+every instance including the flagship, with **no** fallback default (share-mvp#631): unset means
+the feature doesn't exist and no data reaches that third party, not that it silently uses
+allerleih.org's own account. Instance-branding (share-mvp#629/#646) is more nuanced: on the
 **flagship** instance (allerleih.org — `PUBLIC_SITE_ORIGIN` unset or set to
 `https://allerleih.org`) every branding var is optional and falls back to allerleih.org's own
 defaults; on any OTHER `PUBLIC_SITE_ORIGIN`, seven of them (`PUBLIC_INSTANCE_CITY`,

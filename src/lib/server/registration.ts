@@ -151,14 +151,27 @@ export async function requestEmailVerification(pb: PocketBase, email: string): P
 	}
 }
 
-export async function signUpForNewsletter(email: string, username: string): Promise<void> {
+/**
+ * Signature takes `formUrl` as a parameter instead of reading `instance.newsletterFormUrl`
+ * itself (share-mvp#631) — keeps this module env-free and testable without the
+ * `vi.resetModules()`/`vi.doMock()` dance `instanceResolvers.ts` was split out to avoid.
+ * The server guard here is the REAL enforcement of "no newsletter form ⇒ no request": a
+ * handcrafted POST with `subscribeToNewsletter=on` bypasses the hidden `{#if}` checkbox on
+ * `/auth/register` trivially, so this check is what actually stops the request.
+ */
+export async function signUpForNewsletter(
+	formUrl: string,
+	email: string,
+	username: string
+): Promise<void> {
+	if (!formUrl) return; // Instance without a newsletter — no request, no log noise.
 	try {
 		const body = new URLSearchParams();
 		body.set('contact[email]', email);
 		body.set('contact[first_name]', username);
 		// Keila honeypot field — must be empty to pass bot detection.
 		body.set('h[url]', '');
-		await fetch('https://app.keila.io/forms/nfrm_b94Bj5RD', { method: 'POST', body });
+		await fetch(formUrl, { method: 'POST', body });
 	} catch (error) {
 		console.error('Newsletter signup failed:', error);
 	}

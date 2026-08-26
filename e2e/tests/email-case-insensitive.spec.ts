@@ -30,7 +30,10 @@ type FreshUser = {
  * Register a brand-new account through the real form with a mixed-case email.
  * Leaves the page authenticated (redirected off the register form). Reuses the
  * same role/label selectors as auth.spec.ts; the newsletter opt-in is unchecked
- * so registration makes no external (Keila) call.
+ * so registration makes no external (Keila) call. The checkbox itself only renders
+ * when `instance.newsletterFormUrl` is set (share-mvp#631) — relies on
+ * `playwright.config.ts` pinning `e2e/fixtures/instance.ts`'s dummy
+ * `NEWSLETTER_FORM_URL` into `webServer.env` for the whole e2e run.
  */
 async function registerFreshUser(page: Page): Promise<FreshUser> {
 	const unique = `${Date.now()}${Math.floor(Math.random() * 1_000_000)}`;

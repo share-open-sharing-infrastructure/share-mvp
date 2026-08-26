@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
 	CONDITIONAL_INSTANCE_ENV,
 	ENV_PURPOSE,
-	OPTIONAL_ENV,
+	OPTIONAL_PRIVATE_ENV,
+	OPTIONAL_PUBLIC_ENV,
 	REQUIRED_PRIVATE_ENV,
 	REQUIRED_PUBLIC_ENV,
 	formatMissingEnvError,
@@ -62,10 +63,10 @@ describe('missingRequiredEnv', () => {
 		expect(missingRequiredEnv(read, read)).toEqual(['VAPID_SUBJECT']);
 	});
 
-	it('never reports MISTRAL_API_KEY — the one optional var', () => {
+	it('never reports MISTRAL_API_KEY — one of the optional vars', () => {
 		const values = allPresent();
 		delete values.MISTRAL_API_KEY;
-		expect(OPTIONAL_ENV).toContain('MISTRAL_API_KEY');
+		expect(OPTIONAL_PRIVATE_ENV).toContain('MISTRAL_API_KEY');
 		const read = readerFor(values);
 		expect(missingRequiredEnv(read, read)).toEqual([]);
 		expect(ALL_REQUIRED).not.toContain('MISTRAL_API_KEY');
@@ -182,14 +183,52 @@ describe('the registry itself', () => {
 });
 
 describe('formatOptionalEnvGaps', () => {
-	it('names the unset optional var and what it disables, without printing a value', () => {
-		const line = formatOptionalEnvGaps(() => undefined);
-		expect(line).toContain('MISTRAL_API_KEY');
-		expect(line).toContain('/api/analyze-item');
+	// Two readers now (public + private), one per `$env/dynamic/*` store the split registry draws
+	// from — mirrors `missingRequiredEnv`'s split.
+	const allSet = () => 'a-value';
+	const allUnset = () => undefined;
+
+	it('stays silent when every optional var (both registries) is set', () => {
+		expect(formatOptionalEnvGaps(allSet, allSet)).toBe('');
 	});
 
-	it('stays silent when every optional var is set', () => {
-		expect(formatOptionalEnvGaps(() => 'a-key')).toBe('');
-		expect(formatOptionalEnvGaps(() => '   ')).not.toBe('');
+	it('counts a whitespace-only value as unset, same as missingRequiredEnv', () => {
+		expect(formatOptionalEnvGaps(() => '   ', allSet)).not.toBe('');
+	});
+
+	it('reports only the public gap when just PUBLIC_* vars are unset', () => {
+		const line = formatOptionalEnvGaps(allUnset, allSet);
+		expect(line).toContain('PUBLIC_ONBOARDING_SURVEY_URL');
+		expect(line).toContain('PUBLIC_NEWSLETTER_FORM_URL');
+		expect(line).not.toContain('MISTRAL_API_KEY');
+	});
+
+	it('reports only the private gap when just MISTRAL_API_KEY is unset', () => {
+		const line = formatOptionalEnvGaps(allSet, allUnset);
+		expect(line).toContain('MISTRAL_API_KEY');
+		expect(line).toContain('/api/analyze-item');
+		expect(line).not.toContain('PUBLIC_ONBOARDING_SURVEY_URL');
+		expect(line).not.toContain('PUBLIC_NEWSLETTER_FORM_URL');
+	});
+
+	it('reports every var, public before private, when both registries are entirely unset', () => {
+		const line = formatOptionalEnvGaps(allUnset, allUnset);
+		const publicIdx = line.indexOf('PUBLIC_ONBOARDING_SURVEY_URL');
+		const privateIdx = line.indexOf('MISTRAL_API_KEY');
+		expect(publicIdx).toBeGreaterThan(-1);
+		expect(privateIdx).toBeGreaterThan(publicIdx);
+	});
+
+	it('has a disable-explanation for every name in both optional registries', () => {
+		for (const name of OPTIONAL_PUBLIC_ENV) {
+			expect(formatOptionalEnvGaps((n) => (n === name ? undefined : 'set'), allSet)).toContain(
+				name
+			);
+		}
+		for (const name of OPTIONAL_PRIVATE_ENV) {
+			expect(formatOptionalEnvGaps(allSet, (n) => (n === name ? undefined : 'set'))).toContain(
+				name
+			);
+		}
 	});
 });

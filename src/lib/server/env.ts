@@ -86,18 +86,28 @@ export const ENV_PURPOSE: Record<RequiredEnvName, string> = {
  * Turning any of the seven required vars into an optional, feature-toggling one (run without
  * push, without the admin dashboard) is a deliberate follow-up, not something to smuggle in here.
  *
- * **Private-only by construction.** `logOptionalEnvGaps()` reads this whole list from
- * `$env/dynamic/private`, which never holds `PUBLIC_*` vars — so an optional `PUBLIC_*` var
- * cannot just be appended here: it would be reported "running without" even when set. Give this
- * list the split-registry, one-reader-per-store shape of `missingRequiredEnv()` first.
+ * Split into one registry per `$env/dynamic/*` store, like `REQUIRED_PUBLIC_ENV`/
+ * `REQUIRED_PRIVATE_ENV` above — `formatOptionalEnvGaps()` needs a reader for each, since reading
+ * a `PUBLIC_*` name from the private store (or vice versa) would report it "running without" even
+ * when it's set. `MISTRAL_API_KEY` is private; the Class-D third-party data sinks
+ * (`$lib/instance.ts`'s header) are public.
  */
-export const OPTIONAL_ENV = ['MISTRAL_API_KEY'] as const;
+export const OPTIONAL_PRIVATE_ENV = ['MISTRAL_API_KEY'] as const;
+export const OPTIONAL_PUBLIC_ENV = [
+	'PUBLIC_ONBOARDING_SURVEY_URL',
+	'PUBLIC_NEWSLETTER_FORM_URL',
+] as const;
 
-type OptionalEnvName = (typeof OPTIONAL_ENV)[number];
+type OptionalPrivateEnvName = (typeof OPTIONAL_PRIVATE_ENV)[number];
+type OptionalPublicEnvName = (typeof OPTIONAL_PUBLIC_ENV)[number];
+type OptionalEnvName = OptionalPrivateEnvName | OptionalPublicEnvName;
 
 /** What an unset optional var switches off — reported at startup by `logOptionalEnvGaps()`. */
 const OPTIONAL_ENV_DISABLES: Record<OptionalEnvName, string> = {
 	MISTRAL_API_KEY: 'AI item analysis, /api/analyze-item answers 503',
+	PUBLIC_ONBOARDING_SURVEY_URL: 'the onboarding survey step is skipped',
+	PUBLIC_NEWSLETTER_FORM_URL:
+		'/misc/newsletter answers 404, newsletter links + register opt-in hidden',
 };
 
 /**
@@ -212,12 +222,18 @@ export function warnInstanceEnvGaps(): void {
 /**
  * Pure — one line naming the optional vars this instance runs without and what that switches off
  * (`''` when everything is set). Values are never printed. The self-hosting audience otherwise
- * has to diff `.env.example` to find out which feature is quietly off.
+ * has to diff `.env.example` to find out which feature is quietly off. Two readers, public first
+ * — same order/shape as `missingRequiredEnv()` — since the registry is now split across both
+ * `$env/dynamic/*` stores.
  */
 export function formatOptionalEnvGaps(
-	read: (name: OptionalEnvName) => string | undefined
+	readPublic: (name: OptionalPublicEnvName) => string | undefined,
+	readPrivate: (name: OptionalPrivateEnvName) => string | undefined
 ): string {
-	const unset = OPTIONAL_ENV.filter((name) => !read(name)?.trim());
+	const unset = [
+		...OPTIONAL_PUBLIC_ENV.filter((name) => !readPublic(name)?.trim()),
+		...OPTIONAL_PRIVATE_ENV.filter((name) => !readPrivate(name)?.trim()),
+	];
 	if (unset.length === 0) return '';
 	const disabled = unset
 		.map((n) => `${n} (${OPTIONAL_ENV_DISABLES[n]})`)
@@ -227,6 +243,9 @@ export function formatOptionalEnvGaps(
 
 /** Logs the above once, at startup. Called from the `init` server hook, after the assertion. */
 export function logOptionalEnvGaps(): void {
-	const line = formatOptionalEnvGaps((name) => privateEnv[name]);
+	const line = formatOptionalEnvGaps(
+		(name) => publicEnv[name],
+		(name) => privateEnv[name]
+	);
 	if (line) console.info(line);
 }

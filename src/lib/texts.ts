@@ -1062,9 +1062,13 @@ export const texts = {
 			configure: 'Kurzes Onboarding: 1-2 Minuten, um die wichtigsten Einstellungen festzulegen',
 			exploreFirst: 'Direkt losstöbern, Dinge einstellen oder Freunde einladen.',
 		},
+		/** Screen-reader-only progress text next to the step dots (`+page.svelte`). */
+		progress: (step: number, total: number) => `Schritt ${step} von ${total}`,
 		survey:{
 			title: 'Eine ganz kurze Umfrage',
-			explanation: `Wir wollen verstehen, was dich zum Teilen motiviert. Deine Antwort hilft uns, ${APP_NAME} besser zu machen und Fördermittel zu beantragen. Die Antwort bleibt vollständig anonym! Du kannst die Umfrage auch überspringen.`
+			explanation: `Wir wollen verstehen, was dich zum Teilen motiviert. Deine Antwort hilft uns, ${APP_NAME} besser zu machen und Fördermittel zu beantragen. Die Antwort bleibt vollständig anonym! Du kannst die Umfrage auch überspringen.`,
+			iframeTitle: 'Onboarding-Umfrage',
+			loadFailed: 'Die Umfrage konnte nicht geladen werden. Du kannst diesen Schritt überspringen.',
 		}
 	},
 

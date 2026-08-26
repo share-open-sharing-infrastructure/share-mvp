@@ -6,6 +6,11 @@ import { NEWBIE_STORAGE_STATE } from '../fixtures/users';
  * stepper advances. The wizard is a purely client-side stepper (Welcome → How-it-works →
  * Survey → …), so this drives the first steps to confirm it renders, hydrates, and steps.
  * Runs as the newbie in the `multiuser` project.
+ *
+ * The survey step is conditional since share-mvp#631 (`instance.onboardingSurvey.url`) — it
+ * only exists in `STEPS` at all when `PUBLIC_ONBOARDING_SURVEY_URL` is set. This spec relies on
+ * `playwright.config.ts` pinning a dummy value (`e2e/fixtures/instance.ts`'s `SURVEY_URL`) into
+ * `webServer.env`, which is what makes the survey step 3 here rather than absent entirely.
  */
 
 test.describe('onboarding', () => {

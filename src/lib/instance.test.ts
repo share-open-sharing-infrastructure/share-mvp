@@ -59,6 +59,16 @@ describe('instance — flagship defaults (no env vars set)', () => {
 		expect(instance.analytics).toEqual({ scriptOrigin: '', websiteId: '' });
 	});
 
+	// Pins the Class-D "no default, not even on the flagship" decision (share-mvp#631) — unlike
+	// EVERY other value in this describe block, these two stay empty even though this IS the
+	// flagship instance. A flagship literal here (like `FLAGSHIP_CONTACT_EMAIL`) would mean a
+	// forgotten env var silently pipes a self-hoster's survey answers/newsletter signups into
+	// allerleih.org's OWN Tally/Keila account — the inverse failure mode of a missing imprint.
+	it('leaves the onboarding survey and newsletter off even on the flagship (Class D — no fallback instance)', () => {
+		expect(instance.onboardingSurvey).toEqual({ url: '', scriptUrl: '', origin: '' });
+		expect(instance.newsletterFormUrl).toBe('');
+	});
+
 	it('instanceUrl prepends the default origin', () => {
 		expect(instanceUrl('/')).toBe('https://allerleih.org/');
 		expect(instanceUrl('/items/abc')).toBe('https://allerleih.org/items/abc');
@@ -190,6 +200,31 @@ describe('instance — env var wiring (integration)', () => {
 		);
 	});
 
+	it('wires PUBLIC_ONBOARDING_SURVEY_URL/PUBLIC_NEWSLETTER_FORM_URL into instance.onboardingSurvey/newsletterFormUrl', async () => {
+		vi.doMock('$env/dynamic/public', () => ({
+			env: {
+				PUBLIC_ONBOARDING_SURVEY_URL:
+					'https://tally.so/embed/Pdropd?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1&formEventsForwarding=1',
+				PUBLIC_NEWSLETTER_FORM_URL: 'https://app.keila.io/forms/nfrm_b94Bj5RD',
+			},
+		}));
+		const { instance: overridden } = await import('./instance');
+		expect(overridden.onboardingSurvey).toEqual({
+			url: 'https://tally.so/embed/Pdropd?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1&formEventsForwarding=1',
+			scriptUrl: 'https://tally.so/widgets/embed.js',
+			origin: 'https://tally.so',
+		});
+		expect(overridden.newsletterFormUrl).toBe('https://app.keila.io/forms/nfrm_b94Bj5RD');
+	});
+
+	it('an invalid Class-D value resolves to off, not a 500 — http:// is rejected same as SCRIPT_ORIGIN_PATTERN', async () => {
+		vi.doMock('$env/dynamic/public', () => ({
+			env: { PUBLIC_NEWSLETTER_FORM_URL: 'http://app.keila.io/forms/x' },
+		}));
+		const { instance: overridden } = await import('./instance');
+		expect(overridden.newsletterFormUrl).toBe('');
+	});
+
 	/** Recursively collects every string leaf under `node`, for the denylist walk below. Matches
 	 *  `texts.test.ts`'s `collectStrings` — kept identical rather than diverging with a redundant
 	 *  `Array.isArray` branch: `Object.values()` on an array already yields its elements in
@@ -221,6 +256,10 @@ describe('instance — env var wiring (integration)', () => {
 		'VR 202438',
 		'norden.social',
 		'notion.site',
+		// Class D (share-mvp#631): a later-smuggled flagship default for the survey/newsletter
+		// URL would be caught here automatically, same as any other flagship literal.
+		'tally.so',
+		'keila.io',
 	];
 
 	it('leaks no flagship-operator data anywhere in `instance` for a fully-configured non-flagship instance', async () => {

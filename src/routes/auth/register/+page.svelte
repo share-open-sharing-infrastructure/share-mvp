@@ -9,6 +9,7 @@
 	import debounce from 'debounce';
 	import PocketBase from 'pocketbase';
 	import { pbUrl } from '$lib/publicEnv';
+	import { instance } from '$lib/instance';
 	import LegalDocModal from '$lib/components/LegalDocModal.svelte';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 	import { USERNAME_MAX_LENGTH, normalizeUsername, validateUsername } from '$lib/utils/username';
@@ -132,10 +133,12 @@
 					<input type="checkbox" name="userConsent" required class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
 					<span>Ich habe die <Button variant="link" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openTos = true; }}>AGB{tosDoc ? ` (v${tosDoc.version})` : ''}</Button> und die <Button variant="link" onclick={(e) => { e.preventDefault(); e.stopPropagation(); openPrivacy = true; }}>Datenschutzerklärung{privacyDoc ? ` (v${privacyDoc.version})` : ''}</Button> gelesen und stimme beiden zu.</span>
 				</label>
-				<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
-					<input type="checkbox" name="subscribeToNewsletter" checked class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-					<span>{texts.auth.newsletterOptOut}</span>
-				</label>
+				{#if instance.newsletterFormUrl}
+					<label class="flex items-start gap-2 text-sm text-gray-900 dark:text-gray-300">
+						<input type="checkbox" name="subscribeToNewsletter" checked class="mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+						<span>{texts.auth.newsletterOptOut}</span>
+					</label>
+				{/if}
 				<Button type="submit">{texts.auth.register}</Button>
 			</form>
 		</div>

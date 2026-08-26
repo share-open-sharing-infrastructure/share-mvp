@@ -11,6 +11,7 @@ import {
 	handleInviterRelationship,
 } from '$lib/server/registration';
 import { getActiveLegalDocs } from '$lib/server/legalDocs';
+import { instance } from '$lib/instance';
 
 export async function load({ locals, url }) {
 	if (locals.user) {
@@ -71,7 +72,7 @@ export const actions = {
 		// server-side by the backend `legal.pb.js` users-create hook — see #399.
 
 		await requestEmailVerification(locals.pb, email);
-		if (subscribeToNewsletter) await signUpForNewsletter(email, username);
+		if (subscribeToNewsletter) await signUpForNewsletter(instance.newsletterFormUrl, email, username);
 		if (inviter) await handleInviterRelationship(locals.pb, result.user, inviter);
 
 		redirect(303, '/onboarding');

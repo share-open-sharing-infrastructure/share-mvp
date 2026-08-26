@@ -53,9 +53,11 @@
 						<FooterLink {...footerLinkProps} href={resolve('/misc/app')}
 							>{texts.nav.app}</FooterLink
 						>
-						<FooterLink {...footerLinkProps} href={resolve('/misc/newsletter')}
-							>{texts.nav.newsletter}</FooterLink
-						>
+						{#if instance.newsletterFormUrl}
+							<FooterLink {...footerLinkProps} href={resolve('/misc/newsletter')}
+								>{texts.nav.newsletter}</FooterLink
+							>
+						{/if}
 						{#if instance.links.contributeBoard}
 							<FooterLink {...footerLinkProps}
 								href={buildRedirectHref(instance.links.contributeBoard, 'footer')}

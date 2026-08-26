@@ -56,6 +56,8 @@ jobs:
           PUBLIC_ANALYTICS_WEBSITE_ID: ${{ vars.PUBLIC_ANALYTICS_WEBSITE_ID }}
           PUBLIC_SITE_ORIGIN: ${{ vars.PUBLIC_SITE_ORIGIN }}
           PUBLIC_INSTANCE_CITY: ${{ vars.PUBLIC_INSTANCE_CITY }}
+          PUBLIC_ONBOARDING_SURVEY_URL: ${{ vars.PUBLIC_ONBOARDING_SURVEY_URL }}
+          PUBLIC_NEWSLETTER_FORM_URL: ${{ vars.PUBLIC_NEWSLETTER_FORM_URL }}
         with:
           host: ${{ vars.SSH_HOST }}
           username: ${{ vars.SSH_USERNAME }}
@@ -64,7 +66,7 @@ jobs:
           # per-element trimming by the action is unproven in this pipeline. If it did not trim, 11 of
           # 12 names would be looked up with a leading space, silently resolve to empty, and
           # `assertRequiredEnv()` would refuse to boot the freshly deployed site. Keep it flat.
-          envs: PUBLIC_PB_URL,PUBLIC_VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,VAPID_SUBJECT,ORS_API_KEY,MISTRAL_API_KEY,PB_SUPERUSER_EMAIL,PB_SUPERUSER_PASSWORD,PUBLIC_ANALYTICS_ORIGIN,PUBLIC_ANALYTICS_WEBSITE_ID,PUBLIC_SITE_ORIGIN,PUBLIC_INSTANCE_CITY
+          envs: PUBLIC_PB_URL,PUBLIC_VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,VAPID_SUBJECT,ORS_API_KEY,MISTRAL_API_KEY,PB_SUPERUSER_EMAIL,PB_SUPERUSER_PASSWORD,PUBLIC_ANALYTICS_ORIGIN,PUBLIC_ANALYTICS_WEBSITE_ID,PUBLIC_SITE_ORIGIN,PUBLIC_INSTANCE_CITY,PUBLIC_ONBOARDING_SURVEY_URL,PUBLIC_NEWSLETTER_FORM_URL
           script: |
             # `set -e` so a failing `npm ci` fails the deploy instead of reporting success with a
             # half-updated server; `set -u` to catch a typo'd variable name. Because of `set -u`,
@@ -137,6 +139,24 @@ jobs:
             fi
             if [ -n "${PUBLIC_INSTANCE_CITY:-}" ]; then
               echo "PUBLIC_INSTANCE_CITY='${PUBLIC_INSTANCE_CITY}'" >> .env
+            fi
+            # Class D (share-mvp#631) — same "append only when non-empty" shape as
+            # PUBLIC_SITE_ORIGIN above: an empty line would override the "feature off" default
+            # in src/lib/instance.ts with an explicit "", same effect either way, but an absent
+            # repo Variable must not silently disable a configured onboarding survey/newsletter
+            # on the next deploy. `printf` here instead of the echo+single-quote form
+            # used above/below: that form interpolates the value inside single quotes, so a value
+            # containing a literal `'` would break out of the quoting and inject into this
+            # remotely-executed shell (only someone who can already set repo Variables could
+            # trigger it, but `%s` is immune either way). The single quotes stay in the OUTPUT on
+            # purpose: they are dotenv's quoting, not the shell's, and this block depends on
+            # them — dotenv strips an inline ` # comment` from an *unquoted* value. Deliberately
+            # not applied to the other lines here — out of scope, follow-up tracked separately.
+            if [ -n "${PUBLIC_ONBOARDING_SURVEY_URL:-}" ]; then
+              printf "%s='%s'\n" PUBLIC_ONBOARDING_SURVEY_URL "$PUBLIC_ONBOARDING_SURVEY_URL" >> .env
+            fi
+            if [ -n "${PUBLIC_NEWSLETTER_FORM_URL:-}" ]; then
+              printf "%s='%s'\n" PUBLIC_NEWSLETTER_FORM_URL "$PUBLIC_NEWSLETTER_FORM_URL" >> .env
             fi
             npm ci
             supervisorctl restart svelte

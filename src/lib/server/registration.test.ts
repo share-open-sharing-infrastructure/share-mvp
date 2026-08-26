@@ -16,6 +16,7 @@ import {
 	buildCreateUserPayload,
 	createUserAndAuthenticate,
 	handleInviterRelationship,
+	signUpForNewsletter,
 } from './registration';
 import type { User } from '$lib/types/models';
 import { texts } from '$lib/texts';
@@ -326,5 +327,58 @@ describe('handleInviterRelationship', () => {
 		await handleInviterRelationship(pb, { ...stubUser, id: 'new1', username: 'newbie' }, { id: 'inv1' });
 
 		expect(trustsCreate).toHaveBeenCalledWith({ truster: 'new1', trustee: 'inv1' });
+	});
+});
+
+// ---------------------------------------------------------------------------
+// signUpForNewsletter
+// ---------------------------------------------------------------------------
+
+// `formUrl` is a plain parameter (share-mvp#631), not read from `$lib/instance` internally —
+// no env mock needed here, that's the point of the signature change (see the function's doc
+// comment in registration.ts).
+describe('signUpForNewsletter', () => {
+	it('never calls fetch when formUrl is empty — the real enforcement behind the hidden register checkbox', async () => {
+		const fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
+
+		await signUpForNewsletter('', 'julika@example.com', 'Julika');
+
+		expect(fetchMock).not.toHaveBeenCalled();
+		vi.unstubAllGlobals();
+	});
+
+	it('POSTs exactly once to the configured formUrl with the expected body fields', async () => {
+		const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+		vi.stubGlobal('fetch', fetchMock);
+
+		await signUpForNewsletter('https://app.keila.io/forms/nfrm_b94Bj5RD', 'julika@example.com', 'Julika');
+
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock).toHaveBeenCalledWith(
+			'https://app.keila.io/forms/nfrm_b94Bj5RD',
+			expect.objectContaining({ method: 'POST' })
+		);
+		const body = fetchMock.mock.calls[0][1].body as URLSearchParams;
+		expect(body.get('contact[email]')).toBe('julika@example.com');
+		expect(body.get('contact[first_name]')).toBe('Julika');
+		expect(body.get('h[url]')).toBe('');
+		vi.unstubAllGlobals();
+	});
+
+	it('does not throw when fetch rejects — existing error-swallowing semantics (console.error, no rethrow)', async () => {
+		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockRejectedValue(new Error('network down'))
+		);
+
+		await expect(
+			signUpForNewsletter('https://app.keila.io/forms/nfrm_b94Bj5RD', 'julika@example.com', 'Julika')
+		).resolves.toBeUndefined();
+
+		expect(errorSpy).toHaveBeenCalled();
+		errorSpy.mockRestore();
+		vi.unstubAllGlobals();
 	});
 });

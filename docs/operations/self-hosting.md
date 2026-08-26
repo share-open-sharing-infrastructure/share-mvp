@@ -198,9 +198,18 @@ link/field is simply hidden, never a dead link): `PUBLIC_IMPRINT_REPRESENTATIVE`
 `PUBLIC_CONTRIBUTE_URL`. `PUBLIC_GITHUB_URL` (Class C) defaults to the upstream repository on
 every instance and only needs setting if you're pointing "view source" at your own fork.
 
-`PUBLIC_APP_NAME`, `PUBLIC_ANALYTICS_ORIGIN` + `PUBLIC_ANALYTICS_WEBSITE_ID` remain optional
-everywhere, including the flagship (analytics is opt-in — unset means no analytics script loads
-at all). See
+`PUBLIC_APP_NAME` remains optional everywhere, including the flagship — it's cosmetic.
+
+**Class D — opt-in third-party data sinks** (share-mvp#631): `PUBLIC_ANALYTICS_ORIGIN` +
+`PUBLIC_ANALYTICS_WEBSITE_ID` (Umami analytics), `PUBLIC_ONBOARDING_SURVEY_URL` (the Tally
+onboarding-survey embed) and `PUBLIC_NEWSLETTER_FORM_URL` (the Keila newsletter signup) are all
+optional everywhere, including the flagship, and — unlike every other class above — have **no
+built-in default at all**, not even allerleih.org's own. Leave them unset and the corresponding
+feature simply doesn't exist: no analytics script loads, the onboarding wizard skips the survey
+step entirely, and `/misc/newsletter` (plus every newsletter link/checkbox) disappears with a
+404 rather than a dead link. That's the point, not a gap to fill in: **without these vars, no
+data about your users ever leaves your instance to a third party** — this is the safe default a
+fresh self-hosted instance boots into, not a missing feature you need to urgently configure. See
 [architecture.md → Instance configuration (multi-city)](../architecture.md#instance-configuration-multi-city)
 for the full class breakdown and what each var does.
 
@@ -240,7 +249,8 @@ service), and define a retention period rather than keeping every snapshot forev
 | `FRONTEND_URL`/`APP_URL` (step 4) | Practically yes — no startup check catches a missing value (backend vars have no `assertRequiredEnv()`-style gate), but without them registration/password-reset mail links silently point at the wrong host. |
 | SMTP (step 5) | Optional but strongly recommended — without it, registration/verification/reset mail and digests are silently not sent. |
 | Backups (step 8) | Optional in the sense that nothing enforces it, but skipping it risks total data loss. |
-| `PUBLIC_ANALYTICS_*`, `PUBLIC_APP_NAME` | Optional on every instance, including the flagship. |
+| `PUBLIC_APP_NAME` | Optional on every instance, including the flagship. |
+| Class D data-sink vars: `PUBLIC_ANALYTICS_*`, `PUBLIC_ONBOARDING_SURVEY_URL`, `PUBLIC_NEWSLETTER_FORM_URL` | Optional on every instance, including the flagship, and safe to leave unset — no built-in default, so unset means no data reaches that third party at all, not a broken feature. |
 | Class B imprint/feedback/social/contribute vars (step 7) | Optional even on a non-flagship instance — empty just hides the corresponding link/field. |
 | `MISTRAL_API_KEY` | Fully optional — unset just disables AI item-photo analysis. |
 

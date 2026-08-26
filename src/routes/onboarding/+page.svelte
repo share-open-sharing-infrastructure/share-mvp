@@ -11,15 +11,49 @@
 	import StepSurvey from './StepSurvey.svelte';
 	import StepDone from './StepDone.svelte';
 	import { texts } from '$lib/texts';
+	import { instance } from '$lib/instance';
 	import SeoHead from '$lib/components/SeoHead.svelte';
 
 	let { data } = $props();
 
+	type OnboardingStep =
+		| 'welcome'
+		| 'howItWorks'
+		| 'survey'
+		| 'profile'
+		| 'location'
+		| 'transportMode'
+		| 'contact'
+		| 'trustees'
+		| 'browserLocation'
+		| 'pushNotifications'
+		| 'done';
+
+	// The survey step only exists when the instance has a configured onboarding survey (Class D,
+	// share-mvp#631) — `instance` is a module singleton, evaluated identically on server and
+	// client, so this never diverges between SSR and hydration. Steps are IDs, not indices: the
+	// `{#if}` chain below switches on `current === '<id>'`, so a step being absent from `STEPS`
+	// (rather than every later numeric index shifting) is the only thing that changes when the
+	// survey is off.
+	const STEPS: OnboardingStep[] = [
+		'welcome',
+		'howItWorks',
+		...(instance.onboardingSurvey.url ? (['survey'] as const) : []),
+		'profile',
+		'location',
+		'transportMode',
+		'contact',
+		'trustees',
+		'browserLocation',
+		'pushNotifications',
+		'done',
+	];
+
 	let step = $state(1);
-	const totalSteps = 11;
+	const current = $derived(STEPS[step - 1]);
 
 	function next() {
-		if (step < totalSteps) step++;
+		if (step < STEPS.length) step++;
 	}
 
 	function back() {
@@ -45,9 +79,11 @@
 			{/if}
 		</div>
 
-		<!-- Progress dots -->
-		<div class="flex justify-center gap-2 mb-8">
-			{#each Array.from({ length: totalSteps }, (_, i) => i) as i (i)}
+		<!-- Progress dots: purely decorative. They are empty, non-interactive divs with no
+		     accessible name, so `aria-current` on them was inert anyway — the `sr-only` live
+		     region below is the single source of truth for assistive tech. -->
+		<div class="flex justify-center gap-2 mb-8" aria-hidden="true">
+			{#each STEPS as id, i (id)}
 				<div
 					class="h-2 rounded-full transition-all duration-300 {i + 1 === step
 						? 'w-6 bg-primary'
@@ -57,37 +93,38 @@
 				></div>
 			{/each}
 		</div>
+		<p class="sr-only" aria-live="polite">{texts.onboarding.progress(step, STEPS.length)}</p>
 
-		{#if step === 1}
+		{#if current === 'welcome'}
 			<StepWelcome onNext={next} />
-		{:else if step === 2}
+		{:else if current === 'howItWorks'}
 			<StepHowItWorks onNext={next} />
-		{:else if step === 3}
-			<StepSurvey onNext={next} />
-		{:else if step === 4}
+		{:else if current === 'survey'}
+			<StepSurvey onNext={next} survey={instance.onboardingSurvey} />
+		{:else if current === 'profile'}
 			<StepProfile onNext={next} currentUser={data.currentUser} pbUrl={data.PB_URL} />
-		{:else if step === 5}
+		{:else if current === 'location'}
 			<StepLocation
 				onNext={next}
 				initialCity={data.currentUser.city}
 				initialGeolocation={data.geolocation}
 			/>
-		{:else if step === 6}
+		{:else if current === 'transportMode'}
 			<StepTransportMode onNext={next} preferredTransportMode={data.currentUserPreferences?.preferredTransportMode} />
-		{:else if step === 7}
+		{:else if current === 'contact'}
 			<StepContact onNext={next} currentUser={data.contact} />
-		{:else if step === 8}
+		{:else if current === 'trustees'}
 			<StepTrustees
 				onNext={next}
 				users={data.users}
 				trustIds={data.trustIds}
 				currentUserId={data.currentUser.id}
 			/>
-		{:else if step === 9}
+		{:else if current === 'browserLocation'}
 			<StepBrowserLocation onNext={next} />
-		{:else if step === 10}
+		{:else if current === 'pushNotifications'}
 			<StepPushNotifications onNext={next} />
-		{:else if step === 11}
+		{:else if current === 'done'}
 			<StepDone inviteUrl={data.inviteUrl} username={data.username} />
 		{/if}
 

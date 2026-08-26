@@ -61,8 +61,8 @@ and is validated by the `init` hook in `src/hooks.server.ts`: a missing **or emp
 the server refuse to start, naming every offender. Required (template: `.env.example`; see
 `docs/architecture.md` for what each does): `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`,
 `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL`,
-`PB_SUPERUSER_PASSWORD`. `MISTRAL_API_KEY` is the **only optional** var (unset ⇒
-`/api/analyze-item` answers 503). `SYNC_SECRET` is **gone** as of #487 Phase 3 — the integrations
+`PB_SUPERUSER_PASSWORD`. `MISTRAL_API_KEY` is optional (unset ⇒ `/api/analyze-item` answers
+503) — so are the four Class D vars below. `SYNC_SECRET` is **gone** as of #487 Phase 3 — the integrations
 run entirely in the backend, so the frontend holds no sync secret and no `/api/sync`/`/api/refresh`
 endpoints.
 The two public plumbing vars are read only through `$lib/publicEnv.ts` (`pbUrl()` /
@@ -80,8 +80,15 @@ Class-A vars become **required or the server refuses to start**: `PUBLIC_INSTANC
 `PUBLIC_IMPRINT_POSTAL_CODE`, `PUBLIC_IMPRINT_CITY`, `PUBLIC_IMPRINT_COUNTRY`. The rest
 (`PUBLIC_IMPRINT_REPRESENTATIVE`, `PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`,
 `PUBLIC_SOCIAL_TELEGRAM`/`MASTODON`/`PIXELFED`/`INSTAGRAM`, `PUBLIC_CONTRIBUTE_URL`,
-`PUBLIC_GITHUB_URL`, `PUBLIC_APP_NAME`, `PUBLIC_ANALYTICS_ORIGIN`/`WEBSITE_ID`) stay optional
-everywhere; empty ⇒ the corresponding link/field is hidden (`{#if}`), never a dead link.
+`PUBLIC_GITHUB_URL`, `PUBLIC_APP_NAME`) stay optional everywhere; empty ⇒ the corresponding
+link/field is hidden (`{#if}`), never a dead link.
+**Class D — opt-in third-party data sinks (share-mvp#631):** `PUBLIC_ANALYTICS_ORIGIN`/
+`WEBSITE_ID`, `PUBLIC_ONBOARDING_SURVEY_URL` (Tally onboarding survey), `PUBLIC_NEWSLETTER_FORM_URL`
+(Keila newsletter, wired via `/misc/newsletter`'s `?/subscribe` action and
+`signUpForNewsletter()`). Optional on **every** instance, flagship included, and — unlike A/B/C —
+**never** routed through a flagship default: empty/invalid ⇒ the feature doesn't exist (render
+site vanishes, `/misc/newsletter` 404s, no request ever reaches the third party), never "quietly
+uses allerleih.org's own vendor account".
 `$env/dynamic/public` serialises the **whole** `PUBLIC_*` env into every rendered page, not just
 the vars a module references — treat any `PUBLIC_*` var as fully public the moment it's set,
 whether or not any module reads it (see `docs/architecture.md` → "Instance configuration").

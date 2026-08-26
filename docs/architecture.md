@@ -24,7 +24,7 @@ graph TD
     SK -->|"Web Push VAPID — server-side"| Push
 ```
 
-**Key constraint:** All calls to external services (ORS, Mistral, Web Push) are made server-side only. Raw geolocation coordinates and API credentials never reach the browser. User coordinates live in an **owner-only** `user_geolocations` collection (only the owner can read their own row) and are read solely by a PocketBase backend hook (`POST /api/travel-times`) that calls ORS and returns only bucketed minutes — so travel-time ORS calls run from the backend and coordinates never leave it. The browser connects directly to PocketBase only for real-time WebSocket subscriptions — and only with a token passed through `page.data`, since the auth cookie is httpOnly.
+**Key constraint:** All calls to external services that touch user PII (ORS, Mistral, Web Push, and — since share-mvp#631's `?/subscribe` action — Keila) are made server-side only. Raw geolocation coordinates and API credentials never reach the browser. User coordinates live in an **owner-only** `user_geolocations` collection (only the owner can read their own row) and are read solely by a PocketBase backend hook (`POST /api/travel-times`) that calls ORS and returns only bucketed minutes — so travel-time ORS calls run from the backend and coordinates never leave it. The browser connects directly to PocketBase only for real-time WebSocket subscriptions — and only with a token passed through `page.data`, since the auth cookie is httpOnly. **The one exception is Tally** (the onboarding survey embed, `src/routes/onboarding/StepSurvey.svelte`): it loads and runs entirely in the browser via an iframe + embed script, with no server-side proxy — and without a configured `PUBLIC_ONBOARDING_SURVEY_URL` (Class D, see "Instance configuration" below) it is not merely proxied, it doesn't render at all, so no request reaches Tally either way on an instance that hasn't opted in.
 
 ---
 
@@ -93,7 +93,16 @@ Some logic runs inside PocketBase itself (JS hooks) so it can use backend privil
 | Mistral AI | Server → Mistral | Item photo analysis (`/api/analyze-item`) | pixtral-12b-2409 vision model; server-side only |
 | Web Push (VAPID) | Server → Push service | Push notifications | Per-device subscriptions stored in `push_subscriptions`; stale subscriptions auto-removed on HTTP 410/404 |
 | partner lending software instances | Backend (PocketBase hooks) → partner software | Sync partner item catalogues into `items` | Polled by the backend `integration_sync` / `integration_refresh` cron jobs; each institution's `sync_config` row is read and items owned by that account are upserted/archived. See [integrations.md](integrations.md) for details |
+| Tally (onboarding survey) | Browser → Tally | Optional onboarding survey embed (`StepSurvey.svelte`) | Class D (opt-in, no server proxy) — the survey step doesn't exist in the onboarding wizard, and no script loads, unless `PUBLIC_ONBOARDING_SURVEY_URL` is set |
+| Keila (newsletter) | Server → Keila | Newsletter signup (`/misc/newsletter`'s `?/subscribe` action, and the register-form opt-in via `signUpForNewsletter()`) | Class D — since share-mvp#631 both paths POST server-side, not from the browser; the route 404s and every newsletter link/checkbox hides unless `PUBLIC_NEWSLETTER_FORM_URL` is set |
 
+**No CSP today** (verified: `svelte.config.js`, `src/hooks.server.ts`, `src/app.html`,
+`deploy/Caddyfile` — none of them set one). Noted here because it's the one place a future CSP
+would interact with this table: a `Content-Security-Policy` would need `frame-src`/`script-src`
+entries for Tally and `connect-src`/`form-action` for Keila that are only known at runtime (the
+operator-configured Class D origins, `instance.onboardingSurvey.origin` and the host parsed out of
+`newsletterFormUrl`) — a static policy can't express that without either hardcoding those hosts
+(defeating the point of Class D being configurable) or generating the header per-request.
 
 ## Instance configuration (multi-city)
 
@@ -115,10 +124,10 @@ three classes:
 | **A** | Required on a non-flagship instance — the server refuses to start without it (`missingInstanceEnv()` in `src/lib/server/env.ts`); a §5 TMG imprint is legally mandatory | `PUBLIC_INSTANCE_CITY`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_IMPRINT_OPERATOR`, `PUBLIC_IMPRINT_STREET`, `PUBLIC_IMPRINT_POSTAL_CODE`, `PUBLIC_IMPRINT_CITY`, `PUBLIC_IMPRINT_COUNTRY` |
 | **B** | Optional on every instance — unset ⇒ `''` on a non-flagship instance, and the render site hides the link/field (no dead link) | `PUBLIC_IMPRINT_REPRESENTATIVE`, `PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`, `PUBLIC_SOCIAL_TELEGRAM`, `PUBLIC_SOCIAL_MASTODON`, `PUBLIC_SOCIAL_PIXELFED`, `PUBLIC_SOCIAL_INSTAGRAM`, `PUBLIC_CONTRIBUTE_URL` |
 | **C** | Defaults unconditionally, not flagship-gated | `PUBLIC_GITHUB_URL` (upstream repo) |
+| **D** | Opt-in third-party data sinks — optional on **every** instance, flagship included, and deliberately **NOT** routed through the flagship-default machinery: a forgotten env var must degrade to "feature doesn't exist" (route 404s, render site vanishes, no request ever reaches the third party), never to "silently uses allerleih.org's own vendor account" (share-mvp#631) | `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`, `PUBLIC_ONBOARDING_SURVEY_URL` (Tally), `PUBLIC_NEWSLETTER_FORM_URL` (Keila) |
 
-Plus the two cosmetic/analytics vars that predate the class system and are optional everywhere:
-`PUBLIC_APP_NAME` (default `AllerLeih`) and the opt-in analytics pair `PUBLIC_ANALYTICS_ORIGIN`/
-`PUBLIC_ANALYTICS_WEBSITE_ID` (unset ⇒ off). `PUBLIC_SITE_ORIGIN` itself defaults to
+Plus `PUBLIC_APP_NAME` (default `AllerLeih`), a cosmetic var that predates the class system and
+is optional everywhere. `PUBLIC_SITE_ORIGIN` itself defaults to
 `https://allerleih.org` when unset or invalid — never throws (a bad env var must not 500 the
 whole app) — but on a non-flagship instance a value that fails to parse as a valid http(s) origin
 is *also* reported as missing by `missingInstanceEnv()`, alongside whichever Class A vars are
@@ -206,8 +215,9 @@ see "Current Deployment Pipeline" below for where that has to live and which thr
   every offender named, instead of leaving a half-working site up. The check is presence-only — it
   proves a non-empty line exists, not that the value is usable (a placeholder `ORS_API_KEY`
   satisfies it). `logOptionalEnvGaps()` then prints one `console.info` line naming the vars from
-  `OPTIONAL_ENV` this instance runs without and what that disables (names only, never values), so a
-  quietly-off feature shows up in the startup log instead of surfacing later as a 503.
+  `OPTIONAL_PUBLIC_ENV`/`OPTIONAL_PRIVATE_ENV` this instance runs without and what that disables
+  (names only, never values), so a quietly-off feature shows up in the startup log instead of
+  surfacing later as a 503 (or, for the Class D vars, a 404).
   (Integration sync/refresh + the CSV write path run entirely in the backend as of #487 Phase 3 —
   no frontend sync secret.
   `PB_SUPERUSER_*` are **not** tooling-only: `$lib/server/superuser.ts` → `$lib/server/metrics.ts`
@@ -217,10 +227,13 @@ see "Current Deployment Pipeline" below for where that has to live and which thr
 - **PocketBase:** runs as a separate process on Uberspace (repo `allerleih-backend`; schema + JS hooks version-controlled, migrations auto-applied on start); SQLite data and file uploads live on the server filesystem — not managed by the SvelteKit CI/CD pipeline. ⚠️ The backend requires **`ORS_API_KEY`** in **its own** environment (used by the `/api/travel-times` hook) — a separate value from the frontend's, which lives in the SvelteKit runtime `.env`.
 - **Runtime env vars** — since #627 that is *all* of them (the seven required ones,
   `MISTRAL_API_KEY`, and the instance-branding vars — see "Instance configuration" above for the
-  Class A/B/C breakdown). This deploy IS the flagship instance (`PUBLIC_SITE_ORIGIN` is one of the
+  Class A/B/C/D breakdown). This deploy IS the flagship instance (`PUBLIC_SITE_ORIGIN` is one of the
   two repo Variables the `.env` block in `deploy-to-uberspace.yaml` leaves unset), so none of the
   Class A/B vars need setting here; a deploy pointed at any other origin would need the seven
-  Class A vars too, or the process refuses to start. They are read via `$env/dynamic/*` from `process.env`
+  Class A vars too, or the process refuses to start. The two Class D data-sink vars
+  (`PUBLIC_ONBOARDING_SURVEY_URL`, `PUBLIC_NEWSLETTER_FORM_URL`) are independent of the flagship
+  question — allerleih.org itself must set them as repo Variables too, or its own onboarding
+  survey/newsletter silently go dark (share-mvp#631). They are read via `$env/dynamic/*` from `process.env`
   (adapter-node) at server start, never baked into the build — so one build artefact serves every
   city instance and only each instance's runtime environment differs. Three traps when adding one:
   (1) putting it in the workflow's `npm run build` step has **no** effect — that is now true for
@@ -267,7 +280,8 @@ here:
 | `PB_SUPERUSER_EMAIL` / `PB_SUPERUSER_PASSWORD` | **Full PocketBase superuser credentials** — unrestricted read/write on every collection (all users' emails, coordinates, trust graph, messages) plus schema and admin control, bypassing every collection rule. This app only *uses* them for the `/admin` gate, public stats, and `metrics_daily`, but the credential itself is not scoped to those three features — store and rotate it like any other master secret, not like a feature-scoped API key. | — (required) |
 | `MISTRAL_API_KEY` | AI item-photo analysis | unset ⇒ `/api/analyze-item` answers 503 |
 | `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_CONTACT_EMAIL`, `PUBLIC_IMPRINT_OPERATOR`, `PUBLIC_IMPRINT_STREET`, `PUBLIC_IMPRINT_POSTAL_CODE`, `PUBLIC_IMPRINT_CITY`, `PUBLIC_IMPRINT_COUNTRY` | Instance branding, Class A | required unless this is the flagship instance — see "Instance configuration" above |
-| `PUBLIC_IMPRINT_REPRESENTATIVE`, `PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`, `PUBLIC_SOCIAL_TELEGRAM`, `PUBLIC_SOCIAL_MASTODON`, `PUBLIC_SOCIAL_PIXELFED`, `PUBLIC_SOCIAL_INSTAGRAM`, `PUBLIC_CONTRIBUTE_URL`, `PUBLIC_GITHUB_URL`, `PUBLIC_APP_NAME`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` | Instance branding, Class B/C + cosmetic/analytics | optional everywhere — see "Instance configuration" above |
+| `PUBLIC_IMPRINT_REPRESENTATIVE`, `PUBLIC_IMPRINT_REGISTER_ENTRY`, `PUBLIC_FEEDBACK_EMAIL`, `PUBLIC_SOCIAL_TELEGRAM`, `PUBLIC_SOCIAL_MASTODON`, `PUBLIC_SOCIAL_PIXELFED`, `PUBLIC_SOCIAL_INSTAGRAM`, `PUBLIC_CONTRIBUTE_URL`, `PUBLIC_GITHUB_URL`, `PUBLIC_APP_NAME` | Instance branding, Class B/C + cosmetic | optional everywhere — see "Instance configuration" above |
+| `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`, `PUBLIC_ONBOARDING_SURVEY_URL`, `PUBLIC_NEWSLETTER_FORM_URL` | Class D — opt-in third-party data sinks (analytics, Tally onboarding survey, Keila newsletter) | optional everywhere, incl. the flagship, with **no** fallback default — unset ⇒ the feature doesn't exist, not "uses allerleih.org's own account" — see "Instance configuration" above |
 
 Two adapter-node knobs are **not** in that set and cannot be, because `assertRequiredEnv()` has
 no way to see them — they are validated by adapter-node itself, not by this app:
