@@ -34,7 +34,7 @@ SearchParameters  ──buildItemFilter()──►  PocketBase filter string
 | Consolidated filter trigger + modal | [`FilterModal.svelte`](../src/routes/search/FilterModal.svelte) | Opened from a "Filter" button (with an active-filter-count badge counting only what's settable inside the modal: Verfügbarkeit / Anbieter / Kategorien / Gruppe) on the search page. Holds Sortierung / Verfügbarkeit / Anbieter / Kategorien / Gruppe as local draft `$state`, seeded from the current (URL-derived) props whenever it opens. Nothing navigates until "Filter anwenden", which does one `buildSearchUrl` + `goto()` call committing every draft field at once; "Zurücksetzen" only resets the draft to app defaults, it does not navigate or close the modal. |
 | Generic segmented control | [`SegmentedControl.svelte`](../src/lib/components/ui/SegmentedControl.svelte) | Reusable `options[]` + bindable `value` pill-group primitive; used for the Anbieter control and the modal's sort options. |
 | Travel-time filter | [`TravelTimeFilter.svelte`](../src/routes/search/TravelTimeFilter.svelte) | Rendered inline next to Filter/Sort, not inside the modal. Client-side; filters/sorts the **current page** by bucketed minutes (see below). Its state (`transportMode`/`travelTimes`/`maxMinutes`) lives in `+page.svelte` and was never URL state; the slider itself is its own reset (drag back to the 30 min "no limit" default). |
-| Category filter | [`CategoryFilter.svelte`](../src/routes/search/CategoryFilter.svelte) | Rendered inside the modal's Kategorien section. Chip grid + AND/OR toggle; binds to the modal's draft state (`selectedCategories`/`op`) instead of navigating itself. |
+| Category filter | [`CategoryFilter.svelte`](../src/routes/search/CategoryFilter.svelte) | Rendered inside the modal's Kategorien section. Multi-select chip grid (multiple categories combine with OR); binds to the modal's draft state (`selectedCategories`) instead of navigating itself. |
 | Group filter | [`GroupFilter.svelte`](../src/routes/search/GroupFilter.svelte) | Rendered inside the modal's Gruppe section (only when the user has groups; guests never see it). Single-select dropdown of the user's groups; binds to the modal's draft state instead of navigating itself. |
 
 > **Deferred:** Bezirke, Sprachen and max. Leihdauer filters are intentionally not in the modal —
@@ -61,8 +61,7 @@ All discovery state lives in the URL (deep-linkable, server-rendered). Defaults 
 | Param | Meaning |
 |---|---|
 | `q` | free-text query; matches every whitespace token against `name`/`description` |
-| `cats` | comma-separated category list (validated against `ITEM_CATEGORIES`) |
-| `op` | `or` (default) / `and` — how multiple categories combine |
+| `cats` | comma-separated category list (validated against `ITEM_CATEGORIES`); multiple categories combine with OR |
 | `onlyAvailable` | `true` (default); `false` includes unavailable items |
 | `ownerType` | `all` (default) / `institution` / `private` |
 | `group` | a single group id — restrict results to items shared with that group. Only groups the requester owns or is a member of are accepted (see the security note below); anything else is silently dropped |

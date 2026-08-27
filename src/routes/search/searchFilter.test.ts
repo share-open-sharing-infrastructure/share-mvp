@@ -40,7 +40,6 @@ describe('buildItemFilter', () => {
 		page: 1,
 		perPage: 20,
 		selectedCategories: [],
-		op: 'or',
 		onlyAvailable: true,
 		ownerType: 'all',
 		selectedGroup: null,

@@ -11,7 +11,6 @@ export interface FilterDraft {
 	onlyAvailable: boolean;
 	ownerType: OwnerType;
 	selectedCategories: string[];
-	op: 'or' | 'and';
 	selectedGroup: string | null;
 }
 
@@ -20,7 +19,6 @@ export type SearchParameters = {
 	page: number;
 	perPage: number;
 	selectedCategories: ItemCategory[];
-	op: 'or' | 'and';
 	onlyAvailable: boolean;
 	ownerType: OwnerType;
 	/**
@@ -84,7 +82,7 @@ export function buildSearchFilter(raw: string): string | null {
 /**
  * Parses and validates all search-related URL parameters into a typed `SearchParams` object.
  * Invalid or missing values fall back to safe defaults; unrecognised category values are silently dropped.
- * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `op`, `onlyAvailable`, `ownerType`).
+ * @param url the request URL containing search parameters (`q`, `page`, `perPage`, `cats`, `onlyAvailable`, `ownerType`).
  *   `onlyAvailable` defaults to `false` (show all items) unless explicitly set to `true`.
  * @returns a fully typed `SearchParams` object with all fields guaranteed to be valid
  */
@@ -99,7 +97,6 @@ export function parseSearchParameters(url: URL): SearchParameters {
 		.map((s) => s.trim())
 		.filter((s): s is ItemCategory => ITEM_CATEGORIES.includes(s as ItemCategory));
 
-	const op: 'or' | 'and' = url.searchParams.get('op') === 'and' ? 'and' : 'or';
 	const onlyAvailable = url.searchParams.get('onlyAvailable') === 'true';
 
 	const ownerTypeParam = url.searchParams.get('ownerType') ?? 'all';
@@ -118,7 +115,7 @@ export function parseSearchParameters(url: URL): SearchParameters {
 		? (sortParam as SortOption)
 		: 'newest';
 
-	return { query, page, perPage, selectedCategories, op, onlyAvailable, ownerType, selectedGroup, sort };
+	return { query, page, perPage, selectedCategories, onlyAvailable, ownerType, selectedGroup, sort };
 }
 
 /**
@@ -137,9 +134,10 @@ export function buildItemFilter(params: SearchParameters, userId?: string): stri
 
 	// Escape & as \& so PocketBase's filter parser doesn't misinterpret it as the && operator.
 	const escapeCategoryValue = (c: string) => c.replace(/&/g, '\\&');
+	// Multiple selected categories combine with OR: an item matches if it has any of them.
 	const categoryFilter =
 		params.selectedCategories.length > 0
-			? `(${params.selectedCategories.map((c) => `${validateFilterField('categories')} ~ '${escapeCategoryValue(c)}'`).join(params.op === 'and' ? ' && ' : ' || ')})`
+			? `(${params.selectedCategories.map((c) => `${validateFilterField('categories')} ~ '${escapeCategoryValue(c)}'`).join(' || ')})`
 			: null;
 
 	// Trust visibility is enforced by the `items_searchable` view's rule (public items

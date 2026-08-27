@@ -3,7 +3,6 @@ import { resolve } from '$app/paths';
 export interface SearchUrlParams {
 	q?: string;
 	cats?: string[];
-	op?: 'or' | 'and';
 	onlyAvailable?: boolean;
 	ownerType?: string;
 	group?: string;
@@ -18,7 +17,6 @@ export function buildSearchUrl(params: SearchUrlParams): string {
 	if (params.page !== undefined && params.page > 1) parts.push(`page=${params.page}`);
 	if (params.perPage !== undefined) parts.push(`perPage=${params.perPage}`);
 	if (params.cats && params.cats.length > 0) parts.push(`cats=${encodeURIComponent(params.cats.join(','))}`);
-	if (params.op === 'and') parts.push('op=and');
 	if (params.onlyAvailable) parts.push('onlyAvailable=true');
 	if (params.ownerType && params.ownerType !== 'all') parts.push(`ownerType=${params.ownerType}`);
 	if (params.group) parts.push(`group=${encodeURIComponent(params.group)}`);

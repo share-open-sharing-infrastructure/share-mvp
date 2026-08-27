@@ -701,7 +701,6 @@ export const texts = {
 					'Entfernungsfilter aktiv – nur die aktuelle Seite wird gefiltert. Setze das Limit auf >30 min", um alle Seiten zu sehen.',
 				sliderLabel: 'Maximale Reisezeit in Minuten',
 			},
-			categoryFilterAnd: 'Alle Kategorien erfüllen (UND-Filter)',
 			perPage: 'Pro Seite:',
 			pageInfo: (current: number, total: number) => `Seite ${current} / ${total}`,
 			browseAll: 'Alle Dinge zeigen',

@@ -1,27 +1,22 @@
 <script lang="ts">
-	import { Toggle } from 'flowbite-svelte';
 	import { ITEM_CATEGORIES } from '$lib/categories';
-	import { texts } from '$lib/texts';
 
 	// Rendered inside FilterModal (issue #505): holds no navigation of its own. Selections
 	// are local draft state, bound up to the modal, and only committed to the URL when
 	// "Filter anwenden" is clicked there.
 	interface Props {
 		selectedCategories: string[];
-		op: 'or' | 'and';
 	}
 
-	let { selectedCategories = $bindable(), op = $bindable() }: Props = $props();
+	let { selectedCategories = $bindable() }: Props = $props();
 
 	function toggleCat(cat: string) {
-		selectedCategories = selectedCategories.includes(cat) ? [] : [cat];
+		// Multiple categories combine with OR (an item matches any selected category),
+		// so toggling adds/removes from the selection instead of replacing it.
+		selectedCategories = selectedCategories.includes(cat)
+			? selectedCategories.filter((c) => c !== cat)
+			: [...selectedCategories, cat];
 	}
-
-	function toggleOp() {
-		op = op === 'or' ? 'and' : 'or';
-	}
-
-	let andActive = $derived(op === 'and');
 </script>
 
 <div class="mt-3 space-y-2">
@@ -41,14 +36,4 @@
 			</button>
 		{/each}
 	</div>
-
-	{#if selectedCategories.length >= 2}
-		<div class="flex justify-center">
-			<Toggle checked={andActive} onchange={toggleOp}>
-				<span class="text-sm text-tinte-600 dark:text-tinte-400">
-					{texts.pages.search.categoryFilterAnd}
-				</span>
-			</Toggle>
-		</div>
-	{/if}
 </div>
