@@ -73,7 +73,8 @@ time. The superuser credentials are read at runtime by `$lib/server/superuser.ts
 local tooling (seed scripts, Playwright e2e) reads the same two vars via `process.env`.
 Instance configuration (multi-city, all optional — see `docs/architecture.md` → "Instance
 configuration"): `PUBLIC_SITE_ORIGIN`, `PUBLIC_INSTANCE_CITY`, `PUBLIC_APP_NAME`,
-`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID` — read via
+`PUBLIC_CONTACT_EMAIL`, `PUBLIC_ANALYTICS_ORIGIN`, `PUBLIC_ANALYTICS_WEBSITE_ID`,
+`PUBLIC_SHOW_LANDING_STATS` — read via
 `$lib/instance.ts`. `$env/dynamic/public` serialises the **whole** `PUBLIC_*` env into every
 rendered page, not just the vars a module references — treat any `PUBLIC_*` var as fully public
 the moment it's set, whether or not any module reads it (see `docs/architecture.md` → "Instance

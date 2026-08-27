@@ -193,9 +193,10 @@ seven required vars are `PUBLIC_PB_URL`, `PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVA
 `VAPID_SUBJECT`, `ORS_API_KEY`, `PB_SUPERUSER_EMAIL` and `PB_SUPERUSER_PASSWORD` — the last two
 are **full PocketBase superuser credentials** (unrestricted database read/write, not scoped to
 any single feature), so store and rotate them like any other master secret. `MISTRAL_API_KEY` is
-the only optional variable (unset ⇒ `/api/analyze-item` answers 503); the six
+the only optional variable (unset ⇒ `/api/analyze-item` answers 503); the seven
 `PUBLIC_SITE_ORIGIN`/`PUBLIC_INSTANCE_CITY`/`PUBLIC_APP_NAME`/`PUBLIC_CONTACT_EMAIL`/
-`PUBLIC_ANALYTICS_ORIGIN`/`PUBLIC_ANALYTICS_WEBSITE_ID` instance-branding vars are optional too.
+`PUBLIC_ANALYTICS_ORIGIN`/`PUBLIC_ANALYTICS_WEBSITE_ID`/`PUBLIC_SHOW_LANDING_STATS`
+instance-branding vars are optional too.
 See [docs/architecture.md#running-the-official-container-image](docs/architecture.md#running-the-official-container-image)
 for the full reference with defaults — that table is the single source of truth, this is only a
 summary.
