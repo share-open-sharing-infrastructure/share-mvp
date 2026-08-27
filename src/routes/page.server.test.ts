@@ -1,19 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { getPublicStats } = vi.hoisted(() => ({ getPublicStats: vi.fn() }));
 
 vi.mock('$lib/server/metrics', () => ({ getPublicStats }));
-vi.mock('$lib/instance', async (importOriginal) => {
-	const actual = await importOriginal<typeof import('$lib/instance')>();
-	return { ...actual, instance: { ...actual.instance, showLandingStats: true } };
-});
+// Hermetic default env: mocked so a local `.env` (which may set PUBLIC_SHOW_LANDING_STATS for
+// dev) can never decide whether the teaser is on — same rationale as instance.test.ts:3-5.
+vi.mock('$env/dynamic/public', () => ({ env: {} }));
 
-import { instance } from '$lib/instance';
 import { load } from './+page.server';
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	(instance as { showLandingStats: boolean }).showLandingStats = true;
+});
+
+afterEach(() => {
+	vi.doUnmock('$env/dynamic/public');
 });
 
 describe('/ (landing page) load', () => {
@@ -35,9 +36,13 @@ describe('/ (landing page) load', () => {
 	});
 
 	it('returns stats: null without calling getPublicStats when showLandingStats is disabled', async () => {
-		(instance as { showLandingStats: boolean }).showLandingStats = false;
+		vi.resetModules();
+		vi.doMock('$env/dynamic/public', () => ({
+			env: { PUBLIC_SHOW_LANDING_STATS: 'false' },
+		}));
+		const { load: loadDisabled } = await import('./+page.server');
 
-		const result = await load({} as never);
+		const result = await loadDisabled({} as never);
 
 		expect(result).toEqual({ stats: null });
 		expect(getPublicStats).not.toHaveBeenCalled();

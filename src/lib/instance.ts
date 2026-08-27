@@ -94,7 +94,10 @@ export interface InstanceConfig {
 	readonly links: InstanceLinks;
 	readonly imprint: InstanceImprint;
 	readonly analytics: InstanceAnalytics;
-	/** Landing-page ("/") public stats teaser. Unset/anything but "false" ⇒ shown. */
+	/**
+	 * Landing-page ("/") public stats teaser. Only an explicit "false"/"0"/"no"/"off"
+	 * (case-insensitive, trimmed) hides it; unset/anything else ⇒ shown.
+	 */
 	readonly showLandingStats: boolean;
 	/**
 	 * Instance-specific PROSE — the counterpart to the scalar fields above. Demarcation rule:
@@ -197,6 +200,21 @@ export function resolveAnalytics(
 	}
 }
 
+/**
+ * Explicit opt-out values for `PUBLIC_SHOW_LANDING_STATS`, matched case-insensitively after
+ * trimming. Anything else — including unset/empty, the PR's backward-compat default — keeps
+ * the teaser shown.
+ */
+const LANDING_STATS_FALSY = new Set(['false', '0', 'no', 'off']);
+
+/**
+ * Pure resolver for `PUBLIC_SHOW_LANDING_STATS`, exported so tests can call it directly (see
+ * `resolveOrigin`/`resolveAnalytics` above). Never throws.
+ */
+export function resolveShowLandingStats(raw: string | undefined): boolean {
+	return !LANDING_STATS_FALSY.has((raw ?? '').trim().toLowerCase());
+}
+
 const { origin, originHost } = resolveOrigin(env.PUBLIC_SITE_ORIGIN);
 // Hoisted so the `faq` prose below can interpolate it — the `instance` object literal can't
 // self-reference its own `appName` field via `this`.
@@ -244,7 +262,7 @@ export const instance: InstanceConfig = {
 		}
 	},
 	analytics: resolveAnalytics(env.PUBLIC_ANALYTICS_ORIGIN, env.PUBLIC_ANALYTICS_WEBSITE_ID),
-	showLandingStats: env.PUBLIC_SHOW_LANDING_STATS?.trim().toLowerCase() !== 'false',
+	showLandingStats: resolveShowLandingStats(env.PUBLIC_SHOW_LANDING_STATS),
 	faq: {
 		faqItems: [
 			{

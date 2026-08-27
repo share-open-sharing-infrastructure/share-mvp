@@ -118,6 +118,8 @@ All seven are optional; an unset/invalid value falls back to the Lüneburg/aller
 per city (feedback address, social links, GitHub/Notion links, the legal imprint address) are
 hardcoded in the same module rather than env-fed. `showLandingStats` only gates the `/` public
 stats teaser section — `/misc/stats` always shows the same numbers on its own dedicated page.
+Only an explicit `false`/`0`/`no`/`off` (case-insensitive, trimmed) turns it off; unset/anything
+else keeps it shown.
 
 **The origin rule** — stated once, applied everywhere: crawler-facing absolute URLs (sitemap,
 robots, `canonical` via `SeoHead`'s opt-in `canonical` flag, `og:url`, `og:image`) always come

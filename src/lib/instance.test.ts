@@ -11,6 +11,7 @@ import {
 	resolveOrigin,
 	resolveAnalytics,
 	buildAnalyticsSnippet,
+	resolveShowLandingStats,
 } from './instance';
 
 describe('instance — defaults (no env vars set)', () => {
@@ -234,6 +235,28 @@ describe('resolveAnalytics + buildAnalyticsSnippet (pure validation)', () => {
 	});
 });
 
+describe('resolveShowLandingStats (pure validation)', () => {
+	it('is shown by default (unset/empty)', () => {
+		expect(resolveShowLandingStats(undefined)).toBe(true);
+		expect(resolveShowLandingStats('')).toBe(true);
+	});
+
+	it('hides for the explicit falsy set, case-insensitively and trimmed', () => {
+		expect(resolveShowLandingStats('false')).toBe(false);
+		expect(resolveShowLandingStats('FALSE')).toBe(false);
+		expect(resolveShowLandingStats('  false  ')).toBe(false);
+		expect(resolveShowLandingStats('0')).toBe(false);
+		expect(resolveShowLandingStats('no')).toBe(false);
+		expect(resolveShowLandingStats('off')).toBe(false);
+	});
+
+	it('shows for anything else, including truthy-looking values', () => {
+		expect(resolveShowLandingStats('true')).toBe(true);
+		expect(resolveShowLandingStats('1')).toBe(true);
+		expect(resolveShowLandingStats('yes')).toBe(true);
+	});
+});
+
 // Genuine env-integration tests: that the env vars are actually wired to the right
 // `instance` fields / exported functions at all — the module-reset dance is only worth
 // paying for this, not for re-deriving validation logic already covered directly above.
@@ -293,5 +316,13 @@ describe('instance — env var wiring (integration)', () => {
 			'<script defer src="https://analytics.allerleih.org/script.js" data-website-id="6cfb6acd-259e-4771-baa7-c677387ea292"></script>\n' +
 				'<script defer src="https://analytics.allerleih.org/recorder.js" data-website-id="6cfb6acd-259e-4771-baa7-c677387ea292"></script>'
 		);
+	});
+
+	it('wires PUBLIC_SHOW_LANDING_STATS into instance.showLandingStats', async () => {
+		vi.doMock('$env/dynamic/public', () => ({
+			env: { PUBLIC_SHOW_LANDING_STATS: 'false' },
+		}));
+		const { instance: overridden } = await import('./instance');
+		expect(overridden.showLandingStats).toBe(false);
 	});
 });

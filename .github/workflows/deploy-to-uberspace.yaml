@@ -56,15 +56,16 @@ jobs:
           PUBLIC_ANALYTICS_WEBSITE_ID: ${{ vars.PUBLIC_ANALYTICS_WEBSITE_ID }}
           PUBLIC_SITE_ORIGIN: ${{ vars.PUBLIC_SITE_ORIGIN }}
           PUBLIC_INSTANCE_CITY: ${{ vars.PUBLIC_INSTANCE_CITY }}
+          PUBLIC_SHOW_LANDING_STATS: ${{ vars.PUBLIC_SHOW_LANDING_STATS }}
         with:
           host: ${{ vars.SSH_HOST }}
           username: ${{ vars.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           # Deliberately one line, no spaces: `origin/main` has always used the space-free form, so
-          # per-element trimming by the action is unproven in this pipeline. If it did not trim, 11 of
-          # 12 names would be looked up with a leading space, silently resolve to empty, and
+          # per-element trimming by the action is unproven in this pipeline. If it did not trim, 12 of
+          # 13 names would be looked up with a leading space, silently resolve to empty, and
           # `assertRequiredEnv()` would refuse to boot the freshly deployed site. Keep it flat.
-          envs: PUBLIC_PB_URL,PUBLIC_VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,VAPID_SUBJECT,ORS_API_KEY,MISTRAL_API_KEY,PB_SUPERUSER_EMAIL,PB_SUPERUSER_PASSWORD,PUBLIC_ANALYTICS_ORIGIN,PUBLIC_ANALYTICS_WEBSITE_ID,PUBLIC_SITE_ORIGIN,PUBLIC_INSTANCE_CITY
+          envs: PUBLIC_PB_URL,PUBLIC_VAPID_PUBLIC_KEY,VAPID_PRIVATE_KEY,VAPID_SUBJECT,ORS_API_KEY,MISTRAL_API_KEY,PB_SUPERUSER_EMAIL,PB_SUPERUSER_PASSWORD,PUBLIC_ANALYTICS_ORIGIN,PUBLIC_ANALYTICS_WEBSITE_ID,PUBLIC_SITE_ORIGIN,PUBLIC_INSTANCE_CITY,PUBLIC_SHOW_LANDING_STATS
           script: |
             # `set -e` so a failing `npm ci` fails the deploy instead of reporting success with a
             # half-updated server; `set -u` to catch a typo'd variable name. Because of `set -u`,
@@ -120,12 +121,15 @@ jobs:
             } > .env
             # Appended only when non-empty: an explicit empty line would OVERRIDE the code
             # defaults in `src/lib/instance.ts` with "", whereas an absent line lets them apply.
-            # This is what makes the two repo Variables optional rather than mandatory.
+            # This is what makes these three repo Variables optional rather than mandatory.
             if [ -n "${PUBLIC_SITE_ORIGIN:-}" ]; then
               echo "PUBLIC_SITE_ORIGIN='${PUBLIC_SITE_ORIGIN}'" >> .env
             fi
             if [ -n "${PUBLIC_INSTANCE_CITY:-}" ]; then
               echo "PUBLIC_INSTANCE_CITY='${PUBLIC_INSTANCE_CITY}'" >> .env
+            fi
+            if [ -n "${PUBLIC_SHOW_LANDING_STATS:-}" ]; then
+              echo "PUBLIC_SHOW_LANDING_STATS='${PUBLIC_SHOW_LANDING_STATS}'" >> .env
             fi
             npm ci
             supervisorctl restart svelte
