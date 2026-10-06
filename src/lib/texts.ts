@@ -1349,6 +1349,18 @@ export const texts = {
 		dismiss: 'Später',
 	},
 
+	// Temporary Deutscher Engagementpreis voting banner (remove after 2026-10-29, see $lib/depBanner.ts)
+	depBanner: {
+		ariaLabel: 'Hinweis zum Deutschen Engagementpreis',
+		text: 'AllerLeih ist beim Deutschen Engagementpreis nominiert. Stimm bis 29.10. für uns ab: kostenlos, per SMS, in einer Minute.',
+		textShort: 'Stimm beim Deutschen Engagementpreis für AllerLeih ab!',
+		textFinal:
+			'Nur noch bis Do, 29.10., 17:59 Uhr: Stimm für AllerLeih beim Deutschen Engagementpreis ab!',
+		nameHint: 'Auf der Seite steht „Matteo Ramin“, die Stimme gilt AllerLeih.',
+		cta: 'Jetzt abstimmen',
+		dismissLabel: 'Hinweis schließen',
+	},
+
 	// PWA install and notification prompts
 	pwa: {
 		notifBannerText: 'Erhalte Benachrichtigungen für neue Nachrichten und Anfragen.',

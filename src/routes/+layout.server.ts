@@ -1,4 +1,6 @@
 import { NOTIFICATIONS_DEP } from '$lib/constants';
+import { DEP_BANNER_COOKIE, depBannerTimeState } from '$lib/depBanner';
+import { instance } from '$lib/instance';
 import { getUserPreferences } from '$lib/server/userPreferences';
 import { isAdmin } from '$lib/server/metrics';
 import type { UserPreferences } from '$lib/types/models';
@@ -61,7 +63,16 @@ export const load = async (event) => {
 		isAdminUser = adminFlag;
 	}
 
+	// Temporary DEP voting banner (remove after 2026-10-29). Deliberately pathname-independent
+	// (see depBannerTimeState): the excluded-path check happens in DepBanner.svelte.
+	const depBanner = depBannerTimeState(
+		new Date(),
+		event.cookies.get(DEP_BANNER_COOKIE),
+		instance.originHost
+	);
+
 	return {
+		depBanner,
 		currentUser,
 		currentUserPreferences,
 		unreadNotificationCount,

@@ -139,6 +139,23 @@ client recomputes a right-looking value after hydration (issue #473, caught only
 reading the raw SSR response — see `e2e/tests/seo-canonical.spec.ts`). `instanceUrl()` logs a
 DEV-only console error if given a non-root-absolute path, to make a repeat loud instead of silent.
 
+**Temporary: DEP voting banner (remove after 2026-10-29).** `src/routes/components/DepBanner.svelte`
+is rendered by the root `+layout.svelte` between the navbar and `<main>` (normal flow, not
+fixed/sticky) and points to the Deutscher Engagementpreis public vote. `depBannerTimeState()` in
+`src/lib/depBanner.ts` (instance, time, cookie; no path rule) is called from
+the root `+layout.server.ts` (result on `data.depBanner`, so SSR decides and nothing flashes; the load
+is kept URL-independent). `DepBanner.svelte` takes it as `serverState` and owns the rest via
+`resolveDepBanner()`: excluded paths (`page.url.pathname`), the in-session dismissal and the focus
+handoff to `<main>` on dismiss (WCAG 2.4.3). Rules: only
+when `instance.originHost === 'allerleih.org'`; never on `/onboarding`, `/auth/*`, `/admin/*`; expires
+at `DEP_END` (2026-10-29T16:59:00Z) without a deploy; from `DEP_FINAL_START` (2026-10-24T22:00:00Z) the
+`final` variant shows. The ✕ sets the functional cookie `dep26-banner` (`dismissed`, or
+`dismissed-final` for the final variant; `Max-Age` until the end, `SameSite=Lax`, no consent needed).
+A plain `dismissed` no longer hides the banner once the final phase starts. Umami events:
+`dep-banner-cta`, `dep-banner-dismiss`. Copy: `texts.depBanner`. Delete these files plus the
+`<DepBanner>` line in the root layout, the `depBanner` bits in `+layout.server.ts`, `texts.ts` and its layout-test cases
+once the campaign is over.
+
 **`$env/dynamic/*` is the repo-wide convention** (issue #627): every env access — public and
 private — is read at **runtime**, and `$env/static/*` is banned by ESLint. The reason is the one
 this file already gave for `instance.ts`: one build artefact must serve N city instances, and

@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { isAdmin } = vi.hoisted(() => ({ isAdmin: vi.fn() }));
 vi.mock('$lib/server/metrics', () => ({ isAdmin }));
+const { instanceMock } = vi.hoisted(() => ({ instanceMock: { originHost: 'allerleih.org' } }));
+vi.mock('$lib/instance', () => ({ instance: instanceMock }));
 
 import { load } from './+layout.server';
 import { NOTIFICATIONS_DEP } from '$lib/constants';
@@ -21,11 +23,18 @@ describe('Root layout load', () => {
 		depends = vi.fn();
 		filter = vi.fn((raw: string) => raw);
 		isAdmin.mockResolvedValue(false);
+		instanceMock.originHost = 'allerleih.org';
 	});
 
-	function buildEvent(user: { id: string } | null) {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	function buildEvent(user: { id: string } | null, opts: { cookie?: string; pathname?: string } = {}) {
 		return {
 			depends,
+			cookies: { get: vi.fn((name: string) => (name === 'dep26-banner' ? opts.cookie : undefined)) },
+			url: new URL(`https://allerleih.org${opts.pathname ?? '/'}`),
 			locals: {
 				user,
 				pb: {
@@ -144,5 +153,44 @@ describe('Root layout load', () => {
 		const result = await load(buildEvent(null));
 		expect(result.isAdminUser).toBe(false);
 		expect(isAdmin).not.toHaveBeenCalled();
+	});
+
+	describe('DEP voting banner state', () => {
+		it('returns the normal variant for a guest during the campaign', async () => {
+			vi.useFakeTimers({ now: new Date('2026-10-06T12:00:00Z') });
+			expect((await load(buildEvent(null))).depBanner).toBe('normal');
+		});
+
+		it('returns the normal variant for a logged-in user too', async () => {
+			vi.useFakeTimers({ now: new Date('2026-10-06T12:00:00Z') });
+			expect((await load(buildEvent({ id: 'user1' }))).depBanner).toBe('normal');
+		});
+
+		it('reads the dismiss cookie: hidden once dismissed', async () => {
+			vi.useFakeTimers({ now: new Date('2026-10-06T12:00:00Z') });
+			expect((await load(buildEvent(null, { cookie: 'dismissed' }))).depBanner).toBe('hidden');
+		});
+
+		it('re-shows the final variant after a plain dismissal once the final phase starts', async () => {
+			vi.useFakeTimers({ now: new Date('2026-10-25T08:00:00Z') });
+			expect((await load(buildEvent(null, { cookie: 'dismissed' }))).depBanner).toBe('final');
+			expect((await load(buildEvent(null, { cookie: 'dismissed-final' }))).depBanner).toBe('hidden');
+		});
+
+		it('does not depend on the URL (excluded paths are handled in +layout.svelte)', async () => {
+			vi.useFakeTimers({ now: new Date('2026-10-06T12:00:00Z') });
+			expect((await load(buildEvent(null, { pathname: '/auth/login' }))).depBanner).toBe('normal');
+		});
+
+		it('is hidden on other instances', async () => {
+			vi.useFakeTimers({ now: new Date('2026-10-06T12:00:00Z') });
+			instanceMock.originHost = 'lueneburg.example';
+			expect((await load(buildEvent(null))).depBanner).toBe('hidden');
+		});
+
+		it('is hidden after the campaign ends', async () => {
+			vi.useFakeTimers({ now: new Date('2026-10-29T16:59:00Z') });
+			expect((await load(buildEvent(null))).depBanner).toBe('hidden');
+		});
 	});
 });
