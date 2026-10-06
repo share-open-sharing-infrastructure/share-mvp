@@ -7,6 +7,7 @@
 	import PwaPrompts from './components/PwaPrompts.svelte';
 	import OnboardingPrompt from './components/OnboardingPrompt.svelte';
 	import ToastHost from './components/ToastHost.svelte';
+	import DepBanner from './components/DepBanner.svelte';
 	import { getClientPB, syncClientPBAuth } from '$lib/client-pb';
 	import { subscribeRealtime } from '$lib/realtime';
 	import { NOTIFICATIONS_DEP } from '$lib/constants';
@@ -153,6 +154,9 @@
 			<FeedbackButton />
 		</div>
 	{/if}
+
+	<!-- Temporary DEP voting banner (remove after 2026-10-29). -->
+	<DepBanner serverState={data.depBanner} />
 
 	<main class="flex-1 py-2 sm:py-8">
 		<!--
