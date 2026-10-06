@@ -45,7 +45,7 @@
 			},
 			{ once: true }
 		);
-		main.focus();
+		main.focus({ preventScroll: true });
 	}
 </script>
 
@@ -62,17 +62,14 @@
 			<div
 				class="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
 			>
-				<div
-					class="min-w-0 flex-1 text-sm leading-snug"
-					title={texts.depBanner.nameHint}
-				>
+				<div class="min-w-0 flex-1 text-sm leading-snug">
 					{#if variant === 'final'}
 						<p class="font-medium">{texts.depBanner.textFinal}</p>
 					{:else}
 						<p class="font-medium sm:hidden">{texts.depBanner.textShort}</p>
 						<p class="hidden font-medium sm:block">{texts.depBanner.text}</p>
 					{/if}
-					<p class="hidden text-xs sm:block">{texts.depBanner.nameHint}</p>
+					<p class="text-xs">{texts.depBanner.nameHint}</p>
 				</div>
 
 				<Button
@@ -83,7 +80,9 @@
 					data-umami-event="dep-banner-cta"
 					class="shrink-0 self-start sm:self-auto"
 				>
-					{texts.depBanner.cta}
+					{texts.depBanner.cta}<span class="sr-only">
+						{texts.depBanner.newTabHint}</span
+					>
 				</Button>
 			</div>
 

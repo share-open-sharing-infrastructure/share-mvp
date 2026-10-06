@@ -1358,6 +1358,7 @@ export const texts = {
 			'Nur noch bis Do, 29.10., 17:59 Uhr: Stimm für AllerLeih beim Deutschen Engagementpreis ab!',
 		nameHint: 'Auf der Seite steht „Matteo Ramin“, die Stimme gilt AllerLeih.',
 		cta: 'Jetzt abstimmen',
+		newTabHint: '(öffnet in neuem Tab)',
 		dismissLabel: 'Hinweis schließen',
 	},
 

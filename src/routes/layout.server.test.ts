@@ -7,6 +7,7 @@ vi.mock('$lib/instance', () => ({ instance: instanceMock }));
 
 import { load } from './+layout.server';
 import { NOTIFICATIONS_DEP } from '$lib/constants';
+import { DEP_BANNER_COOKIE, DEP_DISMISSED, DEP_DISMISSED_FINAL } from '$lib/depBanner';
 
 type LoadEvent = Parameters<typeof load>[0];
 
@@ -33,7 +34,7 @@ describe('Root layout load', () => {
 	function buildEvent(user: { id: string } | null, opts: { cookie?: string; pathname?: string } = {}) {
 		return {
 			depends,
-			cookies: { get: vi.fn((name: string) => (name === 'dep26-banner' ? opts.cookie : undefined)) },
+			cookies: { get: vi.fn((name: string) => (name === DEP_BANNER_COOKIE ? opts.cookie : undefined)) },
 			url: new URL(`https://allerleih.org${opts.pathname ?? '/'}`),
 			locals: {
 				user,
@@ -168,16 +169,16 @@ describe('Root layout load', () => {
 
 		it('reads the dismiss cookie: hidden once dismissed', async () => {
 			vi.useFakeTimers({ now: new Date('2026-10-06T12:00:00Z') });
-			expect((await load(buildEvent(null, { cookie: 'dismissed' }))).depBanner).toBe('hidden');
+			expect((await load(buildEvent(null, { cookie: DEP_DISMISSED }))).depBanner).toBe('hidden');
 		});
 
 		it('re-shows the final variant after a plain dismissal once the final phase starts', async () => {
 			vi.useFakeTimers({ now: new Date('2026-10-25T08:00:00Z') });
-			expect((await load(buildEvent(null, { cookie: 'dismissed' }))).depBanner).toBe('final');
-			expect((await load(buildEvent(null, { cookie: 'dismissed-final' }))).depBanner).toBe('hidden');
+			expect((await load(buildEvent(null, { cookie: DEP_DISMISSED }))).depBanner).toBe('final');
+			expect((await load(buildEvent(null, { cookie: DEP_DISMISSED_FINAL }))).depBanner).toBe('hidden');
 		});
 
-		it('does not depend on the URL (excluded paths are handled in +layout.svelte)', async () => {
+		it('does not depend on the URL (excluded paths are applied in DepBanner.svelte)', async () => {
 			vi.useFakeTimers({ now: new Date('2026-10-06T12:00:00Z') });
 			expect((await load(buildEvent(null, { pathname: '/auth/login' }))).depBanner).toBe('normal');
 		});
