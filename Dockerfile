@@ -7,7 +7,7 @@
 # docs/architecture.md → "Running the official container image" for the full runtime-var
 # reference and reverse-proxy notes (ORIGIN / BODY_SIZE_LIMIT).
 
-ARG NODE_VERSION=24.19.0
+ARG NODE_VERSION=24.22.1
 
 # --- Build stage ----------------------------------------------------------
 # --platform=$BUILDPLATFORM: the compiled output is platform-neutral JS and no production

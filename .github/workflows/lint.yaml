@@ -1,6 +1,6 @@
 name: Lint & Typecheck on PR
 env:
-  node_version: '24.19.0'
+  node_version: '24.22.1'
 on:
   pull_request:
     branches:
